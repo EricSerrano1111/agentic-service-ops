@@ -1,0 +1,43 @@
+# Agentic Service Operations Intelligence Platform
+
+Northwestern capstone. Multi-agent system over a synthetic field-service
+dispatch database — orchestrator routes intents via A2A to reporting,
+sentiment, and forecast agents, each calling scoped tools through its own
+MCP server, with a QA agent verifying output before it returns. Solo,
+Agile (six 2-week sprints), Python, deployed on GCP. Target is
+production-grade.
+
+## Which doc to check
+
+Read the relevant file before making a change — don't infer schema,
+architecture, or past reasoning from the code alone if a doc covers it.
+
+- Schema, enums, constraints, metrics, access matrix → `docs/data-dictionary.md`
+- Architecture, protocols, security model, stack, budget, sprint plan → `docs/architecture.md`
+- Why something was chosen, what was rejected → `docs/decisions-log.md`
+- Sprint status, retros → `docs/sprint-log.md`
+- Known risks, mitigations → `docs/risk-register.md`
+
+## Keeping docs in sync with the code
+
+When you make a change that contradicts a locked decision, stop and say so
+before proceeding — name the ADR. If a decision genuinely needs to change,
+append a new entry to `docs/decisions-log.md` marked "Supersedes ADR-XXX."
+Never edit a past entry in place.
+
+If you complete or materially change something covered in `docs/sprint-log.md`
+for the current sprint, update it directly rather than waiting to be asked.
+
+## How to work
+
+- Frank and direct. Flag weak reasoning, scope creep, and hand-waving —
+  I'm the only reviewer this project has, so don't soften that.
+- I'm an intermediate ML practitioner. Plain-English explanations of
+  unfamiliar concepts help; skip the basics on Python, SQL, general ML.
+- Prefer Plan Mode for anything touching schema, security scoping, or
+  more than one service — I want to review before you execute, not after.
+- Distinguish what's genuinely required at this scale from what's
+  demonstrated deliberately for portfolio value, and say which is which.
+
+## Commands
+(fill in as they exist — e.g. `make dev`, `pytest`, `docker-compose up`)

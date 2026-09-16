@@ -1,0 +1,214 @@
+# Sprint Log — Agentic Service Operations Intelligence Platform
+
+**Purpose:** The record of what was planned, what shipped, and what changed — updated at the start and end of every sprint. This is the primary evidence for the Agile-methodology requirement: a filled-in log across six sprints is what distinguishes a graded Agile project from a plan that happened to work out. Solo projects lose peer review as a check on drift; a consistently updated log is the substitute.
+
+**Cadence:** Update the "Planned" section at sprint start, "Shipped" and "Retro" at sprint end. Update `risk-register.md` at every sprint boundary — do it in the same sitting as the retro so it actually happens.
+
+---
+
+## How to fill in each sprint
+
+- **Goal (increment):** one sentence — what will be demoable at sprint end. Fixed at planning; don't rewrite it after the fact to match what shipped.
+- **Planned:** the backlog items committed to at sprint start.
+- **Shipped:** what actually got done. Cross-reference against Planned — gaps are data, not failures.
+- **Carried over:** anything from Planned not done, moved to a future sprint (or explicitly dropped, with a one-line reason).
+- **Blockers encountered:** anything that cost meaningful time — a library issue, a design decision that needed rework, an external dependency.
+- **Retro:**
+  - *What went well* — worth repeating deliberately, not just noticing in passing.
+  - *What didn't* — specific, not "time management." What decision or estimate was wrong, and why.
+  - *What changes next sprint* — one or two concrete adjustments, not a general resolution.
+- **Academic deliverable status:** what's due this sprint per the milestone plan, and whether it's done, drafted, or slipped.
+- **Decisions made this sprint:** cross-reference to new `decisions-log.md` entries, if any.
+
+---
+
+## Sprint 1 (Weeks 1–2) — Foundation
+**Goal (increment):** Synthetic data generator producing validated, signal-bearing data; queryable locally.
+
+**Planned:**
+- [ ] Repo scaffold, CI skeleton, docker-compose, local Postgres
+- [ ] Schema finalized in `data-dictionary.md` (done ahead of Sprint 1 — see decisions log)
+- [ ] Data generator + ground-truth tables (`sentiment_labels`, `generation_parameters`)
+- [ ] Validate signal is actually recoverable — plot seasonality, confirm sentiment/severity coupling shows up in the data
+- [ ] GCP budget alerts configured ($50, $80)
+- [ ] Confirm Google AI student credit coverage and expiry (open item from ADR-006)
+
+**Shipped:**
+*(fill in at sprint end)*
+
+**Carried over:**
+*(fill in at sprint end)*
+
+**Blockers encountered:**
+*(fill in at sprint end)*
+
+**Retro:**
+- What went well:
+- What didn't:
+- What changes next sprint:
+
+**Academic deliverable status:** Problem statement, project charter, initial risk register — *(status)*
+
+**Decisions made this sprint:**
+
+---
+
+## Sprint 2 (Weeks 3–4) — First vertical slice
+**Goal (increment):** Ask a natural-language question about incidents, get a verified answer, end to end.
+
+**Planned:**
+- [ ] MCP server #1 (incidents) with scoped tools + dedicated DB role
+- [ ] Reporting agent + A2A Agent Card
+- [ ] Minimal orchestrator routing to a single agent
+
+**Shipped:**
+*(fill in at sprint end)*
+
+**Carried over:**
+*(fill in at sprint end)*
+
+**Blockers encountered:**
+*(fill in at sprint end)*
+
+**Retro:**
+- What went well:
+- What didn't:
+- What changes next sprint:
+
+**Academic deliverable status:** Literature review, architecture documentation — *(status)*
+
+**Decisions made this sprint:**
+
+*Note: this is the highest-risk sprint in the plan — it proves the entire MCP → A2A → orchestrator path. If it slips, that's schedule signal worth taking seriously, not just noting.*
+
+---
+
+## Sprint 3 (Weeks 5–6) — Analytical agents
+**Goal (increment):** All three specialists working; forecast beats a naive baseline or the gap is documented.
+
+**Planned:**
+- [ ] MCP servers #2 and #3 (feedback, volume)
+- [ ] Forecast agent + regression model + seasonal-naive baseline comparison
+- [ ] Sentiment agent + confidence scoring
+- [ ] Orchestrator routes across all three
+
+**Shipped:**
+*(fill in at sprint end)*
+
+**Carried over:**
+*(fill in at sprint end)*
+
+**Blockers encountered:**
+*(fill in at sprint end)*
+
+**Retro:**
+- What went well:
+- What didn't:
+- What changes next sprint:
+
+**Academic deliverable status:** Methodology section, mid-point status deliverable — *(status)*
+
+**Decisions made this sprint:**
+
+---
+
+## Sprint 4 (Weeks 7–8) — Verification
+**Goal (increment):** QA agent operational with all three verification strategies; measurable catch rate.
+
+**Planned:**
+- [ ] QA agent — deterministic re-check (reporting), backtest threshold (forecast), labeled-holdout scoring (sentiment)
+- [ ] Bounded retry loop (max 2), escalation path on final failure
+- [ ] Fault-injection harness for QA catch-rate measurement
+
+**Shipped:**
+*(fill in at sprint end)*
+
+**Carried over:**
+*(fill in at sprint end)*
+
+**Blockers encountered:**
+*(fill in at sprint end)*
+
+**Retro:**
+- What went well:
+- What didn't:
+- What changes next sprint:
+
+**Academic deliverable status:** Ethics & responsible-AI section, security design documentation — *(status)*
+
+**Decisions made this sprint:**
+
+*Note: scope-expansion decisions (broader capability within the existing three domains) are only appropriate if genuinely ahead of plan at this boundary — see the working agreement in `architecture.md` §13.*
+
+---
+
+## Sprint 5 (Weeks 9–10) — Interface & evaluation
+**Goal (increment):** Deployed system with a working UI; routing accuracy reported with failure analysis.
+
+**Planned:**
+- [ ] Routing eval harness + failure-case analysis (ambiguous + out-of-scope intents included)
+- [ ] FastAPI gateway + thin React UI
+- [ ] Migrate Postgres to Cloud SQL; first Cloud Run deployment
+- [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)
+
+**Shipped:**
+*(fill in at sprint end)*
+
+**Carried over:**
+*(fill in at sprint end)*
+
+**Blockers encountered:**
+*(fill in at sprint end)*
+
+**Retro:**
+- What went well:
+- What didn't:
+- What changes next sprint:
+
+**Academic deliverable status:** Results/evaluation writeup begins, draft final paper — *(status)*
+
+**Decisions made this sprint:**
+
+---
+
+## Sprint 6 (Weeks 11–12) — Hardening & delivery
+**Goal (increment):** Production-grade checklist closed out; demo rehearsed.
+
+**Planned:**
+- [ ] Observability, CI/CD completion, graceful degradation, load/latency testing
+- [ ] Production-grade checklist (`architecture.md` §7) audited item by item
+- [ ] Final paper, presentation, demo rehearsal
+
+**Shipped:**
+*(fill in at sprint end)*
+
+**Carried over:**
+*(fill in at sprint end)*
+
+**Blockers encountered:**
+*(fill in at sprint end)*
+
+**Retro:**
+- What went well:
+- What didn't:
+- What changes next sprint: *(n/a — final sprint; note instead what you'd do differently on a future project)*
+
+**Academic deliverable status:** Final paper, presentation, demo — *(status)*
+
+**Decisions made this sprint:**
+
+*Note: this sprint is protected buffer, not planned work with a buffer label. If Sprints 1–5 ran clean, use the slack for polish and rehearsal — not for starting anything new.*
+
+---
+
+## Cumulative Summary
+*(fill in progressively — one line per sprint, for a fast look-back when writing the final paper)*
+
+| Sprint | Goal met? | Key learning | Scope change? |
+|---|---|---|---|
+| 1 | | | |
+| 2 | | | |
+| 3 | | | |
+| 4 | | | |
+| 5 | | | |
+| 6 | | | |
