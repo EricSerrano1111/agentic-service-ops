@@ -1,0 +1,45 @@
+# Environment / secrets — .env.example is intentionally re-included
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# Node / web
+web/node_modules/
+web/.next/
+web/out/
+web/dist/
+
+# Terraform — state files can contain sensitive resource data
+infra/terraform/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Local Postgres data volume (docker-compose)
+pgdata/
+
+# Logs and coverage
+*.log
+.coverage
+htmlcov/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code — personal, machine-specific memory, never shared
+CLAUDE.local.md
