@@ -41,3 +41,10 @@ for the current sprint, update it directly rather than waiting to be asked.
 
 ## Commands
 (fill in as they exist — e.g. `make dev`, `pytest`, `docker-compose up`)
+
+## Decisions log format (permanent)
+
+`docs/decisions-log.md` is a single running file, not a `docs/decisions/`
+folder of per-ADR files. Append new entries to the end of that one file
+using the existing ADR-XXX numbering and format. Never create files under
+a `docs/decisions/` path.

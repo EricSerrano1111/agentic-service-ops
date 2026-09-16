@@ -1,4 +1,4 @@
-# Capstone Project Context — Agentic Service Operations Intelligence Platform
+# Architecture — Agentic Service Operations Intelligence Platform
 
 > **Purpose of this document:** This is the standing context file for the Claude Project supporting this capstone. It defines the project, the architecture, the constraints, the decisions already locked, and the decisions still open. Read this first in any new conversation.
 
@@ -386,10 +386,7 @@ agentic-service-ops/
 │   ├── data-dictionary.md
 │   ├── risk-register.md            # updated every sprint boundary
 │   ├── sprint-log.md               # planning, review, retro per sprint
-│   ├── decisions/                  # ADRs — one file per architectural decision
-│   │   ├── 0001-a2a-plus-mcp.md
-│   │   ├── 0002-gcp-over-azure.md
-│   │   └── 0003-three-mcp-servers.md
+│   ├── decisions-log.md            # ADRs — single running file for architectural decisions
 │   └── academic/                   # rubric deliverables
 │       ├── problem-statement.md
 │       ├── literature-review.md
@@ -446,8 +443,9 @@ agentic-service-ops/
 
 - `packages/llm/` exists specifically to keep the provider swap cheap and to centralize cost metering — both budget requirements from §9.
 - `evals/results/` being version-controlled and dated matters: the paper's results section should cite real dated runs, not numbers retyped from memory.
-- `docs/decisions/` (ADRs) is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, these are arguably the highest-value files in the repo.
+- `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.
 - Each service owns its Dockerfile and tests. Resist the urge to centralize — it undermines the "these are independently deployable peers" claim.
+- Per-ADR files were deliberately collapsed into one running `decisions-log.md` — a folder-per-decision only pays for itself with multiple contributors, and this is a solo project.
 
 ### Companion files for the Claude Project
 
@@ -458,7 +456,7 @@ This document is the standing context. Alongside it:
 | `architecture.md` | This file — architecture, constraints, decisions |
 | `sprint-log.md` | Sprint planning, review, retro entries |
 | `risk-register.md` | Risks, likelihood/impact, mitigations, status |
-| `decisions-log.md` | Running ADR summary (mirrors `docs/decisions/`) |
+| `decisions-log.md` | Running ADR summary — single file, `docs/decisions-log.md` |
 | `data-dictionary.md` | Schema, fields, generation parameters |
 
 Keep this context file updated as decisions change. A stale context document is worse than none — it will confidently mislead.
