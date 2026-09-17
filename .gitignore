@@ -27,6 +27,14 @@ infra/terraform/.terraform/
 *.tfstate.backup
 *.tfvars
 
+# Trained model artifacts — not source, don't belong in git history
+services/*/models/*.bin
+services/*/models/*.pt
+services/*/models/*.pth
+services/*/models/*.safetensors
+services/*/models/*.joblib
+services/*/models/*.pkl
+
 # Local Postgres data volume (docker-compose)
 pgdata/
 

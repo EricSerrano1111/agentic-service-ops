@@ -386,7 +386,7 @@ agentic-service-ops/
 │   ├── data-dictionary.md
 │   ├── risk-register.md            # updated every sprint boundary
 │   ├── sprint-log.md               # planning, review, retro per sprint
-│   ├── decisions-log.md            # ADRs — single running file for architectural decisions
+│   ├── decisions-log.md            # ADR — single running file for architectural decisions
 │   └── academic/                   # rubric deliverables
 │       ├── problem-statement.md
 │       ├── literature-review.md
@@ -412,15 +412,26 @@ agentic-service-ops/
 │   └── schemas/                    # Pydantic contracts shared across services
 │
 ├── services/
-│   ├── orchestrator/               # intent classification + A2A routing
-│   ├── agent_reporting/
+│   ├── orchestrator/ # intent classification + A2A routing
+│   │
+│   ├── agent_reporting/ # deterministic — no model
+│   │
 │   ├── agent_sentiment/
+│   ├── training/
+│   │   └── train.py # fine-tunes BERT model on sentiment_labels
+│   │   └── models/ # trained artifact — gitignored, not committed
+│   │
 │   ├── agent_forecast/
-│   ├── agent_qa/
-│   ├── mcp_incidents/              # scoped tools + own DB role
+│   ├── training/
+│   │   └── train.py # fits the regression on weekly volume history
+│   │   └── models/ # trained artifact — gitignored, not committed
+│   │
+│   ├── agent_qa/ # deterministic — no model
+│   │
+│   ├── mcp_incidents/ # scoped tools + own DB role
 │   ├── mcp_feedback/
 │   ├── mcp_volume/
-│   └── api_gateway/                # FastAPI BFF for the UI
+│   └── api_gateway/ # FastAPI BFF for the UI
 │       └── (each service: Dockerfile, pyproject.toml, src/, tests/)
 │
 ├── web/                            # thin React/Next.js UI
@@ -441,6 +452,7 @@ agentic-service-ops/
 
 **Notes on the layout:**
 
+- `agent_sentiment/models/` and `agent_forecast/models/` hold trained artifacts, not source — gitignored (`**/models/*.bin`, `**/models/*.pt`, `**/models/*.joblib` or equivalent). A transformer checkpoint can exceed 100MB; it has no business in git history. `training/train.py` in each is what produces the artifact — run deliberately, not something any agent triggers.
 - `packages/llm/` exists specifically to keep the provider swap cheap and to centralize cost metering — both budget requirements from §9.
 - `evals/results/` being version-controlled and dated matters: the paper's results section should cite real dated runs, not numbers retyped from memory.
 - `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.
