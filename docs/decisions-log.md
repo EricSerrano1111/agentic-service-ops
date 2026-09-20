@@ -35,6 +35,8 @@
 | 021 | Incident severity influences sentiment, with noise | Accepted |
 | 022 | QA retries bounded at 2, then escalate | Accepted |
 | 023 | Per-agent least-privilege DB roles + narrow MCP tools | Accepted |
+| 024 | Trained models behind sentiment and forecast tools; training is offline | Accepted |
+| 025 | Grant enforcement details: column-level feedback grant, PUBLIC revoked, cross-table invariant left to QA | Accepted |
 
 ---
 
@@ -181,4 +183,32 @@
 **Context:** The architecture had left this implicit. "The agent calls an MCP tool" is true at the orchestration layer for all four specialists, but at the tool layer only sentiment and forecast actually need a model — and that model is classical/deep ML the project trains itself, not a further call out to Gemini. Left unstated, this was at risk of being quietly implemented as an LLM-prompting shortcut for both, which would understate the project's ML content relative to what a DS/AI capstone should demonstrate.
 **Alternatives considered:** LLM-prompted sentiment with self-reported confidence (rejected as the primary approach — faster to build, but weaker academically and offers a less reliable confidence signal than a softmax output from a trained classifier; the owner's existing CIS361 BERT-based text-classification pipeline, already validated CPU-only, removes most of the setup risk that would otherwise justify the shortcut). Agent-triggered or on-demand retraining (rejected — introduces unbounded cost/latency into request handling and blurs a boundary a reviewer would specifically ask about; training stays a deliberate, human-or-scheduler-triggered offline step).
 **Consequences:** Each of `agent_sentiment` and `agent_forecast` needs its own training script and a place to store the resulting artifact — see the repo layout update below. Trained artifacts must never be committed to git (transformer checkpoints in particular can exceed 100MB) — add exclusions to `.gitignore`. The forecast model invites a deliberate choice between extending the approach from the owner's existing Mobility-Demand-Forecaster portfolio project or trying a different technique this time, to avoid the two portfolio pieces reading as duplicates.
+
+### ADR-025 — Grant enforcement details settled while writing the DDL
+*Date: 2026-09-20. Extends ADR-023; supersedes nothing.*
+
+**Decision:** Three implementation choices that §7 of `data-dictionary.md` left underspecified, settled now that the access matrix is executable code:
+
+1. **`service_feedback` for `app_reporting` is a column-level GRANT that omits `feedback_text`**, covering every other column. This is how §7's "SELECT (aggregate)" is enforced.
+2. **Default privileges are revoked from `PUBLIC`** — `REVOKE CONNECT ON DATABASE`, `REVOKE ALL ON SCHEMA public` — and `CONNECT` / `USAGE` are then granted explicitly to the five agent roles.
+3. **The cross-table invariant `archived_requests.completed_at >= service_requests.scheduled_datetime` is not enforced by a database trigger.** It becomes a generator-validation check and a QA-agent invariant instead.
+
+**Context:** §7 is a table of privileges; turning it into GRANT statements forced three questions it didn't answer. Postgres has no aggregate-only privilege, so "SELECT (aggregate)" had to become something concrete. A `CHECK` cannot span two tables, so §8's phrasing ("enforce via trigger or app layer") had to resolve one way. And the matrix says nothing about `PUBLIC`, whose Postgres defaults quietly undercut the least-privilege claim.
+
+**Alternatives considered:**
+
+- *Feedback grant:* plain table-level `SELECT`, with "aggregate" enforced only by the MCP tool layer (rejected — the documented boundary and the actual boundary would differ, and the tool layer is Layer 1; the point of ADR-023's Layer 2 is that it holds when Layer 1 is compromised). A dedicated aggregate view with no grant on the base table (rejected — strongest boundary, but it adds an object the data dictionary doesn't define and pre-commits to which aggregations reporting may ever ask for).
+- *`PUBLIC`:* leave the defaults alone (rejected — on Postgres < 15 any role can create objects in schema `public`, and any role can connect to the database; "least privilege" would be partly aspirational). Note the downgrade path restores the Postgres 15/16 defaults, not the older ones.
+- *Cross-table invariant:* a row-level trigger on `archived_requests` (rejected — invisible behaviour, awkward under the generator's bulk inserts, and it duplicates a check the QA agent already owns; a failed insert deep inside a generation run is also far harder to diagnose than a named validation failure afterwards).
+
+**Consequences:** The reporting agent cannot read a customer's raw words under any code path, which extends the §7 PII claim beyond `contacts` — worth stating in the security writeup alongside it. The privilege sets now live in `packages/db_models/access_matrix.py` rather than in prose, and `tests/unit/test_access_matrix.py` asserts each of §7's three structural properties, so a later edit that reopens one fails CI. §7's own wording should be read against that module, which is the authority for what is actually granted.
+
+### ADR-026 — SQLAlchemy models separate from Pydantic schemas
+*Logged retroactively — decided during planning, before this repo's decisions-log.md existed as the live document; recorded now so the history is complete.*
+ 
+**Decision:** DB table definitions live in `packages/db_models/`, used as the source of truth for Alembic autogenerate. `packages/schemas/` remains Pydantic-only — request/response contracts for MCP tools and the API gateway.
+**Context:** The repo layout didn't originally specify where ORM table definitions should live. Putting them in `packages/schemas/` alongside the Pydantic contracts would conflate two things that change for different reasons — a tool's input/output shape versus a table's column structure.
+**Alternatives considered:** Defining models inline per-service, duplicated wherever needed (rejected — multiple MCP servers need to reference the same tables; duplication risks drift from the canonical structure in `data-dictionary.md`). Folding ORM models into `packages/schemas/` (rejected — see context).
+**Consequences:** Confirmed implemented — `packages/db_models/src/db_models/` now holds `base.py`, `enums.py`, `reference.py`, `operational.py`, `ground_truth.py`, and `access_matrix.py`, matching this decision.
+ 
  

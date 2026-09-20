@@ -140,7 +140,7 @@ Active/open service engagements. This is your "records" table.
 | `service_type` | ENUM (`install`, `repair`, `maintenance`, `inspection`, `upgrade`) | No | |
 | `priority_tier` | ENUM (`standard`, `urgent`, `critical`) | No | |
 | `equipment_unit_count` | INT | No | Number of devices/units in scope for this visit |
-| `scheduled_datetime` | TIMESTAMP | No | Single combined timestamp — replaces split date/time fields |
+| `scheduled_datetime` | TIMESTAMPTZ | No | Single combined timestamp — replaces split date/time fields. *Corrected from `TIMESTAMP` when the DDL was written: §6 forbids naive timestamps outright* |
 | `sla_window_minutes` | INT | No | Target response/resolution window for this request |
 | `assigned_technician_id` | FK → technicians | Yes | Null until dispatched |
 | `payment_method` | ENUM (`credit_card`, `direct_bill`, `ach`, `check`) | No | *Requested* method — may differ from what's actually used at billing (see `archived_requests`) |
@@ -159,7 +159,7 @@ Completed requests with final billing. 1:1 with `service_requests`, created when
 | Column | Type | Nullable | Description |
 |---|---|---|---|
 | `request_id` | FK → service_requests, PK | No | Same key as the originating request |
-| `completed_at` | TIMESTAMP | No | Actual resolution time — needed for SLA-compliance calculation |
+| `completed_at` | TIMESTAMPTZ | No | Actual resolution time — needed for SLA-compliance calculation. *Corrected from `TIMESTAMP` when the DDL was written, per §6* |
 | `technician_id` | FK → technicians | No | Who ultimately performed the work |
 | `labor_charge` | DECIMAL(10,2) | No | |
 | `parts_charge` | DECIMAL(10,2) | No | |
@@ -278,6 +278,18 @@ Defining these once here, referenced by every table above, keeps them from drift
 | `user_role` | `dispatcher`, `supervisor`, `billing_clerk`, `qa_analyst` |
 | `true_sentiment` | `positive`, `neutral`, `negative`, `mixed` |
 
+**Added when the DDL was written.** These five are used by the table definitions in §2–§4 but were missing from this consolidated list, which is exactly the drift this section exists to prevent.
+
+| Enum | Values | Used by |
+|---|---|---|
+| `contact_role` | `site_contact`, `billing_contact`, `account_admin`, `other` | `contacts` |
+| `user_status` | `active`, `inactive` | `internal_users` |
+| `skill` | `network`, `hardware`, `cabling`, `security_systems`, `power_systems` | `technician_skills` |
+| `proficiency` | `certified`, `experienced`, `trainee` | `technician_skills` |
+| `param_group` | `volume`, `incidents`, `sentiment`, `billing`, `anomalies` | `generation_parameters` |
+
+All 21 vocabularies are implemented once, as `StrEnum` classes in `packages/db_models/src/db_models/enums.py`, and reused by the models, the generator, and the eval harness. That module is the authority; this table is the documentation of it.
+
 ---
 
 ## 6. Conventions & Metric Definitions
@@ -362,7 +374,9 @@ If your generated feedback ends up overwhelmingly negative, every accuracy numbe
 
 **Added on review.** The context doc commits to per-agent database roles as a defense-in-depth layer; this is where that gets specified concretely enough to write the GRANT statements against.
 
-| Table | `role_reporting` | `role_sentiment` | `role_forecast` | `role_qa` | `role_generator` |
+Role names are `app_*` (the `role_*` labels used in earlier drafts of this table were never the actual role names). The names below are the values `.env` ships with; the actual names come from `DB_ROLE_*_USER`, which is **required** — the migration fails rather than assuming a name, since a role created under a name nothing connects as surfaces much later as an opaque "permission denied".
+
+| Table | `app_reporting` | `app_sentiment` | `app_forecast` | `app_qa` | `app_generator` |
 |---|---|---|---|---|---|
 | `accounts` | SELECT | — | SELECT | SELECT | ALL |
 | `contacts` | — | — | — | — | ALL |
@@ -373,9 +387,13 @@ If your generated feedback ends up overwhelmingly negative, every accuracy numbe
 | `service_requests` | SELECT | — | SELECT | SELECT | ALL |
 | `archived_requests` | SELECT | — | SELECT | SELECT | ALL |
 | `incidents` | SELECT | **—** | — | SELECT | ALL |
-| `service_feedback` | SELECT (aggregate) | SELECT | — | SELECT | ALL |
+| `service_feedback` | SELECT (aggregate)¹ | SELECT | — | SELECT | ALL |
 | `sentiment_labels` | — | **—** | — | SELECT | ALL |
 | `generation_parameters` | — | — | — | SELECT | ALL |
+
+¹ Postgres has no aggregate-only privilege. This is implemented as a **column-level** `GRANT SELECT` covering every column of `service_feedback` **except `feedback_text`**, so the reporting agent can count and average ratings but is structurally unable to read a customer's raw words. See ADR-025.
+
+**Implementation:** this matrix is executable, not prose — `packages/db_models/src/db_models/access_matrix.py` is the single structure that the roles migration applies and `tests/unit/test_access_matrix.py` asserts against, so the granted privileges and this table cannot drift apart. The migration additionally revokes the Postgres `PUBLIC` defaults (ADR-025), which this table does not cover.
 
 Three things this matrix enforces that a code convention wouldn't:
 
@@ -392,13 +410,19 @@ Note that `role_qa` is deliberately broad: verification requires cross-checking 
 Worth writing as actual DB constraints where possible, and as QA-agent checks where not.
 
 **Check constraints:**
-- `archived_requests.completed_at >= service_requests.scheduled_datetime` (enforce via trigger or app layer)
-- `service_requests.cancelled_at IS NOT NULL` ⟺ `request_status = 'cancelled'`
-- `service_feedback.rating BETWEEN 1 AND 5`
+- `service_requests.cancelled_at IS NOT NULL` ⟺ `request_status = 'cancelled'` — implemented as `ck_service_requests_cancelled_at_matches_status`
+- `service_feedback.rating BETWEEN 1 AND 5` — `ck_service_feedback_rating_range`. A NULL rating passes, which is correct: some respondents leave text only
 - `labor_charge >= 0`, `parts_charge >= 0`, `credit_issued_amount >= 0`
 - `surcharge_rate BETWEEN 0 AND 1`
 - `equipment_unit_count > 0`
-- `parent_request_id <> request_id` (no self-reference)
+- `parent_request_id <> request_id` (no self-reference) — implemented as `parent_request_id IS DISTINCT FROM request_id`, so a NULL parent passes rather than evaluating to NULL
+
+**Added when the DDL was written** (not in the original list; see ADR-025):
+- `cancellation_reason IS NULL OR request_status = 'cancelled'` — `ck_service_requests_cancellation_reason_requires_cancelled`. The list above constrains `cancelled_at` but was silent on the reason column; a cancellation reason on a non-cancelled request is meaningless
+- `sla_window_minutes > 0` — `ck_service_requests_sla_window_minutes_positive`. The SLA matrix in §2 only ever yields 30–480, so a non-positive window is always a generator bug and should fail at insert time rather than surface later as a nonsense compliance figure
+
+**Not a check constraint, deliberately:**
+- `archived_requests.completed_at >= service_requests.scheduled_datetime`. This spans two tables, so it cannot be a `CHECK`. The earlier phrasing offered "trigger or app layer"; it is enforced as a generator-validation check and a QA-agent invariant instead, not a trigger — see ADR-025 for why
 
 **Data invariants for the QA agent to verify:**
 - Every `completed` request has exactly one `archived_requests` row
@@ -406,6 +430,7 @@ Worth writing as actual DB constraints where possible, and as QA-agent checks wh
 - `credit_issued_amount` never exceeds the request's `total_invoice`
 - Every `service_feedback` row has a corresponding `sentiment_labels` row
 - Every `incidents.request_id` and `service_feedback.request_id` resolves to a real request
+- `archived_requests.completed_at >= service_requests.scheduled_datetime` — moved here from the check-constraint list, since it spans two tables
 
 That last set doubles as your data-generator validation suite. Run it immediately after generation in Sprint 1 — finding a broken invariant in Sprint 4 means regenerating and redoing every downstream measurement.
 
@@ -435,10 +460,19 @@ All seven open questions resolved. Recorded here so the reasoning survives into 
 | 7 | **Enums locked; `upgrade` added to `service_type`; VARCHAR+CHECK implementation** | Hardware refresh is a real category with its own seasonality; CHECK constraints avoid painful enum migrations |
 | 8 | **Severity influences sentiment, with noise** | No leakage path given a univariate forecast; the correlation is what makes the synthetic world coherent |
 
-### Remaining before DDL
+### DDL status — **implemented** (2026-09-20)
 
-- [ ] Nothing blocking. Schema is ready for `CREATE TABLE` statements, indexes, CHECK constraints, and the per-role GRANT statements from §7.
+The schema in this document is now implemented in code:
 
-Ready to draft the DDL on request.
+| Artifact | Location |
+|---|---|
+| SQLAlchemy models (all 12 tables) | `packages/db_models/src/db_models/` |
+| Controlled vocabularies | `packages/db_models/src/db_models/enums.py` |
+| §7 access matrix, as data | `packages/db_models/src/db_models/access_matrix.py` |
+| Initial migration — tables, constraints, §9 indexes | `data/migrations/versions/*_initial_schema.py` |
+| Roles and grants migration | `data/migrations/versions/*_roles_and_grants.py` |
+| Contract tests | `tests/unit/` |
 
-Once these are settled, I can draft the actual DDL (CREATE TABLE statements with constraints, indexes, and the per-agent role grants from the security section) whenever you're ready.
+**The models are the source of truth from here.** When this document and `db_models` disagree, the code is right and this file needs correcting — `alembic check` enforces that the migrations match the models, but nothing enforces that either matches this prose.
+
+Three points where implementation required a decision this document had left open are recorded in ADR-025. Three corrections to this document itself are marked inline above (two `TIMESTAMP` → `TIMESTAMPTZ` fixes, five vocabularies missing from §5, and the `role_*` → `app_*` relabel in §7).

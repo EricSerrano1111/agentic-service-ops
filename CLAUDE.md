@@ -40,7 +40,26 @@ for the current sprint, update it directly rather than waiting to be asked.
   demonstrated deliberately for portfolio value, and say which is which.
 
 ## Commands
-(fill in as they exist — e.g. `make dev`, `pytest`, `docker-compose up`)
+
+Windows paths shown; on POSIX substitute `.venv/bin/`.
+
+```
+py -m venv .venv                                  # first time only
+.venv\Scripts\pip install -e "packages/db_models[dev]"
+
+.venv\Scripts\python -m pytest tests/unit -q      # schema + access-matrix contract tests
+.venv\Scripts\python -m ruff check packages data tests
+.venv\Scripts\python -m ruff format packages data tests
+
+docker compose up -d postgres                     # needs Docker Desktop (not yet installed)
+.venv\Scripts\python -m alembic upgrade head      # schema, then roles + grants
+.venv\Scripts\python -m alembic check             # asserts migrations still match the models
+.venv\Scripts\python -m alembic revision --autogenerate -m "..."
+```
+
+`alembic check` is the real guard on `packages/db_models/` — the initial migration was
+hand-written, so a model change that isn't migrated only shows up there. Run it after
+touching any model.
 
 ## Decisions log format (permanent)
 
