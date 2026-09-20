@@ -388,10 +388,10 @@ agentic-service-ops/
 │   ├── sprint-log.md               # planning, review, retro per sprint
 │   ├── decisions-log.md            # ADR — single running file for architectural decisions
 │   └── academic/                   # rubric deliverables
-│       ├── problem-statement.md
-│       ├── literature-review.md
-│       ├── methodology.md
-│       ├── ethics.md
+│       ├── proposal-business-case.md
+│       ├── requirements-analysis.md
+│       ├── planning-management.md
+│       ├── design-solution-architecture.md
 │       └── final-paper.md
 │
 ├── infra/
