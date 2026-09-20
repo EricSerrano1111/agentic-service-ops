@@ -37,6 +37,7 @@ services/*/models/*.pkl
 
 # Local Postgres data volume (docker-compose)
 pgdata/
+*.offline.sql
 
 # Logs and coverage
 *.log

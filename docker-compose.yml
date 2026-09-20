@@ -1,0 +1,34 @@
+# Local development stack. Postgres only for now — agent and MCP services join this
+# file as they are built in Sprints 2–3.
+#
+# Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint 5
+# (ADR-007), because an always-on managed instance would consume roughly a third of
+# the project budget for no benefit during local development.
+#
+#   docker compose up -d postgres
+#   alembic upgrade head
+
+services:
+  postgres:
+    # 16 rather than latest: Cloud SQL's supported versions should match what
+    # development runs against, and pinning keeps the Sprint 5 migration boring.
+    image: postgres:16
+    container_name: service_ops_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:?set POSTGRES_ADMIN_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-service_ops}
+    ports:
+      # Host port from .env so it can be moved off 5432 if something else owns it;
+      # the container always listens on 5432.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
