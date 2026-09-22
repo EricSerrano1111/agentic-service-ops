@@ -6,7 +6,7 @@ them fails CI rather than shipping.
 
 These assert the *intent* encoded in `db_models.access_matrix`. That the database
 actually ends up in that state is proven separately by connecting as each role after
-`alembic upgrade head` — see the README.
+`alembic upgrade head` — see `tests/integration/test_access_matrix_grants.py`.
 """
 
 from __future__ import annotations

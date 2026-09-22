@@ -34,6 +34,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 testpaths = ["tests", "packages"]
 pythonpath = ["packages/db_models/src"]
 addopts = "-ra"
+markers = [
+    "integration: needs a live, migrated Postgres; skips when none is reachable",
+]
 
 [tool.mypy]
 python_version = "3.12"

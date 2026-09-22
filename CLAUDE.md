@@ -51,7 +51,7 @@ py -m venv .venv                                  # first time only
 .venv\Scripts\python -m ruff check packages data tests
 .venv\Scripts\python -m ruff format packages data tests
 
-docker compose up -d postgres                     # needs Docker Desktop (not yet installed)
+docker compose up -d postgres                     # needs Docker Desktop running
 .venv\Scripts\python -m alembic upgrade head      # schema, then roles + grants
 .venv\Scripts\python -m alembic check             # asserts migrations still match the models
 .venv\Scripts\python -m alembic revision --autogenerate -m "..."

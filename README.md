@@ -45,6 +45,7 @@ Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint
 
 ```
 .venv\Scripts\python -m pytest tests/unit -q   # no database needed
+.venv\Scripts\python -m pytest tests/integration -q   # live grants; skips if no database
 .venv\Scripts\python -m alembic check          # "No new upgrade operations detected."
 ```
 
@@ -76,6 +77,10 @@ Those three failures are the point of the design: the sentiment agent cannot ver
 itself against its own ground truth, staff-written incident notes cannot reach the
 sentiment pipeline, and customer PII never enters an LLM context window. Each is
 enforced by a database grant rather than a code convention — see ADR-023 and ADR-025.
+
+`tests/integration/test_access_matrix_grants.py` automates this: it logs in as every
+role and probes every table, plus every column of `service_feedback`, with the
+expected outcome computed from `db_models.access_matrix`.
 
 ## Repository layout
 
