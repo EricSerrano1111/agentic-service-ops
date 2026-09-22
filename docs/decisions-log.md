@@ -40,6 +40,7 @@
 | 026 | SQLAlchemy models separate from Pydantic schemas | Accepted |
 | 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
 | 028 | Role names required, never defaulted: a blank `DB_ROLE_*_USER` fails like a blank password | Accepted |
+| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part |
 
 ---
 
@@ -248,3 +249,48 @@ Planning the change exposed the second problem. `7d54e0c9a318` imported the live
 **Alternatives considered:** Defaulting the name to the canonical role key (rejected — see context; it converts a setup error into a runtime mystery). Defaulting the name but requiring the password (rejected — inconsistent: both halves of a credential are equally load-bearing, and a half-defaulted credential is harder to reason about than either rule applied uniformly). Validating names in application code at startup instead of in the migration (rejected — the migration is what creates the roles, so it is the only place that can fail before the wrong thing is created).
 
 **Consequences:** `.env.example` has to carry every `DB_ROLE_*_USER`, and a fresh checkout cannot run `alembic upgrade head` until they are filled in — deliberate friction, at the one moment when the person setting it up has the context to get it right. The same applies to deployment, though the two halves are not handled alike: role names are not secrets and travel as plain Cloud Run environment variables, while only the `DB_ROLE_*_PASSWORD` values need GCP Secret Manager (ADR-007). `tests/unit/test_roles_migration.py` covers each failure mode, including that all problems are reported together, and `tests/integration/test_access_matrix_grants.py` checks the other end of the contract — each role actually logs in under the name its `DB_ROLE_*_USER` specifies, so a role created under a name nothing connects as fails there too.
+
+### ADR-029 — Runtime inference on the Gemini API free tier; model tiering revised
+*Date: 2026-09-22. Supersedes ADR-006 in part (runtime funding: student credits
+→ free tier) and resolves its open item. Replaces the model-tiering guidance in
+`architecture.md` §9. ADR-007 (Cloud SQL from Sprint 5) is unchanged.*
+
+**Decision:** Development-time inference runs on the Gemini API free tier via a
+Google AI Studio key. Student credits: confirmed not available. Default model
+for all agents during development is Gemini 3.5 Flash-Lite
+(`gemini-3.5-flash-lite`). Flash-class models are used only where Flash-Lite
+measurably underperforms. Pro-class models are not used during development.
+Before the Sprint 5 evaluation runs, decide whether to move eval workloads to
+a paid-tier project with a spend cap.
+
+**Context:** Per the official Gemini API pricing page (checked 2026-09-22),
+all Gemini 3.x Flash and Flash-Lite text models are free on the free tier
+(image and Omni variants are not); Gemini 3.1 Pro (gemini-3.1-pro-preview) is
+paid-only. Free-tier usage may be used by Google to improve its products;
+acceptable here because all data is synthetic. Rate limits — *unverified,
+pending a check of this project's limits in AI Studio:* Flash-Lite about 500
+requests per day; Flash models about 20; limits are per project, reset at
+midnight Pacific, and change without notice. The live values in AI Studio are
+authoritative, not this entry. A project upgraded to paid is billed for all
+usage, so any paid workloads would need a separate project.
+
+**Alternatives considered:** Keep the `architecture.md` §9 tiering — a
+stronger model for orchestrator routing and QA — with Gemini 3.1 Pro for QA
+(rejected for development — it has no free tier). Move to paid now
+(deferred — no workload yet needs it, and Flash-Lite costs are low enough to
+decide on real usage data later). Self-hosted Postgres on an Always Free
+e2-micro instead of Cloud SQL (not adopted — would supersede ADR-007 and
+weaken the production-grade claim; revisit only in a separate ADR if budget
+forces it).
+
+**Consequences:** Update GEMINI_MODEL_* in .env.example to Flash-Lite
+defaults. packages/llm must handle 429 rate-limit responses with backoff,
+since free-tier limits will be hit during evals. Any LLM-generated synthetic
+data must batch many rows per request to fit the daily quota. The QA-model
+comparison noted in `architecture.md` §9 and §12 becomes a Sprint 5 decision,
+made with a spend cap in place. At paid rates, Pro for QA is estimated at
+roughly $10-15 for the evaluation phase, within the budget buffer. Test it in
+Sprint 5 under a spend cap rather than ruling it out. The correct identifier
+for the Pro model is `gemini-3.1-pro-preview` (not `gemini-3.1-pro`); it is a
+preview model, with tighter limits and no stability guarantee. Update R-02 in
+the risk register from Open to Mitigating.
