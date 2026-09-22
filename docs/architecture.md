@@ -289,7 +289,7 @@ This distinction is easy to miss and would blow the budget if discovered in week
 
 ### Runtime model strategy
 
-Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) during development and moves to a Flash-class model only where Flash-Lite measurably underperforms. Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, test routing the QA agent to Gemini 3.1 Pro (`gemini-3.1-pro-preview`, paid-only, preview) in a separate spend-capped project and measure whether catch rate improves — that comparison is itself a good results-section finding.
+Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) during development and moves to a Flash-class model only where Flash-Lite measurably underperforms. Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across three candidates: Flash-Lite (the baseline), `gemini-2.5-pro` (free tier), and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
 
 ### Infrastructure cost plan
 
@@ -488,7 +488,7 @@ Remaining:
 - [ ] Historical data window and granularity for the forecast (drives seasonality realism)
 - [ ] Whether the UI supports conversational follow-up or single-shot intents (affects orchestrator state management)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
-- [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — Sprint 5 test of `gemini-3.1-pro-preview` under a spend cap (ADR-029)
+- [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — Sprint 5 QA comparison of Flash-Lite, `gemini-2.5-pro` (free), and `gemini-3.1-pro-preview` (paid, spend-capped) (ADR-029)
 - [ ] Sprint ceremony cadence and whether the instructor expects to see sprint artifacts at specific checkpoints
 
 ---

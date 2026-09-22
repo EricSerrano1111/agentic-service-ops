@@ -276,7 +276,14 @@ usage, so any paid workloads would need a separate project.
 
 **Alternatives considered:** Keep the `architecture.md` §9 tiering — a
 stronger model for orchestrator routing and QA — with Gemini 3.1 Pro for QA
-(rejected for development — it has no free tier). Move to paid now
+(rejected for development — it has no free tier). Gemini 2.5 Pro for QA (free
+tier) — not adopted for development, kept as a Sprint 5 candidate. It is
+Pro-class and free, so it is tested alongside Flash-Lite and
+gemini-3.1-pro-preview in the Sprint 5 QA comparison rather than ruled out.
+Its free-tier limits for Pro-class models may be too tight for eval volume;
+check this project's limits in AI Studio before the comparison. No shutdown
+date announced per Google's deprecations page, checked 2026-09-22. Move to
+paid now
 (deferred — no workload yet needs it, and Flash-Lite costs are low enough to
 decide on real usage data later). Self-hosted Postgres on an Always Free
 e2-micro instead of Cloud SQL (not adopted — would supersede ADR-007 and
@@ -288,14 +295,14 @@ defaults. packages/llm must handle 429 rate-limit responses with backoff,
 since free-tier limits will be hit during evals. Any LLM-generated synthetic
 data must batch many rows per request to fit the daily quota. The QA-model
 comparison noted in `architecture.md` §9 and §12 becomes a Sprint 5 decision,
-made with a spend cap in place. At paid rates, Pro for QA is estimated at
-roughly $10-15 for the evaluation phase, within the budget buffer. Basis:
-roughly 500 QA calls x ~5,000 input tokens x $2.00/M = ~$5, plus 500 x ~1,000
-output tokens x $12.00/M = ~$6 (gemini-3.1-pro-preview standard paid rates for
-prompts up to 200k tokens, per the official pricing page, checked 2026-09-22).
-Output is billed including thinking tokens, which can multiply output volume
-for Pro models, so the realistic range is closer to $20-30 — still within the
-~$40 buffer, and the spend cap is what enforces it. Test it in
+made with a spend cap in place. Pro for QA is estimated at roughly $20-30 for
+the evaluation phase including thinking tokens (floor of ~$10-15 without them),
+within the ~$40 buffer; the spend cap enforces the ceiling. Basis for the
+floor: roughly 500 QA calls x ~5,000 input tokens x $2.00/M = ~$5, plus
+500 x ~1,000 output tokens x $12.00/M = ~$6 (gemini-3.1-pro-preview standard
+paid rates for prompts up to 200k tokens, per the official pricing page,
+checked 2026-09-22). Output is billed including thinking tokens, which can
+multiply output volume for Pro models. Test it in
 Sprint 5 under a spend cap rather than ruling it out. The correct identifier
 for the Pro model is `gemini-3.1-pro-preview` (not `gemini-3.1-pro`); it is a
 preview model, with tighter limits and no stability guarantee. Update R-02 in
