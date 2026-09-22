@@ -134,6 +134,11 @@
 - [ ] QA agent — deterministic re-check (reporting), backtest threshold (forecast), labeled-holdout scoring (sentiment)
 - [ ] Bounded retry loop (max 2), escalation path on final failure
 - [ ] Fault-injection harness for QA catch-rate measurement
+- [ ] Decide the eval-run approach before Sprint 5: split runs across
+  days on the free tier vs. a paid, spend-capped eval project. Price a
+  full routing eval run (~300-700 requests) on paid Flash-Lite using the
+  official pricing page, and add that cost to the budget alongside the
+  ~$20-30 Pro-for-QA test (ADR-029).
 
 **Shipped:**
 *(fill in at sprint end)*
