@@ -267,12 +267,20 @@ a paid-tier project with a spend cap.
 all Gemini 3.x Flash and Flash-Lite text models are free on the free tier
 (image and Omni variants are not); Gemini 3.1 Pro (gemini-3.1-pro-preview) is
 paid-only. Free-tier usage may be used by Google to improve its products;
-acceptable here because all data is synthetic. Rate limits — *unverified,
-pending a check of this project's limits in AI Studio:* Flash-Lite about 500
-requests per day; Flash models about 20; limits are per project, reset at
-midnight Pacific, and change without notice. The live values in AI Studio are
-authoritative, not this entry. A project upgraded to paid is billed for all
-usage, so any paid workloads would need a separate project.
+acceptable here because all data is synthetic. Rate limits, verified in AI
+Studio on 2026-09-22 (from a free-tier project on the same account; free-tier
+defaults apply per project):
+
+- `gemini-3.5-flash-lite`: 15 RPM, 250K TPM, 500 RPD.
+- All Gemini Flash models (3, 3.5, 3.6, 3.7, 3.8): 5 RPM, 250K TPM, 20 RPD.
+- `gemini-2.5-pro` and `gemini-3.1-pro-preview`: 0 RPM / 0 TPM / 0 RPD — no
+  free-tier quota.
+- Gemma 4 26B and Gemma 4 31B (open-weight, not Gemini): 30 RPM, 16K TPM,
+  14.4K RPD. Recorded for reference only — not adopted for any agent.
+
+Limits change without notice; the live values in AI Studio are authoritative,
+not this entry. A project upgraded to paid is billed for all usage, so any paid
+workloads would need a separate project.
 
 **Alternatives considered:** Keep the `architecture.md` §9 tiering — a
 stronger model for orchestrator routing and QA — with Gemini 3.1 Pro for QA
@@ -282,8 +290,12 @@ Pro-class and free, so it is tested alongside Flash-Lite and
 gemini-3.1-pro-preview in the Sprint 5 QA comparison rather than ruled out.
 Its free-tier limits for Pro-class models may be too tight for eval volume;
 check this project's limits in AI Studio before the comparison. No shutdown
-date announced per Google's deprecations page, checked 2026-09-22. Move to
-paid now
+date announced per Google's deprecations page, checked 2026-09-22.
+*Revised 2026-09-22 after quota check:* despite the pricing page listing it as
+free-tier, `gemini-2.5-pro` has zero free-tier quota on this account (0 RPM /
+0 TPM / 0 RPD), so it is not a free QA candidate and is dropped from the
+Sprint 5 QA comparison; `gemini-3.1-pro-preview` remains the paid,
+spend-capped Pro-class candidate. Move to paid now
 (deferred — no workload yet needs it, and Flash-Lite costs are low enough to
 decide on real usage data later). Self-hosted Postgres on an Always Free
 e2-micro instead of Cloud SQL (not adopted — would supersede ADR-007 and
@@ -292,8 +304,19 @@ forces it).
 
 **Consequences:** Update GEMINI_MODEL_* in .env.example to Flash-Lite
 defaults. packages/llm must handle 429 rate-limit responses with backoff,
-since free-tier limits will be hit during evals. Any LLM-generated synthetic
-data must batch many rows per request to fit the daily quota. The QA-model
+since free-tier limits will be hit during evals. Moving any agent from
+Flash-Lite to Flash on the free tier is impractical at 20 RPD, so any such move
+implies the paid tier. A full routing eval run may need 300-700 requests
+(orchestrator, specialist, QA, and up to 2 retries per case), which can exceed
+the 500 RPD Flash-Lite cap; Sprint 5 must either split eval runs across days or
+run evals on a paid, spend-capped project. Any LLM-generated synthetic data on
+Flash-Lite must batch many rows per request to fit the daily quota. Gemma 4's
+14.4K RPD makes it a candidate for generating synthetic `feedback_text`, since
+the ~7,200 `service_feedback` rows would fit in one day even at one row per
+request. Its 16K TPM limits how many tokens can be generated per minute (about
+530 tokens per request at the full 30 RPM; 7,200 requests take at least four
+hours). Decision deferred to the data generator session; not a runtime model
+for any agent. The QA-model
 comparison noted in `architecture.md` §9 and §12 becomes a Sprint 5 decision,
 made with a spend cap in place. Pro for QA is estimated at roughly $20-30 for
 the evaluation phase including thinking tokens (floor of ~$10-15 without them),
