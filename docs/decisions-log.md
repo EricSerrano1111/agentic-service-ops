@@ -289,7 +289,13 @@ since free-tier limits will be hit during evals. Any LLM-generated synthetic
 data must batch many rows per request to fit the daily quota. The QA-model
 comparison noted in `architecture.md` §9 and §12 becomes a Sprint 5 decision,
 made with a spend cap in place. At paid rates, Pro for QA is estimated at
-roughly $10-15 for the evaluation phase, within the budget buffer. Test it in
+roughly $10-15 for the evaluation phase, within the budget buffer. Basis:
+roughly 500 QA calls x ~5,000 input tokens x $2.00/M = ~$5, plus 500 x ~1,000
+output tokens x $12.00/M = ~$6 (gemini-3.1-pro-preview standard paid rates for
+prompts up to 200k tokens, per the official pricing page, checked 2026-09-22).
+Output is billed including thinking tokens, which can multiply output volume
+for Pro models, so the realistic range is closer to $20-30 — still within the
+~$40 buffer, and the spend cap is what enforces it. Test it in
 Sprint 5 under a spend cap rather than ruling it out. The correct identifier
 for the Pro model is `gemini-3.1-pro-preview` (not `gemini-3.1-pro`); it is a
 preview model, with tighter limits and no stability guarantee. Update R-02 in

@@ -83,7 +83,7 @@
 **Review trigger:** Every sprint retro — explicitly compare actual progress against the plan, not just against what felt productive.
 
 ### R-11 — Vendor pricing or model access changes mid-project
-**Description:** Gemini pricing, the student credit program, or model availability could change over a 12-week window in ways that affect the budget plan.
+**Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).
 **Mitigation:** Provider-agnostic LLM interface (ADR-006) keeps a provider swap mechanically cheap; GCP budget alerts at $50/$80 serve as an early warning regardless of root cause.
 **Review trigger:** Any GCP budget alert firing; otherwise passive monitoring.
 

@@ -298,7 +298,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 | Postgres | **Local Docker through Sprint 4.** Cloud SQL only from Sprint 5 onward | ~$10–15 total |
 | Cloud Run (7 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic | ~$0–5 |
 | Artifact Registry / Cloud Build / Secret Manager | Free tier | ~$0–3 |
-| Runtime LLM | Gemini API free tier; separate spend-capped paid project only for a Sprint 5 Pro-for-QA test | ~$0 (Pro test ~$10–15, drawn from buffer) |
+| Runtime LLM | Gemini API free tier; separate spend-capped paid project only for a Sprint 5 Pro-for-QA test | ~$0 (Pro test ~$20–30 incl. thinking tokens, drawn from buffer) |
 | Buffer | Overruns, a stronger QA model, demo-day headroom | ~$40 |
 
 **The Cloud SQL timing is the key move.** An always-on managed Postgres instance running all 12 weeks would consume roughly a third of the budget for no benefit during local development. Develop against Docker Postgres, migrate to Cloud SQL when deployment work actually begins, and keep the schema migration path (Alembic) identical for both so the switch is trivial.
