@@ -210,7 +210,7 @@ Post-visit customer survey responses. **New on review.** This is the sentiment a
 | `submitted_by_contact_id` | FK → contacts | No | |
 | `submitted_at` | TIMESTAMPTZ | No | |
 | `rating` | SMALLINT (1–5) | Yes | Structured satisfaction score. Nullable — some respondents leave text only |
-| `feedback_text` | TEXT | Yes | The customer's own words — **this is what the sentiment agent reads** |
+| `feedback_text` | TEXT | Yes | The customer's own words — **this is what the sentiment agent reads**. Generated text, drawn from the frozen corpus in `data/generator/corpus/` (ADR-030) |
 | `response_channel` | ENUM (`email_survey`, `sms_survey`, `phone_followup`, `portal`) | No | |
 | `created_at` | TIMESTAMPTZ | No | |
 
@@ -247,9 +247,9 @@ Store the coupling strength as an explicit parameter (`incident_severity_sentime
 | Column | Type | Description |
 |---|---|---|
 | `feedback_id` | FK → service_feedback, PK | One label per feedback record |
-| `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text |
+| `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was *asked* to write (ADR-030) — intent, verified by sampling in `validate.py`, not guaranteed |
 | `label_confidence` | DECIMAL | Optional — if you want ambiguous cases to exist deliberately |
-| `is_sarcastic` | BOOLEAN | **Added on review** — flags deliberately hard cases so failure analysis can report accuracy on easy vs. hard subsets separately. "92% overall, 61% on sarcastic cases" is a far more credible finding than a single aggregate number |
+| `is_sarcastic` | BOOLEAN | **Added on review** — flags sarcastic comments only, one kind of deliberately hard case, so failure analysis can report accuracy on them separately. "92% overall, 61% on sarcastic cases" is a far more credible finding than a single aggregate number. Genuinely ambiguous hard cases are not flagged here; the full hard-case type is kept in the corpus (ADR-030) |
 
 **The sentiment agent's MCP tool must never have a code path that reads this table.** It exists solely for the QA agent and the eval harness. Enforce this with a database grant, not a code convention — see §7.
 

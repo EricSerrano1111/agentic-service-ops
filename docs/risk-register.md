@@ -26,6 +26,7 @@
 | R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Open |
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Low-Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Open |
+| R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Open |
 
 ---
 
@@ -91,6 +92,11 @@
 **Description:** Both protocols are new and moving fast — MCP had its largest spec revision to date in July 2026. An SDK update mid-project could introduce breaking changes.
 **Mitigation:** Pin SDK versions at project start; don't chase spec updates mid-build. The project targets the 2026-07-28 MCP spec and A2A v1.0 as documented in `architecture.md` §3 — treat that as fixed unless a specific reason forces an upgrade.
 **Review trigger:** Only if a dependency update is being considered — otherwise not time-based.
+
+### R-13 — Generated comments don't match their requested sentiment
+**Description:** `feedback_text` is LLM-generated to a requested label (ADR-030), and `sentiment_labels.true_sentiment` records that request, not a verified reading of the text. Comments that drift from their label would make the sentiment model's accuracy look worse than it is — the model gets marked wrong for reading the text correctly. Hard cases can fail the other way: sarcasm an LLM writes on request is often obvious, so "hard" comments may be easier than labeled and inflate hard-case accuracy.
+**Mitigation:** Sampled label validation in `validate.py` before the corpus is accepted, plus exact and near-duplicate rejection so no comment spans the training and holdout splits.
+**Review trigger:** Corpus generation in Sprint 1.
 
 ---
 

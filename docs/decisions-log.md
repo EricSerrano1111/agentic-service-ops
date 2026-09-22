@@ -41,6 +41,7 @@
 | 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
 | 028 | Role names required, never defaulted: a blank `DB_ROLE_*_USER` fails like a blank password | Accepted |
 | 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part |
+| 030 | `feedback_text` LLM-generated once and frozen as a committed corpus | Accepted |
 
 ---
 
@@ -330,3 +331,65 @@ Sprint 5 under a spend cap rather than ruling it out. The correct identifier
 for the Pro model is `gemini-3.1-pro-preview` (not `gemini-3.1-pro`); it is a
 preview model, with tighter limits and no stability guarantee. Update R-02 in
 the risk register from Open to Mitigating.
+
+### ADR-030 — `feedback_text` is LLM-generated once and frozen as a committed corpus
+*Date: 2026-09-22. Applies the frozen-snapshot principle of ADR-027 to generated
+data; uses the API and limits recorded in ADR-029. Supersedes nothing.*
+
+**Decision:** `feedback_text` is written by an AI model through Google's API,
+not assembled from templates. A dedicated corpus script,
+`data/generator/build_corpus.py`, calls the API once and writes every feedback
+comment to a committed file, `data/generator/corpus/feedback_text.jsonl`. Each
+comment carries the sentiment it was requested to have, whether it was
+requested as a hard case, and if so which kind (sarcastic or genuinely
+ambiguous). A provenance record alongside it,
+`data/generator/corpus/provenance.json`, captures the model ID, date, exact
+prompt, and generation settings. `generate.py` reads the frozen corpus and
+never calls an API; it assigns comments to `service_feedback` rows using the
+persisted random seed, so the same seed and corpus reproduce the same dataset.
+Regenerating the corpus is a deliberate, documented act, not something that
+happens on a normal run.
+
+**Context:** LLM output isn't deterministic, hosted models change or are
+retired, and free-tier limits change without notice (ADR-029), so calling the
+API on every generation run would make the dataset irreproducible and
+downstream accuracy numbers incomparable across runs. This is the same
+principle as the frozen migrations in ADR-027: an artifact that later results
+depend on is captured once as a literal snapshot, not re-derived from
+something that can drift.
+
+**Alternatives considered:** Templates (rejected — risk a sentiment model that
+learns template patterns rather than sentiment). Claude-written raw material
+assembled by the script (rejected — assembling fragments recreates the
+template problem at a finer grain; whole generated comments read more
+naturally). Calling the API on every `generate.py` run (rejected —
+irreproducible, for the reasons above).
+
+**Consequences:**
+- The requested sentiment is intent, not ground truth. `validate.py` must
+  check a sample of comments against their intended labels before the corpus
+  is accepted.
+- The corpus must hold at least as many unique comments in each (sentiment,
+  hard-case) cell as the locked distribution needs (`data-dictionary.md` §6:
+  ~3,600 positive, ~1,580 neutral, ~1,440 negative, ~580 mixed; ~1,080 hard),
+  so `generate.py` never reuses a comment. `validate.py` also rejects exact and
+  near duplicates: a comment that lands in both the sentiment model's training
+  split and the holdout (ADR-024) inflates accuracy, and LLM batches do repeat
+  phrasing. Generate 15-20% more than the target in each cell, so comments
+  rejected by label validation or duplicate checks are replaced from spares
+  rather than requiring another API run.
+- The corpus records each hard case's type (sarcastic or genuinely
+  ambiguous). `sentiment_labels.is_sarcastic` can only represent the sarcastic
+  kind, so genuinely ambiguous hard cases would be stored the same as easy
+  ones and become indistinguishable in failure analysis.
+- Requests should generate many comments per call so the prompt is paid once
+  per batch, not once per comment (see ADR-029 rate limits).
+- Generator scripts print progress and summaries only, never generated rows,
+  to keep tool output small.
+- Open for the generator session: which model (Gemma 4 vs Flash-Lite, per
+  ADR-029), batch size, prompt design, how label validation is done (sample
+  size and method), and whether comments are also requested per
+  `service_type` or incident presence, so a comment about a failed printer
+  doesn't land on a clean network install; and whether `sentiment_labels`
+  needs a `hard_case_type` column (a schema change and new migration) so the
+  distinction survives into the database.

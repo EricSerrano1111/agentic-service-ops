@@ -401,8 +401,10 @@ agentic-service-ops/
 ├── data/
 │   ├── generator/                  # synthetic data generation from known params
 │   │   ├── parameters.py           # the ground truth of this synthetic world
-│   │   ├── generate.py
-│   │   └── validate.py             # confirms signal is recoverable
+│   │   ├── build_corpus.py         # one-off: LLM writes feedback_text (ADR-030)
+│   │   ├── corpus/                 # committed: feedback_text.jsonl + provenance.json
+│   │   ├── generate.py             # reads the frozen corpus; never calls an API
+│   │   └── validate.py             # confirms signal is recoverable; samples corpus labels
 │   └── migrations/                 # Alembic — identical local ↔ Cloud SQL
 │
 ├── packages/                       # shared libraries
@@ -453,6 +455,7 @@ agentic-service-ops/
 **Notes on the layout:**
 
 - `agent_sentiment/models/` and `agent_forecast/models/` hold trained artifacts, not source — gitignored (`**/models/*.bin`, `**/models/*.pt`, `**/models/*.joblib` or equivalent). A transformer checkpoint can exceed 100MB; it has no business in git history. `training/train.py` in each is what produces the artifact — run deliberately, not something any agent triggers.
+- `data/generator/corpus/` is committed, unlike trained-model artifacts: it is the frozen `feedback_text` corpus and its provenance record, written once by `build_corpus.py`. `generate.py` reads it and never calls an API, so a normal generation run is reproducible from the seed alone (ADR-030).
 - `packages/llm/` exists specifically to keep the provider swap cheap and to centralize cost metering — both budget requirements from §9.
 - `evals/results/` being version-controlled and dated matters: the paper's results section should cite real dated runs, not numbers retyped from memory.
 - `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.
