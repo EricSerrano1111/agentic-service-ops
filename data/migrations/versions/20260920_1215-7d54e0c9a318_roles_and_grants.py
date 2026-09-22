@@ -5,9 +5,19 @@ Creates the five per-agent Postgres login roles and applies exactly the privileg
 ADR-023: the forecast agent is *unable* to read the feedback table at the database
 permission level, not merely disinclined by convention.
 
-The privilege sets themselves live in `db_models.access_matrix`, not in this file, so
-the granted privileges and the documented matrix cannot drift apart and can be
-asserted by a test.
+**Frozen.** The role and privilege sets below are a literal snapshot of
+`db_models.access_matrix` as it stood when this migration was written (2026-09-20),
+including `app_sentiment`'s table-level SELECT on `service_feedback`. This migration
+originally imported the live matrix, which meant its effect silently changed whenever
+the matrix did: a fresh database no longer reproduced history, and a table added by a
+later migration would have broken a fresh `upgrade head` here. It was frozen in place on
+2026-09-22 (ADR-027). That edit was safe only because this migration had been applied to
+nothing but the local development database, and freezing preserves its original effect
+exactly. Every later grant change is its own migration — the first is the sentiment
+column-level tightening that follows this one.
+
+After Sprint 5, once this has run against Cloud SQL, editing an applied migration is no
+longer acceptable under any circumstances: fix forward with a new migration.
 
 **Credentials.** Role names come from `DB_ROLE_*_USER` and passwords from
 `DB_ROLE_*_PASSWORD` (see `.env.example`). Nothing is hardcoded and no password is
@@ -45,19 +55,94 @@ import os
 from collections.abc import Sequence
 
 from alembic import op
-from db_models.access_matrix import (
-    ALL_GRANTS,
-    ALL_ROLES,
-    COLUMN_SELECT_GRANTS,
-    ROLE_ENV_VARS,
-    SELECT_GRANTS,
-)
 from psycopg import sql
 
 revision: str = "7d54e0c9a318"
 down_revision: str | None = "0f3c81a47b21"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+
+# --------------------------------------------------------------------------- #
+# Frozen snapshot of the §7 access matrix as of 2026-09-20 — do not edit.
+# --------------------------------------------------------------------------- #
+
+#: Canonical role key → the environment variable pair carrying its name and password.
+ROLE_ENV_VARS: dict[str, tuple[str, str]] = {
+    "app_reporting": ("DB_ROLE_REPORTING_USER", "DB_ROLE_REPORTING_PASSWORD"),
+    "app_sentiment": ("DB_ROLE_SENTIMENT_USER", "DB_ROLE_SENTIMENT_PASSWORD"),
+    "app_forecast": ("DB_ROLE_FORECAST_USER", "DB_ROLE_FORECAST_PASSWORD"),
+    "app_qa": ("DB_ROLE_QA_USER", "DB_ROLE_QA_PASSWORD"),
+    "app_generator": ("DB_ROLE_GENERATOR_USER", "DB_ROLE_GENERATOR_PASSWORD"),
+}
+
+ALL_ROLES: tuple[str, ...] = tuple(ROLE_ENV_VARS)
+
+#: Role → tables granted table-level SELECT.
+SELECT_GRANTS: dict[str, tuple[str, ...]] = {
+    "app_reporting": (
+        "accounts",
+        "archived_requests",
+        "incidents",
+        "locations",
+        "service_requests",
+        "technician_skills",
+        "technicians",
+    ),
+    "app_sentiment": ("service_feedback",),
+    "app_forecast": (
+        "accounts",
+        "archived_requests",
+        "locations",
+        "service_requests",
+    ),
+    "app_qa": (
+        "accounts",
+        "archived_requests",
+        "generation_parameters",
+        "incidents",
+        "locations",
+        "sentiment_labels",
+        "service_feedback",
+        "service_requests",
+        "technician_skills",
+        "technicians",
+    ),
+    "app_generator": (),
+}
+
+#: Role → table → columns granted column-level SELECT.
+COLUMN_SELECT_GRANTS: dict[str, dict[str, tuple[str, ...]]] = {
+    "app_reporting": {
+        "service_feedback": (
+            "feedback_id",
+            "request_id",
+            "incident_id",
+            "submitted_by_contact_id",
+            "submitted_at",
+            "rating",
+            "response_channel",
+            "created_at",
+        ),
+    },
+}
+
+#: Role → tables granted ALL PRIVILEGES.
+ALL_GRANTS: dict[str, tuple[str, ...]] = {
+    "app_generator": (
+        "accounts",
+        "archived_requests",
+        "contacts",
+        "generation_parameters",
+        "incidents",
+        "internal_users",
+        "locations",
+        "sentiment_labels",
+        "service_feedback",
+        "service_requests",
+        "technician_skills",
+        "technicians",
+    ),
+}
 
 
 class MissingRoleCredentials(RuntimeError):

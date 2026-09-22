@@ -387,19 +387,22 @@ Role names are `app_*` (the `role_*` labels used in earlier drafts of this table
 | `service_requests` | SELECT | — | SELECT | SELECT | ALL |
 | `archived_requests` | SELECT | — | SELECT | SELECT | ALL |
 | `incidents` | SELECT | **—** | — | SELECT | ALL |
-| `service_feedback` | SELECT (aggregate)¹ | SELECT | — | SELECT | ALL |
+| `service_feedback` | SELECT (aggregate)¹ | SELECT (columns)² | — | SELECT | ALL |
 | `sentiment_labels` | — | **—** | — | SELECT | ALL |
 | `generation_parameters` | — | — | — | SELECT | ALL |
 
 ¹ Postgres has no aggregate-only privilege. This is implemented as a **column-level** `GRANT SELECT` covering every column of `service_feedback` **except `feedback_text`**, so the reporting agent can count and average ratings but is structurally unable to read a customer's raw words. See ADR-025.
 
-**Implementation:** this matrix is executable, not prose — `packages/db_models/src/db_models/access_matrix.py` is the single structure that the roles migration applies and `tests/unit/test_access_matrix.py` asserts against, so the granted privileges and this table cannot drift apart. The migration additionally revokes the Postgres `PUBLIC` defaults (ADR-025), which this table does not cover.
+² A **column-level** `GRANT SELECT` on exactly `feedback_id`, `request_id`, `submitted_at` and `feedback_text`: the text to classify, an identifier to report against, and the timestamp `get_feedback_batch(date_range, …)` filters on. **`rating` is withheld** because it is the QA agent's independent cross-check on sentiment classification (R-04); a sentiment agent that can see the stars is no longer being checked independently. See ADR-027, which supersedes ADR-025's table-level grant here.
 
-Three things this matrix enforces that a code convention wouldn't:
+**Implementation:** this matrix is executable, not prose — `packages/db_models/src/db_models/access_matrix.py` is the authority for what is granted. `tests/unit/test_access_matrix.py` asserts it says what this table says, and `tests/integration/test_access_matrix_grants.py` asserts the migrated database grants exactly that, reads and writes both. Migrations carry frozen literal copies of the grants they applied rather than importing the module (ADR-027), so every grant change is a new migration. The roles migration additionally revokes the Postgres `PUBLIC` defaults (ADR-025), which this table does not cover.
+
+Four things this matrix enforces that a code convention wouldn't:
 
 1. **The sentiment agent cannot read `sentiment_labels`.** Circular self-verification becomes structurally impossible, not just discouraged.
 2. **The sentiment agent cannot read `incidents`.** Staff-written notes can never leak into the sentiment pipeline.
 3. **No agent reads `contacts`.** Customer PII never enters an LLM context window — a strong, concrete point for the security writeup, and exactly the kind of deliberate scoping decision worth calling out in an interview.
+4. **The sentiment agent cannot read `service_feedback.rating`.** The rating stays a genuinely independent signal for the QA agent to check sentiment against (R-04, ADR-027).
 
 Note that `role_qa` is deliberately broad: verification requires cross-checking sources the specialists can't see. That's the point — but it also makes the QA agent the highest-value target in the system, which is worth one paragraph in the threat model.
 
@@ -470,8 +473,10 @@ The schema in this document is now implemented in code:
 | Controlled vocabularies | `packages/db_models/src/db_models/enums.py` |
 | §7 access matrix, as data | `packages/db_models/src/db_models/access_matrix.py` |
 | Initial migration — tables, constraints, §9 indexes | `data/migrations/versions/*_initial_schema.py` |
-| Roles and grants migration | `data/migrations/versions/*_roles_and_grants.py` |
+| Roles and grants migration (frozen, ADR-027) | `data/migrations/versions/*_roles_and_grants.py` |
+| Sentiment column-level feedback grant (ADR-027) | `data/migrations/versions/*_sentiment_feedback_column_grant.py` |
 | Contract tests | `tests/unit/` |
+| Live grant tests (reads and writes, per role) | `tests/integration/` |
 
 **The models are the source of truth from here.** When this document and `db_models` disagree, the code is right and this file needs correcting — `alembic check` enforces that the migrations match the models, but nothing enforces that either matches this prose.
 

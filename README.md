@@ -60,8 +60,9 @@ The least-privilege claim is worth demonstrating rather than asserting. Connect 
 each role and check that the walls are where the access matrix says they are:
 
 ```sql
--- as app_sentiment: its entire world is one table
+-- as app_sentiment: its entire world is four columns of one table
 SELECT feedback_text FROM service_feedback LIMIT 1;   -- succeeds
+SELECT rating FROM service_feedback LIMIT 1;          -- ERROR: permission denied (R-04)
 SELECT * FROM incidents LIMIT 1;                      -- ERROR: permission denied
 SELECT * FROM sentiment_labels LIMIT 1;               -- ERROR: permission denied
 
@@ -73,14 +74,15 @@ SELECT feedback_text FROM service_feedback LIMIT 1;   -- ERROR: permission denie
 SELECT * FROM contacts LIMIT 1;                       -- ERROR: permission denied
 ```
 
-Those three failures are the point of the design: the sentiment agent cannot verify
-itself against its own ground truth, staff-written incident notes cannot reach the
-sentiment pipeline, and customer PII never enters an LLM context window. Each is
-enforced by a database grant rather than a code convention — see ADR-023 and ADR-025.
+Those failures are the point of the design: the sentiment agent cannot verify itself
+against its own ground truth, cannot see the rating QA checks it against, staff-written
+incident notes cannot reach the sentiment pipeline, and customer PII never enters an
+LLM context window. Each is enforced by a database grant rather than a code convention
+— see ADR-023, ADR-025 and ADR-027.
 
 `tests/integration/test_access_matrix_grants.py` automates this: it logs in as every
-role and probes every table, plus every column of `service_feedback`, with the
-expected outcome computed from `db_models.access_matrix`.
+role and probes every table for reads and for INSERT/UPDATE/DELETE, plus every column
+of `service_feedback`, with the expected outcome computed from `db_models.access_matrix`.
 
 ## Repository layout
 

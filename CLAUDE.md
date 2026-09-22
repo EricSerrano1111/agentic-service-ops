@@ -36,6 +36,8 @@ for the current sprint, update it directly rather than waiting to be asked.
   unfamiliar concepts help; skip the basics on Python, SQL, general ML.
 - Prefer Plan Mode for anything touching schema, security scoping, or
   more than one service — I want to review before you execute, not after.
+- Commit messages must not include a `Co-Authored-By` trailer or any
+  other AI attribution. Same for pull request descriptions.
 - Distinguish what's genuinely required at this scale from what's
   demonstrated deliberately for portfolio value, and say which is which.
 

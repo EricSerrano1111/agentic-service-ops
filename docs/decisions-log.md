@@ -37,6 +37,8 @@
 | 023 | Per-agent least-privilege DB roles + narrow MCP tools | Accepted |
 | 024 | Trained models behind sentiment and forecast tools; training is offline | Accepted |
 | 025 | Grant enforcement details: column-level feedback grant, PUBLIC revoked, cross-table invariant left to QA | Accepted |
+| 026 | SQLAlchemy models separate from Pydantic schemas | Accepted |
+| 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
 
 ---
 
@@ -210,5 +212,27 @@
 **Context:** The repo layout didn't originally specify where ORM table definitions should live. Putting them in `packages/schemas/` alongside the Pydantic contracts would conflate two things that change for different reasons — a tool's input/output shape versus a table's column structure.
 **Alternatives considered:** Defining models inline per-service, duplicated wherever needed (rejected — multiple MCP servers need to reference the same tables; duplication risks drift from the canonical structure in `data-dictionary.md`). Folding ORM models into `packages/schemas/` (rejected — see context).
 **Consequences:** Confirmed implemented — `packages/db_models/src/db_models/` now holds `base.py`, `enums.py`, `reference.py`, `operational.py`, `ground_truth.py`, and `access_matrix.py`, matching this decision.
- 
- 
+
+### ADR-027 — Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots
+*Date: 2026-09-22. Supersedes ADR-025 in part: the table-level `service_feedback` grant to `app_sentiment` that ADR-025 left in place. ADR-025's other decisions stand.*
+
+**Decision:** Two linked decisions.
+
+1. **`app_sentiment` gets a column-level `GRANT SELECT` on `service_feedback`** covering exactly `feedback_id`, `request_id`, `submitted_at` and `feedback_text`, replacing its table-level SELECT. `rating` is withheld. `submitted_at` stays because `get_feedback_batch(date_range, …)` filters on it.
+2. **Migrations are immutable snapshots of what they did.** A migration carries its roles, tables and columns as literal data. It never imports live application code such as `db_models.access_matrix`, and every future grant change gets its own new migration. The already-applied roles-and-grants migration (`7d54e0c9a318`) was frozen in place to comply. The sentiment change is migration `1ee8342c81a7`.
+
+**Context:** R-04's mitigation depends on `rating` being an *independent* cross-check on sentiment classification: a "positive" label on a 1-star review is a contradiction the QA agent can catch. If the sentiment agent can read the rating, a classifier (or an LLM step) can lean on the stars, and the check stops being independent without anything visibly breaking. ADR-025 closed the equivalent gap for reporting but left sentiment's table-level grant alone.
+
+Planning the change exposed the second problem. `7d54e0c9a318` imported the live matrix, so its effect silently changed whenever the matrix did. On a fresh database it would already have applied the new sentiment grant, so history was no longer reproducible. Its downgrade could not know the prior state. And the first migration to add a table would have broken a fresh `upgrade head`, because `7d54e0c9a318` would try to grant on a table that doesn't exist yet at that revision.
+
+**Alternatives considered:**
+
+- *Sentiment grant:* keep table-level SELECT and have the sentiment MCP tool simply not select `rating` (rejected — the same argument as ADR-025: the tool is Layer 1, and ADR-023's Layer 2 exists so the boundary holds when Layer 1 doesn't). A view exposing only the four columns (rejected — same as ADR-025: an object the data dictionary doesn't define, for no stronger guarantee than a column grant).
+- *Migrations:* keep importing the matrix and treat later grant migrations as convergent deltas (rejected — it leaves all three problems in place and makes each migration's meaning depend on the date it's read). Freeze `7d54e0c9a318` later, just before the first table-adding migration (rejected — a deferred fix that's cheap now and only gets riskier once more environments exist).
+
+**Consequences:**
+
+- The sentiment agent cannot read `rating` under any code path, so R-04's second signal is independent by construction. As a side effect it also loses `submitted_by_contact_id` (a PII foreign key) and `incident_id` (a pointer into staff-written data), consistent with §7 points 2–3.
+- Freezing `7d54e0c9a318` in place was an edit to an applied migration. It was acceptable once, and only because that migration had run against nothing but the local development database, and the frozen literals reproduce its original effect exactly (verified against the matrix as committed, and by upgrading a fresh database to that revision). **After Sprint 5, once migrations have run against Cloud SQL, editing an applied migration is never acceptable:** fix forward with a new one.
+- Because migrations no longer import the matrix, nothing *structurally* ties the two together. `tests/integration/test_access_matrix_grants.py` is what does: it compares the fully migrated database with the live matrix, reads and writes both, so a matrix edit with no matching migration (or the reverse) fails there. That makes the integration suite load-bearing, and it belongs in CI once a database is available there.
+- Order matters in any migration that narrows a table grant to columns: in Postgres, `REVOKE … ON TABLE` also revokes that privilege on every column, so the table-level REVOKE must come before the column GRANT.

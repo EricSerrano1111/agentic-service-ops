@@ -1,6 +1,6 @@
 """The access matrix says what `docs/data-dictionary.md` §7 says.
 
-§7 names three properties that a database grant enforces and a code convention would
+§7 names four properties that a database grant enforces and a code convention would
 not. Each has a test here, so a future edit to the matrix that quietly reopens one of
 them fails CI rather than shipping.
 
@@ -75,6 +75,19 @@ def test_reporting_cannot_read_raw_feedback_text() -> None:
     # And it is the *only* column withheld — reporting still aggregates ratings.
     all_columns = set(m.metadata.tables["service_feedback"].columns.keys())
     assert all_columns - granted == {"feedback_text"}
+
+
+def test_sentiment_cannot_read_rating() -> None:
+    """§7 point 4 / R-04 / ADR-027: rating stays an independent cross-check on sentiment.
+
+    The column set is pinned exactly, so widening it is a deliberate, reviewed change
+    rather than a drive-by addition.
+    """
+    assert "service_feedback" not in am.SELECT_GRANTS[am.ROLE_SENTIMENT]
+
+    granted = set(am.COLUMN_SELECT_GRANTS[am.ROLE_SENTIMENT]["service_feedback"])
+    assert granted == {"feedback_id", "request_id", "submitted_at", "feedback_text"}
+    assert "rating" not in granted
 
 
 def test_forecast_sees_neither_incidents_nor_sentiment() -> None:

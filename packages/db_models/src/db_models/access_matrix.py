@@ -2,16 +2,18 @@
 
 `docs/data-dictionary.md` §7 specifies per-agent database privileges. Transcribing it
 into a wall of GRANT statements would make the security boundary unreviewable and
-undiffable. It lives here instead as a single structure that the roles migration
-executes and the tests assert against, so the granted privileges and the documented
-matrix cannot drift apart.
+undiffable. It lives here instead as a single structure the tests assert against: the
+unit tests check it says what §7 says, and the integration tests check the migrated
+database grants exactly this. Migrations do *not* import it — each carries a frozen
+literal copy of the grants it applied (ADR-027), so a change here needs a new migration
+or the integration suite fails.
 
 The constants below are the canonical role keys — the names `.env` ships with and the
 documentation uses. The actual name each role is created under comes from
 `DB_ROLE_*_USER`, which is required rather than defaulted: see
 `_resolve_credentials()` in the roles migration.
 
-Three properties this matrix enforces structurally, which a code convention would not
+Four properties this matrix enforces structurally, which a code convention would not
 (§7):
 
 1. `app_sentiment` cannot read `sentiment_labels` — self-verification is impossible.
@@ -19,6 +21,8 @@ Three properties this matrix enforces structurally, which a code convention woul
    sentiment pipeline.
 3. No role but the generator touches `contacts` — customer PII never reaches an LLM
    context window.
+4. `app_sentiment` cannot read `service_feedback.rating` — the rating stays an
+   independent cross-check on sentiment for the QA agent (R-04, ADR-027).
 """
 
 from __future__ import annotations
@@ -81,7 +85,7 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
             # service_feedback is column-level only — see COLUMN_SELECT_GRANTS.
         }
     ),
-    ROLE_SENTIMENT: frozenset({"service_feedback"}),
+    ROLE_SENTIMENT: frozenset(),  # service_feedback is column-level only — see ADR-027.
     ROLE_FORECAST: frozenset(
         {
             "accounts",
@@ -131,6 +135,19 @@ _FEEDBACK_NON_TEXT_COLUMNS: Final[tuple[str, ...]] = (
     "created_at",
 )
 
+#: The sentiment agent's view of `service_feedback`: the text, an identifier to report
+#: against, and the timestamp its batch pulls filter on. `rating` is withheld because it
+#: is the QA agent's independent cross-check on sentiment (R-04) — a classifier that can
+#: see the stars is no longer being checked independently. Withholding the rest drops a
+#: PII foreign key (`submitted_by_contact_id`) and a pointer into staff-written data
+#: (`incident_id`) as a side effect.
+_SENTIMENT_FEEDBACK_COLUMNS: Final[tuple[str, ...]] = (
+    "feedback_id",
+    "request_id",
+    "submitted_at",
+    "feedback_text",
+)
+
 #: Role → table → the specific columns it may SELECT.
 #:
 #: §7 marks reporting's access to `service_feedback` as "SELECT (aggregate)".
@@ -141,6 +158,7 @@ _FEEDBACK_NON_TEXT_COLUMNS: Final[tuple[str, ...]] = (
 #: the actual boundary out of step.
 COLUMN_SELECT_GRANTS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     ROLE_REPORTING: {"service_feedback": _FEEDBACK_NON_TEXT_COLUMNS},
+    ROLE_SENTIMENT: {"service_feedback": _SENTIMENT_FEEDBACK_COLUMNS},
 }
 
 # --------------------------------------------------------------------------- #

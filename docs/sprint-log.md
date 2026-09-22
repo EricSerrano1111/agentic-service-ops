@@ -40,9 +40,11 @@
 - Alembic under `data/migrations/`, building its connection string from `POSTGRES_*` environment variables so the Sprint 5 Cloud SQL switch is a config change (ADR-007).
 - Two migrations: initial schema (tables, FKs, CHECK constraints, the §9 indexes) and the five least-privilege roles with the §7 grants.
 - `docker-compose.yml` with Postgres 16.
-- 33 contract tests covering the schema, the access matrix, and the roles migration's credential handling, running without a database.
+- 34 contract tests covering the schema, the access matrix, and the roles migration's credential handling, running without a database.
 - `alembic upgrade head` run against local Postgres (both migrations applied); `alembic check` reports "No new upgrade operations detected." The hand-written initial migration now matches the models, including column types and server defaults.
-- Grants integration test (`tests/integration/test_access_matrix_grants.py`, 120 cases): logs in as each of the five roles with its `.env` credentials and checks every table, plus every column of `service_feedback`, against `db_models.access_matrix`. Checked by drifting the matrix in memory both ways (an extra grant, a missing grant) and confirming the right cases fail. Skips when no database is reachable.
+- Grants integration test (`tests/integration/test_access_matrix_grants.py`, 301 cases): logs in as each of the five roles with its `.env` credentials and checks reads on every table, plus every column of `service_feedback`, and INSERT/UPDATE/DELETE on every table (the generator can write everywhere, no agent role anywhere), all against `db_models.access_matrix`. Write probes touch zero rows. Checked by drifting the matrix in memory both ways (an extra grant, a missing grant) and confirming exactly the right cases fail. Skips when no database is reachable.
+- `app_sentiment` tightened to a column-level grant on `service_feedback` (`feedback_id`, `request_id`, `submitted_at`, `feedback_text`), so `rating` stays an independent QA cross-check (R-04). Applied by a new migration, `1ee8342c81a7`.
+- Roles-and-grants migration frozen to a literal snapshot of its original matrix instead of importing the live one (ADR-027). Verified by upgrading a fresh database to that revision (sentiment still had its original table-level grant) and then to head, with `alembic check` and both test suites green.
 - Docs: ADR-025 added; three corrections to `data-dictionary.md` that writing the DDL exposed.
 
 **Carried over:**
@@ -60,6 +62,7 @@
 
 **Decisions made this sprint:**
 - ADR-025 — grant enforcement details: column-level `service_feedback` grant for reporting, `PUBLIC` defaults revoked, the cross-table `completed_at` invariant left to QA rather than a trigger.
+- ADR-027 — sentiment's `service_feedback` grant made column-level with `rating` withheld (supersedes ADR-025 in part); migrations are immutable snapshots that never import the live matrix, and each grant change gets its own migration.
 
 ---
 
