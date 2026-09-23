@@ -1,0 +1,291 @@
+"""Offline tests for data/generator/parameters.py: seeds, the sentiment solver, the
+ADR-036 cell rules, generation_parameters rows, and validate_parameters()."""
+
+import dataclasses
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+_GEN = Path(__file__).resolve().parents[2] / "data" / "generator"
+sys.path.insert(0, str(_GEN))
+import parameters as prm  # noqa: E402
+
+# --------------------------------------------------------------------------- validation
+
+
+def test_default_parameters_validate():
+    prm.validate_parameters()
+
+
+def _replace(domain: str, name: str, value, kind: str | None = None) -> prm.Parameters:
+    dom = getattr(prm.PARAMS, domain)
+    old = getattr(dom, name)
+    new_p = dataclasses.replace(old, value=prm.fz(value) if isinstance(value, dict) else value)
+    if kind:
+        new_p = dataclasses.replace(new_p, kind=kind)
+    return dataclasses.replace(prm.PARAMS, **{domain: dataclasses.replace(dom, **{name: new_p})})
+
+
+@pytest.mark.parametrize(
+    ("domain", "name", "value", "match"),
+    [
+        ("requests", "priority_mix", {"standard": 0.7, "urgent": 0.2, "critical": 0.08}, "sums to"),
+        ("incidents", "request_incident_rate", 0.2, "incidents"),
+        ("feedback", "response_rate_no_incident", 0.8, "feedback"),
+        ("volume", "expected_new_requests", 30_000, "requests"),
+        (
+            "anomalies",
+            "volume_drop",
+            {"account_rank": 1, "drop": 0.9, "start_week": 140, "n_weeks": 2},
+            "holdout",
+        ),
+        (
+            "anomalies",
+            "billing_surcharge",
+            {
+                "payment_method": "direct_bill",
+                "surcharge_rate": 0.1,
+                "start_week": 129,
+                "n_weeks": 3,
+            },
+            "holdout",
+        ),
+        (
+            "sentiment",
+            "hard_case_shares",
+            {("positive", "implicit"): 0.08, ("mixed", "sarcastic"): 0.07},
+            "forbidden",
+        ),
+        (
+            "requests",
+            "sla_window_minutes",
+            {
+                "standard": {"standard": 480, "urgent": 240, "critical": 120},
+                "priority": {"standard": 240, "urgent": 120, "critical": 60},
+                "enterprise": {"standard": 120, "urgent": 60, "critical": 45},
+            },
+            "SLA matrix",
+        ),
+        ("incidents", "severity_mix", {"low": 0.5, "medium": 0.35, "severe": 0.15}, "severity_mix"),
+        (
+            "sentiment",
+            "incident_sentiment_by_severity",
+            {
+                "low": {"positive": 0.3, "neutral": 0.1, "negative": 0.35, "mixed": 0.25},
+                "medium": {"positive": 0.15, "neutral": 0.0, "negative": 0.60, "mixed": 0.25},
+                "high": {"positive": 0.10, "neutral": 0.0, "negative": 0.70, "mixed": 0.20},
+            },
+            "neutral must be 0",
+        ),
+    ],
+)
+def test_validate_catches_bad_parameters(domain, name, value, match):
+    with pytest.raises(ValueError, match=match):
+        prm.validate_parameters(_replace(domain, name, value))
+
+
+def test_validate_catches_infeasible_sentiment():
+    # A huge incident share of feedback forces negative no-incident positives.
+    bad = _replace(
+        "sentiment",
+        "target_mix",
+        {"positive": 0.02, "neutral": 0.40, "negative": 0.50, "mixed": 0.08},
+    )
+    with pytest.raises(ValueError, match="infeasible"):
+        prm.validate_parameters(bad)
+
+
+def test_expected_totals_within_dictionary_ranges():
+    t = prm.expected_totals()
+    assert 18_000 <= t["new_requests"] <= 22_000
+    assert 15_000 <= t["requests"] <= 25_000
+    assert 0.35 <= t["feedback_per_completed"] <= 0.50
+    assert 0.08 <= t["incidents_per_completed"] <= 0.12
+    assert t["missed_sla_incidents"] < t["sla_misses"]
+
+
+def test_sla_mu_hits_targets():
+    from statistics import NormalDist
+
+    sigma = prm.PARAMS.requests.completion_ratio_sigma.value
+    for pr, mu in prm.completion_ratio_mu().items():
+        met = NormalDist(mu, sigma).cdf(0.0)  # P(log ratio <= 0)
+        assert met == pytest.approx(prm.PARAMS.requests.sla_met_target.value[pr], abs=1e-12)
+
+
+def test_largest_account_share():
+    shares = prm.account_volume_shares()
+    assert shares[0] == pytest.approx(0.12, abs=1e-6)
+    assert sum(shares) == pytest.approx(1.0)
+    assert shares == sorted(shares, reverse=True)
+
+
+# --------------------------------------------------------------------------- seeds
+
+
+def _seed_state_in_subprocess(stage: str, hashseed: str) -> list[int]:
+    code = (
+        "import sys, json; sys.path.insert(0, sys.argv[1]); import parameters as p; "
+        "print(json.dumps(p.derive_seed(sys.argv[2]).generate_state(4).tolist()))"
+    )
+    env = {**os.environ, "PYTHONHASHSEED": hashseed}
+    out = subprocess.run(
+        [sys.executable, "-c", code, str(_GEN), stage],
+        capture_output=True,
+        text=True,
+        check=True,
+        env=env,
+    )
+    return json.loads(out.stdout)
+
+
+def test_seed_stable_across_processes():
+    here = prm.derive_seed(prm.STAGE_VOLUME).generate_state(4).tolist()
+    assert _seed_state_in_subprocess(prm.STAGE_VOLUME, "1") == here
+    assert _seed_state_in_subprocess(prm.STAGE_VOLUME, "987") == here
+
+
+def test_new_stage_does_not_change_existing():
+    before = {s: prm.derive_seed(s).generate_state(4).tolist() for s in prm.STAGES}
+    prm.derive_seed("a_future_stage")
+    after = {s: prm.derive_seed(s).generate_state(4).tolist() for s in prm.STAGES}
+    assert before == after
+    # A stage's seed depends only on its own name and the master seed.
+    assert prm.derive_seed(prm.STAGE_FEEDBACK).entropy == [
+        prm.MASTER_SEED,
+        prm.stage_key(prm.STAGE_FEEDBACK),
+    ]
+
+
+def test_stage_seeds_differ():
+    states = {tuple(prm.derive_seed(s).generate_state(4)) for s in prm.STAGES}
+    assert len(states) == len(prm.STAGES) == 9
+    assert prm.stage_key("volume") != prm.stage_key("Volume")
+
+
+def test_stage_key_is_sha256_prefix():
+    import hashlib
+
+    assert prm.stage_key("reference") == int.from_bytes(
+        hashlib.sha256(b"reference").digest()[:8], "big"
+    )
+    with pytest.raises(ValueError):
+        prm.stage_key("")
+
+
+# --------------------------------------------------------------------------- solver
+
+
+def test_solver_reproduces_targets():
+    t = prm.expected_totals()
+    f = t["feedback_incident_share"]
+    inc = prm.incident_row_sentiment()
+    p0 = prm.no_incident_sentiment()
+    for se, target in prm.PARAMS.sentiment.target_mix.value.items():
+        assert f * inc[se] + (1 - f) * p0[se] == pytest.approx(target, abs=1e-12)
+        assert 0 <= p0[se] <= 1
+    assert sum(p0.values()) == pytest.approx(1.0)
+    assert inc["neutral"] == 0
+
+
+def test_solver_rejects_infeasible():
+    with pytest.raises(ValueError, match="infeasible"):
+        prm.solve_no_incident_distribution(
+            {"positive": 0.05, "neutral": 0.25, "negative": 0.6, "mixed": 0.1},
+            {"positive": 0.5, "neutral": 0.0, "negative": 0.3, "mixed": 0.2},
+            0.5,
+        )
+    with pytest.raises(ValueError):
+        prm.solve_no_incident_distribution({}, {}, 1.0)
+
+
+def test_max_severity_dist():
+    msd = prm.max_severity_dist()
+    assert sum(msd.values()) == pytest.approx(1.0)
+    # More incidents per request can only push the maximum up.
+    assert msd["high"] > prm.PARAMS.incidents.severity_mix.value["high"]
+
+
+# --------------------------------------------------------------------------- cell rules
+
+
+@pytest.mark.parametrize(
+    "cell",
+    [
+        ("neutral", "plain", "minor"),
+        ("neutral", "plain", "serious"),
+        ("neutral", "implicit", "none"),
+        ("neutral", "sarcastic", "none"),
+        ("mixed", "implicit", "none"),
+        ("mixed", "sarcastic", "minor"),
+        ("positive", "sarcastic", "none"),
+    ],
+)
+def test_forbidden_cells_excluded(cell):
+    assert not prm.is_allowed(*cell)
+    assert cell not in prm.ALLOWED_CELLS
+
+
+def test_allowed_cells():
+    assert prm.is_allowed("neutral", "plain", "none")
+    assert prm.is_allowed("mixed", "plain", "serious")
+    assert prm.is_allowed("negative", "sarcastic", "serious")
+    assert prm.is_allowed("positive", "implicit", "minor")
+    # 2 positive + 3 negative + 1 mixed styles x 3 contexts, plus neutral/plain/none.
+    assert len(prm.ALLOWED_CELLS) == (2 + 3 + 1) * 3 + 1
+
+
+def test_corpus_cells_all_allowed_and_sized():
+    cells = prm.expected_cell_counts()
+    s = prm.corpus_summary()
+    assert s["cells"] == len(cells) == 7 * 5 + 6 * 2 * 7
+    floor = prm.PARAMS.corpus.cell_floor.value
+    for c in cells:
+        assert prm.is_allowed(c["sentiment"], c["style"], c["context"])
+        base = max(floor, c["expected"]) * 1.2
+        mult = (
+            2 if (c["sentiment"], c["style"]) in {("neutral", "plain"), ("mixed", "plain")} else 1
+        )
+        assert c["required"] >= base * mult - 1e-9
+    assert s["expected_rows"] == pytest.approx(prm.expected_totals()["feedback"])
+
+
+# --------------------------------------------------------------------------- rows
+
+
+def test_generation_parameters_rows():
+    rows = prm.to_generation_parameters_rows()
+    groups = {"volume", "incidents", "sentiment", "billing", "anomalies"}
+    keys = [r[0] for r in rows]
+    assert len(keys) == len(set(keys))
+    for key, value, group, notes in rows:
+        assert len(key) <= 100, key
+        assert group in groups
+        assert notes.strip()
+        json.dumps(value)  # JSON-safe
+    assert rows[0] == ("seed.master_seed", prm.MASTER_SEED, "volume", rows[0][3])
+    n_params = sum(1 for _ in prm.iter_params())
+    assert len(rows) == n_params + 2 + 7
+
+
+def test_param_groups_match_schema_enum():
+    import db_models.enums as e
+
+    assert {g for g, _ in prm.GROUP_BY_DOMAIN.values()} <= set(e.values(e.ParamGroup))
+
+
+def test_every_parameter_has_a_note():
+    for domain, name, p in prm.iter_params():
+        assert p.note.strip(), f"{domain}.{name}"
+        assert p.kind in {"value", "dist", "dist_by"}
+
+
+def test_parameters_are_frozen():
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        prm.PARAMS.volume.weekly_noise_sd = prm.V(0.1, "x")  # type: ignore[misc]
+    with pytest.raises(TypeError):
+        prm.PARAMS.requests.priority_mix.value["standard"] = 0.5  # type: ignore[index]

@@ -8,7 +8,9 @@ dependencies = []
 [project.optional-dependencies]
 # Offline data tooling under data/generator/ — never installed into a runtime service.
 # google-genai is pinned exactly: corpus provenance (ADR-030) records the SDK version.
-generator = ["google-genai==2.25.0", "python-dotenv>=1.0"]
+# numpy is pinned exactly too: seeded generation is only bit-for-bit reproducible within
+# one numpy version (some distribution samplers may change between releases).
+generator = ["google-genai==2.25.0", "numpy==2.5.3", "python-dotenv>=1.0"]
 
 [build-system]
 requires = ["hatchling"]
