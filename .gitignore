@@ -52,3 +52,5 @@ Thumbs.db
 
 # Claude Code — personal, machine-specific memory, never shared
 CLAUDE.local.md
+# Corpus build working files: raw responses, stage files, request counts (ADR-036)
+data/generator/corpus/work/

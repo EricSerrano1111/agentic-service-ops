@@ -1,0 +1,66 @@
+{
+  "judge_agreement_by_group": {
+    "distractor": {
+      "agree": 9,
+      "judged": 13,
+      "specs": 15,
+      "accepted": 10,
+      "rejected": 5
+    },
+    "minimal_neutral": {
+      "agree": 8,
+      "judged": 9,
+      "specs": 10,
+      "accepted": 8,
+      "rejected": 2
+    },
+    "mixed_serious": {
+      "agree": 10,
+      "judged": 10,
+      "specs": 10,
+      "accepted": 10,
+      "rejected": 0
+    },
+    "positive_incident": {
+      "agree": 0,
+      "judged": 14,
+      "specs": 15,
+      "accepted": 6,
+      "rejected": 9
+    },
+    "sms": {
+      "agree": 7,
+      "judged": 8,
+      "specs": 10,
+      "accepted": 7,
+      "rejected": 3
+    }
+  },
+  "check_rejections_by_reason": {
+    "date": 2,
+    "length": 2,
+    "technician_opener": 1,
+    "near_duplicate": 1
+  },
+  "missing_from_response": 0,
+  "positive_incident_names_problem_HEURISTIC": {
+    "count": 7,
+    "of": 15,
+    "corpus_ids": [
+      "t-000011",
+      "t-000006",
+      "t-000008",
+      "t-000010",
+      "t-000013",
+      "t-000015",
+      "t-000004"
+    ],
+    "note": "keyword match on the incident phrasing; a heuristic, not a judgment"
+  },
+  "judge_disagreement_by_style": {
+    "plain": 13,
+    "implicit": 7
+  },
+  "review_rows": 30,
+  "stopped": null
+}

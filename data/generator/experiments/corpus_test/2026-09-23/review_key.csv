@@ -1,0 +1,31 @@
+review_id,model,spec_id,corpus_id,group,intended_sentiment,style,neutral_kind,incident_severity,incident_type,channel,focus,opening,judge_label,selected,names_problem_heuristic
+R01,gemini-3.5-flash-lite,9,t-000009,positive_incident,positive,implicit,,minor,equipment_damage,email_survey,the fix itself,problem first,mixed,accepted,n
+R02,gemini-3.5-flash-lite,50,t-000050,distractor,neutral,plain,administrative,,,email_survey,scheduling,time reference,neutral,accepted,
+R03,gemini-3.5-flash-lite,2,t-000002,positive_incident,positive,plain,,minor,technician_conduct,portal,cleanup,problem first,mixed,rejected:judge_disagreement,n
+R04,gemini-3.5-flash-lite,1,t-000001,positive_incident,positive,plain,,minor,equipment_damage,email_survey,communication beforehand,problem first,mixed,rejected:judge_disagreement,n
+R05,gemini-3.5-flash-lite,20,t-000020,mixed_serious,mixed,plain,,serious,billing_dispute,portal,the fix itself,time reference,mixed,accepted,y
+R06,gemini-3.5-flash-lite,5,t-000005,positive_incident,positive,plain,,serious,missed_sla,email_survey,how things run now,time reference,mixed,rejected:judge_disagreement,n
+R07,gemini-3.5-flash-lite,13,t-000013,positive_incident,positive,implicit,,serious,repeat_visit_required,email_survey,cleanup,time reference,mixed,accepted,y
+R08,gemini-3.5-flash-lite,14,t-000014,positive_incident,positive,implicit,,serious,equipment_damage,phone_followup,billing,problem first,mixed,accepted,n
+R09,gemini-3.5-flash-lite,16,t-000016,mixed_serious,mixed,plain,,serious,billing_dispute,email_survey,billing,sentence fragment,mixed,accepted,y
+R10,gemini-3.5-flash-lite,46,t-000046,distractor,positive,plain,,,,email_survey,professionalism,time reference,positive,accepted,
+R11,gemini-3.5-flash-lite,23,t-000023,mixed_serious,mixed,plain,,serious,technician_conduct,phone_followup,cleanup,sentence fragment,mixed,accepted,y
+R12,gemini-3.5-flash-lite,37,t-000037,sms,positive,implicit,,,,sms_survey,professionalism,problem first,positive,accepted,
+R13,gemini-3.5-flash-lite,35,t-000035,minimal_neutral,neutral,plain,minimal,,,portal,,,neutral,accepted,
+R14,gemini-3.5-flash-lite,19,t-000019,mixed_serious,mixed,plain,,serious,billing_dispute,portal,scheduling,sentence fragment,mixed,accepted,y
+R15,gemini-3.5-flash-lite,47,t-000047,distractor,positive,plain,,,,email_survey,cleanup,problem first,mixed,rejected:judge_disagreement,
+R16,gemini-3.5-flash-lite,26,t-000026,minimal_neutral,neutral,plain,minimal,,,email_survey,,,neutral,accepted,
+R17,gemini-3.5-flash-lite,15,t-000015,positive_incident,positive,implicit,,serious,wrong_dispatch_info,email_survey,billing,sentence fragment,mixed,accepted,y
+R18,gemini-3.5-flash-lite,34,t-000034,minimal_neutral,neutral,plain,minimal,,,portal,,,neutral,accepted,
+R19,gemini-3.5-flash-lite,56,t-000056,distractor,negative,implicit,,serious,wrong_dispatch_info,email_survey,scheduling,sentence fragment,negative,accepted,y
+R20,gemini-3.5-flash-lite,25,t-000025,mixed_serious,mixed,plain,,serious,wrong_dispatch_info,portal,timeliness,sentence fragment,mixed,accepted,y
+R21,gemini-3.5-flash-lite,8,t-000008,positive_incident,positive,plain,,serious,billing_dispute,email_survey,billing,sentence fragment,mixed,rejected:judge_disagreement,y
+R22,gemini-3.5-flash-lite,11,t-000011,positive_incident,positive,implicit,,minor,billing_dispute,email_survey,professionalism,time reference,mixed,accepted,y
+R23,gemini-3.5-flash-lite,18,t-000018,mixed_serious,mixed,plain,,serious,repeat_visit_required,email_survey,how things run now,time reference,mixed,accepted,y
+R24,gemini-3.5-flash-lite,29,t-000029,minimal_neutral,neutral,plain,minimal,,,phone_followup,,,positive,rejected:judge_disagreement,
+R25,gemini-3.5-flash-lite,33,t-000033,minimal_neutral,neutral,plain,minimal,,,portal,,,neutral,accepted,
+R26,gemini-3.5-flash-lite,12,t-000012,positive_incident,positive,implicit,,serious,other,email_survey,billing,problem first,mixed,accepted,n
+R27,gemini-3.5-flash-lite,43,t-000043,sms,negative,sarcastic,,,,sms_survey,scheduling,sentence fragment,negative,accepted,
+R28,gemini-3.5-flash-lite,7,t-000007,positive_incident,positive,plain,,serious,wrong_dispatch_info,portal,how things run now,sentence fragment,mixed,rejected:judge_disagreement,n
+R29,gemini-3.5-flash-lite,41,t-000041,sms,negative,plain,,,,sms_survey,how things run now,time reference,negative,accepted,
+R30,gemini-3.5-flash-lite,31,t-000031,minimal_neutral,neutral,plain,minimal,,,email_survey,,,neutral,accepted,

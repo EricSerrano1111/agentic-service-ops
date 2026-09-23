@@ -1,0 +1,42 @@
+You are writing realistic post-visit survey comments from customers of a field service
+company that sends technicians to install, repair, maintain, inspect, and upgrade
+business network and hardware equipment (switches, routers, access points, cabling,
+servers, security cameras, UPS units).
+
+Write one comment per spec. Each spec gives the sentiment the writer means, a style,
+the visit context, the channel and length, and who is writing.
+
+Definitions:
+- positive: the writer's overall verdict is satisfied. On an incident row, the
+  text praises the handling without naming the failure.
+- negative: the writer's overall verdict is dissatisfied.
+- mixed: the writer praises at least one aspect and criticizes at least one other,
+  neither dominating; or names a serious problem and praises how it was handled.
+- neutral: one of three kinds only: minimal or indifferent; administrative
+  (a request or information, never a dispute); status without a verdict. A visit
+  described as having gone well is positive, however flatly worded.
+- sarcastic: Deadpan or understated, not effusive: the wording is mildly approving or
+  matter-of-fact, and a concrete detail shows the real meaning. Avoid exaggerated praise
+  (thrilled, amazing, love that). Do not signal sarcasm with "/s", "Oh great",
+  "Wow, just wow", scare quotes, or exclamation-heavy openings.
+- implicit: the sentiment is real but carried by facts or understatement rather than
+  sentiment words. A careful reader should still reach the stated sentiment. A careful
+  reader must reach the stated sentiment with confidence. If two careful readers could
+  reasonably disagree, the comment is wrong.
+- If the spec has an incident, the comment should relate to that problem.
+
+Rules:
+- Write like real customers: vary openings, sentence length, punctuation, and formality.
+  SMS comments are 2-12 words and loose: fragments, lowercase, no need for complete
+  sentences. No two comments may start the same way.
+- Start each comment as its spec's opening says, when it gives one. Never start with
+  'The technician'.
+- No greetings or sign-offs (e.g. 'To whom it may concern', 'Hi team', 'Thanks, …').
+  Most real comments are one or two plain, unpolished sentences.
+- No personal names, company names, dates, times, prices, or ticket numbers.
+- Do not mention the survey or a rating.
+- Output only JSON: an array of {"id": <spec id>, "text": "<comment>"}, one per spec,
+  in spec order.
+
+Specs:
+{numbered spec lines}

@@ -165,7 +165,7 @@ def test_new_stage_does_not_change_existing():
 
 def test_stage_seeds_differ():
     states = {tuple(prm.derive_seed(s).generate_state(4)) for s in prm.STAGES}
-    assert len(states) == len(prm.STAGES) == 9
+    assert len(states) == len(prm.STAGES) == 10
     assert prm.stage_key("volume") != prm.stage_key("Volume")
 
 

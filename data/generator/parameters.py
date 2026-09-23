@@ -78,6 +78,7 @@ STAGE_FEEDBACK = "feedback"
 STAGE_SENTIMENT = "sentiment"
 STAGE_CORPUS_ASSIGNMENT = "corpus_assignment"
 STAGE_ANOMALIES = "anomalies"
+STAGE_CORPUS_SPECS = "corpus_specs"
 STAGES: tuple[str, ...] = (
     STAGE_REFERENCE,
     STAGE_VOLUME,
@@ -88,6 +89,7 @@ STAGES: tuple[str, ...] = (
     STAGE_SENTIMENT,
     STAGE_CORPUS_ASSIGNMENT,
     STAGE_ANOMALIES,
+    STAGE_CORPUS_SPECS,
 )
 
 
@@ -631,6 +633,46 @@ class Corpus:
         },
         "How each incident type is described to the corpus generator (bake-off spec; "
         "'other' added by ADR-038).",
+    )
+    length_band_by_channel: P = V(
+        {
+            "email_survey": (15, 60),
+            "sms_survey": (2, 12),
+            "phone_followup": (10, 40),
+            "portal": (15, 60),
+        },
+        "Word-count band per channel for generated comments; SMS 2-12 in a loose style "
+        "(ADR-036 decision 6).",
+    )
+    minimal_neutral_band: P = V(
+        (1, 8), "Word-count band for minimal neutrals on any channel (ADR-036 decision 6)."
+    )
+    neutral_kind_mix: P = D(
+        {"minimal": 0.35, "administrative": 0.35, "status": 0.30},
+        "Kind of each neutral corpus comment (ADR-036 decision 3).",
+        chosen=True,
+    )
+    writers: P = V(
+        ("site contact", "office manager", "IT manager", "facilities lead"),
+        "Who writes the comment; drawn uniformly per spec (bake-off spec).",
+    )
+    focuses: P = V(
+        (
+            "timeliness",
+            "communication beforehand",
+            "the fix itself",
+            "professionalism",
+            "cleanup",
+            "scheduling",
+            "how things run now",
+            "billing",
+        ),
+        "Aspect a comment centres on; drawn uniformly per spec, none for minimal neutrals.",
+    )
+    openings: P = V(
+        ("problem first", "time reference", "sentence fragment", "question"),
+        "How a comment starts; drawn uniformly per spec, none for minimal neutrals; "
+        "'question' only for negative and administrative neutral (ADR-036 decision 6).",
     )
 
 

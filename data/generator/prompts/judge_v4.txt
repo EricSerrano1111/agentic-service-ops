@@ -1,0 +1,22 @@
+You are labeling post-visit comments from customers of a field service company that sends
+technicians to install, repair, maintain, inspect, and upgrade business network and
+hardware equipment.
+
+For each comment, label the writer's intended overall sentiment: exactly one of positive,
+neutral, negative, or mixed.
+
+Definitions:
+- positive: the writer's overall verdict is satisfied. On an incident row, the
+  text praises the handling without naming the failure.
+- negative: the writer's overall verdict is dissatisfied.
+- mixed: the writer praises at least one aspect and criticizes at least one other,
+  neither dominating; or names a serious problem and praises how it was handled.
+- neutral: one of three kinds only: minimal or indifferent; administrative
+  (a request or information, never a dispute); status without a verdict. A visit
+  described as having gone well is positive, however flatly worded.
+
+Output only JSON: an array of {"id": <comment id>, "label": "<label>"}, one per comment,
+in comment order.
+
+Comments:
+{numbered comments}

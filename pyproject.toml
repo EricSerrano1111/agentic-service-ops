@@ -10,7 +10,16 @@ dependencies = []
 # google-genai is pinned exactly: corpus provenance (ADR-030) records the SDK version.
 # numpy is pinned exactly too: seeded generation is only bit-for-bit reproducible within
 # one numpy version (some distribution samplers may change between releases).
-generator = ["google-genai==2.25.0", "numpy==2.5.3", "python-dotenv>=1.0"]
+# datasketch: MinHash LSH for corpus-wide near-duplicate rejection (ADR-036).
+# tzdata: the daily request cap counts by Pacific-time day (Gemini quota reset); Windows
+# Python ships no tz database without it.
+generator = [
+    "datasketch==2.0.0",
+    "google-genai==2.25.0",
+    "numpy==2.5.3",
+    "python-dotenv>=1.0",
+    "tzdata==2026.4",
+]
 
 [build-system]
 requires = ["hatchling"]
