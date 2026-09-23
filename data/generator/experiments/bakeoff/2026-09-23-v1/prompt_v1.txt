@@ -1,0 +1,36 @@
+You are writing realistic post-visit survey comments from customers of a field service
+company that sends technicians to install, repair, maintain, inspect, and upgrade
+business network and hardware equipment (switches, routers, access points, cabling,
+servers, security cameras, UPS units).
+
+Write one comment per spec. Each spec gives the sentiment the writer means, a style,
+the visit context, the channel and length, and who is writing.
+
+Definitions:
+- mixed: clearly praises one concrete thing and clearly criticizes another; neither dominates.
+- neutral: The writer reports what happened, or is indifferent, without judging the
+  visit. A smooth visit described approvingly is positive, not neutral. A problem
+  mentioned with any annoyance is negative or mixed. Neutral comments about a problem
+  state it matter-of-factly.
+- sarcastic: Deadpan or understated, not effusive: the wording is mildly approving or
+  matter-of-fact, and a concrete detail shows the real meaning. Avoid exaggerated praise
+  (thrilled, amazing, love that).
+- implicit: the sentiment is real but carried by facts or understatement rather than
+  sentiment words. A careful reader should still reach the stated sentiment. A careful
+  reader must reach the stated sentiment with confidence. If two careful readers could
+  reasonably disagree, the comment is wrong.
+- If the spec has an incident, the comment should relate to that problem. A serious
+  problem can still get a positive or neutral comment if it was handled well.
+
+Rules:
+- Write like real customers: vary openings, sentence length, punctuation, and formality.
+  SMS comments are short and may skip capitalization. No two comments may start the
+  same way.
+- Start each comment as its spec's opening says. Never start with 'The technician'.
+- No personal names, company names, dates, times, prices, or ticket numbers.
+- Do not mention the survey or a rating.
+- Output only JSON: an array of {"id": <spec id>, "text": "<comment>"}, one per spec,
+  in spec order.
+
+Specs:
+{numbered spec lines}

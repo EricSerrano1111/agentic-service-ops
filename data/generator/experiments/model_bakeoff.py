@@ -211,7 +211,7 @@ def batches(specs: list[dict], size: int = BATCH_SIZE) -> list[list[dict]]:
 _FENCE = re.compile(r"^\s*```(?:json)?\s*\n?(.*?)\n?\s*```\s*$", re.DOTALL | re.IGNORECASE)
 
 
-def parse_response(text: str | None, expected_ids: list[int]) -> dict:
+def parse_response(text: str | None, expected_ids: list[int], field: str = "text") -> dict:
     """Parse a batch response into {id: text} and report mismatches against the specs.
 
     Accepts bare JSON, fenced JSON, or JSON embedded in prose (first '[' to last ']').
@@ -247,15 +247,15 @@ def parse_response(text: str | None, expected_ids: list[int]) -> dict:
     comments: dict[int, str] = {}
     seen: Counter = Counter()
     for item in data:
-        if not isinstance(item, dict) or "text" not in item:
+        if not isinstance(item, dict) or field not in item:
             continue
         try:
             cid = int(item.get("id"))
         except (TypeError, ValueError):
             continue
         seen[cid] += 1
-        if cid not in comments and isinstance(item["text"], str):
-            comments[cid] = item["text"].strip()
+        if cid not in comments and isinstance(item[field], str):
+            comments[cid] = item[field].strip()
     expected = set(expected_ids)
     result.update(
         ok=True,
@@ -400,11 +400,13 @@ def make_client_and_config():
 # --------------------------------------------------------------------------- review sheet
 
 
-def select_review_ids(specs: list[dict], available: set[int], seed: int = SEED) -> list[int]:
+def select_review_ids(
+    specs: list[dict], available: set[int], seed: int = SEED, quotas: dict | None = None
+) -> list[int]:
     """Stratified spec ids for blind review; within each stratum alternate incident/none."""
     rng = random.Random(seed + 1)
     chosen = []
-    for (style, sentiment), n in REVIEW_QUOTAS.items():
+    for (style, sentiment), n in (quotas or REVIEW_QUOTAS).items():
         pool = [
             s
             for s in specs

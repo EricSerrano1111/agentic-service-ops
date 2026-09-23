@@ -1,0 +1,273 @@
+{
+  "judge_agreement": {
+    "overall": {
+      "agree": 54,
+      "n": 80,
+      "rate": 0.675
+    },
+    "by_sentiment": {
+      "positive": {
+        "agree": 16,
+        "n": 20,
+        "rate": 0.8
+      },
+      "neutral": {
+        "agree": 2,
+        "n": 20,
+        "rate": 0.1
+      },
+      "negative": {
+        "agree": 27,
+        "n": 29,
+        "rate": 0.931
+      },
+      "mixed": {
+        "agree": 9,
+        "n": 11,
+        "rate": 0.818
+      }
+    },
+    "by_style": {
+      "plain": {
+        "agree": 29,
+        "n": 40,
+        "rate": 0.725
+      },
+      "implicit": {
+        "agree": 13,
+        "n": 25,
+        "rate": 0.52
+      },
+      "sarcastic": {
+        "agree": 12,
+        "n": 15,
+        "rate": 0.8
+      }
+    },
+    "by_incident": {
+      "incident": {
+        "agree": 21,
+        "n": 32,
+        "rate": 0.656
+      },
+      "no_incident": {
+        "agree": 33,
+        "n": 48,
+        "rate": 0.688
+      }
+    },
+    "confusion_intended_by_judged": {
+      "positive": {
+        "positive": 16,
+        "neutral": 0,
+        "negative": 0,
+        "mixed": 4,
+        "invalid_or_missing": 0
+      },
+      "neutral": {
+        "positive": 10,
+        "neutral": 2,
+        "negative": 2,
+        "mixed": 6,
+        "invalid_or_missing": 0
+      },
+      "negative": {
+        "positive": 0,
+        "neutral": 0,
+        "negative": 27,
+        "mixed": 2,
+        "invalid_or_missing": 0
+      },
+      "mixed": {
+        "positive": 0,
+        "neutral": 0,
+        "negative": 2,
+        "mixed": 9,
+        "invalid_or_missing": 0
+      }
+    }
+  },
+  "openers": {
+    "n": 80,
+    "top_first_word": {
+      "word": "to",
+      "count": 10,
+      "share": 0.125
+    },
+    "top_3word_opener": {
+      "opener": "to whom it",
+      "count": 3,
+      "share": 0.037
+    },
+    "distinct_first_words": 43,
+    "starts_the_technician": 0
+  },
+  "distinct_1": 0.3613,
+  "distinct_2": 0.8139,
+  "near_duplicate_pairs": [],
+  "length_compliance": 0.963,
+  "mean_words": 20.2,
+  "rule_violations": {
+    "counts": {
+      "money": 0,
+      "time": 0,
+      "date": 0,
+      "name_like": 0
+    },
+    "spec_ids": {
+      "money": [],
+      "time": [],
+      "date": [],
+      "name_like": []
+    }
+  },
+  "v0_rule_checks": {
+    "banned_sarcasm_marker": 0,
+    "mentions_survey_or_rating": 0,
+    "price_or_clock_time": 0,
+    "exclamation_opening": 0
+  },
+  "generation_requests": {
+    "requests": 4,
+    "failed_requests": 0,
+    "parse_failures": 0,
+    "count_mismatch_batches": 0,
+    "retries_429": 0,
+    "retries_5xx": 0,
+    "input_tokens_total": 5570,
+    "output_tokens_total": 3478,
+    "mean_latency_s": 3.89,
+    "per_request": [
+      {
+        "batch": 1,
+        "latency_s": 4.09,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1391,
+        "output_tokens": 849,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 2,
+        "latency_s": 3.37,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1388,
+        "output_tokens": 819,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 3,
+        "latency_s": 4.4,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1382,
+        "output_tokens": 911,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 4,
+        "latency_s": 3.7,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1409,
+        "output_tokens": 899,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      }
+    ]
+  },
+  "judge_requests": {
+    "requests": 4,
+    "failed_requests": 0,
+    "parse_failures": 0,
+    "count_mismatch_batches": 0,
+    "retries_429": 0,
+    "retries_5xx": 4,
+    "input_tokens_total": 2974,
+    "output_tokens_total": 1203,
+    "mean_latency_s": 28.29,
+    "per_request": [
+      {
+        "batch": 1,
+        "latency_s": 37.95,
+        "retries": {},
+        "error": null,
+        "input_tokens": 724,
+        "output_tokens": 294,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 2,
+        "latency_s": 25.94,
+        "retries": {
+          "500": 1,
+          "503": 1
+        },
+        "error": null,
+        "input_tokens": 695,
+        "output_tokens": 303,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 3,
+        "latency_s": 28.31,
+        "retries": {},
+        "error": null,
+        "input_tokens": 786,
+        "output_tokens": 303,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 4,
+        "latency_s": 20.94,
+        "retries": {
+          "500": 2
+        },
+        "error": null,
+        "input_tokens": 769,
+        "output_tokens": 303,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      }
+    ]
+  }
+}

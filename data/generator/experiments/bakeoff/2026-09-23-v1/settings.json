@@ -1,0 +1,56 @@
+{
+  "run_date": "2026-09-23",
+  "sdk": "google-genai 2.25.0",
+  "python": "3.13.1",
+  "seed": 20260924,
+  "n_specs": 80,
+  "spec_mix": {
+    "plain/neutral": 10,
+    "implicit/neutral": 10,
+    "implicit/positive": 8,
+    "implicit/negative": 7,
+    "sarcastic/negative": 12,
+    "sarcastic/mixed": 3,
+    "plain/positive": 12,
+    "plain/negative": 10,
+    "plain/mixed": 8
+  },
+  "incident_rules": {
+    "neutral_minor": 8,
+    "serious_on_positive": 8,
+    "other_incidents": "16 non-neutral, half serious",
+    "neutral_excluded_types": [
+      "equipment_damage",
+      "technician_conduct"
+    ]
+  },
+  "generation": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "v1 (derived from v0 in bakeoff/2026-09-23/prompt.txt)",
+    "prompt_delivery": "single user turn, no system_instruction",
+    "batch_size": 20,
+    "temperature": 1.0,
+    "response_mime_type": "application/json",
+    "response_schema": null,
+    "thinking_level": "minimal"
+  },
+  "judge": {
+    "model": "gemma-4-31b-it",
+    "input": "comment text only, no spec fields",
+    "batch_size": 20,
+    "temperature": 0.0,
+    "response_mime_type": "application/json",
+    "response_schema": null,
+    "thinking_level": "minimal"
+  },
+  "retry_policy": {
+    "retry_on": [
+      429,
+      500,
+      503
+    ],
+    "max_retries": 5,
+    "backoff": "full jitter, uniform(0, min(60.0, 4.0*2^n)) s"
+  },
+  "requests": "sequential; all generation batches, then all judge batches"
+}
