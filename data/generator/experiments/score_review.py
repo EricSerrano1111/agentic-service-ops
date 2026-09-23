@@ -5,6 +5,8 @@ writes review_scored.json. Stops with a list of problems rather than guessing.
 
 A key with a judge_label column (prompt v1 runs onward) is scored three-way: human vs
 intended vs the Gemma judge, with the neutral, implicit, and positive-vs-mixed breakdowns.
+A key with a group column (prompt v2 runs onward) is scored per spec group instead: three-way
+agreement by group and neutral kind, the human pass criteria, and ratings by channel/opening.
 Older keys are scored per model exactly as before.
 
 Usage:
@@ -77,6 +79,8 @@ def load(run: Path) -> list[dict]:
                 focus=k["focus"],
                 opening=k["opening"],
             )
+        if "group" in k:  # v2+ keys; v0/v1 rows stay exactly as before
+            rows[-1].update(group=k["group"], neutral_kind=k["neutral_kind"] or None)
     if problems:
         sys.exit("Validation failed:\n  " + "\n  ".join(problems))
     return rows
@@ -334,9 +338,145 @@ def fmt_c(c: dict) -> str:
     return f"{c['count']}/{c['n']}"
 
 
+# --------------------------------------------------------------------------- v2+: grouped
+
+GROUPS = ["neutral", "positive_serious", "mixed_incident", "distractor"]
+NEUTRAL_KINDS = ["minimal", "administrative", "status"]
+HUMAN_PASS = {"neutral_min_share": 0.7, "sounds_ai_max_share": 0.25}
+ROW_FIELDS = ["review_id", "detail", "focus", "opening", "intended", "mine", "judge", "text"]
+
+
+def row_detail(r: dict) -> str:
+    return f"kind: {r['neutral_kind']}" if r["neutral_kind"] else f"incident: {incident_str(r)}"
+
+
+def rating_summary(rows: list[dict]) -> dict:
+    n = len(rows)
+    bel = Counter(r["believable"] for r in rows)
+    ai = sum(r["sounds_ai"] for r in rows)
+    return {
+        "n": n,
+        "believable_distribution": {str(k): bel.get(k, 0) for k in (1, 2, 3)},
+        "mean_believable_1to3": round(sum(r["believable"] for r in rows) / n, 2),
+        "sounds_ai_y": {"y": ai, "n": n, "rate": round(ai / n, 3)},
+    }
+
+
+def score_grouped(rows: list[dict]) -> dict:
+    """v2+ review (spec groups): three-way agreement per group, human pass criteria, lists."""
+    subsets = {"overall": rows}
+    for g in GROUPS:
+        subsets[g] = [r for r in rows if r["group"] == g]
+        if g == "neutral":
+            for k in NEUTRAL_KINDS:
+                subsets[f"neutral/{k}"] = [r for r in rows if r["neutral_kind"] == k]
+    agreement = {
+        name: {pair: pair_agree(rs, a, b) for pair, (a, b) in PAIRS.items()}
+        for name, rs in subsets.items()
+    }
+
+    neutral = subsets["neutral"]
+    n_agree = sum(r["mine"] == r["intended"] for r in neutral)
+    ai = sum(r["sounds_ai"] for r in rows)
+    human_pass = {
+        "human agrees with intended on neutral >= 70%": {
+            "value": f"{n_agree}/{len(neutral)}",
+            "pass": bool(neutral) and n_agree / len(neutral) >= HUMAN_PASS["neutral_min_share"],
+        },
+        "sounds_ai_yn = y <= 25% of rows": {
+            "value": f"{ai}/{len(rows)}",
+            "pass": ai / len(rows) <= HUMAN_PASS["sounds_ai_max_share"],
+        },
+    }
+
+    def listed(r):
+        return {**{f: r[f] for f in ROW_FIELDS if f != "detail"}, "detail": row_detail(r)}
+
+    focus_rows = [r for r in rows if r["intended"] in ("neutral", "mixed")]
+    other_disagree = [
+        r
+        for r in rows
+        if r["intended"] not in ("neutral", "mixed")
+        and len({r["intended"], r["mine"], r["judge"]}) > 1
+    ]
+
+    def by_id(rs):
+        return sorted(rs, key=lambda r: (r["intended"], r["review_id"]))
+
+    ratings = {
+        "all": rating_summary(rows),
+        "by_channel": {
+            c: rating_summary([r for r in rows if r["channel"] == c])
+            for c in sorted({r["channel"] for r in rows})
+        },
+        "by_opening": {
+            o: rating_summary([r for r in rows if r["opening"] == o])
+            for o in sorted({r["opening"] for r in rows})
+        },
+    }
+    return {
+        "three_way_agreement": agreement,
+        "human_pass_criteria": human_pass,
+        "neutral_and_mixed_rows": [listed(r) for r in by_id(focus_rows)],
+        "other_disagreement_rows": [listed(r) for r in by_id(other_disagree)],
+        "ratings": ratings,
+        "rows": rows,
+    }
+
+
+def print_grouped(res: dict) -> None:
+    ag = res["three_way_agreement"]
+    names = list(PAIRS)
+    print(f"== 2. Three-way agreement ({res['ratings']['all']['n']} reviewed)")
+    print(f"{'':26}" + "".join(f"{n:>20}" for n in names))
+    for sub, d in ag.items():
+        label = f"  {sub.split('/')[1]}" if "/" in sub else sub
+        print(f"{label:26}" + "".join(f"{fmt(d[n]):>20}" for n in names))
+
+    print("\n== 3. Human pass criteria")
+    for name, c in res["human_pass_criteria"].items():
+        print(f"  {'PASS' if c['pass'] else 'FAIL'}  {name:48} {c['value']}")
+
+    def show(rows):
+        for r in rows:
+            print(
+                f"- {r['review_id']} | {r['detail']} | focus: {r['focus']} | "
+                f"opening: {r['opening']} | intended {r['intended']} | human {r['mine']} | "
+                f"judge {r['judge']}"
+            )
+            print(f"    {r['text']}")
+
+    print(f"\n== 4a. Neutral and mixed rows ({len(res['neutral_and_mixed_rows'])})")
+    show(res["neutral_and_mixed_rows"])
+    print(f"\n== 4b. Other rows with any disagreement ({len(res['other_disagreement_rows'])})")
+    show(res["other_disagreement_rows"])
+
+    def rline(label, s):
+        d = s["believable_distribution"]
+        print(
+            f"  {label:26} n={s['n']:2}  believable 1/2/3 = {d['1']}/{d['2']}/{d['3']}  "
+            f"mean {s['mean_believable_1to3']:.2f}  sounds AI {s['sounds_ai_y']['y']}/{s['n']}"
+        )
+
+    rt = res["ratings"]
+    print("\n== 5. Ratings")
+    rline("all", rt["all"])
+    for key in ("by_channel", "by_opening"):
+        print(f"  {key.replace('_', ' ')}:")
+        for k, s in rt[key].items():
+            rline(f"  {k}", s)
+
+
 def main() -> None:
     run = Path(sys.argv[1])
     rows = load(run)
+    if "group" in rows[0]:
+        result = score_grouped(rows)
+        (run / "review_scored.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        print_grouped(result)
+        return
     if "judge" in rows[0]:
         result = score_three_way(run, rows)
         (run / "review_scored.json").write_text(

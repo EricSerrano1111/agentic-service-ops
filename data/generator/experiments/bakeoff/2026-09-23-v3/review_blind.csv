@@ -1,25 +1,25 @@
 review_id,text,my_sentiment,believable_1to3,sounds_ai_yn,notes
-R01,"Keycard access was delayed at the lobby, please send the technician's full legal name for our security badge log.",,,,
-R02,"Following an awkward misunderstanding regarding workspace access, management stepped in quickly, cleared the debris, and left the server room immaculate.",,,,
-R03,"Switches upgraded, though nobody told us the maintenance window changed until after the crew arrived.",,,,
-R04,"The rack installation is fully complete and operational. Although the tech hit traffic and showed up an hour late, they stayed focused, cleaned up completely, and got the switches online before the end of the day.",,,,
-R05,"Everything is functioning properly now after the initial visit needed a follow-up, and the adjusted billing reflects a very fair resolution.",,,,
-R06,"Access points checked, will see if the new firmware holds up over the weekend.",,,,
-R07,"Security camera inspection complete and all lenses cleaned, waiting on the formal report to be emailed over.",,,,
-R08,Cardboard boxes and zip tie scraps left all over the floor after finishing the new access point setup.,,,,
-R09,"Initial confusion over the drop locations sorted out quickly, and the technician was extremely polite and professional throughout.",,,,
-R10,"Although the specialist was delayed arriving yesterday, your office handled the invoice adjustment promptly and fairly, leaving us entirely satisfied.",,,,
-R11,Cabling replacement finished successfully today even though the crew showed up an hour past our scheduled window.,,,,
-R12,"Replacement UPS unit swapped out quickly after the initial hardware arrived with a dented housing, and everything is running smoothly now.",,,,
-R13,"Tech was forty minutes late getting here, but once the switch was configured they cleaned up every scrap of packaging.",,,,
-R14,"Router maintenance done, no issues noted.",,,,
-R15,Network upgrade completed without issues.,,,,
-R16,"Scratched a floor panel while replacing the UPS unit, but the packaging debris was cleared away completely from the utility closet.",,,,
-R17,Done quickly and right on time.,,,,
-R18,"A ceiling tile was cracked when the ladder slipped, but your supervisor handled the replacement reimbursement quickly and the new switch is running great.",,,,
-R19,"Technician arrived promptly at nine, please forward the service report to the main inbox.",,,,
-R20,"Yesterday's switch replacement went according to plan. The old hardware was cleared out of the rack, and we are monitoring the port activity to ensure stability.",,,,
-R21,On time today.,,,,
-R22,"Switches were updated properly during the routine maintenance check. The wiring cabinet looks organized overall, though a couple of unused patch cables were left lying on the floor.",,,,
-R23,Scheduling the upcoming quarterly inspection for next Tuesday morning would work best for our team.,,,,
-R24,"Everything is working now, though I wish dispatch had called me before sending someone out with incomplete details, which meant a return trip later in the week.",,,,
+R01,"Keycard access was delayed at the lobby, please send the technician's full legal name for our security badge log.",neutral,3,n,
+R02,"Following an awkward misunderstanding regarding workspace access, management stepped in quickly, cleared the debris, and left the server room immaculate.",mixed,2,n,
+R03,"Switches upgraded, though nobody told us the maintenance window changed until after the crew arrived.",mixed,3,n,
+R04,"The rack installation is fully complete and operational. Although the tech hit traffic and showed up an hour late, they stayed focused, cleaned up completely, and got the switches online before the end of the day.",mixed,2,n,mostly positive
+R05,"Everything is functioning properly now after the initial visit needed a follow-up, and the adjusted billing reflects a very fair resolution.",mixed,2,y,mostly positive
+R06,"Access points checked, will see if the new firmware holds up over the weekend.",neutral,1,y,
+R07,"Security camera inspection complete and all lenses cleaned, waiting on the formal report to be emailed over.",neutral,2,y,mostly positive
+R08,Cardboard boxes and zip tie scraps left all over the floor after finishing the new access point setup.,negative,2,n,
+R09,"Initial confusion over the drop locations sorted out quickly, and the technician was extremely polite and professional throughout.",positive,3,n,
+R10,"Although the specialist was delayed arriving yesterday, your office handled the invoice adjustment promptly and fairly, leaving us entirely satisfied.",mixed,3,n,mostly positive
+R11,Cabling replacement finished successfully today even though the crew showed up an hour past our scheduled window.,mixed,2,y,mostly positive
+R12,"Replacement UPS unit swapped out quickly after the initial hardware arrived with a dented housing, and everything is running smoothly now.",mixed,3,n,
+R13,"Tech was forty minutes late getting here, but once the switch was configured they cleaned up every scrap of packaging.",mixed,2,n,
+R14,"Router maintenance done, no issues noted.",positive,2,n,somewhat neutral
+R15,Network upgrade completed without issues.,positive,3,n,somewhat neutral
+R16,"Scratched a floor panel while replacing the UPS unit, but the packaging debris was cleared away completely from the utility closet.",mixed,2,n,mostly positive
+R17,Done quickly and right on time.,positive,1,y,
+R18,"A ceiling tile was cracked when the ladder slipped, but your supervisor handled the replacement reimbursement quickly and the new switch is running great.",positive,2,y,
+R19,"Technician arrived promptly at nine, please forward the service report to the main inbox.",neutral,1,y,
+R20,"Yesterday's switch replacement went according to plan. The old hardware was cleared out of the rack, and we are monitoring the port activity to ensure stability.",positive,3,n,
+R21,On time today.,neutral,2,y,somewhat sarcastic
+R22,"Switches were updated properly during the routine maintenance check. The wiring cabinet looks organized overall, though a couple of unused patch cables were left lying on the floor.",positive,2,n,somewhat mixed
+R23,Scheduling the upcoming quarterly inspection for next Tuesday morning would work best for our team.,neutral,1,y,
+R24,"Everything is working now, though I wish dispatch had called me before sending someone out with incomplete details, which meant a return trip later in the week.",mixed,2,y,

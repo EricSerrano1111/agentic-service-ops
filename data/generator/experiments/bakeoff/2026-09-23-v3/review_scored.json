@@ -1,0 +1,1002 @@
+{
+  "three_way_agreement": {
+    "overall": {
+      "human_vs_intended": {
+        "agree": 13,
+        "n": 24,
+        "rate": 0.542
+      },
+      "judge_vs_intended": {
+        "agree": 15,
+        "n": 24,
+        "rate": 0.625
+      },
+      "human_vs_judge": {
+        "agree": 16,
+        "n": 24,
+        "rate": 0.667
+      }
+    },
+    "neutral": {
+      "human_vs_intended": {
+        "agree": 6,
+        "n": 10,
+        "rate": 0.6
+      },
+      "judge_vs_intended": {
+        "agree": 4,
+        "n": 10,
+        "rate": 0.4
+      },
+      "human_vs_judge": {
+        "agree": 8,
+        "n": 10,
+        "rate": 0.8
+      }
+    },
+    "neutral/minimal": {
+      "human_vs_intended": {
+        "agree": 1,
+        "n": 4,
+        "rate": 0.25
+      },
+      "judge_vs_intended": {
+        "agree": 0,
+        "n": 4,
+        "rate": 0.0
+      },
+      "human_vs_judge": {
+        "agree": 3,
+        "n": 4,
+        "rate": 0.75
+      }
+    },
+    "neutral/administrative": {
+      "human_vs_intended": {
+        "agree": 3,
+        "n": 3,
+        "rate": 1.0
+      },
+      "judge_vs_intended": {
+        "agree": 3,
+        "n": 3,
+        "rate": 1.0
+      },
+      "human_vs_judge": {
+        "agree": 3,
+        "n": 3,
+        "rate": 1.0
+      }
+    },
+    "neutral/status": {
+      "human_vs_intended": {
+        "agree": 2,
+        "n": 3,
+        "rate": 0.667
+      },
+      "judge_vs_intended": {
+        "agree": 1,
+        "n": 3,
+        "rate": 0.333
+      },
+      "human_vs_judge": {
+        "agree": 2,
+        "n": 3,
+        "rate": 0.667
+      }
+    },
+    "positive_serious": {
+      "human_vs_intended": {
+        "agree": 1,
+        "n": 6,
+        "rate": 0.167
+      },
+      "judge_vs_intended": {
+        "agree": 6,
+        "n": 6,
+        "rate": 1.0
+      },
+      "human_vs_judge": {
+        "agree": 1,
+        "n": 6,
+        "rate": 0.167
+      }
+    },
+    "mixed_incident": {
+      "human_vs_intended": {
+        "agree": 4,
+        "n": 4,
+        "rate": 1.0
+      },
+      "judge_vs_intended": {
+        "agree": 3,
+        "n": 4,
+        "rate": 0.75
+      },
+      "human_vs_judge": {
+        "agree": 3,
+        "n": 4,
+        "rate": 0.75
+      }
+    },
+    "distractor": {
+      "human_vs_intended": {
+        "agree": 2,
+        "n": 4,
+        "rate": 0.5
+      },
+      "judge_vs_intended": {
+        "agree": 2,
+        "n": 4,
+        "rate": 0.5
+      },
+      "human_vs_judge": {
+        "agree": 4,
+        "n": 4,
+        "rate": 1.0
+      }
+    }
+  },
+  "human_pass_criteria": {
+    "human agrees with intended on neutral >= 70%": {
+      "value": "6/10",
+      "pass": false
+    },
+    "sounds_ai_yn = y <= 25% of rows": {
+      "value": "10/24",
+      "pass": false
+    }
+  },
+  "neutral_and_mixed_rows": [
+    {
+      "review_id": "R11",
+      "focus": "timeliness",
+      "opening": "outcome first",
+      "intended": "mixed",
+      "mine": "mixed",
+      "judge": "positive",
+      "text": "Cabling replacement finished successfully today even though the crew showed up an hour past our scheduled window.",
+      "detail": "incident: minor missed_sla"
+    },
+    {
+      "review_id": "R13",
+      "focus": "cleanup",
+      "opening": "problem first",
+      "intended": "mixed",
+      "mine": "mixed",
+      "judge": "mixed",
+      "text": "Tech was forty minutes late getting here, but once the switch was configured they cleaned up every scrap of packaging.",
+      "detail": "incident: minor missed_sla"
+    },
+    {
+      "review_id": "R16",
+      "focus": "cleanup",
+      "opening": "sentence fragment",
+      "intended": "mixed",
+      "mine": "mixed",
+      "judge": "mixed",
+      "text": "Scratched a floor panel while replacing the UPS unit, but the packaging debris was cleared away completely from the utility closet.",
+      "detail": "incident: minor equipment_damage"
+    },
+    {
+      "review_id": "R22",
+      "focus": "cleanup",
+      "opening": "outcome first",
+      "intended": "mixed",
+      "mine": "positive",
+      "judge": "positive",
+      "text": "Switches were updated properly during the routine maintenance check. The wiring cabinet looks organized overall, though a couple of unused patch cables were left lying on the floor.",
+      "detail": "incident: none"
+    },
+    {
+      "review_id": "R24",
+      "focus": "communication beforehand",
+      "opening": "outcome first",
+      "intended": "mixed",
+      "mine": "mixed",
+      "judge": "mixed",
+      "text": "Everything is working now, though I wish dispatch had called me before sending someone out with incomplete details, which meant a return trip later in the week.",
+      "detail": "incident: minor repeat_visit_required"
+    },
+    {
+      "review_id": "R01",
+      "focus": "professionalism",
+      "opening": "problem first",
+      "intended": "neutral",
+      "mine": "neutral",
+      "judge": "neutral",
+      "text": "Keycard access was delayed at the lobby, please send the technician's full legal name for our security badge log.",
+      "detail": "kind: administrative"
+    },
+    {
+      "review_id": "R06",
+      "focus": "the fix itself",
+      "opening": "outcome first",
+      "intended": "neutral",
+      "mine": "neutral",
+      "judge": "neutral",
+      "text": "Access points checked, will see if the new firmware holds up over the weekend.",
+      "detail": "kind: status"
+    },
+    {
+      "review_id": "R07",
+      "focus": "the fix itself",
+      "opening": "outcome first",
+      "intended": "neutral",
+      "mine": "neutral",
+      "judge": "positive",
+      "text": "Security camera inspection complete and all lenses cleaned, waiting on the formal report to be emailed over.",
+      "detail": "kind: status"
+    },
+    {
+      "review_id": "R14",
+      "focus": "communication beforehand",
+      "opening": "outcome first",
+      "intended": "neutral",
+      "mine": "positive",
+      "judge": "positive",
+      "text": "Router maintenance done, no issues noted.",
+      "detail": "kind: minimal"
+    },
+    {
+      "review_id": "R15",
+      "focus": "how things run now",
+      "opening": "sentence fragment",
+      "intended": "neutral",
+      "mine": "positive",
+      "judge": "positive",
+      "text": "Network upgrade completed without issues.",
+      "detail": "kind: minimal"
+    },
+    {
+      "review_id": "R17",
+      "focus": "timeliness",
+      "opening": "outcome first",
+      "intended": "neutral",
+      "mine": "positive",
+      "judge": "positive",
+      "text": "Done quickly and right on time.",
+      "detail": "kind: minimal"
+    },
+    {
+      "review_id": "R19",
+      "focus": "timeliness",
+      "opening": "sentence fragment",
+      "intended": "neutral",
+      "mine": "neutral",
+      "judge": "neutral",
+      "text": "Technician arrived promptly at nine, please forward the service report to the main inbox.",
+      "detail": "kind: administrative"
+    },
+    {
+      "review_id": "R20",
+      "focus": "cleanup",
+      "opening": "time reference",
+      "intended": "neutral",
+      "mine": "positive",
+      "judge": "positive",
+      "text": "Yesterday's switch replacement went according to plan. The old hardware was cleared out of the rack, and we are monitoring the port activity to ensure stability.",
+      "detail": "kind: status"
+    },
+    {
+      "review_id": "R21",
+      "focus": "timeliness",
+      "opening": "time reference",
+      "intended": "neutral",
+      "mine": "neutral",
+      "judge": "positive",
+      "text": "On time today.",
+      "detail": "kind: minimal"
+    },
+    {
+      "review_id": "R23",
+      "focus": "timeliness",
+      "opening": "problem first",
+      "intended": "neutral",
+      "mine": "neutral",
+      "judge": "neutral",
+      "text": "Scheduling the upcoming quarterly inspection for next Tuesday morning would work best for our team.",
+      "detail": "kind: administrative"
+    }
+  ],
+  "other_disagreement_rows": [
+    {
+      "review_id": "R03",
+      "focus": "communication beforehand",
+      "opening": "outcome first",
+      "intended": "negative",
+      "mine": "mixed",
+      "judge": "mixed",
+      "text": "Switches upgraded, though nobody told us the maintenance window changed until after the crew arrived.",
+      "detail": "incident: none"
+    },
+    {
+      "review_id": "R02",
+      "focus": "cleanup",
+      "opening": "time reference",
+      "intended": "positive",
+      "mine": "mixed",
+      "judge": "positive",
+      "text": "Following an awkward misunderstanding regarding workspace access, management stepped in quickly, cleared the debris, and left the server room immaculate.",
+      "detail": "incident: serious technician_conduct"
+    },
+    {
+      "review_id": "R04",
+      "focus": "timeliness",
+      "opening": "outcome first",
+      "intended": "positive",
+      "mine": "mixed",
+      "judge": "positive",
+      "text": "The rack installation is fully complete and operational. Although the tech hit traffic and showed up an hour late, they stayed focused, cleaned up completely, and got the switches online before the end of the day.",
+      "detail": "incident: serious missed_sla"
+    },
+    {
+      "review_id": "R05",
+      "focus": "billing",
+      "opening": "outcome first",
+      "intended": "positive",
+      "mine": "mixed",
+      "judge": "positive",
+      "text": "Everything is functioning properly now after the initial visit needed a follow-up, and the adjusted billing reflects a very fair resolution.",
+      "detail": "incident: serious repeat_visit_required"
+    },
+    {
+      "review_id": "R10",
+      "focus": "billing",
+      "opening": "time reference",
+      "intended": "positive",
+      "mine": "mixed",
+      "judge": "positive",
+      "text": "Although the specialist was delayed arriving yesterday, your office handled the invoice adjustment promptly and fairly, leaving us entirely satisfied.",
+      "detail": "incident: serious missed_sla"
+    },
+    {
+      "review_id": "R12",
+      "focus": "scheduling",
+      "opening": "sentence fragment",
+      "intended": "positive",
+      "mine": "mixed",
+      "judge": "positive",
+      "text": "Replacement UPS unit swapped out quickly after the initial hardware arrived with a dented housing, and everything is running smoothly now.",
+      "detail": "incident: serious equipment_damage"
+    }
+  ],
+  "ratings": {
+    "all": {
+      "n": 24,
+      "believable_distribution": {
+        "1": 4,
+        "2": 13,
+        "3": 7
+      },
+      "mean_believable_1to3": 2.12,
+      "sounds_ai_y": {
+        "y": 10,
+        "n": 24,
+        "rate": 0.417
+      }
+    },
+    "by_channel": {
+      "email_survey": {
+        "n": 5,
+        "believable_distribution": {
+          "1": 0,
+          "2": 4,
+          "3": 1
+        },
+        "mean_believable_1to3": 2.2,
+        "sounds_ai_y": {
+          "y": 2,
+          "n": 5,
+          "rate": 0.4
+        }
+      },
+      "phone_followup": {
+        "n": 7,
+        "believable_distribution": {
+          "1": 0,
+          "2": 5,
+          "3": 2
+        },
+        "mean_believable_1to3": 2.29,
+        "sounds_ai_y": {
+          "y": 2,
+          "n": 7,
+          "rate": 0.286
+        }
+      },
+      "portal": {
+        "n": 6,
+        "believable_distribution": {
+          "1": 0,
+          "2": 4,
+          "3": 2
+        },
+        "mean_believable_1to3": 2.33,
+        "sounds_ai_y": {
+          "y": 2,
+          "n": 6,
+          "rate": 0.333
+        }
+      },
+      "sms_survey": {
+        "n": 6,
+        "believable_distribution": {
+          "1": 4,
+          "2": 0,
+          "3": 2
+        },
+        "mean_believable_1to3": 1.67,
+        "sounds_ai_y": {
+          "y": 4,
+          "n": 6,
+          "rate": 0.667
+        }
+      }
+    },
+    "by_opening": {
+      "outcome first": {
+        "n": 10,
+        "believable_distribution": {
+          "1": 2,
+          "2": 7,
+          "3": 1
+        },
+        "mean_believable_1to3": 1.9,
+        "sounds_ai_y": {
+          "y": 6,
+          "n": 10,
+          "rate": 0.6
+        }
+      },
+      "problem first": {
+        "n": 5,
+        "believable_distribution": {
+          "1": 1,
+          "2": 2,
+          "3": 2
+        },
+        "mean_believable_1to3": 2.2,
+        "sounds_ai_y": {
+          "y": 2,
+          "n": 5,
+          "rate": 0.4
+        }
+      },
+      "sentence fragment": {
+        "n": 5,
+        "believable_distribution": {
+          "1": 1,
+          "2": 2,
+          "3": 2
+        },
+        "mean_believable_1to3": 2.2,
+        "sounds_ai_y": {
+          "y": 1,
+          "n": 5,
+          "rate": 0.2
+        }
+      },
+      "time reference": {
+        "n": 4,
+        "believable_distribution": {
+          "1": 0,
+          "2": 2,
+          "3": 2
+        },
+        "mean_believable_1to3": 2.5,
+        "sounds_ai_y": {
+          "y": 1,
+          "n": 4,
+          "rate": 0.25
+        }
+      }
+    }
+  },
+  "rows": [
+    {
+      "review_id": "R01",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 60,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "neutral",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Keycard access was delayed at the lobby, please send the technician's full legal name for our security badge log.",
+      "notes": "",
+      "judge": "neutral",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "sms_survey",
+      "focus": "professionalism",
+      "opening": "problem first",
+      "group": "neutral",
+      "neutral_kind": "administrative"
+    },
+    {
+      "review_id": "R02",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 20,
+      "style": "plain",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "Following an awkward misunderstanding regarding workspace access, management stepped in quickly, cleared the debris, and left the server room immaculate.",
+      "notes": "",
+      "judge": "positive",
+      "incident_severity": "serious",
+      "incident_type": "technician_conduct",
+      "channel": "phone_followup",
+      "focus": "cleanup",
+      "opening": "time reference",
+      "group": "positive_serious",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R03",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 22,
+      "style": "implicit",
+      "intended": "negative",
+      "incident": false,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Switches upgraded, though nobody told us the maintenance window changed until after the crew arrived.",
+      "notes": "",
+      "judge": "mixed",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "sms_survey",
+      "focus": "communication beforehand",
+      "opening": "outcome first",
+      "group": "distractor",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R04",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 44,
+      "style": "implicit",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "The rack installation is fully complete and operational. Although the tech hit traffic and showed up an hour late, they stayed focused, cleaned up completely, and got the switches online before the end of the day.",
+      "notes": "mostly positive",
+      "judge": "positive",
+      "incident_severity": "serious",
+      "incident_type": "missed_sla",
+      "channel": "email_survey",
+      "focus": "timeliness",
+      "opening": "outcome first",
+      "group": "positive_serious",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R05",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 12,
+      "style": "plain",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": true,
+      "text": "Everything is functioning properly now after the initial visit needed a follow-up, and the adjusted billing reflects a very fair resolution.",
+      "notes": "mostly positive",
+      "judge": "positive",
+      "incident_severity": "serious",
+      "incident_type": "repeat_visit_required",
+      "channel": "email_survey",
+      "focus": "billing",
+      "opening": "outcome first",
+      "group": "positive_serious",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R06",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 21,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "neutral",
+      "believable": 1,
+      "sounds_ai": true,
+      "text": "Access points checked, will see if the new firmware holds up over the weekend.",
+      "notes": "",
+      "judge": "neutral",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "sms_survey",
+      "focus": "the fix itself",
+      "opening": "outcome first",
+      "group": "neutral",
+      "neutral_kind": "status"
+    },
+    {
+      "review_id": "R07",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 28,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "neutral",
+      "believable": 2,
+      "sounds_ai": true,
+      "text": "Security camera inspection complete and all lenses cleaned, waiting on the formal report to be emailed over.",
+      "notes": "mostly positive",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "portal",
+      "focus": "the fix itself",
+      "opening": "outcome first",
+      "group": "neutral",
+      "neutral_kind": "status"
+    },
+    {
+      "review_id": "R08",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 34,
+      "style": "plain",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "Cardboard boxes and zip tie scraps left all over the floor after finishing the new access point setup.",
+      "notes": "",
+      "judge": "negative",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "portal",
+      "focus": "cleanup",
+      "opening": "sentence fragment",
+      "group": "distractor",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R09",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 40,
+      "style": "plain",
+      "intended": "positive",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Initial confusion over the drop locations sorted out quickly, and the technician was extremely polite and professional throughout.",
+      "notes": "",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "phone_followup",
+      "focus": "professionalism",
+      "opening": "problem first",
+      "group": "distractor",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R10",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 10,
+      "style": "plain",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Although the specialist was delayed arriving yesterday, your office handled the invoice adjustment promptly and fairly, leaving us entirely satisfied.",
+      "notes": "mostly positive",
+      "judge": "positive",
+      "incident_severity": "serious",
+      "incident_type": "missed_sla",
+      "channel": "phone_followup",
+      "focus": "billing",
+      "opening": "time reference",
+      "group": "positive_serious",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R11",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 24,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": true,
+      "text": "Cabling replacement finished successfully today even though the crew showed up an hour past our scheduled window.",
+      "notes": "mostly positive",
+      "judge": "positive",
+      "incident_severity": "minor",
+      "incident_type": "missed_sla",
+      "channel": "email_survey",
+      "focus": "timeliness",
+      "opening": "outcome first",
+      "group": "mixed_incident",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R12",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 23,
+      "style": "implicit",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Replacement UPS unit swapped out quickly after the initial hardware arrived with a dented housing, and everything is running smoothly now.",
+      "notes": "",
+      "judge": "positive",
+      "incident_severity": "serious",
+      "incident_type": "equipment_damage",
+      "channel": "email_survey",
+      "focus": "scheduling",
+      "opening": "sentence fragment",
+      "group": "positive_serious",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R13",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 29,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "Tech was forty minutes late getting here, but once the switch was configured they cleaned up every scrap of packaging.",
+      "notes": "",
+      "judge": "mixed",
+      "incident_severity": "minor",
+      "incident_type": "missed_sla",
+      "channel": "phone_followup",
+      "focus": "cleanup",
+      "opening": "problem first",
+      "group": "mixed_incident",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R14",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 27,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "Router maintenance done, no issues noted.",
+      "notes": "somewhat neutral",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "phone_followup",
+      "focus": "communication beforehand",
+      "opening": "outcome first",
+      "group": "neutral",
+      "neutral_kind": "minimal"
+    },
+    {
+      "review_id": "R15",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 47,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Network upgrade completed without issues.",
+      "notes": "somewhat neutral",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "portal",
+      "focus": "how things run now",
+      "opening": "sentence fragment",
+      "group": "neutral",
+      "neutral_kind": "minimal"
+    },
+    {
+      "review_id": "R16",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 15,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "Scratched a floor panel while replacing the UPS unit, but the packaging debris was cleared away completely from the utility closet.",
+      "notes": "mostly positive",
+      "judge": "mixed",
+      "incident_severity": "minor",
+      "incident_type": "equipment_damage",
+      "channel": "email_survey",
+      "focus": "cleanup",
+      "opening": "sentence fragment",
+      "group": "mixed_incident",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R17",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 7,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 1,
+      "sounds_ai": true,
+      "text": "Done quickly and right on time.",
+      "notes": "",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "sms_survey",
+      "focus": "timeliness",
+      "opening": "outcome first",
+      "group": "neutral",
+      "neutral_kind": "minimal"
+    },
+    {
+      "review_id": "R18",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 49,
+      "style": "plain",
+      "intended": "positive",
+      "incident": true,
+      "mine": "positive",
+      "believable": 2,
+      "sounds_ai": true,
+      "text": "A ceiling tile was cracked when the ladder slipped, but your supervisor handled the replacement reimbursement quickly and the new switch is running great.",
+      "notes": "",
+      "judge": "positive",
+      "incident_severity": "serious",
+      "incident_type": "equipment_damage",
+      "channel": "phone_followup",
+      "focus": "scheduling",
+      "opening": "problem first",
+      "group": "positive_serious",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R19",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 42,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "neutral",
+      "believable": 1,
+      "sounds_ai": true,
+      "text": "Technician arrived promptly at nine, please forward the service report to the main inbox.",
+      "notes": "",
+      "judge": "neutral",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "sms_survey",
+      "focus": "timeliness",
+      "opening": "sentence fragment",
+      "group": "neutral",
+      "neutral_kind": "administrative"
+    },
+    {
+      "review_id": "R20",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 8,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Yesterday's switch replacement went according to plan. The old hardware was cleared out of the rack, and we are monitoring the port activity to ensure stability.",
+      "notes": "",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "portal",
+      "focus": "cleanup",
+      "opening": "time reference",
+      "group": "neutral",
+      "neutral_kind": "status"
+    },
+    {
+      "review_id": "R21",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 36,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "neutral",
+      "believable": 2,
+      "sounds_ai": true,
+      "text": "On time today.",
+      "notes": "somewhat sarcastic",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "portal",
+      "focus": "timeliness",
+      "opening": "time reference",
+      "group": "neutral",
+      "neutral_kind": "minimal"
+    },
+    {
+      "review_id": "R22",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 3,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": false,
+      "mine": "positive",
+      "believable": 2,
+      "sounds_ai": false,
+      "text": "Switches were updated properly during the routine maintenance check. The wiring cabinet looks organized overall, though a couple of unused patch cables were left lying on the floor.",
+      "notes": "somewhat mixed",
+      "judge": "positive",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "portal",
+      "focus": "cleanup",
+      "opening": "outcome first",
+      "group": "distractor",
+      "neutral_kind": null
+    },
+    {
+      "review_id": "R23",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 11,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "neutral",
+      "believable": 1,
+      "sounds_ai": true,
+      "text": "Scheduling the upcoming quarterly inspection for next Tuesday morning would work best for our team.",
+      "notes": "",
+      "judge": "neutral",
+      "incident_severity": null,
+      "incident_type": null,
+      "channel": "sms_survey",
+      "focus": "timeliness",
+      "opening": "problem first",
+      "group": "neutral",
+      "neutral_kind": "administrative"
+    },
+    {
+      "review_id": "R24",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 41,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 2,
+      "sounds_ai": true,
+      "text": "Everything is working now, though I wish dispatch had called me before sending someone out with incomplete details, which meant a return trip later in the week.",
+      "notes": "",
+      "judge": "mixed",
+      "incident_severity": "minor",
+      "incident_type": "repeat_visit_required",
+      "channel": "phone_followup",
+      "focus": "communication beforehand",
+      "opening": "outcome first",
+      "group": "mixed_incident",
+      "neutral_kind": null
+    }
+  ]
+}
