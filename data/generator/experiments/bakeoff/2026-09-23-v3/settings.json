@@ -1,0 +1,130 @@
+{
+  "run_date": "2026-09-23",
+  "sdk": "google-genai 2.25.0",
+  "python": "3.13.1",
+  "seed": 20260926,
+  "n_specs": 60,
+  "spec_plan": [
+    {
+      "group": "neutral",
+      "sentiment": "neutral",
+      "style": "plain",
+      "severity": null,
+      "n": 20
+    },
+    {
+      "group": "positive_serious",
+      "sentiment": "positive",
+      "style": "plain",
+      "severity": "serious",
+      "n": 6
+    },
+    {
+      "group": "positive_serious",
+      "sentiment": "positive",
+      "style": "implicit",
+      "severity": "serious",
+      "n": 4
+    },
+    {
+      "group": "mixed_incident",
+      "sentiment": "mixed",
+      "style": "plain",
+      "severity": "minor",
+      "n": 8
+    },
+    {
+      "group": "distractor",
+      "sentiment": "positive",
+      "style": "plain",
+      "severity": null,
+      "n": 6
+    },
+    {
+      "group": "distractor",
+      "sentiment": "positive",
+      "style": "implicit",
+      "severity": null,
+      "n": 4
+    },
+    {
+      "group": "distractor",
+      "sentiment": "negative",
+      "style": "plain",
+      "severity": "half",
+      "n": 2
+    },
+    {
+      "group": "distractor",
+      "sentiment": "negative",
+      "style": "implicit",
+      "severity": "half",
+      "n": 2
+    },
+    {
+      "group": "distractor",
+      "sentiment": "negative",
+      "style": "sarcastic",
+      "severity": "half",
+      "n": 4
+    },
+    {
+      "group": "distractor",
+      "sentiment": "mixed",
+      "style": "plain",
+      "severity": null,
+      "n": 4
+    }
+  ],
+  "neutral_kinds": {
+    "minimal": 7,
+    "administrative": 7,
+    "status": 6
+  },
+  "minimal_neutral_band_words": [
+    1,
+    8
+  ],
+  "openings": [
+    "outcome first",
+    "problem first",
+    "time reference",
+    "sentence fragment",
+    "question"
+  ],
+  "question_opening_allowed_for": "negative specs and administrative neutral specs",
+  "spec_line_notes": {
+    "positive with incident": "Mention the problem briefly and without blame. Make the recovery and the writer's satisfaction the point. No lingering complaint.",
+    "administrative neutral": "An administrative note is a request or a piece of information, never a dispute or a correction. Do not use words like wrong, again, still, missing, or incorrect."
+  },
+  "generation": {
+    "model": "gemini-3.5-flash-lite",
+    "prompt_version": "v3 (derived from v2 in bakeoff/2026-09-23-v2/prompt_v2.txt)",
+    "prompt_delivery": "single user turn, no system_instruction",
+    "batch_size": 20,
+    "temperature": 1.0,
+    "response_mime_type": "application/json",
+    "response_schema": null,
+    "thinking_level": "minimal"
+  },
+  "judge": {
+    "model": "gemma-4-31b-it",
+    "prompt_version": "judge v3 (v2 judge prompt, mixed definition replaced)",
+    "input": "comment text only, no spec fields",
+    "batch_size": 20,
+    "temperature": 0.0,
+    "response_mime_type": "application/json",
+    "response_schema": null,
+    "thinking_level": "minimal"
+  },
+  "retry_policy": {
+    "retry_on": [
+      429,
+      500,
+      503
+    ],
+    "max_retries": 5,
+    "backoff": "full jitter, uniform(0, min(60.0, 4.0*2^n)) s"
+  },
+  "requests": "sequential; all generation batches, then all judge batches"
+}

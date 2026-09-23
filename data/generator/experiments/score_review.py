@@ -30,8 +30,11 @@ def load(run: Path) -> list[dict]:
         key = {r["review_id"].strip(): r for r in csv.DictReader(f)}
 
     problems = []
-    if len(blind) != 40 or len(key) != 40:
-        problems.append(f"expected 40 rows each; blind={len(blind)} key={len(key)}")
+    # The key defines the review size; the blind sheet must match it exactly.
+    if not key:
+        problems.append("review_key.csv has no rows")
+    if len(blind) != len(key):
+        problems.append(f"row counts differ; blind={len(blind)} key={len(key)}")
     for rid in sorted(blind.keys() ^ key.keys()):
         problems.append(f"{rid}: present in only one file")
 
@@ -270,7 +273,7 @@ def score_three_way(run: Path, rows: list[dict]) -> dict:
 def print_three_way(res: dict) -> None:
     ag = res["three_way_agreement"]
     names = list(PAIRS)
-    print("== 2. Three-way agreement (40 reviewed)")
+    print(f"== 2. Three-way agreement ({len(res['rows'])} reviewed)")
     print(f"{'':22}" + "".join(f"{n:>20}" for n in names))
 
     def line(label, get):
@@ -319,7 +322,7 @@ def print_three_way(res: dict) -> None:
 
     rt = res["ratings"]
     d = rt["believable_distribution"]
-    print("\n== 5. Ratings (all 40)")
+    print(f"\n== 5. Ratings (all {rt['n']})")
     print(
         f"  mean believable {rt['mean_believable_1to3']:.2f}  "
         f"(1s: {d['1']}, 2s: {d['2']}, 3s: {d['3']});  "
