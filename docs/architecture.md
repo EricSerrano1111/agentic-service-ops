@@ -99,7 +99,7 @@ Three layers, following current industry practice as of late 2026:
 
 **Agents:**
 
-- **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, assembles the final response. Handles ambiguous and out-of-scope intents gracefully.
+- **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, and returns the specialist's verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
 - **Reporting/Metrics Agent** — Incident and quality metrics reporting. Fully deterministic outputs.
 - **Sentiment Agent** — Sentiment classification on freeform customer feedback text.
 - **Forecast Agent** — Regression-based forward volume forecasting.
@@ -261,7 +261,7 @@ Build a labeled set of test intents with expected routing outcomes, deliberately
 
 - Clear single-agent intents
 - **Ambiguous intents** ("how are we doing on quality?")
-- **Multi-agent intents** requiring more than one specialist
+- **Multi-domain intents** spanning more than one specialist, expected to be detected and returned with a split instruction rather than routed (ADR-032)
 - **Out-of-scope intents** that should be declined rather than force-routed
 
 Report routing accuracy across N test intents with a documented failure-case analysis. *"Routing accuracy is X% across N intents, here are the failure modes and what I changed"* is the single most interview-ready sentence this project can produce.
@@ -490,7 +490,7 @@ Remaining:
 - [ ] Sentiment approach: fine-tuned transformer vs. LLM-with-confidence — decide by week 5
 - [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029)
 - [ ] Historical data window and granularity for the forecast (drives seasonality realism)
-- [x] Whether the UI supports conversational follow-up or single-shot intents (affects orchestrator state management)
+- [x] Whether the UI supports conversational follow-up or single-shot intents — single-shot committed; multi-turn only as a scope expansion decided at the Sprint 4 boundary (ADR-031)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
 - [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` (paid, spend-capped) (ADR-029)
 - [ ] Sprint ceremony cadence and whether the instructor expects to see sprint artifacts at specific checkpoints

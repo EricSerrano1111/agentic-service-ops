@@ -378,14 +378,14 @@ Role names are `app_*` (the `role_*` labels used in earlier drafts of this table
 
 | Table | `app_reporting` | `app_sentiment` | `app_forecast` | `app_qa` | `app_generator` |
 |---|---|---|---|---|---|
-| `accounts` | SELECT | — | SELECT | SELECT | ALL |
+| `accounts` | SELECT | — | — | SELECT | ALL |
 | `contacts` | — | — | — | — | ALL |
-| `locations` | SELECT | — | SELECT | SELECT | ALL |
+| `locations` | SELECT | — | — | SELECT | ALL |
 | `technicians` | SELECT | — | — | SELECT | ALL |
 | `technician_skills` | SELECT | — | — | SELECT | ALL |
 | `internal_users` | — | — | — | — | ALL |
-| `service_requests` | SELECT | — | SELECT | SELECT | ALL |
-| `archived_requests` | SELECT | — | SELECT | SELECT | ALL |
+| `service_requests` | SELECT | — | SELECT (columns)³ | SELECT | ALL |
+| `archived_requests` | SELECT | — | — | SELECT | ALL |
 | `incidents` | SELECT | **—** | — | SELECT | ALL |
 | `service_feedback` | SELECT (aggregate)¹ | SELECT (columns)² | — | SELECT | ALL |
 | `sentiment_labels` | — | **—** | — | SELECT | ALL |
@@ -395,14 +395,17 @@ Role names are `app_*` (the `role_*` labels used in earlier drafts of this table
 
 ² A **column-level** `GRANT SELECT` on exactly `feedback_id`, `request_id`, `submitted_at` and `feedback_text`: the text to classify, an identifier to report against, and the timestamp `get_feedback_batch(date_range, …)` filters on. **`rating` is withheld** because it is the QA agent's independent cross-check on sentiment classification (R-04); a sentiment agent that can see the stars is no longer being checked independently. See ADR-027, which supersedes ADR-025's table-level grant here.
 
+³ A **column-level** `GRANT SELECT` on exactly `request_id`, `scheduled_datetime` and `service_type`. That is all the univariate forecast needs (ADR-018): a weekly count by `scheduled_datetime`, optionally broken out by `service_type`, with an identifier to count against. Billing and payment fields, cancellation detail, and every account, contact and technician identifier are withheld, and the forecast role has no access to `accounts`, `locations` or `archived_requests`. A breakout beyond `service_type` needs a new grant, migration and ADR. See ADR-035.
+
 **Implementation:** this matrix is executable, not prose — `packages/db_models/src/db_models/access_matrix.py` is the authority for what is granted. `tests/unit/test_access_matrix.py` asserts it says what this table says, and `tests/integration/test_access_matrix_grants.py` asserts the migrated database grants exactly that, reads and writes both. Migrations carry frozen literal copies of the grants they applied rather than importing the module (ADR-027), so every grant change is a new migration. The roles migration additionally revokes the Postgres `PUBLIC` defaults (ADR-025), which this table does not cover.
 
-Four things this matrix enforces that a code convention wouldn't:
+Five things this matrix enforces that a code convention wouldn't:
 
 1. **The sentiment agent cannot read `sentiment_labels`.** Circular self-verification becomes structurally impossible, not just discouraged.
 2. **The sentiment agent cannot read `incidents`.** Staff-written notes can never leak into the sentiment pipeline.
 3. **No agent reads `contacts`.** Customer PII never enters an LLM context window — a strong, concrete point for the security writeup, and exactly the kind of deliberate scoping decision worth calling out in an interview.
 4. **The sentiment agent cannot read `service_feedback.rating`.** The rating stays a genuinely independent signal for the QA agent to check sentiment against (R-04, ADR-027).
+5. **The forecast agent cannot read billing or any customer or technician identifier.** It sees three columns of `service_requests` and nothing else (ADR-035).
 
 Note that `role_qa` is deliberately broad: verification requires cross-checking sources the specialists can't see. That's the point — but it also makes the QA agent the highest-value target in the system, which is worth one paragraph in the threat model.
 
@@ -475,6 +478,7 @@ The schema in this document is now implemented in code:
 | Initial migration — tables, constraints, §9 indexes | `data/migrations/versions/*_initial_schema.py` |
 | Roles and grants migration (frozen, ADR-027) | `data/migrations/versions/*_roles_and_grants.py` |
 | Sentiment column-level feedback grant (ADR-027) | `data/migrations/versions/*_sentiment_feedback_column_grant.py` |
+| Forecast column-level `service_requests` grant (ADR-035) | `data/migrations/versions/*_forecast_service_requests_column_grant.py` |
 | Contract tests | `tests/unit/` |
 | Live grant tests (reads and writes, per role) | `tests/integration/` |
 

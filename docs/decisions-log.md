@@ -405,8 +405,9 @@ irreproducible, for the reasons above).
 **Decision:** The system accepts one natural-language question and returns
 one verified answer per exchange. No conversation state, no follow-up
 handling, in the committed build. Multi-turn/conversational follow-up is
-considered only as a Sprint 6 stretch item, and only if the team is genuinely
-ahead of plan per the §13 working agreement — never a default assumption.
+considered only as a scope expansion, decided at the Sprint 4 boundary and
+only if genuinely ahead of plan per the §13 working agreement. It is never
+built in Sprint 6, which is protected buffer.
 
 **Context:** `architecture.md` §12 left this open: *"Whether the UI supports
 conversational follow-up or single-shot intents (affects orchestrator state
@@ -422,9 +423,9 @@ displacing solo dev time from the routing eval and QA loop, which are the
 higher-value places to spend it).
 
 **Consequences:** The orchestrator has no session/state layer to design,
-build, or test in the committed scope. Multi-turn/conversational follow-up is 
-considered only as a scope expansion, decided at the Sprint 4 boundary and only 
-if genuinely ahead of plan per the §13 working agreement. It is never built in Sprint 6, which is protected buffer.
+build, or test in the committed scope. Resolves the conversational-vs-single-shot
+open item in `architecture.md` §12. If multi-turn is pursued later, it is a
+scope expansion under the terms above, not a reopened architectural question.
 
 ### ADR-032 — Compound (multi-specialist) routing is out of scope; multi-domain questions are detected and split by the user
 *Date: 2026-09-22. Resolves an implied commitment in `architecture.md` §3 and §8 that no ADR had decided. Supersedes nothing.*
@@ -517,10 +518,28 @@ effect of the schema.
   training, and dispatch decisions; the attribution field exists for that
   purpose. Hiding it would push leaders back to analysts for the question,
   which is the gap the project exists to close.
-- *Allow it with no stated
+- *Allow it with no stated framing* (rejected). Leaves the ethical position
+  implicit, which the Ethical Considerations requirement doesn't permit.
+
+**Consequences:**
+
+- FR-06 lists individual technician as a reportable dimension. The Ethical
+  Considerations requirement states the decision-support framing.
+- Rates are shown with their completed-job count, because a technician with
+  few jobs can look far worse than peers after a single incident. A rate
+  without its sample size is misleading, and misleading figures about named
+  people are the most harmful kind this system can produce.
+- `attributed_technician_id` is nullable: not every incident is
+  attributable (e.g., dispatch errors). Technician-level incident counts
+  cover attributable incidents only, and answers say so.
+- Technician names are employee personal data. Acceptable here because all
+  data is synthetic; a real deployment would need a data-handling review
+  before technician names enter model context.
+- The Sprint 4 ethics section cites this ADR. The routing eval should
+  include technician-level questions so this path is tested.
 
 ### ADR-034 — 120-second end-to-end timeout ceiling; latency measured, not targeted
-*Date: 2026-09-23. Extends ADR-022. Supersedes nothing.*
+*Date: 2026-09-22. Extends ADR-022. Supersedes nothing.*
 
 **Decision:** No request runs longer than 120 seconds end to end. When the
 ceiling is reached, the system stops waiting and returns a degraded result
@@ -564,7 +583,7 @@ the system's own code, so it is met by construction.
 - Revisit only with evidence: if Sprint 5 deploy measurements show
   legitimate requests approaching the ceiling, raising it is a new ADR.
 
-  ### ADR-035 — Forecast agent narrowed to three columns of `service_requests`
+### ADR-035 — Forecast agent narrowed to three columns of `service_requests`
 *Date: 2026-09-22. Extends ADR-023. Supersedes the forecast column of the original `data-dictionary.md` §7 access matrix.*
 
 **Decision:** `app_forecast` gets a column-level `GRANT SELECT` on

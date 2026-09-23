@@ -13,7 +13,7 @@ documentation uses. The actual name each role is created under comes from
 `DB_ROLE_*_USER`, which is required rather than defaulted: see
 `_resolve_credentials()` in the roles migration.
 
-Four properties this matrix enforces structurally, which a code convention would not
+Five properties this matrix enforces structurally, which a code convention would not
 (§7):
 
 1. `app_sentiment` cannot read `sentiment_labels` — self-verification is impossible.
@@ -23,6 +23,8 @@ Four properties this matrix enforces structurally, which a code convention would
    context window.
 4. `app_sentiment` cannot read `service_feedback.rating` — the rating stays an
    independent cross-check on sentiment for the QA agent (R-04, ADR-027).
+5. `app_forecast` cannot read billing or any customer or technician identifier — it
+   sees three columns of `service_requests` and nothing else (ADR-035).
 """
 
 from __future__ import annotations
@@ -86,14 +88,7 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
         }
     ),
     ROLE_SENTIMENT: frozenset(),  # service_feedback is column-level only — see ADR-027.
-    ROLE_FORECAST: frozenset(
-        {
-            "accounts",
-            "locations",
-            "service_requests",
-            "archived_requests",
-        }
-    ),
+    ROLE_FORECAST: frozenset(),  # service_requests is column-level only — see ADR-035.
     # Deliberately broad: verification requires cross-checking sources the
     # specialists cannot see. That also makes the QA agent the highest-value target
     # in the system, which the threat model addresses explicitly.
@@ -148,6 +143,17 @@ _SENTIMENT_FEEDBACK_COLUMNS: Final[tuple[str, ...]] = (
     "feedback_text",
 )
 
+#: The forecast agent's view of `service_requests`: the date the univariate weekly
+#: series is counted by (ADR-018), the optional `service_type` breakout, and an
+#: identifier to count against. Everything else is withheld — billing and payment
+#: fields, cancellation detail, and every account, contact and technician identifier.
+#: A breakout beyond `service_type` is a new grant, migration and ADR (ADR-035).
+_FORECAST_REQUEST_COLUMNS: Final[tuple[str, ...]] = (
+    "request_id",
+    "scheduled_datetime",
+    "service_type",
+)
+
 #: Role → table → the specific columns it may SELECT.
 #:
 #: §7 marks reporting's access to `service_feedback` as "SELECT (aggregate)".
@@ -159,6 +165,7 @@ _SENTIMENT_FEEDBACK_COLUMNS: Final[tuple[str, ...]] = (
 COLUMN_SELECT_GRANTS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     ROLE_REPORTING: {"service_feedback": _FEEDBACK_NON_TEXT_COLUMNS},
     ROLE_SENTIMENT: {"service_feedback": _SENTIMENT_FEEDBACK_COLUMNS},
+    ROLE_FORECAST: {"service_requests": _FORECAST_REQUEST_COLUMNS},
 }
 
 # --------------------------------------------------------------------------- #

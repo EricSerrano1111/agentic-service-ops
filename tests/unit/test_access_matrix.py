@@ -1,6 +1,6 @@
 """The access matrix says what `docs/data-dictionary.md` §7 says.
 
-§7 names four properties that a database grant enforces and a code convention would
+§7 names five properties that a database grant enforces and a code convention would
 not. Each has a test here, so a future edit to the matrix that quietly reopens one of
 them fails CI rather than shipping.
 
@@ -98,6 +98,30 @@ def test_forecast_sees_neither_incidents_nor_sentiment() -> None:
     """
     readable = am.tables_readable_by(am.ROLE_FORECAST)
     assert not (readable & {"incidents", "service_feedback", "sentiment_labels"})
+
+
+def test_forecast_reads_only_service_requests() -> None:
+    """ADR-035: the forecast MCP server's entire world is one table."""
+    assert am.tables_readable_by(am.ROLE_FORECAST) == {"service_requests"}
+
+
+@pytest.mark.parametrize("table", ["accounts", "locations", "archived_requests"])
+def test_forecast_cannot_read_accounts_locations_or_archive(table: str) -> None:
+    """ADR-035: dropped from the original §7 forecast column — none is used by the series."""
+    assert table not in am.tables_readable_by(am.ROLE_FORECAST)
+
+
+def test_forecast_reads_exactly_three_request_columns() -> None:
+    """§7 point 5 / ADR-035: no billing, no customer or technician identifier.
+
+    The column set is pinned exactly, so widening it (a regional or per-account
+    breakout, say) is a deliberate, reviewed change rather than a drive-by addition.
+    """
+    assert "service_requests" not in am.SELECT_GRANTS[am.ROLE_FORECAST]
+
+    granted = set(am.COLUMN_SELECT_GRANTS[am.ROLE_FORECAST]["service_requests"])
+    assert granted == {"request_id", "scheduled_datetime", "service_type"}
+    assert granted <= set(m.metadata.tables["service_requests"].columns.keys())
 
 
 def test_qa_can_cross_check_every_specialist() -> None:
