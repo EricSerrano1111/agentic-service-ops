@@ -1,0 +1,276 @@
+{
+  "pass_criteria": {
+    "judge neutral >= 14/20": {
+      "value": "8/20",
+      "pass": false
+    },
+    "judge positive + serious incident >= 7/10": {
+      "value": "9/10",
+      "pass": true
+    },
+    "judge mixed + incident >= 6/8": {
+      "value": "2/8",
+      "pass": false
+    },
+    "top first word <= 15%": {
+      "value": "4/60",
+      "pass": true
+    },
+    "top 3-word opener <= 5%": {
+      "value": "2/60",
+      "pass": true
+    },
+    "zero 'The technician' starts": {
+      "value": "0",
+      "pass": true
+    },
+    "zero greetings or sign-offs": {
+      "value": "0",
+      "pass": true
+    }
+  },
+  "judge_agreement": {
+    "overall": {
+      "agree": 40,
+      "n": 60,
+      "rate": 0.667
+    },
+    "groups": {
+      "neutral": {
+        "all": {
+          "agree": 8,
+          "n": 20,
+          "rate": 0.4
+        },
+        "by_kind": {
+          "minimal": {
+            "agree": 1,
+            "n": 7,
+            "rate": 0.143
+          },
+          "administrative": {
+            "agree": 4,
+            "n": 7,
+            "rate": 0.571
+          },
+          "status": {
+            "agree": 3,
+            "n": 6,
+            "rate": 0.5
+          }
+        },
+        "judged_as": {
+          "positive": 8,
+          "neutral": 8,
+          "mixed": 2,
+          "negative": 2
+        }
+      },
+      "positive_serious": {
+        "all": {
+          "agree": 9,
+          "n": 10,
+          "rate": 0.9
+        },
+        "judged_as": {
+          "positive": 9,
+          "mixed": 1
+        }
+      },
+      "mixed_incident": {
+        "all": {
+          "agree": 2,
+          "n": 8,
+          "rate": 0.25
+        },
+        "judged_as": {
+          "negative": 5,
+          "mixed": 2,
+          "positive": 1
+        }
+      },
+      "distractor": {
+        "all": {
+          "agree": 21,
+          "n": 22,
+          "rate": 0.955
+        },
+        "by_sentiment": {
+          "positive": {
+            "agree": 10,
+            "n": 10,
+            "rate": 1.0
+          },
+          "negative": {
+            "agree": 8,
+            "n": 8,
+            "rate": 1.0
+          },
+          "mixed": {
+            "agree": 3,
+            "n": 4,
+            "rate": 0.75
+          }
+        }
+      }
+    }
+  },
+  "openers": {
+    "n": 60,
+    "top_first_word": {
+      "word": "why",
+      "count": 4,
+      "share": 0.067
+    },
+    "top_3word_opener": {
+      "opener": "by the time",
+      "count": 2,
+      "share": 0.033
+    },
+    "distinct_first_words": 48,
+    "starts_the_technician": 0,
+    "greeting_or_signoff": []
+  },
+  "distinct_1": 0.4137,
+  "distinct_2": 0.8486,
+  "near_duplicate_pairs": [],
+  "length_compliance": 1.0,
+  "mean_words": 20.2,
+  "rule_violations": {
+    "counts": {
+      "money": 0,
+      "time": 0,
+      "date": 0,
+      "name_like": 0
+    },
+    "spec_ids": {
+      "money": [],
+      "time": [],
+      "date": [],
+      "name_like": []
+    }
+  },
+  "v0_rule_checks": {
+    "banned_sarcasm_marker": 0,
+    "mentions_survey_or_rating": 0,
+    "price_or_clock_time": 0,
+    "exclamation_opening": 0
+  },
+  "generation_requests": {
+    "requests": 3,
+    "failed_requests": 0,
+    "parse_failures": 0,
+    "count_mismatch_batches": 0,
+    "retries_429": 0,
+    "retries_5xx": 0,
+    "input_tokens_total": 5046,
+    "output_tokens_total": 2700,
+    "mean_latency_s": 4.02,
+    "per_request": [
+      {
+        "batch": 1,
+        "latency_s": 4.26,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1674,
+        "output_tokens": 877,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 2,
+        "latency_s": 4.49,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1683,
+        "output_tokens": 987,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 3,
+        "latency_s": 3.32,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1689,
+        "output_tokens": 836,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      }
+    ]
+  },
+  "judge_requests": {
+    "requests": 3,
+    "failed_requests": 0,
+    "parse_failures": 0,
+    "count_mismatch_batches": 0,
+    "retries_429": 0,
+    "retries_5xx": 4,
+    "input_tokens_total": 2489,
+    "output_tokens_total": 900,
+    "mean_latency_s": 40.0,
+    "per_request": [
+      {
+        "batch": 1,
+        "latency_s": 50.74,
+        "retries": {
+          "503": 1,
+          "500": 1
+        },
+        "error": null,
+        "input_tokens": 834,
+        "output_tokens": 294,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 2,
+        "latency_s": 32.59,
+        "retries": {
+          "503": 1
+        },
+        "error": null,
+        "input_tokens": 863,
+        "output_tokens": 303,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      },
+      {
+        "batch": 3,
+        "latency_s": 36.68,
+        "retries": {
+          "500": 1
+        },
+        "error": null,
+        "input_tokens": 792,
+        "output_tokens": 303,
+        "thought_tokens": null,
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": []
+      }
+    ]
+  }
+}

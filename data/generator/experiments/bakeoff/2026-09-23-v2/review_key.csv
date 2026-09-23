@@ -1,0 +1,25 @@
+review_id,model,spec_id,group,intended_sentiment,style,neutral_kind,incident_severity,incident_type,channel,focus,opening,judge_label
+R01,gemini-3.5-flash-lite,16,positive_serious,positive,plain,,serious,technician_conduct,portal,cleanup,time reference,mixed
+R02,gemini-3.5-flash-lite,11,mixed_incident,mixed,plain,,minor,billing_dispute,email_survey,scheduling,time reference,negative
+R03,gemini-3.5-flash-lite,43,neutral,neutral,plain,minimal,,,sms_survey,communication beforehand,sentence fragment,positive
+R04,gemini-3.5-flash-lite,44,mixed_incident,mixed,plain,,minor,missed_sla,portal,cleanup,outcome first,mixed
+R05,gemini-3.5-flash-lite,51,distractor,positive,plain,,,,email_survey,timeliness,time reference,positive
+R06,gemini-3.5-flash-lite,45,neutral,neutral,plain,status,,,email_survey,timeliness,outcome first,neutral
+R07,gemini-3.5-flash-lite,36,positive_serious,positive,implicit,,serious,missed_sla,phone_followup,communication beforehand,sentence fragment,positive
+R08,gemini-3.5-flash-lite,59,neutral,neutral,plain,minimal,,,email_survey,scheduling,problem first,mixed
+R09,gemini-3.5-flash-lite,1,positive_serious,positive,plain,,serious,billing_dispute,phone_followup,timeliness,problem first,positive
+R10,gemini-3.5-flash-lite,49,neutral,neutral,plain,administrative,,,portal,billing,outcome first,neutral
+R11,gemini-3.5-flash-lite,54,mixed_incident,mixed,sarcastic,,minor,technician_conduct,portal,the fix itself,time reference,negative
+R12,gemini-3.5-flash-lite,23,positive_serious,positive,implicit,,serious,billing_dispute,portal,communication beforehand,time reference,positive
+R13,gemini-3.5-flash-lite,34,distractor,negative,sarcastic,,,,phone_followup,timeliness,outcome first,negative
+R14,gemini-3.5-flash-lite,3,neutral,neutral,plain,minimal,,,sms_survey,professionalism,problem first,neutral
+R15,gemini-3.5-flash-lite,39,distractor,mixed,plain,,,,portal,timeliness,time reference,mixed
+R16,gemini-3.5-flash-lite,56,neutral,neutral,plain,status,,,portal,professionalism,outcome first,positive
+R17,gemini-3.5-flash-lite,2,neutral,neutral,plain,status,,,phone_followup,timeliness,outcome first,positive
+R18,gemini-3.5-flash-lite,31,positive_serious,positive,plain,,serious,missed_sla,portal,scheduling,time reference,positive
+R19,gemini-3.5-flash-lite,24,positive_serious,positive,plain,,serious,equipment_damage,portal,timeliness,sentence fragment,positive
+R20,gemini-3.5-flash-lite,57,mixed_incident,mixed,plain,,serious,wrong_dispatch_info,portal,cleanup,question,negative
+R21,gemini-3.5-flash-lite,17,neutral,neutral,plain,minimal,,,sms_survey,cleanup,outcome first,positive
+R22,gemini-3.5-flash-lite,6,neutral,neutral,plain,administrative,,,email_survey,how things run now,problem first,mixed
+R23,gemini-3.5-flash-lite,29,neutral,neutral,plain,administrative,,,portal,professionalism,problem first,negative
+R24,gemini-3.5-flash-lite,38,distractor,negative,plain,,,,email_survey,cleanup,problem first,negative
