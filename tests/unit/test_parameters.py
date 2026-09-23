@@ -3,7 +3,9 @@ ADR-036 cell rules, generation_parameters rows, and validate_parameters()."""
 
 import dataclasses
 import json
+import math
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -66,9 +68,9 @@ def _replace(domain: str, name: str, value, kind: str | None = None) -> prm.Para
             {
                 "standard": {"standard": 480, "urgent": 240, "critical": 120},
                 "priority": {"standard": 240, "urgent": 120, "critical": 60},
-                "enterprise": {"standard": 120, "urgent": 60, "critical": 45},
+                "enterprise": {"standard": 120, "urgent": 60, "critical": 240},
             },
-            "SLA matrix",
+            "shrink",
         ),
         ("incidents", "severity_mix", {"low": 0.5, "medium": 0.35, "severe": 0.15}, "severity_mix"),
         (
@@ -244,13 +246,13 @@ def test_corpus_cells_all_allowed_and_sized():
     s = prm.corpus_summary()
     assert s["cells"] == len(cells) == 7 * 5 + 6 * 2 * 7
     floor = prm.PARAMS.corpus.cell_floor.value
+    doubles = {("neutral", "plain"), ("mixed", "plain")}
     for c in cells:
         assert prm.is_allowed(c["sentiment"], c["style"], c["context"])
-        base = max(floor, c["expected"]) * 1.2
-        mult = (
-            2 if (c["sentiment"], c["style"]) in {("neutral", "plain"), ("mixed", "plain")} else 1
-        )
-        assert c["required"] >= base * mult - 1e-9
+        mult = 2.0 if (c["sentiment"], c["style"]) in doubles else 1.2
+        q = prm.poisson_ppf(0.99, c["expected"])
+        assert c["required"] == max(floor, math.ceil(q * mult))
+        assert c["required"] >= c["expected"]
     assert s["expected_rows"] == pytest.approx(prm.expected_totals()["feedback"])
 
 
@@ -259,7 +261,7 @@ def test_corpus_cells_all_allowed_and_sized():
 
 def test_generation_parameters_rows():
     rows = prm.to_generation_parameters_rows()
-    groups = {"volume", "incidents", "sentiment", "billing", "anomalies"}
+    groups = {"volume", "incidents", "sentiment", "billing", "anomalies", "world", "feedback"}
     keys = [r[0] for r in rows]
     assert len(keys) == len(set(keys))
     for key, value, group, notes in rows:
@@ -267,15 +269,22 @@ def test_generation_parameters_rows():
         assert group in groups
         assert notes.strip()
         json.dumps(value)  # JSON-safe
-    assert rows[0] == ("seed.master_seed", prm.MASTER_SEED, "volume", rows[0][3])
+    assert rows[0] == ("seed.master_seed", prm.MASTER_SEED, "world", rows[0][3])
     n_params = sum(1 for _ in prm.iter_params())
-    assert len(rows) == n_params + 2 + 7
+    assert len(rows) == n_params + 2 + 10
+    by_key = {r[0]: r for r in rows}
+    assert by_key["regions.states"][2] == "world"
+    assert by_key["corpus.cell_floor"][2] == "feedback"
+    assert by_key["feedback.channel_mix"][2] == "feedback"
 
 
 def test_param_groups_match_schema_enum():
     import db_models.enums as e
 
-    assert {g for g, _ in prm.GROUP_BY_DOMAIN.values()} <= set(e.values(e.ParamGroup))
+    assert set(prm.GROUP_BY_DOMAIN.values()) <= set(e.values(e.ParamGroup))
+    assert {"world", "feedback"} <= set(prm.GROUP_BY_DOMAIN.values())
+    # Every parameter domain has a group.
+    assert {d for d, _, _ in prm.iter_params()} <= set(prm.GROUP_BY_DOMAIN)
 
 
 def test_every_parameter_has_a_note():
@@ -289,3 +298,113 @@ def test_parameters_are_frozen():
         prm.PARAMS.volume.weekly_noise_sd = prm.V(0.1, "x")  # type: ignore[misc]
     with pytest.raises(TypeError):
         prm.PARAMS.requests.priority_mix.value["standard"] = 0.5  # type: ignore[index]
+
+
+# --------------------------------------------------------------------------- ADR-038
+
+
+def _sla_matrix_from_dictionary() -> dict[str, dict[str, int]]:
+    path = Path(__file__).resolve().parents[2] / "docs" / "data-dictionary.md"
+    text = path.read_text(encoding="utf-8")
+    block = text.split("**SLA defaults by tier (minutes)", 1)[1].split("\n\n", 2)[1]
+    out = {}
+    for line in block.splitlines():
+        m = re.match(r"\|\s*`(\w+)`\s*\|(.*)\|\s*$", line)
+        if m:
+            nums = [int(re.match(r"\d+", c.strip()).group()) for c in m.group(2).split("|")]
+            out[m.group(1)] = dict(zip(prm.PRIORITIES, nums, strict=True))
+    return out
+
+
+def test_sla_matrix_matches_data_dictionary():
+    """parameters.py is the authority at generation time; the doc must agree (ADR-038)."""
+    encoded = {k: dict(v) for k, v in prm.PARAMS.requests.sla_window_minutes.value.items()}
+    assert _sla_matrix_from_dictionary() == encoded
+
+
+def test_validate_does_not_read_docs():
+    import inspect
+
+    assert "docs" not in inspect.getsource(prm.validate_parameters)
+    assert not hasattr(prm, "DICTIONARY")
+
+
+@pytest.mark.parametrize(("q", "lam", "k"), [(0.99, 1.0, 4), (0.99, 10.0, 18), (0.5, 0.0, 0)])
+def test_poisson_ppf_known_values(q, lam, k):
+    assert prm.poisson_ppf(q, lam) == k
+
+
+def test_poisson_ppf_large_lambda():
+    lam = 1500.0
+    k = prm.poisson_ppf(0.99, lam)
+    # Normal approximation: lam + 2.326 * sqrt(lam), within a couple of counts.
+    assert abs(k - (lam + 2.326 * math.sqrt(lam))) < 3
+
+
+def test_regions():
+    states = prm.PARAMS.regions.states.value
+    shares = prm.PARAMS.regions.share.value
+    assert set(states) == {"northeast", "southeast", "central", "west"}
+    assert dict(shares) == {"northeast": 0.30, "southeast": 0.25, "central": 0.25, "west": 0.20}
+    flat = [st for sts in states.values() for st in sts]
+    assert len(flat) == len(set(flat)) == 51  # 50 states + DC
+
+
+def test_anomaly_strength():
+    z = {k: v["z_window"] for k, v in prm.anomaly_strength().items()}
+    assert z["regional_drop"] >= 3
+    assert z["account_drop"] < 2  # invisible in totals by design; visible per account
+    assert z["billing_surcharge"] > 10
+    reg = prm.anomaly_strength()["regional_drop"]["weeks"]
+    assert [w["week_start"] for w in reg] == ["2025-02-17", "2025-02-24"]
+
+
+@pytest.mark.parametrize(
+    ("value", "match"),
+    [
+        (
+            {"region": "northeast", "drop": 0.30, "start": prm.date(2025, 2, 17), "n_weeks": 2},
+            "must be >= 3",
+        ),
+        (
+            {"region": "west", "drop": 0.85, "start": prm.date(2025, 2, 17), "n_weeks": 2},
+            "largest-share region",
+        ),
+        (
+            {"region": "northeast", "drop": 0.85, "start": prm.date(2025, 2, 18), "n_weeks": 2},
+            "not a Monday",
+        ),
+        (
+            {"region": "northeast", "drop": 0.85, "start": prm.date(2026, 4, 6), "n_weeks": 2},
+            "holdout",
+        ),
+        (
+            {"region": "northeast", "drop": 0.85, "start": prm.date(2024, 6, 17), "n_weeks": 2},
+            "overlap",
+        ),
+    ],
+)
+def test_validate_catches_bad_regional_anomaly(value, match):
+    with pytest.raises(ValueError, match=match):
+        prm.validate_parameters(_replace("anomalies", "regional_drop", value))
+
+
+def test_effective_noise_note_matches_derived_value():
+    eff = prm.effective_weekly_noise()
+    assert eff == pytest.approx(0.106, abs=0.0005)
+    assert f"~{eff * 100:.1f}%" in prm.PARAMS.volume.weekly_noise_sd.note
+
+
+def test_incident_status_by_age():
+    window = prm.PARAMS.incidents.incident_active_window_weeks.value
+    shares = [prm.incident_active_share(age) for age in range(window + 3)]
+    assert shares[0] == prm.PARAMS.incidents.incident_active_share_at_end.value
+    assert all(a > b for a, b in zip(shares[:window], shares[1:window], strict=False))
+    assert all(x == 0 for x in shares[window:])
+    assert 0 < prm.expected_active_incidents() < prm.expected_totals()["incidents"]
+
+
+def test_other_incident_type_has_a_phrasing():
+    phr = prm.PARAMS.corpus.incident_type_phrasing.value
+    assert phr["other"] == "a problem with the visit"
+    assert set(phr) == set(prm.INCIDENT_TYPES)

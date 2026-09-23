@@ -187,13 +187,15 @@ class Proficiency(StrEnum):
 
 
 class ParamGroup(StrEnum):
-    """`generation_parameters.param_group` — §4."""
+    """`generation_parameters.param_group` — §4. `world` and `feedback` added by ADR-038."""
 
     VOLUME = "volume"
     INCIDENTS = "incidents"
     SENTIMENT = "sentiment"
     BILLING = "billing"
     ANOMALIES = "anomalies"
+    WORLD = "world"
+    FEEDBACK = "feedback"
 
 
 class HardCaseType(StrEnum):

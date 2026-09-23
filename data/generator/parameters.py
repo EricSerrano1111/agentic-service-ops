@@ -19,7 +19,7 @@ Names and categories are generic field service (R-08).
 Run as a script to print the derived summary (totals, solved sentiment, corpus sizing,
 anomaly strength). It prints numbers only.
 
-Docs: data-dictionary.md §2-§6; ADR-018, -019, -021, -030, -036, -037.
+Docs: data-dictionary.md §2-§6; ADR-018, -019, -021, -030, -036, -037, -038.
 """
 
 from __future__ import annotations
@@ -27,19 +27,14 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields
 from datetime import date, timedelta
-from pathlib import Path
 from statistics import NormalDist
 from types import MappingProxyType
 from typing import Any
 
 import numpy as np
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DICTIONARY = REPO_ROOT / "docs" / "data-dictionary.md"
 
 
 def fz(d: Mapping) -> Mapping:
@@ -298,7 +293,12 @@ class Volume:
         "Scheduled hour, site-local business hours. Timezone handling is generate.py's call.",
         chosen=True,
     )
-    weekly_noise_sd: P = V(0.06, "SD of weekly multiplicative noise on expected volume.")
+    weekly_noise_sd: P = V(
+        0.06,
+        "SD of weekly multiplicative noise on expected volume. Effective week-to-week noise, "
+        "with Poisson counting noise at mean weekly volume, is ~10.6% "
+        "(derived_volume.effective_weekly_noise; ADR-038).",
+    )
     service_type_mix: P = D(
         {"repair": 0.35, "maintenance": 0.25, "install": 0.18, "inspection": 0.12, "upgrade": 0.10},
         "Base service type mix.",
@@ -519,9 +519,25 @@ class Incidents:
         "credits on one request is capped at its total_invoice.",
         chosen=True,
     )
-    incident_status_mix: P = D(
-        {"closed": 0.35, "resolved": 0.55, "investigating": 0.07, "open": 0.03},
-        "Incident status; generate.py should skew recent incidents toward open.",
+    incident_active_window_weeks: P = V(
+        8,
+        "Incidents reported this many or more weeks before the window end are resolved or "
+        "closed only, with resolved_at set (ADR-038).",
+    )
+    incident_active_share_at_end: P = V(
+        0.60,
+        "Share of incidents still open or investigating when reported in the final week; "
+        "falls linearly to 0 at the active-window edge.",
+        chosen=True,
+    )
+    incident_active_mix: P = D(
+        {"open": 0.40, "investigating": 0.60},
+        "Status among still-active incidents; resolved_at is null.",
+        chosen=True,
+    )
+    incident_terminal_mix: P = D(
+        {"resolved": 0.60, "closed": 0.40},
+        "Status among finished incidents; resolved_at is set.",
         chosen=True,
     )
 
@@ -587,17 +603,85 @@ class Sentiment:
 @dataclass(frozen=True)
 class Corpus:
     cell_floor: P = V(6, "Minimum comments per possible corpus cell (ADR-036 §5).")
-    spare_rate: P = V(0.20, "Spares on top of each cell's requirement (ADR-036 §5).")
+    poisson_quantile: P = V(
+        0.99,
+        "Cells are sized from this Poisson quantile of their expected count, not the mean, "
+        "so small cells don't run out (ADR-038).",
+    )
+    cell_multiplier: P = V(1.2, "Spare multiplier on each cell's Poisson quantile (ADR-038).")
     double_cells: P = V(
         (("neutral", "plain"), ("mixed", "plain")),
         "(sentiment, style) cells sized 2x: the judge filter rejects more of them.",
     )
-    double_multiplier: P = V(2.0, "Size multiplier for double_cells.")
+    double_multiplier: P = V(2.0, "Multiplier for double_cells, in place of cell_multiplier.")
     incident_context_by_severity: P = V(
         {"low": "minor", "medium": "serious", "high": "serious"},
         "Corpus incident level from the linked incident's severity (ADR-036 §5).",
     )
     batch_size: P = V(20, "Comments per Flash-Lite request (ADR-036 §8).")
+    incident_type_phrasing: P = V(
+        {
+            "missed_sla": "technician arrived late",
+            "wrong_dispatch_info": "technician was sent with wrong information or parts",
+            "repeat_visit_required": "needed a second visit",
+            "technician_conduct": "a problem with the technician's conduct",
+            "equipment_damage": "equipment was damaged",
+            "billing_dispute": "a billing problem",
+            "other": "a problem with the visit",
+        },
+        "How each incident type is described to the corpus generator (bake-off spec; "
+        "'other' added by ADR-038).",
+    )
+
+
+@dataclass(frozen=True)
+class Regions:
+    states: P = V(
+        {
+            "northeast": ("CT", "DC", "DE", "MA", "MD", "ME", "NH", "NJ", "NY", "PA", "RI", "VT"),
+            "southeast": ("AL", "FL", "GA", "KY", "MS", "NC", "SC", "TN", "VA", "WV"),
+            "central": (
+                "AR",
+                "IA",
+                "IL",
+                "IN",
+                "KS",
+                "LA",
+                "MI",
+                "MN",
+                "MO",
+                "ND",
+                "NE",
+                "OH",
+                "OK",
+                "SD",
+                "TX",
+                "WI",
+            ),
+            "west": (
+                "AK",
+                "AZ",
+                "CA",
+                "CO",
+                "HI",
+                "ID",
+                "MT",
+                "NM",
+                "NV",
+                "OR",
+                "UT",
+                "WA",
+                "WY",
+            ),
+        },
+        "Generic regions as state lists; a location's state places it in a region.",
+        chosen=True,
+    )
+    share: P = D(
+        {"northeast": 0.30, "southeast": 0.25, "central": 0.25, "west": 0.20},
+        "Target share of locations and of request volume by region; generate.py assigns "
+        "location states so these hold.",
+    )
 
 
 @dataclass(frozen=True)
@@ -607,6 +691,12 @@ class Anomalies:
         "Largest account's requests drop 90% for 2 weeks (a site closure); week index "
         "from window start, inside the training span.",
         chosen=True,
+    )
+    regional_drop: P = V(
+        {"region": "northeast", "drop": 0.85, "start": date(2025, 2, 17), "n_weeks": 2},
+        "Every site in the largest-share region drops 85% for 2 weeks from Monday "
+        "2025-02-17 (a regional outage); inside the training span, clear of the Q4 peak and "
+        "the December trough (ADR-038).",
     )
     billing_surcharge: P = V(
         {"payment_method": "direct_bill", "surcharge_rate": 0.10, "start_week": 95, "n_weeks": 3},
@@ -620,6 +710,7 @@ class Anomalies:
 class Parameters:
     window: Window = field(default_factory=Window)
     reference: Reference = field(default_factory=Reference)
+    regions: Regions = field(default_factory=Regions)
     volume: Volume = field(default_factory=Volume)
     requests: Requests = field(default_factory=Requests)
     billing: Billing = field(default_factory=Billing)
@@ -972,15 +1063,32 @@ def expected_cell_counts(params: Parameters = PARAMS) -> list[dict]:
                     )
 
     floor = params.corpus.cell_floor.value
-    spare = params.corpus.spare_rate.value
+    q = params.corpus.poisson_quantile.value
     doubles = set(params.corpus.double_cells.value)
     for c in cells:
+        double = (c["sentiment"], c["style"]) in doubles
         mult = (
-            params.corpus.double_multiplier.value if (c["sentiment"], c["style"]) in doubles else 1
+            params.corpus.double_multiplier.value if double else params.corpus.cell_multiplier.value
         )
-        c["floor_binds"] = c["expected"] < floor
-        c["required"] = math.ceil(max(floor, c["expected"]) * (1 + spare) * mult)
+        c["poisson_q"] = poisson_ppf(q, c["expected"])
+        sized = math.ceil(c["poisson_q"] * mult)
+        c["floor_binds"] = sized < floor
+        c["required"] = max(floor, sized)
     return cells
+
+
+def poisson_ppf(q: float, lam: float) -> int:
+    """Smallest k with P(Poisson(lam) <= k) >= q. Summed in log space (no scipy)."""
+    if not 0 < q < 1:
+        raise ValueError("q must be in (0, 1)")
+    if lam <= 0:
+        return 0
+    log_lam, cdf, k = math.log(lam), 0.0, 0
+    while True:
+        cdf += math.exp(k * log_lam - lam - math.lgamma(k + 1))
+        if cdf >= q:
+            return k
+        k += 1
 
 
 def corpus_summary(params: Parameters = PARAMS) -> dict:
@@ -997,57 +1105,145 @@ def corpus_summary(params: Parameters = PARAMS) -> dict:
     }
 
 
-def anomaly_volume_dip(params: Parameters = PARAMS) -> dict:
-    """How visible the volume anomaly is in weekly totals, against noise."""
-    a = params.anomalies.volume_drop.value
+def week_index(d: date, params: Parameters = PARAMS) -> int:
+    """Week number (0-based) of the week starting on Monday `d`."""
+    days = (d - params.window.start_monday.value).days
+    if days % 7:
+        raise ValueError(f"{d} is not a Monday week start")
+    return days // 7
+
+
+def effective_weekly_noise(params: Parameters = PARAMS) -> float:
+    """Week-to-week relative noise: multiplicative sd plus Poisson at mean weekly volume."""
+    mean_weekly = expected_totals(params)["requests"] / params.window.n_weeks.value
+    return math.sqrt(params.volume.weekly_noise_sd.value**2 + 1 / mean_weekly)
+
+
+def _volume_dip(share: float, drop: float, start_week: int, n_weeks: int, params: Parameters):
     weekly = weekly_expected_new(params)
     tot = expected_totals(params)
     scale = tot["requests"] / tot["new_requests"]
-    share = account_volume_shares(params)[a["account_rank"] - 1]
     out = []
-    for w in range(a["start_week"], a["start_week"] + a["n_weeks"]):
+    for w in range(start_week, start_week + n_weeks):
         expected = weekly[w] * scale
-        dip = expected * share * a["drop"]
-        noise_sd = expected * params.volume.weekly_noise_sd.value
-        poisson_sd = math.sqrt(expected)
-        combined = math.hypot(noise_sd, poisson_sd)
+        dip = expected * share * drop
+        combined = math.hypot(expected * params.volume.weekly_noise_sd.value, math.sqrt(expected))
         out.append(
             {
                 "week": w,
                 "week_start": week_start(w, params).isoformat(),
                 "expected_total": expected,
                 "expected_dip": dip,
-                "dip_fraction": share * a["drop"],
-                "noise_sd": noise_sd,
-                "poisson_sd": poisson_sd,
+                "dip_fraction": share * drop,
                 "combined_sd": combined,
                 "z": dip / combined,
             }
         )
-    z_two = sum(o["expected_dip"] for o in out) / math.sqrt(sum(o["combined_sd"] ** 2 for o in out))
-    return {"weeks": out, "z_combined_window": z_two}
+    z = sum(o["expected_dip"] for o in out) / math.sqrt(sum(o["combined_sd"] ** 2 for o in out))
+    return {"weeks": out, "z_window": z}
+
+
+def payment_final_dist(params: Parameters = PARAMS) -> dict[str, float]:
+    """Distribution of payment_method_final after the change rate."""
+    mix = params.billing.payment_method_mix.value
+    c = params.billing.payment_method_change_rate.value
+    n = len(mix)
+    return {m: mix[m] * (1 - c) + (1 - mix[m]) * c / (n - 1) for m in mix}
+
+
+def anomaly_strength(params: Parameters = PARAMS) -> dict:
+    """z-scores of all three anomalies against their natural noise (ADR-038).
+
+    Volume anomalies: expected dip in weekly request totals over combined multiplicative
+    and Poisson noise. Billing: shift in the weekly mean surcharge_rate over completed
+    invoices against its sampling sd.
+    """
+    a = params.anomalies
+    acct = a.volume_drop.value
+    reg = a.regional_drop.value
+    account = _volume_dip(
+        account_volume_shares(params)[acct["account_rank"] - 1],
+        acct["drop"],
+        acct["start_week"],
+        acct["n_weeks"],
+        params,
+    )
+    regional = _volume_dip(
+        params.regions.share.value[reg["region"]],
+        reg["drop"],
+        week_index(reg["start"], params),
+        reg["n_weeks"],
+        params,
+    )
+
+    b = a.billing_surcharge.value
+    final = payment_final_dist(params)
+    rates = params.billing.surcharge_rate_by_method.value
+    mean = sum(final[m] * rates[m] for m in final)
+    var = sum(final[m] * rates[m] ** 2 for m in final) - mean**2
+    shift = final[b["payment_method"]] * (b["surcharge_rate"] - rates[b["payment_method"]])
+    tot = expected_totals(params)
+    completed_share = tot["completed"] / tot["new_requests"]
+    weekly = weekly_expected_new(params)
+    weeks, invoices = [], 0.0
+    for w in range(b["start_week"], b["start_week"] + b["n_weeks"]):
+        n_inv = weekly[w] * completed_share
+        invoices += n_inv * final[b["payment_method"]]
+        z = shift / math.sqrt(var / n_inv)
+        weeks.append(
+            {"week": w, "week_start": week_start(w, params).isoformat(), "invoices": n_inv, "z": z}
+        )
+    billing = {
+        "weeks": weeks,
+        "affected_invoices": invoices,
+        "z_window": sum(x["z"] for x in weeks) / math.sqrt(len(weeks)),
+    }
+    return {"account_drop": account, "regional_drop": regional, "billing_surcharge": billing}
+
+
+def incident_active_share(age_weeks: int, params: Parameters = PARAMS) -> float:
+    """P(open or investigating) for an incident reported `age_weeks` before the window end
+    (0 = final week). Zero from the active-window edge back (ADR-038)."""
+    window = params.incidents.incident_active_window_weeks.value
+    if age_weeks >= window:
+        return 0.0
+    return params.incidents.incident_active_share_at_end.value * (1 - age_weeks / window)
+
+
+def expected_active_incidents(params: Parameters = PARAMS) -> float:
+    """Expected incidents still open or investigating at window end."""
+    weekly = weekly_expected_new(params)
+    tot = expected_totals(params)
+    per_request = tot["incidents"] / tot["new_requests"]
+    n = params.window.n_weeks.value
+    return sum(
+        weekly[n - 1 - age] * per_request * incident_active_share(age, params)
+        for age in range(params.incidents.incident_active_window_weeks.value)
+    )
 
 
 # --------------------------------------------------------------------------- persistence
 
-#: param_group by domain. Only the five existing values are used; "*" marks a
-#: provisional mapping where no group really fits (reported, not silently accepted).
-GROUP_BY_DOMAIN: Mapping[str, tuple[str, bool]] = MappingProxyType(
+#: param_group by domain (ADR-038: `world` and `feedback` join the five originals).
+GROUP_BY_DOMAIN: Mapping[str, str] = MappingProxyType(
     {
-        "seed": ("volume", True),
-        "window": ("volume", True),
-        "reference": ("volume", True),
-        "volume": ("volume", False),
-        "requests": ("volume", True),
-        "billing": ("billing", False),
-        "incidents": ("incidents", False),
-        "feedback": ("sentiment", True),
-        "sentiment": ("sentiment", False),
-        "corpus": ("sentiment", True),
-        "anomalies": ("anomalies", False),
-        "derived_volume": ("volume", False),
-        "derived_sentiment": ("sentiment", False),
-        "derived_requests": ("volume", True),
+        "seed": "world",
+        "window": "world",
+        "reference": "world",
+        "regions": "world",
+        "requests": "world",
+        "volume": "volume",
+        "billing": "billing",
+        "incidents": "incidents",
+        "feedback": "feedback",
+        "corpus": "feedback",
+        "sentiment": "sentiment",
+        "anomalies": "anomalies",
+        "derived_volume": "volume",
+        "derived_requests": "world",
+        "derived_incidents": "incidents",
+        "derived_sentiment": "sentiment",
+        "derived_anomalies": "anomalies",
     }
 )
 
@@ -1067,10 +1263,6 @@ def json_safe(v: Any) -> Any:
     return v
 
 
-def provisional_group_mappings() -> list[str]:
-    return sorted(d for d, (_, prov) in GROUP_BY_DOMAIN.items() if prov)
-
-
 def to_generation_parameters_rows(params: Parameters = PARAMS) -> list[tuple[str, Any, str, str]]:
     """(param_key, JSON-safe value, param_group, notes) for generation_parameters.
 
@@ -1081,19 +1273,19 @@ def to_generation_parameters_rows(params: Parameters = PARAMS) -> list[tuple[str
         (
             "seed.master_seed",
             MASTER_SEED,
-            GROUP_BY_DOMAIN["seed"][0],
+            GROUP_BY_DOMAIN["seed"],
             "Master seed; each stage derives its own SeedSequence from it and the stage name.",
         ),
         (
             "seed.stage_keys",
             {s: str(stage_key(s)) for s in STAGES},
-            GROUP_BY_DOMAIN["seed"][0],
+            GROUP_BY_DOMAIN["seed"],
             "Per-stage entropy: first 8 bytes of sha256(stage name), as decimal strings.",
         ),
     ]
     for domain, name, p in iter_params(params):
         note = p.note + (" [value chosen in parameters.py]" if p.chosen else "")
-        rows.append((f"{domain}.{name}", json_safe(p.value), GROUP_BY_DOMAIN[domain][0], note))
+        rows.append((f"{domain}.{name}", json_safe(p.value), GROUP_BY_DOMAIN[domain], note))
     derived = [
         (
             "derived_volume",
@@ -1112,6 +1304,24 @@ def to_generation_parameters_rows(params: Parameters = PARAMS) -> list[tuple[str
             "account_zipf_exponent",
             zipf_exponent(params),
             "Zipf exponent over requesting accounts giving the largest-account share.",
+        ),
+        (
+            "derived_volume",
+            "effective_weekly_noise",
+            effective_weekly_noise(params),
+            "Week-to-week relative noise including Poisson counting noise (ADR-038).",
+        ),
+        (
+            "derived_anomalies",
+            "anomaly_z",
+            {k: v["z_window"] for k, v in anomaly_strength(params).items()},
+            "z-score of each anomaly over its window against natural noise (ADR-038).",
+        ),
+        (
+            "derived_incidents",
+            "expected_active_incidents",
+            expected_active_incidents(params),
+            "Expected incidents still open or investigating at window end.",
         ),
         (
             "derived_requests",
@@ -1139,24 +1349,11 @@ def to_generation_parameters_rows(params: Parameters = PARAMS) -> list[tuple[str
         ),
     ]
     for domain, name, value, note in derived:
-        rows.append((f"{domain}.{name}", json_safe(value), GROUP_BY_DOMAIN[domain][0], note))
+        rows.append((f"{domain}.{name}", json_safe(value), GROUP_BY_DOMAIN[domain], note))
     return rows
 
 
 # --------------------------------------------------------------------------- validation
-
-
-def _parse_sla_matrix_from_dictionary(path: Path = DICTIONARY) -> dict[str, dict[str, int]]:
-    text = path.read_text(encoding="utf-8")
-    block = text.split("**SLA defaults by tier (minutes)", 1)[1].split("\n\n", 2)[1]
-    out = {}
-    for line in block.splitlines():
-        m = re.match(r"\|\s*`(\w+)`\s*\|(.*)\|\s*$", line)
-        if m:
-            cells = [c.strip() for c in m.group(2).split("|")]
-            nums = [int(re.match(r"\d+", c).group()) for c in cells]
-            out[m.group(1)] = dict(zip(PRIORITIES, nums, strict=True))
-    return out
 
 
 def _vocab_checks(params: Parameters) -> list[str]:
@@ -1188,7 +1385,16 @@ def _vocab_checks(params: Parameters) -> list[str]:
         ("payment_status_mix", set(b.payment_status_mix.value), vals(e.PaymentStatus)),
         ("incident_type_mix", set(i.incident_type_mix.value), vals(e.IncidentType)),
         ("severity_mix", set(i.severity_mix.value), vals(e.Severity)),
-        ("incident_status_mix", set(i.incident_status_mix.value), vals(e.IncidentStatus)),
+        (
+            "incident active + terminal mixes",
+            set(i.incident_active_mix.value) | set(i.incident_terminal_mix.value),
+            vals(e.IncidentStatus),
+        ),
+        (
+            "incident_type_phrasing",
+            set(params.corpus.incident_type_phrasing.value),
+            vals(e.IncidentType),
+        ),
         ("root_cause_by_type keys", set(i.root_cause_by_type.value), vals(e.IncidentType)),
         ("attribution_prob_by_type", set(i.attribution_prob_by_type.value), vals(e.IncidentType)),
         ("credit_by_type", set(i.credit_by_type.value), vals(e.IncidentType)),
@@ -1309,27 +1515,63 @@ def validate_parameters(params: Parameters = PARAMS) -> None:
     if abs(sum(params.sentiment.hard_case_shares.value.values()) - 0.15) > 1e-9:
         problems.append("hard_case_shares must total 0.15 (ADR-019)")
 
-    # 5. Anomalies inside the window and outside the holdout.
+    # 5. Anomalies inside the window, outside the holdout, apart, and strong enough.
     hs = holdout_start_week(params)
-    for name, a in (
-        ("volume_drop", params.anomalies.volume_drop.value),
-        ("billing_surcharge", params.anomalies.billing_surcharge.value),
-    ):
-        if a["start_week"] < 0 or a["start_week"] + a["n_weeks"] > hs:
+    reg = params.anomalies.regional_drop.value
+    spans: dict[str, tuple[int, int]] = {}
+    try:
+        spans["regional_drop"] = (week_index(reg["start"], params), reg["n_weeks"])
+    except ValueError as exc:
+        problems.append(f"regional_drop: {exc}")
+    for name in ("volume_drop", "billing_surcharge"):
+        a = getattr(params.anomalies, name).value
+        spans[name] = (a["start_week"], a["n_weeks"])
+    in_span = True
+    for name, (start, n) in spans.items():
+        if start < 0 or start + n > hs:
+            in_span = False
             problems.append(f"anomaly {name} weeks overlap the holdout or leave the window")
+    if "regional_drop" in spans:
+        (a0, n0), (a1, n1) = spans["volume_drop"], spans["regional_drop"]
+        if not (a0 + n0 <= a1 or a1 + n1 <= a0):
+            problems.append("the account and regional volume anomalies overlap")
+    shares = params.regions.share.value
+    if reg["region"] != max(shares, key=shares.get):
+        problems.append("regional_drop must hit the largest-share region")
+    elif "regional_drop" in spans and in_span:
+        z = anomaly_strength(params)["regional_drop"]["z_window"]
+        if z < 3:
+            problems.append(f"regional_drop z = {z:.2f} over its window; must be >= 3 (ADR-038)")
+
+    # Regions: disjoint two-letter state lists for exactly the regions with a share.
+    states = params.regions.states.value
+    if set(states) != set(shares):
+        problems.append("regions.states and regions.share name different regions")
+    flat = [st for sts in states.values() for st in sts]
+    if len(flat) != len(set(flat)):
+        problems.append("a state appears in more than one region")
+    if not all(len(st) == 2 and st.isupper() for st in flat):
+        problems.append("states must be two-letter uppercase codes (locations.state)")
     if params.anomalies.billing_surcharge.value["payment_method"] not in (
         params.billing.surcharge_rate_by_method.value
     ):
         problems.append("billing anomaly payment_method unknown")
 
-    # 6. SLA matrix matches §2, and the Zipf solve hit its target.
-    try:
-        documented = _parse_sla_matrix_from_dictionary()
-        encoded = {k: dict(v) for k, v in params.requests.sla_window_minutes.value.items()}
-        if documented != encoded:
-            problems.append(f"SLA matrix {encoded} != data-dictionary §2 {documented}")
-    except (OSError, IndexError, AttributeError) as exc:
-        problems.append(f"could not read the §2 SLA matrix: {exc!r}")
+    # 6. SLA matrix shape (the §2 comparison is a unit test, ADR-038), and the Zipf solve.
+    sla = params.requests.sla_window_minutes.value
+    if set(sla) != set(CONTRACT_TIERS) or any(set(v) != set(PRIORITIES) for v in sla.values()):
+        problems.append("SLA matrix must cover every contract tier x priority")
+    else:
+        by_priority = any(
+            sla[t][PRIORITIES[i]] < sla[t][PRIORITIES[i + 1]] for t in sla for i in range(2)
+        )
+        by_tier = any(
+            sla[CONTRACT_TIERS[i]][p] < sla[CONTRACT_TIERS[i + 1]][p]
+            for p in PRIORITIES
+            for i in range(2)
+        )
+        if by_priority or by_tier:
+            problems.append("SLA windows must shrink with higher priority and higher tier")
     if abs(account_volume_shares(params)[0] - ref.largest_account_volume_share.value) > 1e-6:
         problems.append("Zipf solve missed the largest-account share")
 
@@ -1356,9 +1598,10 @@ def summary(params: Parameters = PARAMS) -> dict:
         "no_incident_sentiment": no_incident_sentiment(params),
         "style_given_sentiment": style_given_sentiment(params),
         "corpus": corpus_summary(params),
-        "anomaly_volume_dip": anomaly_volume_dip(params),
+        "effective_weekly_noise": effective_weekly_noise(params),
+        "anomaly_strength": anomaly_strength(params),
+        "expected_active_incidents": expected_active_incidents(params),
         "holdout_start": week_start(holdout_start_week(params), params).isoformat(),
-        "provisional_groups": provisional_group_mappings(),
         "n_rows": len(to_generation_parameters_rows(params)),
     }
 

@@ -24,6 +24,8 @@ INITIAL_REVISION = "0f3c81a47b21"
 #: modelled but not in the initial migration, so the offline render includes it too.
 HARD_CASE_REVISION = "4c6589542b27"
 HARD_CASE_PARENT = "fae4b8c9814c"
+#: ADR-038: param_group gains world and feedback (CHECK dropped and recreated).
+PARAM_GROUP_REVISION = "9135d8de9f27"
 
 EXPECTED_TABLES = {
     # §2 reference
@@ -195,6 +197,7 @@ def offline_sql(monkeypatch: pytest.MonkeyPatch) -> str:
     config.set_main_option("script_location", str(REPO_ROOT / "data" / "migrations"))
     command.upgrade(config, INITIAL_REVISION, sql=True)
     command.upgrade(config, f"{HARD_CASE_PARENT}:{HARD_CASE_REVISION}", sql=True)
+    command.upgrade(config, f"{HARD_CASE_REVISION}:{PARAM_GROUP_REVISION}", sql=True)
     return buffer.getvalue()
 
 
@@ -267,3 +270,19 @@ def test_hard_case_migration_matches_model(offline_sql: str) -> None:
     assert "hard_case_type IN ('none', 'sarcastic', 'implicit')" in offline_sql
     assert "uq_sentiment_labels_corpus_id UNIQUE (corpus_id)" in offline_sql
     assert "DROP COLUMN is_sarcastic" in offline_sql
+
+
+def test_param_group_migration_matches_model(offline_sql: str) -> None:
+    """ADR-038: the model's param_group CHECK is what the latest migration creates."""
+    table = m.metadata.tables["generation_parameters"]
+    (check,) = [
+        c
+        for c in table.constraints
+        if isinstance(c, sa.CheckConstraint) and c.name == "ck_generation_parameters_param_group"
+    ]
+    expected = (
+        "param_group IN ('volume', 'incidents', 'sentiment', 'billing', 'anomalies', "
+        "'world', 'feedback')"
+    )
+    assert str(check.sqltext) == expected
+    assert expected in offline_sql

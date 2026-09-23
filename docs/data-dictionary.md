@@ -229,7 +229,7 @@ The true parameters used to generate the synthetic dataset. Written once by the 
 |---|---|---|
 | `param_key` | VARCHAR(100), PK | e.g. `seasonality_amplitude`, `trend_slope_monthly`, `incident_rate_baseline`, `incident_sentiment_corr`, `anomaly_window_start` |
 | `param_value` | JSONB or NUMERIC | Value; JSONB handles the windowed/array cases |
-| `param_group` | ENUM (`volume`, `incidents`, `sentiment`, `billing`, `anomalies`) | Groups params by which model they govern |
+| `param_group` | ENUM (`volume`, `incidents`, `sentiment`, `billing`, `anomalies`, `world`, `feedback`) | Groups params by which model they govern. Seven values (ADR-038): `world` holds the seed, window, reference counts, regions and request lifecycle; `feedback` holds response rates, channels and corpus sizing |
 | `notes` | TEXT | Human explanation of what this parameter controls |
 | `generated_at` | TIMESTAMPTZ | Generation run timestamp — lets you regenerate reproducibly |
 
@@ -287,7 +287,7 @@ Defining these once here, referenced by every table above, keeps them from drift
 | `user_status` | `active`, `inactive` | `internal_users` |
 | `skill` | `network`, `hardware`, `cabling`, `security_systems`, `power_systems` | `technician_skills` |
 | `proficiency` | `certified`, `experienced`, `trainee` | `technician_skills` |
-| `param_group` | `volume`, `incidents`, `sentiment`, `billing`, `anomalies` | `generation_parameters` |
+| `param_group` | `volume`, `incidents`, `sentiment`, `billing`, `anomalies`, `world`, `feedback` (the last two added by ADR-038) | `generation_parameters` |
 | `hard_case_type` | `none`, `sarcastic`, `implicit` | `sentiment_labels` |
 
 All 22 vocabularies are implemented once, as `StrEnum` classes in `packages/db_models/src/db_models/enums.py`, and reused by the models, the generator, and the eval harness. That module is the authority; this table is the documentation of it.
@@ -339,8 +339,8 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 | Annual seasonality | Q4 budget-flush peak (Oct–Nov high), late-December trough. Amplitude ~±25% of baseline |
 | Growth trend | ~+8% per year, so the model must separate trend from season |
 | Weekly pattern | Weekday-concentrated; minimal weekend volume |
-| Noise | Enough that a seasonal-naive baseline is imperfect, not so much that the pattern is unrecoverable |
-| Anomalies | 1–2 windows — e.g. a two-week volume collapse from a major client site closure. These are what make the reporting and QA agents interesting |
+| Noise | Enough that a seasonal-naive baseline is imperfect, not so much that the pattern is unrecoverable. 6% weekly multiplicative noise; ~10.6% effective week-to-week once Poisson counting noise is included (ADR-038) |
+| Anomalies | Three, all in the training span (ADR-038): the largest account drops 90% for weeks 40–41 (from 2024-06-10; invisible in weekly totals, obvious per account); every site in the largest region drops 85% for two weeks from 2025-02-17 (z ≥ 3 in weekly totals); direct-bill invoices carry a 0.10 surcharge for weeks 95–97 (from 2025-06-30). These are what make the reporting and QA agents interesting |
 | Random seed | Persisted, so the whole dataset is reproducible |
 
 ### Dataset scale targets
@@ -355,7 +355,7 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 | `service_requests` | 15,000–25,000 | ~100–160/week — enough signal for weekly regression, small enough to stay inside free-tier Postgres |
 | `archived_requests` | ~90% of requests | Remainder cancelled |
 | `incidents` | 8–12% of completed requests | Realistic field service incident rate |
-| `service_feedback` | 35–50% of completed requests (~7,200 rows) | Realistic survey response rate |
+| `service_feedback` | 35–50% of completed requests (~7,200 rows) | Realistic survey response rate. Every row has `feedback_text`; only `rating` may be null (ADR-038) |
 
 ### Sentiment distribution — **locked**
 
@@ -484,6 +484,7 @@ The schema in this document is now implemented in code:
 | Sentiment column-level feedback grant (ADR-027) | `data/migrations/versions/*_sentiment_feedback_column_grant.py` |
 | Forecast column-level `service_requests` grant (ADR-035) | `data/migrations/versions/*_forecast_service_requests_column_grant.py` |
 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`, `corpus_id` added (ADR-037, `4c6589542b27`) | `data/migrations/versions/*_sentiment_labels_hard_case_type_and_.py` |
+| `generation_parameters.param_group` gains `world` and `feedback` (ADR-038, `9135d8de9f27`) | `data/migrations/versions/*_param_group_world_and_feedback.py` |
 | Contract tests | `tests/unit/` |
 | Live grant tests (reads and writes, per role) | `tests/integration/` |
 

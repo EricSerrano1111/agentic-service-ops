@@ -49,6 +49,7 @@
 | 035 | Forecast agent narrowed to three columns of `service_requests` | Accepted |
 | 036 | Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels | Accepted — supersedes ADR-019, ADR-021 and ADR-030 in part |
 | 037 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`; `corpus_id` added | Accepted |
+| 038 | Generator parameters: text on every feedback row, anomalies, coherence rules, corpus sizing, param_group values | Accepted |
 
 ---
 
@@ -765,3 +766,59 @@ matching the text, which is fragile.
   both new columns are covered without a grant change. No agent role gains anything.
 - `data-dictionary.md` §4, §5 and §10 are updated; the vocabulary count goes from 21
   to 22.
+
+### ADR-038 — Generator parameters: text on every feedback row, anomalies, coherence rules, corpus sizing, `param_group` values
+*Date: 2026-09-23. Extends ADR-018, ADR-021 and ADR-036. Supersedes nothing.*
+
+**Decision:**
+1. **Every `service_feedback` row has `feedback_text`.** Only `rating` may be null
+   (10%). A sentiment label on a row with no text would be meaningless.
+2. **Three anomalies, all inside the forecast training span:**
+   - *Account drop:* the largest account (12% of volume) falls 90% for weeks 40-41
+     (from 2024-06-10). It is invisible in weekly totals (z ≈ 1.4 over the window)
+     and obvious at account level, so it tests the reporting agent's drill-down.
+   - *Regional drop:* every site in the largest region (~30% of volume) falls 85% for
+     two weeks from 2025-02-17. It is visible in weekly totals (z >= 3 over the
+     window) and tests forecast robustness. Placed away from the Q4 peak and the
+     December trough so it isn't confounded with seasonality.
+   - *Billing:* direct-bill invoices carry a 0.10 surcharge instead of 0 for weeks
+     95-97 (from 2025-06-30), about 130 invoices, detectable per invoice.
+3. **Noise:** the weekly multiplicative noise parameter is 6%. The effective
+   week-to-week noise, including Poisson counting noise, is about 10.6%. Reports cite
+   the effective figure.
+4. **Coherence rules:**
+   - `missed_sla` incidents occur only on requests that missed their SLA.
+   - A `repeat_visit_required` incident creates exactly one child request (same
+     account, site and type, 2-10 days later).
+   - Feedback links to the most severe incident, with ties going to the earliest.
+   - Incident status depends on age: only recent incidents are open or investigating.
+5. **Corpus cells are sized from the Poisson 99th percentile of their expected count**
+   (then x1.2, or x2 for plain neutral and plain mixed, with a floor of 6), not from a
+   seeded dry run. That keeps the corpus independent of the seed. `generate.py` fails
+   if a cell runs out; it never reuses or borrows across cells.
+6. **`param_group` gains `world`** (seed, window, reference counts, regions, request
+   lifecycle) **and `feedback`** (response rates, channels, corpus sizing), via a new
+   frozen migration.
+7. **numpy is pinned exactly**, because seeded draws are reproducible only within one
+   numpy version. `parameters.py` is the authority for the SLA matrix at generation
+   time. A unit test, not the generator, checks it against `data-dictionary.md` §2.
+
+**Context:** Reviewing `parameters.py`'s analytic output showed that the account drop
+was statistically invisible in weekly totals, that Poisson noise exceeded the 6%
+parameter, that sizing corpus cells from their expectation would starve small cells,
+and that five of the seven parameter prefixes had no fitting `param_group`.
+
+**Alternatives considered:**
+- *A larger top account* (rejected). An account at ~25% of volume is needed for the
+  drop to be visible, which distorts account-level reporting.
+- *Replacing the account drop with the regional one* (rejected). The account drop is
+  the better drill-down test for the reporting agent.
+- *Sizing the corpus from a seeded dry run* (rejected). It ties the corpus to one seed,
+  which ADR-030's design avoids.
+- *Mapping global parameters into existing groups* (rejected). It mislabels
+  ground-truth rows the paper cites.
+
+**Consequences:** The corpus grows to roughly 12-13K comments, still two days of
+Flash-Lite quota. `generate.py` must assign location states to hit the regional
+shares. The final paper reports anomaly strength as z-scores against the effective
+noise.
