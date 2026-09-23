@@ -1,0 +1,720 @@
+{
+  "per_model": {
+    "gemini-3.5-flash-lite": {
+      "agreement_overall": {
+        "agree": 13,
+        "n": 20,
+        "rate": 0.65
+      },
+      "agreement_by_style": {
+        "plain": {
+          "agree": 5,
+          "n": 8,
+          "rate": 0.625
+        },
+        "sarcastic": {
+          "agree": 6,
+          "n": 6,
+          "rate": 1.0
+        },
+        "implicit": {
+          "agree": 2,
+          "n": 6,
+          "rate": 0.333
+        }
+      },
+      "agreement_by_incident": {
+        "incident": {
+          "agree": 6,
+          "n": 10,
+          "rate": 0.6
+        },
+        "no_incident": {
+          "agree": 7,
+          "n": 10,
+          "rate": 0.7
+        }
+      },
+      "mean_believable_1to3": 3.0,
+      "sounds_ai_y": {
+        "y": 0,
+        "n": 20,
+        "rate": 0.0
+      }
+    },
+    "gemma-4-31b-it": {
+      "agreement_overall": {
+        "agree": 15,
+        "n": 20,
+        "rate": 0.75
+      },
+      "agreement_by_style": {
+        "plain": {
+          "agree": 6,
+          "n": 8,
+          "rate": 0.75
+        },
+        "sarcastic": {
+          "agree": 5,
+          "n": 6,
+          "rate": 0.833
+        },
+        "implicit": {
+          "agree": 4,
+          "n": 6,
+          "rate": 0.667
+        }
+      },
+      "agreement_by_incident": {
+        "incident": {
+          "agree": 7,
+          "n": 10,
+          "rate": 0.7
+        },
+        "no_incident": {
+          "agree": 8,
+          "n": 10,
+          "rate": 0.8
+        }
+      },
+      "mean_believable_1to3": 3.0,
+      "sounds_ai_y": {
+        "y": 0,
+        "n": 20,
+        "rate": 0.0
+      }
+    }
+  },
+  "disagreements": [
+    {
+      "review_id": "R09",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 45,
+      "style": "implicit",
+      "intended": "neutral",
+      "mine": "positive",
+      "text": "During the building infrastructure inspection, the technician checked all the data drops, verified the patch panel labels, and provided a complete summary report before leaving the premises."
+    },
+    {
+      "review_id": "R12",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 73,
+      "style": "implicit",
+      "intended": "positive",
+      "mine": "mixed",
+      "text": "Even though traffic delayed the technician by an hour, he stayed late to ensure all cabling was securely terminated and tested."
+    },
+    {
+      "review_id": "R15",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 91,
+      "style": "implicit",
+      "intended": "neutral",
+      "mine": "positive",
+      "text": "The technician had to order a replacement part and returned the following day to complete the repair on our server rack."
+    },
+    {
+      "review_id": "R34",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 23,
+      "style": "implicit",
+      "intended": "negative",
+      "mine": "mixed",
+      "text": "The router replacement was done, but the local network dropped connection four separate times within an hour of the technician leaving the building."
+    },
+    {
+      "review_id": "R11",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 66,
+      "style": "plain",
+      "intended": "neutral",
+      "mine": "negative",
+      "text": "During the security camera inspection, the technician spoke loudly on a personal phone call for the entire duration of the appointment and left a cup of coffee on the reception desk."
+    },
+    {
+      "review_id": "R26",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 42,
+      "style": "plain",
+      "intended": "neutral",
+      "mine": "positive",
+      "text": "the network switch repair was completed without any issues this morning."
+    },
+    {
+      "review_id": "R38",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 92,
+      "style": "plain",
+      "intended": "positive",
+      "mine": "mixed",
+      "text": "The UPS unit casing was dented, but a replacement is already on the way."
+    },
+    {
+      "review_id": "R27",
+      "model": "gemma-4-31b-it",
+      "spec_id": 45,
+      "style": "implicit",
+      "intended": "neutral",
+      "mine": "positive",
+      "text": "The technician walked through the server room and checked the cabling. He provided a list of the equipment currently installed in the racks."
+    },
+    {
+      "review_id": "R39",
+      "model": "gemma-4-31b-it",
+      "spec_id": 91,
+      "style": "implicit",
+      "intended": "neutral",
+      "mine": "mixed",
+      "text": "The first technician could not resolve the issue. A senior lead came back the following day and finished the repair."
+    },
+    {
+      "review_id": "R20",
+      "model": "gemma-4-31b-it",
+      "spec_id": 66,
+      "style": "plain",
+      "intended": "neutral",
+      "mine": "mixed",
+      "text": "The technician completed the inspection of the UPS units, though there was a disagreement regarding professional conduct during the visit."
+    },
+    {
+      "review_id": "R35",
+      "model": "gemma-4-31b-it",
+      "spec_id": 42,
+      "style": "plain",
+      "intended": "neutral",
+      "mine": "positive",
+      "text": "the tech fixed the router and left."
+    },
+    {
+      "review_id": "R14",
+      "model": "gemma-4-31b-it",
+      "spec_id": 16,
+      "style": "sarcastic",
+      "intended": "mixed",
+      "mine": "positive",
+      "text": "The new server is running fast, which is a nice contrast to the crack the technician put in our rack door during the installation."
+    }
+  ],
+  "rows": [
+    {
+      "review_id": "R01",
+      "model": "gemma-4-31b-it",
+      "spec_id": 94,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "I am thrilled that the technician managed to drop the new security camera. It adds a very unique look to the shattered lens.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R02",
+      "model": "gemma-4-31b-it",
+      "spec_id": 74,
+      "style": "plain",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The repair on the server didn't hold and the system crashed again two hours after the technician left the site.",
+      "notes": ""
+    },
+    {
+      "review_id": "R03",
+      "model": "gemma-4-31b-it",
+      "spec_id": 23,
+      "style": "implicit",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician spent two hours on site to repair the server. The system is still rebooting itself every few hours since the visit.",
+      "notes": ""
+    },
+    {
+      "review_id": "R04",
+      "model": "gemma-4-31b-it",
+      "spec_id": 18,
+      "style": "plain",
+      "intended": "positive",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The inspection was handled very professionally. The technician identified several potential failure points in our UPS units before they became actual problems.",
+      "notes": ""
+    },
+    {
+      "review_id": "R05",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 29,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "It is wonderful when someone arrives four hours past the scheduled window without calling to explain, making our entire maintenance team wait around the empty facility.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R06",
+      "model": "gemma-4-31b-it",
+      "spec_id": 84,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "It is truly impressive that your team managed to skip the server room entirely during a scheduled maintenance visit. I love paying for a ghost visit.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R07",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 16,
+      "style": "sarcastic",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician did a fantastic job configuring our new firewall appliance, but it would have been nice if the rack door wasn't deeply scratched during the installation process.",
+      "notes": "positive and negative"
+    },
+    {
+      "review_id": "R08",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 41,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": false,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The new access points were installed cleanly and look great across the floor, but the technician left cardboard boxes and zip ties scattered all over the reception area for us to clean up.",
+      "notes": "mostly positive"
+    },
+    {
+      "review_id": "R09",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 45,
+      "style": "implicit",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "During the building infrastructure inspection, the technician checked all the data drops, verified the patch panel labels, and provided a complete summary report before leaving the premises.",
+      "notes": ""
+    },
+    {
+      "review_id": "R10",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 18,
+      "style": "plain",
+      "intended": "positive",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The security camera inspection was thorough and well-documented. The technician checked every mounting bracket, verified the lens angles, and provided a comprehensive report before leaving the premises.",
+      "notes": ""
+    },
+    {
+      "review_id": "R11",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 66,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "During the security camera inspection, the technician spoke loudly on a personal phone call for the entire duration of the appointment and left a cup of coffee on the reception desk.",
+      "notes": "technician specific feedback"
+    },
+    {
+      "review_id": "R12",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 73,
+      "style": "implicit",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Even though traffic delayed the technician by an hour, he stayed late to ensure all cabling was securely terminated and tested.",
+      "notes": "mostly positive"
+    },
+    {
+      "review_id": "R13",
+      "model": "gemma-4-31b-it",
+      "spec_id": 92,
+      "style": "plain",
+      "intended": "positive",
+      "incident": true,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "broken switch was replaced fast. great service.",
+      "notes": ""
+    },
+    {
+      "review_id": "R14",
+      "model": "gemma-4-31b-it",
+      "spec_id": 16,
+      "style": "sarcastic",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The new server is running fast, which is a nice contrast to the crack the technician put in our rack door during the installation.",
+      "notes": ""
+    },
+    {
+      "review_id": "R15",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 91,
+      "style": "implicit",
+      "intended": "neutral",
+      "incident": true,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician had to order a replacement part and returned the following day to complete the repair on our server rack.",
+      "notes": ""
+    },
+    {
+      "review_id": "R16",
+      "model": "gemma-4-31b-it",
+      "spec_id": 73,
+      "style": "implicit",
+      "intended": "positive",
+      "incident": true,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Despite the delay in arrival, the technician worked through his lunch break to ensure the security cameras were fully integrated before leaving.",
+      "notes": ""
+    },
+    {
+      "review_id": "R17",
+      "model": "gemma-4-31b-it",
+      "spec_id": 95,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "I love how the maintenance visit consisted of a technician glancing at the router for two minutes and telling me everything looks fine while the logs show constant drops.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R18",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 74,
+      "style": "plain",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician sent to repair our network switch failed to identify the faulty port, leaving us without internet access across half the building until we called someone else.",
+      "notes": ""
+    },
+    {
+      "review_id": "R19",
+      "model": "gemma-4-31b-it",
+      "spec_id": 48,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "I appreciate that the tech was very professional and polite during both visits. It was frustrating that the first appointment didn't resolve the issue, requiring a second trip to finish the job.",
+      "notes": "positive and negative"
+    },
+    {
+      "review_id": "R20",
+      "model": "gemma-4-31b-it",
+      "spec_id": 66,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician completed the inspection of the UPS units, though there was a disagreement regarding professional conduct during the visit.",
+      "notes": "positive and negative"
+    },
+    {
+      "review_id": "R21",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 95,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Routine maintenance is always wonderful when the technician spends three hours testing equipment that was replaced just last month.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R22",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 94,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Smashed rack rails are a great addition to the server room. Nothing says professional installation quite like replacing the hardware you just paid for.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R23",
+      "model": "gemma-4-31b-it",
+      "spec_id": 41,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": false,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The new access points are working perfectly and the signal is strong throughout the office. However, the technician left a significant mess of cardboard and plastic wrap in the conference room for us to clean up.",
+      "notes": "mostly positive"
+    },
+    {
+      "review_id": "R24",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 13,
+      "style": "plain",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "tech showed up three hours late to fix the cabling without calling.",
+      "notes": ""
+    },
+    {
+      "review_id": "R25",
+      "model": "gemma-4-31b-it",
+      "spec_id": 96,
+      "style": "implicit",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician spent an hour on site before realizing he had the wrong model of access point for our ceiling mounts.",
+      "notes": ""
+    },
+    {
+      "review_id": "R26",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 42,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "the network switch repair was completed without any issues this morning.",
+      "notes": ""
+    },
+    {
+      "review_id": "R27",
+      "model": "gemma-4-31b-it",
+      "spec_id": 45,
+      "style": "implicit",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician walked through the server room and checked the cabling. He provided a list of the equipment currently installed in the racks.",
+      "notes": ""
+    },
+    {
+      "review_id": "R28",
+      "model": "gemma-4-31b-it",
+      "spec_id": 29,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "It was a pleasure waiting three hours past the appointment window for the technician to arrive. I especially enjoyed the lack of a phone call to let me know he was running late.",
+      "notes": "sarcastic"
+    },
+    {
+      "review_id": "R29",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 48,
+      "style": "plain",
+      "intended": "mixed",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician was polite and knowledgeable during the initial cabling run, but because the wrong connector modules were brought, a second visit was required to get the network jacks working.",
+      "notes": "positive and negative"
+    },
+    {
+      "review_id": "R30",
+      "model": "gemma-4-31b-it",
+      "spec_id": 13,
+      "style": "plain",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "tech showed up an hour late. not professional.",
+      "notes": ""
+    },
+    {
+      "review_id": "R31",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 96,
+      "style": "implicit",
+      "intended": "negative",
+      "incident": true,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The technician arrived without the specific mounting brackets we noted in the work order, requiring another trip to the warehouse.",
+      "notes": ""
+    },
+    {
+      "review_id": "R32",
+      "model": "gemma-4-31b-it",
+      "spec_id": 2,
+      "style": "sarcastic",
+      "intended": "mixed",
+      "incident": false,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "fixed the router but left a huge mess. truly a master of efficiency.",
+      "notes": "positive and negative"
+    },
+    {
+      "review_id": "R33",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 2,
+      "style": "sarcastic",
+      "intended": "mixed",
+      "incident": false,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "router fixed fast but left greasy fingerprints all over the conference table",
+      "notes": "mostly positive"
+    },
+    {
+      "review_id": "R34",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 23,
+      "style": "implicit",
+      "intended": "negative",
+      "incident": false,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The router replacement was done, but the local network dropped connection four separate times within an hour of the technician leaving the building.",
+      "notes": "positive and negative"
+    },
+    {
+      "review_id": "R35",
+      "model": "gemma-4-31b-it",
+      "spec_id": 42,
+      "style": "plain",
+      "intended": "neutral",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "the tech fixed the router and left.",
+      "notes": ""
+    },
+    {
+      "review_id": "R36",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 61,
+      "style": "implicit",
+      "intended": "positive",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Every access point is blinking green now and the cabling is neatly bundled.",
+      "notes": ""
+    },
+    {
+      "review_id": "R37",
+      "model": "gemma-4-31b-it",
+      "spec_id": 61,
+      "style": "implicit",
+      "intended": "positive",
+      "incident": false,
+      "mine": "positive",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "tech found all the cabling issues during the walkthrough. efficient work.",
+      "notes": ""
+    },
+    {
+      "review_id": "R38",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 92,
+      "style": "plain",
+      "intended": "positive",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The UPS unit casing was dented, but a replacement is already on the way.",
+      "notes": "mostly positive"
+    },
+    {
+      "review_id": "R39",
+      "model": "gemma-4-31b-it",
+      "spec_id": 91,
+      "style": "implicit",
+      "intended": "neutral",
+      "incident": true,
+      "mine": "mixed",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "The first technician could not resolve the issue. A senior lead came back the following day and finished the repair.",
+      "notes": "mostly positive"
+    },
+    {
+      "review_id": "R40",
+      "model": "gemini-3.5-flash-lite",
+      "spec_id": 84,
+      "style": "sarcastic",
+      "intended": "negative",
+      "incident": false,
+      "mine": "negative",
+      "believable": 3,
+      "sounds_ai": false,
+      "text": "Routine maintenance is always such a thrill when the technician manages to disconnect the main server rack power supply instead of the inactive switch.",
+      "notes": "sarcastic"
+    }
+  ]
+}
