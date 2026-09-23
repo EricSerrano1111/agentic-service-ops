@@ -42,6 +42,11 @@
 | 028 | Role names required, never defaulted: a blank `DB_ROLE_*_USER` fails like a blank password | Accepted |
 | 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part |
 | 030 | `feedback_text` LLM-generated once and frozen as a committed corpus | Accepted |
+| 031 | Single-shot interaction committed; multi-turn is conditional stretch | Accepted |
+| 032 | Compound routing out of scope; multi-domain questions detected and split by the user | Accepted |
+| 033 | Metrics reportable per individual technician, framed as decision support | Accepted |
+| 034 | 120-second end-to-end timeout ceiling; latency measured, not targeted | Accepted |
+| 035 | Forecast agent narrowed to three columns of `service_requests` | Accepted |
 
 ---
 
@@ -393,3 +398,209 @@ irreproducible, for the reasons above).
   doesn't land on a clean network install; and whether `sentiment_labels`
   needs a `hard_case_type` column (a schema change and new migration) so the
   distinction survives into the database.
+
+### ADR-031 — Single-shot interaction is the committed scope; multi-turn is conditional stretch
+*Date: 2026-09-22. Resolves the open item in `architecture.md` §12. Supersedes nothing.*
+
+**Decision:** The system accepts one natural-language question and returns
+one verified answer per exchange. No conversation state, no follow-up
+handling, in the committed build. Multi-turn/conversational follow-up is
+considered only as a Sprint 6 stretch item, and only if the team is genuinely
+ahead of plan per the §13 working agreement — never a default assumption.
+
+**Context:** `architecture.md` §12 left this open: *"Whether the UI supports
+conversational follow-up or single-shot intents (affects orchestrator state
+management)."* Left unresolved, it was ambiguous whether the orchestrator
+needed a session/state layer at all — a load-bearing design question, not a
+UI detail, since it affects how the orchestrator is built from Sprint 2
+onward.
+
+**Alternatives considered:** Building conversational support from the start
+(rejected — adds orchestrator state-management complexity with no
+corresponding rubric requirement or portfolio value strong enough to justify
+displacing solo dev time from the routing eval and QA loop, which are the
+higher-value places to spend it).
+
+**Consequences:** The orchestrator has no session/state layer to design,
+build, or test in the committed scope. Multi-turn/conversational follow-up is 
+considered only as a scope expansion, decided at the Sprint 4 boundary and only 
+if genuinely ahead of plan per the §13 working agreement. It is never built in Sprint 6, which is protected buffer.
+
+### ADR-032 — Compound (multi-specialist) routing is out of scope; multi-domain questions are detected and split by the user
+*Date: 2026-09-22. Resolves an implied commitment in `architecture.md` §3 and §8 that no ADR had decided. Supersedes nothing.*
+
+**Decision:** The orchestrator routes each question to exactly one specialist.
+It does not send one question to several specialists or merge their answers.
+When a question spans more than one domain (e.g., "are incidents and
+sentiment both getting worse in the Northeast?"), the orchestrator detects
+it and responds by telling the user which domains the question covers and
+asking them to submit each part separately. It does not silently answer only
+one part.
+
+**Context:** `architecture.md` §8 lists "multi-agent intents requiring more
+than one specialist" as a routing eval category, and §3 says the orchestrator
+"assembles the final response." Read together, they imply compound routing as
+a committed capability. But no ADR decided it, no sprint plans to build it,
+and the Sprint 5 eval item in `sprint-log.md` lists only ambiguous and
+out-of-scope intents. The architecture was testing for a behavior the plan
+never builds. Surfaced while writing the Detailed Requirements Analysis,
+where leaving it unresolved would have let a frozen requirements contract be
+read as committing to it.
+
+**Alternatives considered:**
+
+- *Build compound routing* (rejected). The cost sits in three places:
+  merging outputs of different types (a metric table, a sentiment breakdown,
+  a forecast) into one coherent answer; QA across multiple outputs per
+  request, including partial failure where one specialist passes and another
+  doesn't; and multiplying API calls per request, including retries, under
+  the 500 RPD Flash-Lite free-tier cap (ADR-029). None of this is needed to
+  answer the Business Case's three question types, each of which maps to a
+  single specialist.
+- *Answer only the primary domain of a compound question* (rejected). A
+  partial answer presented as a complete one is the failure the QA stage
+  exists to prevent.
+- *Remove the multi-agent category from the routing eval* (rejected). Users
+  will still ask compound questions. Dropping the category would leave the
+  orchestrator's handling of them untested.
+
+**Consequences:**
+
+- Detecting and splitting multi-domain questions is requirement FR-04.
+  Compound routing is listed as excluded (FR-21) in the Detailed
+  Requirements Analysis.
+- The QA agent verifies one specialist output per request. No partial-failure
+  handling is needed.
+- Since interaction is single-shot (ADR-031), the orchestrator cannot ask a
+  follow-up. Its response must itself name the domains detected and tell
+  the user to resubmit each part.
+- The routing eval keeps the multi-agent category, with a changed expected
+  outcome: a case is scored correct when the orchestrator detects the
+  multi-domain question and returns the split instruction, not when it
+  routes to multiple specialists.
+- Required edits:
+  - `architecture.md` §3, Orchestrator description: replace "assembles the
+    final response" with "returns the specialist's verified response to the
+    user."
+  - `architecture.md` §8, Routing eval harness: change the bullet to
+    "**Multi-domain intents** spanning more than one specialist, expected to
+    be detected and returned with a split instruction rather than routed
+    (ADR-032)."
+  - `sprint-log.md` Sprint 5: change the eval item to "Routing eval harness
+    + failure-case analysis (ambiguous, multi-domain, and out-of-scope
+    intents included)."
+
+### ADR-033 — Metrics may be reported for individual technicians, as decision support
+*Date: 2026-09-22. Extends FR-06 and the Ethical Considerations requirement in the Detailed Requirements Analysis. Supersedes nothing.*
+
+**Decision:** The reporting agent may answer questions at the level of an
+individual technician (e.g., "which technicians have the most incidents this
+quarter?"), alongside account, region, and service-type breakdowns.
+Technician-level figures are presented as decision support for operations
+leaders, not as automated performance judgments, and pass the same QA
+verification as every other answer. Every technician-level rate is shown
+with the number of completed jobs behind it.
+
+**Context:** `incidents.attributed_technician_id` records which technician an
+incident is attributed to, and `app_reporting` already holds SELECT on
+`technicians` and `incidents` (`data-dictionary.md` §7), so technician-level
+reporting was technically possible but undecided. Surfaced while writing the
+Ethical Considerations requirement: a system that ranks individual employees
+from automated output is making a choice with consequences for those
+employees, and that choice should be stated rather than left as a side
+effect of the schema.
+
+**Alternatives considered:**
+
+- *Restrict reporting to team, region, or account level* (rejected).
+  Operations leaders need technician-level information for coaching,
+  training, and dispatch decisions; the attribution field exists for that
+  purpose. Hiding it would push leaders back to analysts for the question,
+  which is the gap the project exists to close.
+- *Allow it with no stated
+
+### ADR-034 — 120-second end-to-end timeout ceiling; latency measured, not targeted
+*Date: 2026-09-23. Extends ADR-022. Supersedes nothing.*
+
+**Decision:** No request runs longer than 120 seconds end to end. When the
+ceiling is reached, the system stops waiting and returns a degraded result
+with a warning and an escalation flag, reusing ADR-022's final-failure path.
+No response-time target is committed. Response time and token cost are
+measured per request type (reporting, sentiment, forecast, declined,
+escalated) and reported in the final evaluation, including the effect of QA
+revision cycles and cold starts.
+
+**Context:** Set while writing the Performance requirement in the Detailed
+Requirements Analysis, which becomes a frozen contract. The template's
+example target (0.5 seconds) is not achievable for a multi-agent system
+with LLM calls and a QA stage, and no latency measurements exist yet. A
+committed target would be a guess. The ceiling is enforced by a timeout in
+the system's own code, so it is met by construction.
+
+**Alternatives considered:**
+
+- *A fixed response-time target* (rejected). Unverifiable before measurement,
+  and largely dependent on the external model's response time.
+- *60-second ceiling* (rejected). A cold start plus up to two QA revision
+  cycles could reach it on legitimate requests, returning degraded results
+  for answers that would have finished.
+- *5-minute ceiling* (rejected). Nothing in the pipeline should legitimately
+  take minutes; a request running that long is almost certainly stuck, and a
+  long ceiling hides it from the user instead of escalating it. It also
+  equals Cloud Run's default 300-second request timeout, so Cloud Run would
+  cut the request off before the system's own ceiling fired, and the user
+  would get a generic error instead of the degraded result.
+
+**Consequences:**
+
+- Inner timeouts must fit inside the ceiling: orchestrator-to-specialist
+  calls, MCP calls, and each QA cycle get their own shorter timeouts that
+  together stay under 120 seconds.
+- Everything in front of the orchestrator must wait longer than 120 seconds:
+  the FastAPI gateway and the UI's HTTP requests need timeouts above the
+  ceiling, and Cloud Run's 300-second default must not be lowered below it.
+- Latency measurement belongs to Sprint 6 load and latency testing
+  (`architecture.md` §8).
+- Revisit only with evidence: if Sprint 5 deploy measurements show
+  legitimate requests approaching the ceiling, raising it is a new ADR.
+
+  ### ADR-035 — Forecast agent narrowed to three columns of `service_requests`
+*Date: 2026-09-22. Extends ADR-023. Supersedes the forecast column of the original `data-dictionary.md` §7 access matrix.*
+
+**Decision:** `app_forecast` gets a column-level `GRANT SELECT` on
+`service_requests` covering exactly `request_id`, `scheduled_datetime`, and
+`service_type`, replacing its table-level SELECT. Its SELECT on `accounts`,
+`locations`, and `archived_requests` is revoked. Applied by a new migration.
+
+**Context:** Found while writing the per-agent data access maps for the
+Detailed Requirements Analysis. The forecast is univariate (ADR-018): a
+weekly count of requests by `scheduled_datetime`, with an optional breakout
+by `service_type`. The original matrix granted it four tables, including
+completed-job billing records, none of which that forecast uses. The
+least-privilege claim (ADR-023) did not hold for this role, and a reader
+comparing the access map with FR-08 could see it.
+
+**Alternatives considered:**
+
+- *Keep the original grants* (rejected). Leaves billing data reachable by an
+  agent that never needs it, and overstates the least-privilege claim.
+- *Table-level SELECT on `service_requests` only* (rejected). Still exposes
+  payment method, cancellation reasons, and account, contact, and technician
+  IDs. Same reasoning as ADR-025 and ADR-027: where a table-level grant
+  over-grants, use a column-level one.
+- *A pre-aggregated weekly-volume view* (rejected). Same as ADR-025: an
+  object the data dictionary doesn't define, for no stronger guarantee than
+  a column grant.
+
+**Consequences:**
+
+- The forecast agent cannot read billing, accounts, locations, customer
+  feedback, incidents, or any customer or technician identifier.
+  `request_id` stays as an identifier to count and report against.
+- Any forecast breakout beyond `service_type` (e.g., by region or account)
+  requires a new grant, migration, and ADR. That friction is deliberate.
+- Per ADR-027, the migration carries its grants as frozen literals, revokes
+  the table-level SELECT before granting columns, and its downgrade restores
+  the original grants exactly.
+- `data-dictionary.md` §7 and `db_models.access_matrix` are updated to
+  match. The live grants integration test enforces the match.

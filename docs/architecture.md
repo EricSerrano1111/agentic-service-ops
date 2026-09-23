@@ -124,6 +124,7 @@ The sentiment path is the trap. Do **not** have the QA agent re-run the same sen
 ### QA loop semantics (locked)
 
 - **Bounded retries:** Maximum 2 revision cycles per request.
+- **End-to-end ceiling:** No request runs longer than 120 seconds. At the ceiling, the system returns the same degraded result and escalation flag as a final QA failure (ADR-034).
 - **On final failure:** Return a degraded result with an explicit warning plus a human-escalation flag. Never silently return unverified output; never loop unbounded.
 - **Granularity:** QA annotates specific failed checks rather than rejecting wholesale, so revision guidance is actionable.
 - This cap is a deliberate cost and latency control — document it as such.
@@ -239,7 +240,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Config and secrets management — no hardcoded credentials
 - [ ] Structured logging with trace IDs correlated across agent hops
 - [ ] Health checks and readiness probes on every service
-- [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls
+- [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-034)
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration
 - [ ] Eval harness (see below)
@@ -489,7 +490,7 @@ Remaining:
 - [ ] Sentiment approach: fine-tuned transformer vs. LLM-with-confidence — decide by week 5
 - [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029)
 - [ ] Historical data window and granularity for the forecast (drives seasonality realism)
-- [ ] Whether the UI supports conversational follow-up or single-shot intents (affects orchestrator state management)
+- [x] Whether the UI supports conversational follow-up or single-shot intents (affects orchestrator state management)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
 - [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` (paid, spend-capped) (ADR-029)
 - [ ] Sprint ceremony cadence and whether the instructor expects to see sprint artifacts at specific checkpoints
