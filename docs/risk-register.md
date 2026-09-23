@@ -26,7 +26,7 @@
 | R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Open |
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Low-Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Open |
-| R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Open |
+| R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
 
 ---
 
@@ -98,6 +98,8 @@
 **Description:** `feedback_text` is LLM-generated to a requested label (ADR-030), and `sentiment_labels.true_sentiment` records that request, not a verified reading of the text. Comments that drift from their label would make the sentiment model's accuracy look worse than it is — the model gets marked wrong for reading the text correctly. Hard cases can fail the other way: sarcasm an LLM writes on request is often obvious, so "hard" comments may be easier than labeled and inflate hard-case accuracy.
 **Mitigation:** Sampled label validation in `validate.py` before the corpus is accepted, plus exact and near-duplicate rejection so no comment spans the training and holdout splits.
 **Review trigger:** Corpus generation in Sprint 1.
+
+**Update 2026-09-23 (ADR-036):** The bake-off confirmed label drift for neutral: the generator wrote neutral as intended only about half the time, and a flat report of a working fix read as satisfied to both the human reviewer and the judge. Mitigation: a Gemma 4 judge labels every comment, and plain comments whose judge label differs from the intended one are rejected and replaced from spares; a blind, stratified review of ~200 comments follows. Hard cases (sarcastic, implicit) are not judge-filtered, so filtering cannot inflate hard-case accuracy. Remaining exposure: the human evidence is a single annotator, and believability is unproven (10 of 24 v3 comments sounded AI-written). Status: Open → Mitigating.
 
 ---
 

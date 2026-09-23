@@ -249,7 +249,7 @@ Store the coupling strength as an explicit parameter (`incident_severity_sentime
 | `feedback_id` | FK → service_feedback, PK | One label per feedback record |
 | `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was *asked* to write (ADR-030) — intent, verified by sampling in `validate.py`, not guaranteed |
 | `label_confidence` | DECIMAL | Optional — if you want ambiguous cases to exist deliberately |
-| `is_sarcastic` | BOOLEAN | **Added on review** — flags sarcastic comments only, one kind of deliberately hard case, so failure analysis can report accuracy on them separately. "92% overall, 61% on sarcastic cases" is a far more credible finding than a single aggregate number. Genuinely ambiguous hard cases are not flagged here; the full hard-case type is kept in the corpus (ADR-030) |
+| `is_sarcastic` | BOOLEAN | **Added on review** — flags sarcastic comments only, one kind of deliberately hard case, so failure analysis can report accuracy on them separately. "92% overall, 61% on sarcastic cases" is a far more credible finding than a single aggregate number. Implicit (ADR-036) hard cases are not flagged here; the full hard-case type is kept in the corpus (ADR-030). Pending replacement by `hard_case_type` (ADR-037) |
 
 **The sentiment agent's MCP tool must never have a code path that reads this table.** It exists solely for the QA agent and the eval harness. Enforce this with a database grant, not a code convention — see §7.
 
@@ -364,7 +364,9 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 | `negative` | 20% | ~1,440 |
 | `mixed` | 8% | ~580 |
 
-**Hard cases: ~15% of all feedback** (~1,080 rows) flagged `is_sarcastic` or genuinely ambiguous. Enough to report subgroup accuracy credibly — "92% overall, 64% on hard cases, here's the failure analysis" — without making the dataset look artificially adversarial.
+**Hard cases: ~15% of all feedback** (~1,080 rows) sarcastic or implicit (ADR-036). Enough to report subgroup accuracy credibly — "92% overall, 64% on hard cases, here's the failure analysis" — without making the dataset look artificially adversarial.
+
+Cell rules (ADR-036): no neutral on incident rows; sarcastic is negative only; implicit is positive and negative only.
 
 If your generated feedback ends up overwhelmingly negative, every accuracy number you report downstream is noise. Validate this distribution in Sprint 1 before building anything on top of it.
 

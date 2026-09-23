@@ -47,6 +47,7 @@
 | 033 | Metrics reportable per individual technician, framed as decision support | Accepted |
 | 034 | 120-second end-to-end timeout ceiling; latency measured, not targeted | Accepted |
 | 035 | Forecast agent narrowed to three columns of `service_requests` | Accepted |
+| 036 | Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels | Accepted — supersedes ADR-019, ADR-021 and ADR-030 in part |
 
 ---
 
@@ -623,3 +624,101 @@ comparing the access map with FR-08 could see it.
   the original grants exactly.
 - `data-dictionary.md` §7 and `db_models.access_matrix` are updated to
   match. The live grants integration test enforces the match.
+
+### ADR-036 — Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels
+*Date: 2026-09-23. Supersedes ADR-019 and ADR-030 in part (the second hard-case type:
+"genuinely ambiguous" becomes "implicit"), ADR-021 in part (how a handled-well serious
+incident appears in the text), and ADR-030's validation approach for plain comments.
+Resolves ADR-030's open items except the `hard_case_type` schema question, which is
+ADR-037.*
+
+**Decision:**
+
+1. **Models.** `gemini-3.5-flash-lite` writes the corpus (temperature 1.0,
+   `thinking_level=minimal`, JSON mode). `gemma-4-31b-it` is the label judge
+   (temperature 0, `thinking_level=minimal`) and sees comment text only.
+2. **Hard-case types are `sarcastic` and `implicit`.** Implicit: the sentiment is real
+   but carried by facts or understatement, and a careful reader reaches it with
+   confidence. Genuinely ambiguous comments are excluded: their label would be noise.
+3. **Label definitions**, used verbatim in both generator and judge prompts:
+   - *positive*: the writer's overall verdict is satisfied. On an incident row, the
+     text praises the handling without naming the failure.
+   - *negative*: the writer's overall verdict is dissatisfied.
+   - *mixed*: the writer praises at least one aspect and criticizes at least one other,
+     neither dominating; or names a serious problem and praises how it was handled.
+   - *neutral*: one of three kinds only: minimal or indifferent; administrative
+     (a request or information, never a dispute); status without a verdict. A visit
+     described as having gone well is positive, however flatly worded.
+4. **Cell rules:** neutral only on rows without an incident, plain style only. Mixed
+   plain only, any incident level. Sarcastic only negative. Implicit only positive and
+   negative. `parameters.py` enforces these as zero-probability combinations.
+5. **Conditioning:** comments without an incident are keyed on (sentiment, style,
+   service_type); incident comments on (sentiment, style, incident level, incident
+   type), with minor = low severity and serious = medium or high. Every possible cell
+   gets at least 6 comments plus 20% spares; plain neutral and plain mixed cells get
+   2x, since the judge filter rejects more of them.
+6. **Spec fields:** focus and opening are drawn per spec, except for minimal neutrals,
+   which get neither. Openings: problem first, time reference, sentence fragment,
+   question (question only for negative and administrative neutral). SMS comments are
+   2-12 words in a loose style; minimal neutrals are 1-8 words on any channel.
+7. **Validation:**
+   - The judge labels every comment. A plain comment whose judge label differs from
+     its intended label is rejected and replaced from spares.
+   - Sarcastic and implicit comments are never rejected on judge disagreement;
+     disagreements go to human review.
+   - Automated checks reject money, times, dates, name-like tokens, greetings, and
+     near-duplicates (5-gram character Jaccard > 0.6 within a cell).
+   - A blind, stratified human review of about 200 comments follows, with a
+     calibration pass first and anchored believability ratings. It reports agreement
+     per cell. A cell below 50% human-intended agreement is regenerated once. Other
+     results are reported, not gating.
+8. **`build_corpus.py`** batches 20 comments per request, retries server errors with
+   a higher cap than the bake-off's 5, and resumes from the last completed batch.
+
+**Context:** ADR-030's model question was settled by a bake-off and three prompt
+iterations on 2026-09-23 (evidence in `data/generator/experiments/bakeoff/`, scored
+blind by the owner).
+
+| Round | What it showed |
+|---|---|
+| v0 | Quality tied (human agreement 13/20 Flash-Lite, 15/20 Gemma); about half of all comments opened with "The" |
+| v1 | Openers fixed. Judge agreed on neutral 2/20, but the human and judge agreed 32/40, so the generator was the weak link |
+| v2 | Content-type neutral definition; neutral 8/20. The minimal kind conflicted with the length bands |
+| v3 | Final iteration under a pre-committed stop rule: neutral 10/20, mixed + minor incident 4/8, both below target. The human review showed the human reading 5 of 6 "positive after a serious incident" comments as mixed, while the judge read all 6 as positive |
+
+Three findings drove the design. Defining neutral by tone produced label noise, because
+a flat report of a working fix reads as satisfied. The judge applies whatever definition
+it is given, so its agreement proves consistency with the specification, not that the
+specification matches a human reader. And the system's users are operations leaders
+reading these comments, so ground truth has to match how a person reads them; otherwise
+the sentiment agent is marked wrong for reading like one (R-13).
+
+**Alternatives considered:**
+- *More prompt iterations* (rejected). Four rounds were run, and the stop rule was set in advance.
+- *Dropping neutral, or changing the 50/22/20/8 mix* (rejected). Neutral is real, and
+  ADR-019's mix stands.
+- *Judge filter on every cell* (rejected). It removes the hardest sarcastic and implicit
+  cases, inflating the hard-case accuracy that subgroup exists to measure.
+- *No judge filter* (rejected). The generator writes neutral as intended only about half
+  the time, and unfiltered, that becomes label noise.
+- *Problem plus recovery labeled positive* (rejected). The human reader disagreed on 5 of 6.
+- *Gemma as generator* (rejected). Quality tied, and it was 11x slower with frequent
+  server errors.
+
+**Consequences:**
+- Plain labels are judge-confirmed, not only generator-intended. Hard-case labels
+  remain intent verified by sampling. The final paper states both.
+- Judge filtering biases plain cells toward comments Gemma reads clearly, so the plain
+  subgroup is easier than real plain feedback. This is stated as a limitation.
+- The human evidence so far is one annotator (the owner) on 20-24 comments per round.
+  The full-corpus human review is the real acceptance evidence, and the single-annotator
+  limitation is stated in the paper.
+- Believability was not achieved in the bake-off (10 of 24 v3 comments sounded
+  AI-written). The SMS and opening changes target its two measured sources but are
+  untested until the corpus review. If unresolved, it is reported as a limitation.
+- The corpus grows to roughly 10-11K comments: about 550 Flash-Lite requests over two
+  days, plus a judge pass of several hours.
+- `parameters.py` allocates the 15% hard-case share across positive (implicit) and
+  negative (implicit, sarcastic) only.
+- `sentiment_labels.is_sarcastic` cannot represent implicit hard cases. ADR-037 decides
+  the schema change.
