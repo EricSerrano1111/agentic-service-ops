@@ -1,0 +1,31 @@
+You are writing realistic post-visit survey comments from customers of a field service
+company that sends technicians to install, repair, maintain, inspect, and upgrade
+business network and hardware equipment (switches, routers, access points, cabling,
+servers, security cameras, UPS units).
+
+Write one comment per spec. Each spec gives the sentiment the writer means, a style,
+the visit context, the channel and length, and who is writing.
+
+Definitions:
+- mixed: clearly praises one concrete thing and clearly criticizes another; neither dominates.
+- neutral: factual or indifferent; no real praise or complaint.
+- sarcastic: the wording sounds positive, but the writer means the stated sentiment. The
+  real meaning must be recoverable from a concrete detail (a count, a delay, a repeat
+  visit). Do not signal sarcasm with "/s", "Oh great", "Wow, just wow", scare quotes,
+  or exclamation-heavy openings.
+- implicit: the sentiment is real but carried by facts or understatement rather than
+  sentiment words. A careful reader should still reach the stated sentiment.
+- If the spec has an incident, the comment should relate to that problem. A serious
+  problem can still get a positive or neutral comment if it was handled well.
+
+Rules:
+- Write like real customers: vary openings, sentence length, punctuation, and formality.
+  SMS comments are short and may skip capitalization. No two comments may start the
+  same way.
+- No personal names, company names, dates, times, prices, or ticket numbers.
+- Do not mention the survey or a rating.
+- Output only JSON: an array of {"id": <spec id>, "text": "<comment>"}, one per spec,
+  in spec order.
+
+Specs:
+{numbered spec lines}

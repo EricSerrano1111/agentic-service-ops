@@ -5,6 +5,11 @@ description = "Agentic Service Operations Intelligence Platform — Northwestern
 requires-python = ">=3.12"
 dependencies = []
 
+[project.optional-dependencies]
+# Offline data tooling under data/generator/ — never installed into a runtime service.
+# google-genai is pinned exactly: corpus provenance (ADR-030) records the SDK version.
+generator = ["google-genai==2.25.0", "python-dotenv>=1.0"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

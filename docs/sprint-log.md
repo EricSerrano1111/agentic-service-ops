@@ -31,6 +31,7 @@
 - [x] Schema finalized in `data-dictionary.md` (done ahead of Sprint 1 — see decisions log)
 - [ ] Data generator + ground-truth tables (`sentiment_labels`, `generation_parameters`)
 - [ ] `data/generator/build_corpus.py` — one-off script that generates `feedback_text` through Google's API (ADR-030)
+  - [ ] Model choice (ADR-030 open item) — *bake-off ran 2026-09-23 (`data/generator/experiments/model_bakeoff.py`, 100 specs × Gemma 4 31B / Flash-Lite 3.5); automatic metrics near-identical, blind human review (`review_blind.csv`) pending before a decision*
 - [ ] Committed corpus: `data/generator/corpus/feedback_text.jsonl` plus `provenance.json` (model ID, date, prompt, settings)
 - [ ] Corpus label validation in `validate.py` — sample comments against their requested sentiment, reject exact and near duplicates — before the corpus is accepted
 - [ ] Validate signal is actually recoverable — plot seasonality, confirm sentiment/severity coupling shows up in the data

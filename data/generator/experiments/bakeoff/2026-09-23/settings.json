@@ -1,0 +1,54 @@
+{
+  "run_date": "2026-09-23",
+  "models": [
+    "gemma-4-31b-it",
+    "gemini-3.5-flash-lite"
+  ],
+  "sdk": "google-genai 2.25.0",
+  "python": "3.13.1",
+  "seed": 20260923,
+  "n_specs": 100,
+  "batch_size": 20,
+  "prompt_version": "v0",
+  "prompt_delivery": "single user turn (no system_instruction), identical for both models",
+  "generation_config": {
+    "temperature": 1.0,
+    "response_mime_type": "application/json",
+    "response_schema": null,
+    "thinking_config": {
+      "thinking_level": "minimal"
+    },
+    "automatic_function_calling": "disabled",
+    "other params": "API defaults (top_p, top_k, max_output_tokens unset)"
+  },
+  "retry_policy": {
+    "retry_on": [
+      429,
+      500,
+      503
+    ],
+    "max_retries": 5,
+    "backoff": "full jitter, uniform(0, min(60.0, 4.0*2^n)) s"
+  },
+  "requests": "sequential; model by model, batch order 1-5",
+  "feature_probe_2026_09_23": {
+    "gemma-4-31b-it": {
+      "system_instruction": "supported",
+      "response_mime_type_json": "supported",
+      "response_schema": "unverified: 1 success, 4 x HTTP 500 on probe",
+      "thinking_default": "on (~90-700 thought tokens per probe call)",
+      "thinking_level": "'minimal' (no thought tokens) and 'high' accepted; 'low' -> 400 not supported",
+      "thinking_budget": "400 not supported",
+      "reliability": "frequent transient 500/503 on probe calls"
+    },
+    "gemini-3.5-flash-lite": {
+      "system_instruction": "supported",
+      "response_mime_type_json": "supported",
+      "response_schema": "supported",
+      "thinking_default": "no thought tokens observed at default (3 probe prompts) - behaves as 'minimal'; set explicitly anyway",
+      "thinking_level": "minimal/low/medium/high accepted",
+      "thinking_budget": "0 -> 400 invalid argument"
+    },
+    "fairness_note": "both features used are supported by both models; schema omitted because it could not be verified on Gemma. Parser tolerates fenced/embedded JSON for both."
+  }
+}

@@ -1,0 +1,388 @@
+{
+  "gemma-4-31b-it": {
+    "parse_success_rate": 1.0,
+    "comments_returned": 100,
+    "comments_expected": 100,
+    "count_mismatch_batches": 0,
+    "retries_429": 0,
+    "retries_5xx": 3,
+    "failed_requests": 0,
+    "n_comments": 100,
+    "length_compliance": 1.0,
+    "length_compliance_by_channel": {
+      "email_survey": {
+        "in_band": 29,
+        "n": 29,
+        "rate": 1.0
+      },
+      "phone_followup": {
+        "in_band": 24,
+        "n": 24,
+        "rate": 1.0
+      },
+      "portal": {
+        "in_band": 20,
+        "n": 20,
+        "rate": 1.0
+      },
+      "sms_survey": {
+        "in_band": 27,
+        "n": 27,
+        "rate": 1.0
+      }
+    },
+    "mean_words": 19.3,
+    "distinct_1": 0.2834,
+    "distinct_2": 0.7071,
+    "top_repeated_3word_openers": [
+      {
+        "opener": "the technician arrived",
+        "count": 7
+      },
+      {
+        "opener": "i really appreciate",
+        "count": 4
+      },
+      {
+        "opener": "the upgrade was",
+        "count": 3
+      },
+      {
+        "opener": "it took two",
+        "count": 2
+      },
+      {
+        "opener": "the hardware upgrade",
+        "count": 2
+      },
+      {
+        "opener": "the inspection was",
+        "count": 2
+      },
+      {
+        "opener": "the technician was",
+        "count": 2
+      },
+      {
+        "opener": "the technician spent",
+        "count": 2
+      },
+      {
+        "opener": "it was a",
+        "count": 2
+      },
+      {
+        "opener": "the new access",
+        "count": 2
+      }
+    ],
+    "distinct_first_words": 25,
+    "top_first_words": [
+      {
+        "word": "the",
+        "count": 49
+      },
+      {
+        "word": "i",
+        "count": 12
+      },
+      {
+        "word": "it",
+        "count": 8
+      },
+      {
+        "word": "tech",
+        "count": 4
+      },
+      {
+        "word": "loved",
+        "count": 3
+      }
+    ],
+    "near_duplicate_pairs": [],
+    "rule_violations": {
+      "banned_sarcasm_marker": 0,
+      "mentions_survey_or_rating": 0,
+      "price_or_clock_time": 1,
+      "exclamation_opening": 0
+    },
+    "requests": [
+      {
+        "batch": 1,
+        "latency_s": 48.39,
+        "retries": {
+          "500": 1
+        },
+        "error": null,
+        "input_tokens": 1116,
+        "output_tokens": 890,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 2,
+        "latency_s": 51.46,
+        "retries": {
+          "500": 1
+        },
+        "error": null,
+        "input_tokens": 1090,
+        "output_tokens": 875,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 3,
+        "latency_s": 44.94,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1112,
+        "output_tokens": 828,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 4,
+        "latency_s": 47.72,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1116,
+        "output_tokens": 648,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 5,
+        "latency_s": 43.9,
+        "retries": {
+          "500": 1
+        },
+        "error": null,
+        "input_tokens": 1109,
+        "output_tokens": 871,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      }
+    ]
+  },
+  "gemini-3.5-flash-lite": {
+    "parse_success_rate": 1.0,
+    "comments_returned": 100,
+    "comments_expected": 100,
+    "count_mismatch_batches": 0,
+    "retries_429": 0,
+    "retries_5xx": 0,
+    "failed_requests": 0,
+    "n_comments": 100,
+    "length_compliance": 1.0,
+    "length_compliance_by_channel": {
+      "email_survey": {
+        "in_band": 29,
+        "n": 29,
+        "rate": 1.0
+      },
+      "phone_followup": {
+        "in_band": 24,
+        "n": 24,
+        "rate": 1.0
+      },
+      "portal": {
+        "in_band": 20,
+        "n": 20,
+        "rate": 1.0
+      },
+      "sms_survey": {
+        "in_band": 27,
+        "n": 27,
+        "rate": 1.0
+      }
+    },
+    "mean_words": 22.4,
+    "distinct_1": 0.2909,
+    "distinct_2": 0.7389,
+    "top_repeated_3word_openers": [
+      {
+        "opener": "the technician arrived",
+        "count": 5
+      },
+      {
+        "opener": "the technician had",
+        "count": 3
+      },
+      {
+        "opener": "even though the",
+        "count": 2
+      },
+      {
+        "opener": "the inspector spent",
+        "count": 2
+      },
+      {
+        "opener": "the first technician",
+        "count": 2
+      },
+      {
+        "opener": "the technician sent",
+        "count": 2
+      },
+      {
+        "opener": "the technician did",
+        "count": 2
+      },
+      {
+        "opener": "the router replacement",
+        "count": 2
+      },
+      {
+        "opener": "the technician showed",
+        "count": 2
+      },
+      {
+        "opener": "the new access",
+        "count": 2
+      }
+    ],
+    "distinct_first_words": 28,
+    "top_first_words": [
+      {
+        "word": "the",
+        "count": 51
+      },
+      {
+        "word": "it",
+        "count": 6
+      },
+      {
+        "word": "routine",
+        "count": 5
+      },
+      {
+        "word": "we",
+        "count": 3
+      },
+      {
+        "word": "even",
+        "count": 3
+      }
+    ],
+    "near_duplicate_pairs": [],
+    "rule_violations": {
+      "banned_sarcasm_marker": 0,
+      "mentions_survey_or_rating": 0,
+      "price_or_clock_time": 0,
+      "exclamation_opening": 0
+    },
+    "requests": [
+      {
+        "batch": 1,
+        "latency_s": 4.2,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1116,
+        "output_tokens": 991,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 2,
+        "latency_s": 5.17,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1090,
+        "output_tokens": 926,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 3,
+        "latency_s": 3.88,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1112,
+        "output_tokens": 910,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 4,
+        "latency_s": 3.63,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1116,
+        "output_tokens": 866,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      },
+      {
+        "batch": 5,
+        "latency_s": 4.08,
+        "retries": {},
+        "error": null,
+        "input_tokens": 1109,
+        "output_tokens": 867,
+        "thought_tokens": null,
+        "finish_reason": "FinishReason.STOP",
+        "parse_ok": true,
+        "n_parsed": 20,
+        "missing_ids": [],
+        "extra_ids": [],
+        "duplicate_ids": [],
+        "parse_error": null
+      }
+    ]
+  }
+}
