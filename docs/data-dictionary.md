@@ -239,7 +239,7 @@ Also persist the **random seed** here. Without it your dataset isn't reproducibl
 
 Store the coupling strength as an explicit parameter (`incident_severity_sentiment_coupling`) rather than a magic number in generator code.
 
-**Guard: do not make it deterministic.** If severity perfectly predicts sentiment, the text becomes redundant — an analyst could skip reading it entirely, and your sentiment agent's reason for existing evaporates. Build in genuine exceptions: a high-severity incident that was handled well sometimes yields neutral or even positive feedback ("equipment failed, but the tech had it running in an hour"). Those cases are also excellent `is_sarcastic`-adjacent hard examples for QA scoring.
+**Guard: do not make it deterministic.** If severity perfectly predicts sentiment, the text becomes redundant — an analyst could skip reading it entirely, and your sentiment agent's reason for existing evaporates. Build in genuine exceptions: a serious incident handled well can yield mixed feedback that names the problem and praises the recovery, or positive feedback that praises the handling without naming the failure (ADR-036). Neutral feedback never occurs on incident rows.
 
 ### `sentiment_labels`
 **Repointed on review** — now keyed to `service_feedback`, not incidents, following the table split.
@@ -247,9 +247,10 @@ Store the coupling strength as an explicit parameter (`incident_severity_sentime
 | Column | Type | Description |
 |---|---|---|
 | `feedback_id` | FK → service_feedback, PK | One label per feedback record |
-| `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was *asked* to write (ADR-030) — intent, verified by sampling in `validate.py`, not guaranteed |
+| `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was asked to write (ADR-030). Plain comments are confirmed by the judge (ADR-036); sarcastic and implicit comments are intent, verified by human sampling. |
 | `label_confidence` | DECIMAL | Optional — if you want ambiguous cases to exist deliberately |
-| `is_sarcastic` | BOOLEAN | **Added on review** — flags sarcastic comments only, one kind of deliberately hard case, so failure analysis can report accuracy on them separately. "92% overall, 61% on sarcastic cases" is a far more credible finding than a single aggregate number. Implicit (ADR-036) hard cases are not flagged here; the full hard-case type is kept in the corpus (ADR-030). Pending replacement by `hard_case_type` (ADR-037) |
+| `hard_case_type` | ENUM (`none`, `sarcastic`, `implicit`), NOT NULL | Which kind of deliberately hard case the comment is, or `none` (ADR-037; replaces `is_sarcastic`). There are two hard-case types (ADR-036), and failure analysis reports subgroup accuracy per type. |
+| `corpus_id` | VARCHAR(32), NOT NULL, UNIQUE | ID of the corpus comment (`data/generator/corpus/feedback_text.jsonl`) that supplied the row's `feedback_text`, so the eval harness can join a label to its corpus metadata. UNIQUE enforces ADR-030's no-reuse rule (ADR-037). |
 
 **The sentiment agent's MCP tool must never have a code path that reads this table.** It exists solely for the QA agent and the eval harness. Enforce this with a database grant, not a code convention — see §7.
 
@@ -278,7 +279,7 @@ Defining these once here, referenced by every table above, keeps them from drift
 | `user_role` | `dispatcher`, `supervisor`, `billing_clerk`, `qa_analyst` |
 | `true_sentiment` | `positive`, `neutral`, `negative`, `mixed` |
 
-**Added when the DDL was written.** These five are used by the table definitions in §2–§4 but were missing from this consolidated list, which is exactly the drift this section exists to prevent.
+**Added when the DDL was written.** These are used by the table definitions in §2–§4 but were missing from this consolidated list, which is exactly the drift this section exists to prevent. `hard_case_type` was added later, by ADR-037.
 
 | Enum | Values | Used by |
 |---|---|---|
@@ -287,8 +288,9 @@ Defining these once here, referenced by every table above, keeps them from drift
 | `skill` | `network`, `hardware`, `cabling`, `security_systems`, `power_systems` | `technician_skills` |
 | `proficiency` | `certified`, `experienced`, `trainee` | `technician_skills` |
 | `param_group` | `volume`, `incidents`, `sentiment`, `billing`, `anomalies` | `generation_parameters` |
+| `hard_case_type` | `none`, `sarcastic`, `implicit` | `sentiment_labels` |
 
-All 21 vocabularies are implemented once, as `StrEnum` classes in `packages/db_models/src/db_models/enums.py`, and reused by the models, the generator, and the eval harness. That module is the authority; this table is the documentation of it.
+All 22 vocabularies are implemented once, as `StrEnum` classes in `packages/db_models/src/db_models/enums.py`, and reused by the models, the generator, and the eval harness. That module is the authority; this table is the documentation of it.
 
 ---
 
@@ -481,6 +483,7 @@ The schema in this document is now implemented in code:
 | Roles and grants migration (frozen, ADR-027) | `data/migrations/versions/*_roles_and_grants.py` |
 | Sentiment column-level feedback grant (ADR-027) | `data/migrations/versions/*_sentiment_feedback_column_grant.py` |
 | Forecast column-level `service_requests` grant (ADR-035) | `data/migrations/versions/*_forecast_service_requests_column_grant.py` |
+| `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`, `corpus_id` added (ADR-037, `4c6589542b27`) | `data/migrations/versions/*_sentiment_labels_hard_case_type_and_.py` |
 | Contract tests | `tests/unit/` |
 | Live grant tests (reads and writes, per role) | `tests/integration/` |
 

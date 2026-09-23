@@ -196,6 +196,18 @@ class ParamGroup(StrEnum):
     ANOMALIES = "anomalies"
 
 
+class HardCaseType(StrEnum):
+    """`sentiment_labels.hard_case_type` — §4 (ADR-036, ADR-037).
+
+    Which kind of deliberately hard case a feedback comment is, so failure analysis can
+    report accuracy per type. `none` for ordinary comments.
+    """
+
+    NONE = "none"
+    SARCASTIC = "sarcastic"
+    IMPLICIT = "implicit"
+
+
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
@@ -239,4 +251,5 @@ ALL_VOCABULARIES: tuple[type[StrEnum], ...] = (
     Skill,
     Proficiency,
     ParamGroup,
+    HardCaseType,
 )

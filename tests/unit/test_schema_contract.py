@@ -20,6 +20,10 @@ from alembic.config import Config
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INITIAL_REVISION = "0f3c81a47b21"
+#: ADR-037: hard_case_type replaces is_sarcastic, corpus_id added. Its constraints are
+#: modelled but not in the initial migration, so the offline render includes it too.
+HARD_CASE_REVISION = "4c6589542b27"
+HARD_CASE_PARENT = "fae4b8c9814c"
 
 EXPECTED_TABLES = {
     # §2 reference
@@ -67,6 +71,9 @@ EXPECTED_CHECK_CONSTRAINTS = {
     "ck_service_requests_sla_window_minutes_positive",
 }
 
+#: VARCHAR(32) columns that are identifiers, not vocabularies, so carry no CHECK.
+NON_VOCABULARY_32 = {("sentiment_labels", "corpus_id")}
+
 
 def _all_check_names() -> set[str]:
     return {
@@ -99,6 +106,8 @@ def test_every_vocabulary_column_has_a_check_constraint() -> None:
     checks = _all_check_names()
     for table in m.metadata.tables.values():
         for column in table.columns:
+            if (table.name, column.name) in NON_VOCABULARY_32:
+                continue
             if isinstance(column.type, sa.String) and column.type.length == m.VOCAB_LEN:
                 assert f"ck_{table.name}_{column.name}" in checks, (
                     f"{table.name}.{column.name} looks like a vocabulary column but "
@@ -166,7 +175,12 @@ def test_total_invoice_is_not_stored() -> None:
 
 @pytest.fixture
 def offline_sql(monkeypatch: pytest.MonkeyPatch) -> str:
-    """DDL the initial migration emits, rendered without touching a database."""
+    """DDL the schema migrations emit, rendered without touching a database.
+
+    The initial migration, plus the ADR-037 migration (rendered from its parent), which
+    adds constraints the initial one predates. The grant-only migrations in between are
+    skipped: they need role credentials and create no schema objects.
+    """
     for name, value in {
         "POSTGRES_ADMIN_USER": "offline",
         "POSTGRES_ADMIN_PASSWORD": "offline",
@@ -180,6 +194,7 @@ def offline_sql(monkeypatch: pytest.MonkeyPatch) -> str:
     config = Config(str(REPO_ROOT / "alembic.ini"), stdout=buffer, output_buffer=buffer)
     config.set_main_option("script_location", str(REPO_ROOT / "data" / "migrations"))
     command.upgrade(config, INITIAL_REVISION, sql=True)
+    command.upgrade(config, f"{HARD_CASE_PARENT}:{HARD_CASE_REVISION}", sql=True)
     return buffer.getvalue()
 
 
@@ -203,3 +218,52 @@ def test_migration_creates_every_modelled_constraint(offline_sql: str) -> None:
         if constraint.name
     }
     assert modelled <= created, f"absent from the migration: {sorted(modelled - created)}"
+
+
+# --------------------------------------------------------------------------- #
+# ADR-037: sentiment_labels.hard_case_type and corpus_id
+# --------------------------------------------------------------------------- #
+
+
+def test_hard_case_type_values() -> None:
+    assert m.values(m.HardCaseType) == ("none", "sarcastic", "implicit")
+
+
+def test_vocabulary_count() -> None:
+    """§5 lists 22 controlled vocabularies (ADR-037 added `HardCaseType`)."""
+    assert len(m.ALL_VOCABULARIES) == 22
+    assert len(set(m.ALL_VOCABULARIES)) == 22
+
+
+def test_sentiment_labels_hard_case_type() -> None:
+    table = m.metadata.tables["sentiment_labels"]
+    assert "is_sarcastic" not in table.columns
+    column = table.columns["hard_case_type"]
+    assert not column.nullable
+    assert isinstance(column.type, sa.String) and column.type.length == m.VOCAB_LEN
+    (check,) = [
+        c
+        for c in table.constraints
+        if isinstance(c, sa.CheckConstraint) and c.name == "ck_sentiment_labels_hard_case_type"
+    ]
+    assert str(check.sqltext) == "hard_case_type IN ('none', 'sarcastic', 'implicit')"
+
+
+def test_sentiment_labels_corpus_id() -> None:
+    table = m.metadata.tables["sentiment_labels"]
+    column = table.columns["corpus_id"]
+    assert not column.nullable
+    assert isinstance(column.type, sa.String) and column.type.length == 32
+    uniques = [
+        c
+        for c in table.constraints
+        if isinstance(c, sa.UniqueConstraint) and [col.name for col in c.columns] == ["corpus_id"]
+    ]
+    assert [u.name for u in uniques] == ["uq_sentiment_labels_corpus_id"]
+
+
+def test_hard_case_migration_matches_model(offline_sql: str) -> None:
+    """The ADR-037 migration emits the modelled CHECK values and drops is_sarcastic."""
+    assert "hard_case_type IN ('none', 'sarcastic', 'implicit')" in offline_sql
+    assert "uq_sentiment_labels_corpus_id UNIQUE (corpus_id)" in offline_sql
+    assert "DROP COLUMN is_sarcastic" in offline_sql

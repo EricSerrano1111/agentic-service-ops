@@ -48,6 +48,7 @@
 | 034 | 120-second end-to-end timeout ceiling; latency measured, not targeted | Accepted |
 | 035 | Forecast agent narrowed to three columns of `service_requests` | Accepted |
 | 036 | Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels | Accepted — supersedes ADR-019, ADR-021 and ADR-030 in part |
+| 037 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`; `corpus_id` added | Accepted |
 
 ---
 
@@ -722,3 +723,45 @@ the sentiment agent is marked wrong for reading like one (R-13).
   negative (implicit, sarcastic) only.
 - `sentiment_labels.is_sarcastic` cannot represent implicit hard cases. ADR-037 decides
   the schema change.
+
+### ADR-037 — `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`; `corpus_id` added
+*Date: 2026-09-23. Resolves the schema question left open by ADR-030 and ADR-036.
+Supersedes nothing.*
+
+**Decision:**
+1. `sentiment_labels.is_sarcastic` is replaced by `hard_case_type`: VARCHAR + CHECK
+   (`none`, `sarcastic`, `implicit`), NOT NULL. It becomes the 22nd controlled
+   vocabulary, `HardCaseType` in `enums.py`.
+2. `sentiment_labels.corpus_id` is added: VARCHAR(32), NOT NULL, UNIQUE. It holds the
+   ID of the corpus comment (`data/generator/corpus/feedback_text.jsonl`) that supplied
+   the row's `feedback_text`.
+3. A new migration applies both, carrying its definitions as frozen literals (ADR-027).
+   Its upgrade maps existing rows (`is_sarcastic` true → `sarcastic`, false → `none`),
+   although the table is empty today. Its downgrade restores `is_sarcastic`, mapping
+   `sarcastic` → true and everything else → false. That mapping is lossy for
+   `implicit`, which is documented in the migration.
+
+**Context:** ADR-036 defines two hard-case types. A boolean can represent only one, so
+implicit hard cases would be stored as easy ones and disappear from the failure
+analysis. That analysis also needs the corpus metadata behind each label (neutral kind,
+incident level, focus, channel), which lives in the committed corpus, not the database.
+Without a stored key, the eval harness could join a label to its corpus record only by
+matching the text, which is fragile.
+
+**Alternatives considered:**
+- *Keep `is_sarcastic` and add a separate implicit flag* (rejected). Two booleans can
+  contradict each other; one vocabulary column cannot.
+- *Keep the hard-case type only in the corpus* (rejected). Without `corpus_id` there is
+  no reliable join, and with it the type would still be one extra join away for every
+  subgroup query.
+- *Store the full corpus metadata in the database* (rejected). It adds columns the
+  schema doesn't otherwise need. The corpus file is committed and authoritative, and
+  `corpus_id` is enough to reach it.
+
+**Consequences:**
+- `UNIQUE (corpus_id)` enforces ADR-030's no-reuse rule in the database: a generator
+  bug that assigns one comment to two feedback rows fails at insert time.
+- `sentiment_labels` grants are table-level (`app_qa` SELECT, `app_generator` ALL), so
+  both new columns are covered without a grant change. No agent role gains anything.
+- `data-dictionary.md` §4, §5 and §10 are updated; the vocabulary count goes from 21
+  to 22.

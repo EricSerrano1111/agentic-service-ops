@@ -11,12 +11,12 @@ from __future__ import annotations
 import datetime as dt
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Boolean, ForeignKey, Numeric, String, Text, false
+from sqlalchemy import BigInteger, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, tz_timestamp
-from .enums import VOCAB_LEN, ParamGroup, TrueSentiment, check_in
+from .enums import VOCAB_LEN, HardCaseType, ParamGroup, TrueSentiment, check_in
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .operational import ServiceFeedback
@@ -51,7 +51,10 @@ class SentimentLabel(Base):
     """
 
     __tablename__ = "sentiment_labels"
-    __table_args__ = (check_in("sentiment_labels", "true_sentiment", TrueSentiment),)
+    __table_args__ = (
+        check_in("sentiment_labels", "true_sentiment", TrueSentiment),
+        check_in("sentiment_labels", "hard_case_type", HardCaseType),
+    )
 
     feedback_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("service_feedback.feedback_id"), primary_key=True
@@ -60,8 +63,13 @@ class SentimentLabel(Base):
     #: §4 leaves precision unstated and calls it optional. Numeric(4, 3) covers
     #: 0.000–1.000 exactly, and NULL means "no deliberate ambiguity assigned".
     label_confidence: Mapped[float | None] = mapped_column(Numeric(4, 3), nullable=True)
-    #: Flags deliberately hard cases (~15% of feedback, ADR-019) so failure analysis
-    #: can report easy vs. hard subset accuracy separately.
-    is_sarcastic: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=false())
+    #: Which kind of deliberately hard case this is (~15% of feedback, ADR-019), or
+    #: `none`, so failure analysis can report accuracy per type (ADR-036, ADR-037).
+    hard_case_type: Mapped[str] = mapped_column(String(VOCAB_LEN), nullable=False)
+    #: ID of the corpus comment that supplied this row's `feedback_text`
+    #: (`data/generator/corpus/feedback_text.jsonl`). UNIQUE enforces ADR-030's
+    #: no-reuse rule: one comment can never back two feedback rows (ADR-037).
+    #: Not a vocabulary, despite sharing VOCAB_LEN's width.
+    corpus_id: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
 
     feedback: Mapped[ServiceFeedback] = relationship(back_populates="sentiment_label")
