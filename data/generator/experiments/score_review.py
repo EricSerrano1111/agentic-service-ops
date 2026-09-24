@@ -7,7 +7,9 @@ A key with a judge_label column (prompt v1 runs onward) is scored three-way: hum
 intended vs the Gemma judge, with the neutral, implicit, and positive-vs-mixed breakdowns.
 A key with a group column (prompt v2 runs onward) is scored per spec group instead: three-way
 agreement by group and neutral kind, the human pass criteria, and ratings by channel/opening.
-Older keys are scored per model exactly as before.
+A blind sheet with a names_failure_yn column (build_corpus.py test batch) is scored by its
+test groups, with the ADR-036 gross-failure check. Older keys are scored per model exactly
+as before.
 
 Usage:
     python data/generator/experiments/score_review.py data/generator/experiments/bakeoff/<date>
@@ -81,6 +83,11 @@ def load(run: Path) -> list[dict]:
             )
         if "group" in k:  # v2+ keys; v0/v1 rows stay exactly as before
             rows[-1].update(group=k["group"], neutral_kind=k["neutral_kind"] or None)
+        if "names_failure_yn" in b:  # corpus test batch sheets only; older sheets lack it
+            nf = b["names_failure_yn"].strip().lower()
+            if nf not in {"y", "n"}:
+                problems.append(f"{rid}: names_failure_yn={b['names_failure_yn']!r}")
+            rows[-1].update(names_failure=nf == "y", corpus_id=k["corpus_id"])
     if problems:
         sys.exit("Validation failed:\n  " + "\n  ".join(problems))
     return rows
@@ -467,9 +474,132 @@ def print_grouped(res: dict) -> None:
             rline(f"  {k}", s)
 
 
+# --------------------------------------------------------------------------- corpus test batch
+
+#: Scoring groups for build_corpus.py's test batch; positive_incident is split by style.
+CORPUS_TEST_GROUPS = [
+    (
+        "positive_incident/plain",
+        lambda r: r["group"] == "positive_incident" and r["style"] == "plain",
+    ),
+    (
+        "positive_incident/implicit",
+        lambda r: r["group"] == "positive_incident" and r["style"] == "implicit",
+    ),
+    ("mixed_serious", lambda r: r["group"] == "mixed_serious"),
+    ("minimal_neutral", lambda r: r["group"] == "minimal_neutral"),
+    ("sms", lambda r: r["group"] == "sms"),
+    ("distractor", lambda r: r["group"] == "distractor"),
+]
+GROSS_FAILURE_BELOW = 0.5  # ADR-036 decision 7: a cell below 50% is regenerated once
+
+
+def score_corpus_test(rows: list[dict]) -> dict:
+    """build_corpus.py test batch: three-way agreement by group, the positive-with-incident
+    names-the-failure breakdown, the ADR-036 gross-failure check, and ratings."""
+    groups = {name: [r for r in rows if pred(r)] for name, pred in CORPUS_TEST_GROUPS}
+    agreement = {"overall": {p: pair_agree(rows, a, b) for p, (a, b) in PAIRS.items()}}
+    for name, rs in groups.items():
+        agreement[name] = {p: pair_agree(rs, a, b) for p, (a, b) in PAIRS.items()}
+
+    pos = sorted(
+        (r for r in rows if r["group"] == "positive_incident"),
+        key=lambda r: (r["style"], r["review_id"]),
+    )
+    pos_rows = [
+        {
+            "review_id": r["review_id"],
+            "style": r["style"],
+            "severity": r["incident_severity"],
+            "incident_type": r["incident_type"],
+            "names_failure": r["names_failure"],
+            "human": r["mine"],
+            "judge": r["judge"],
+            "text": r["text"],
+        }
+        for r in pos
+    ]
+    not_naming = [r for r in pos if not r["names_failure"]]
+    pos_totals = {
+        "n": len(pos),
+        "names_failure": sum(r["names_failure"] for r in pos),
+        "not_naming": len(not_naming),
+        "not_naming_human_labels": dict(Counter(r["mine"] for r in not_naming).most_common()),
+        "naming_human_labels": dict(
+            Counter(r["mine"] for r in pos if r["names_failure"]).most_common()
+        ),
+    }
+
+    gross = {
+        name: {
+            "value": fmt(agreement[name]["human_vs_intended"]),
+            "flag": bool(rs) and agreement[name]["human_vs_intended"]["rate"] < GROSS_FAILURE_BELOW,
+        }
+        for name, rs in groups.items()
+    }
+    sms = groups["sms"]
+    return {
+        "three_way_agreement": agreement,
+        "positive_incident_rows": pos_rows,
+        "positive_incident_totals": pos_totals,
+        "gross_failure_check": gross,
+        "ratings": {"all": rating_summary(rows), "sms": rating_summary(sms) if sms else None},
+        "rows": rows,
+    }
+
+
+def print_corpus_test(res: dict) -> None:
+    ag = res["three_way_agreement"]
+    names = list(PAIRS)
+    n = res["ratings"]["all"]["n"]
+    print(f"== 2. Three-way agreement ({n} reviewed)")
+    print(f"{'':28}" + "".join(f"{p:>20}" for p in names))
+    for group, d in ag.items():
+        print(f"{group:28}" + "".join(f"{fmt(d[p]):>20}" for p in names))
+
+    t = res["positive_incident_totals"]
+    print(f"\n== 3. Positive-with-incident rows ({t['n']})")
+    for r in res["positive_incident_rows"]:
+        print(
+            f"- {r['review_id']} | {r['style']} | {r['severity']} {r['incident_type']} | "
+            f"names failure {'y' if r['names_failure'] else 'n'} | human {r['human']} | "
+            f"judge {r['judge']}"
+        )
+        print(f"    {r['text']}")
+    print(
+        f"  you said {t['names_failure']}/{t['n']} name the failure; of the {t['not_naming']} "
+        f"that don't, your labels: {t['not_naming_human_labels']}"
+    )
+    print(f"  of those that do: {t['naming_human_labels']}")
+
+    print(f"\n== 4. Gross-failure check (human vs intended < {GROSS_FAILURE_BELOW:.0%})")
+    for group, g in res["gross_failure_check"].items():
+        print(f"  {'FLAG' if g['flag'] else 'ok  '}  {group:28} {g['value']}")
+
+    def rline(label, s):
+        d = s["believable_distribution"]
+        print(
+            f"  {label:6} n={s['n']:2}  believable 1/2/3 = {d['1']}/{d['2']}/{d['3']}  "
+            f"mean {s['mean_believable_1to3']:.2f}  sounds AI {s['sounds_ai_y']['y']}/{s['n']} "
+            f"({s['sounds_ai_y']['rate']:.0%})"
+        )
+
+    print("\n== 5. Ratings")
+    rline("all", res["ratings"]["all"])
+    if res["ratings"]["sms"]:
+        rline("sms", res["ratings"]["sms"])
+
+
 def main() -> None:
     run = Path(sys.argv[1])
     rows = load(run)
+    if "names_failure" in rows[0]:
+        result = score_corpus_test(rows)
+        (run / "review_scored.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        print_corpus_test(result)
+        return
     if "group" in rows[0]:
         result = score_grouped(rows)
         (run / "review_scored.json").write_text(
