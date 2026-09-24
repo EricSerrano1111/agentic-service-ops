@@ -80,6 +80,26 @@ EXPECTED_OUTPUT_TOKENS = {GEN_MODEL: 1_000, JUDGE_MODEL: 350}
 #: A per-minute 429 waits at least this long before retrying (the window is a minute).
 PER_MINUTE_429_MIN_WAIT_S = 30.0
 
+#: ADR-041: Flash-Lite generation may run on a separate paid project with its own key.
+#: The Gemma judge always uses the free-tier key. Key values are never printed.
+FREE_KEY_VAR = "GOOGLE_AI_API_KEY"
+PAID_KEY_VAR = "GOOGLE_AI_API_KEY_PAID"
+PAID_RPM = 60
+PAID_MAX_REQUESTS_DEFAULT = 1000
+#: Flash-Lite list prices, USD per million tokens (ADR-041). Thinking tokens bill as output.
+PRICE_PER_M_TOKENS = {"input": 0.30, "output": 2.50}
+PAID_LOG_PATH = WORK_DIR / "paid_requests.jsonl"
+
+#: 2026-09-24 neutral_kind_mix change: ungenerated round-0 minimal specs are retired.
+RETIRE_MINIMAL_REASON = "neutral_kind_mix changed 2026-09-24 (minimal .35 -> .15)"
+NEUTRAL_KIND_MIX_CHANGE = {
+    "date": "2026-09-24",
+    "from": {"minimal": 0.35, "administrative": 0.35, "status": 0.30},
+    "to": {"minimal": 0.15, "administrative": 0.50, "status": 0.35},
+    "rule": "round-0 specs generated before the change keep the old mix; ungenerated round-0 "
+    "minimal specs are retired; top-up rounds draw from the new mix",
+}
+
 TOPUP_ROUNDS = 3
 TOPUP_INFLATION = 1.5
 JUDGE_PASSES = 3
@@ -159,6 +179,7 @@ class Workspace:
         self.generated = root / "generated.jsonl"
         self.checks = root / "checks.jsonl"
         self.judged = root / "judged.jsonl"
+        self.retired = root / "retired.jsonl"
 
     def load_specs(self) -> list[dict]:
         return read_jsonl(self.specs)
@@ -181,6 +202,10 @@ class Workspace:
         for r in read_jsonl(self.judged):
             out.update(r["labels"])
         return out
+
+    def retired_ids(self) -> dict[str, str]:
+        """corpus_id -> reason, for specs that will never be generated."""
+        return {r["corpus_id"]: r["reason"] for r in read_jsonl(self.retired)}
 
 
 # --------------------------------------------------------------------------- request cap
@@ -266,21 +291,74 @@ class Pacer:
 # --------------------------------------------------------------------------- api
 
 
-class GeminiApi:
-    """Real API. `request(model, prompt)` -> {"text", "raw", "latency_s", "retries"}."""
+def request_cost(input_tokens: int, output_tokens: int) -> float:
+    """Estimated USD at Flash-Lite list prices (ADR-041); not billing data."""
+    return (
+        input_tokens * PRICE_PER_M_TOKENS["input"] + output_tokens * PRICE_PER_M_TOKENS["output"]
+    ) / 1_000_000
 
-    def __init__(self, counter: RequestCounter, pacer: Pacer | None = None):
+
+def paid_summary(path: Path | None = None) -> dict:
+    rows = read_jsonl(path or PAID_LOG_PATH)
+    inp = sum(r["input_tokens"] for r in rows)
+    out = sum(r["output_tokens"] for r in rows)
+    return {
+        "requests": len(rows),
+        "input_tokens": inp,
+        "output_tokens": out,
+        "estimated_cost_usd": round(request_cost(inp, out), 6),
+        "prices_per_million_tokens": PRICE_PER_M_TOKENS,
+        "note": "estimate from list prices, not billing data",
+    }
+
+
+def _usage(resp) -> tuple[int, int]:
+    u = getattr(resp, "usage_metadata", None)
+    inp = getattr(u, "prompt_token_count", None) or 0
+    out = (getattr(u, "candidates_token_count", None) or 0) + (
+        getattr(u, "thoughts_token_count", None) or 0
+    )
+    return int(inp), int(out)
+
+
+class GeminiApi:
+    """Real API. `request(model, prompt)` -> {"text", "raw", "latency_s", "retries", "tier",
+    "usage"}. With paid=True, Flash-Lite runs on the paid project's key (ADR-041)."""
+
+    def __init__(
+        self,
+        counter: RequestCounter,
+        pacer: Pacer | None = None,
+        *,
+        paid: bool = False,
+        paid_max_requests: int = PAID_MAX_REQUESTS_DEFAULT,
+        paid_log: Path | None = None,
+    ):
         from dotenv import load_dotenv
         from google import genai
         from google.genai import types
 
         load_dotenv(HERE.parents[1] / ".env")
-        key = os.environ.get("GOOGLE_AI_API_KEY")
-        if not key:
-            raise SystemExit("GOOGLE_AI_API_KEY is not set (see .env.example)")
-        self.client = genai.Client(api_key=key)
+        free_key = os.environ.get(FREE_KEY_VAR)
+        if not free_key:
+            raise SystemExit(f"{FREE_KEY_VAR} is not set (see .env.example)")
+        free = genai.Client(api_key=free_key)
+        gen_client = free
+        if paid:
+            paid_key = os.environ.get(PAID_KEY_VAR)
+            if not paid_key:
+                raise SystemExit(f"{PAID_KEY_VAR} is not set (see .env.example)")
+            gen_client = genai.Client(api_key=paid_key)
+        self.clients = {GEN_MODEL: gen_client, JUDGE_MODEL: free}
+        self.tiers = {GEN_MODEL: "paid" if paid else "free", JUDGE_MODEL: "free"}
         self.counter = counter
-        self.pacer = pacer or Pacer()
+        limits = dict(PACING)
+        if paid:
+            limits[GEN_MODEL] = {"rpm": PAID_RPM}
+        self.pacer = pacer or Pacer(limits)
+        self.paid_max_requests = paid_max_requests
+        self.paid_requests = 0
+        self.paid_log = paid_log or PAID_LOG_PATH
 
         def config(temperature: float):
             return types.GenerateContentConfig(
@@ -296,24 +374,43 @@ class GeminiApi:
         retries: Counter = Counter()
         attempt = 0
         est = estimate_tokens(model, prompt)
+        tier = self.tiers.get(model, "free")
         while True:
+            if tier == "paid" and self.paid_requests >= self.paid_max_requests:
+                raise StopRun(f"{model}: paid session cap {self.paid_max_requests} reached")
             self.pacer.wait(model, est)
-            self.counter.take(model)
+            # Paid requests are counted per day under their own key: no daily cap applies,
+            # and they never eat into the free tier's local count.
+            self.counter.take(f"{model}@paid" if tier == "paid" else model)
+            if tier == "paid":
+                self.paid_requests += 1
             self.pacer.record(model, est)
             t0 = time.perf_counter()
             try:
-                resp = self.client.models.generate_content(
+                resp = self.clients[model].models.generate_content(
                     model=model, contents=prompt, config=self.configs[model]
                 )
-                usage = getattr(resp, "usage_metadata", None)
-                total = getattr(usage, "total_token_count", None)
-                if total:
-                    self.pacer.correct_last(model, int(total))
+                inp, out = _usage(resp)
+                if inp or out:
+                    self.pacer.correct_last(model, inp + out)
+                if tier == "paid":
+                    append_jsonl(
+                        self.paid_log,
+                        {
+                            "at": _now(),
+                            "model": model,
+                            "input_tokens": inp,
+                            "output_tokens": out,
+                            "cost_usd": round(request_cost(inp, out), 6),
+                        },
+                    )
                 return {
                     "text": resp.text,
                     "raw": resp.model_dump(mode="json"),
                     "latency_s": round(time.perf_counter() - t0, 2),
                     "retries": dict(retries),
+                    "tier": tier,
+                    "usage": {"input": inp, "output": out},
                 }
             except Exception as exc:  # SDK raises ClientError/ServerError with .code
                 code = getattr(exc, "code", None)
@@ -560,12 +657,14 @@ def parse_array(text: str | None, n: int, field: str) -> dict[int, str]:
 MONEY = re.compile(r"[$€£]\s?\d|\b\d+(?:\.\d+)?\s?(?:dollars|bucks|usd)\b", re.IGNORECASE)
 TIME = re.compile(r"\b\d{1,2}:\d{2}\b|\b\d{1,2}\s?(?:a\.?m\.?|p\.?m\.?)(?!\w)", re.IGNORECASE)
 _MONTHS = "january|february|march|april|may|june|july|august|september|october|november|december"
+#: Calendar dates only. Weekday names ("Monday", "Mon") are allowed since 2026-09-24:
+#: they are how real customers write ("we'll see Monday if it holds") and identify no date.
 DATE = re.compile(
     rf"\b(?:{_MONTHS})\s+\d{{1,2}}\b|\b\d{{1,2}}/\d{{1,2}}(?:/\d{{2,4}})?\b"
-    r"|\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)s?\b"
     r"|\b\d{1,2}(?:st|nd|rd|th)\b",
     re.IGNORECASE,
 )
+WEEKDAY_RECHECK = "weekday_exemption_2026-09-24"
 #: Titlecase word not at the start of the text or of a sentence/clause.
 NAME_LIKE = re.compile(r"(?<![.!?:;]\s)(?<![.!?:;])(?<!^)(?<!\n)\b[A-Z][a-z]+\b")
 NAME_ALLOW = {"Wi", "Fi", "Ethernet", "Internet", "PoE"}
@@ -671,7 +770,8 @@ def _now() -> str:
 
 def stage_generate(ws: Workspace, api, template: str) -> int:
     """Generate every batch not yet in generated.jsonl. Returns batches completed now."""
-    specs = ws.load_specs()
+    retired = ws.retired_ids()
+    specs = [s for s in ws.load_specs() if s["corpus_id"] not in retired]
     done = ws.generated_batches()
     by_batch: dict[str, list[dict]] = defaultdict(list)
     for s in specs:
@@ -681,8 +781,10 @@ def stage_generate(ws: Workspace, api, template: str) -> int:
     for n, b in enumerate(pending, 1):
         batch = sorted(by_batch[b], key=lambda s: s["corpus_id"])
         prompt = render_generator_prompt(template, batch)
+        usage = Counter()
         for attempt in range(1, EMPTY_PARSE_ATTEMPTS + 1):
             res = api.request(GEN_MODEL, prompt)
+            usage.update(res.get("usage") or {})  # every attempt is billed
             parsed = parse_array(res["text"], len(batch), "text")
             if parsed:
                 break
@@ -699,6 +801,8 @@ def stage_generate(ws: Workspace, api, template: str) -> int:
                 "latency_s": res.get("latency_s"),
                 "retries": res.get("retries", {}),
                 "attempts": attempt,
+                "tier": res.get("tier", "free"),
+                "usage": dict(usage),
                 "raw": res.get("raw"),
             },
         )
@@ -735,6 +839,76 @@ def stage_checks(ws: Workspace) -> int:
         )
         new += 1
     return new
+
+
+def retire_ungenerated_minimal(ws: Workspace) -> int:
+    """Retire round-0 minimal-neutral specs not yet generated (2026-09-24 mix change).
+
+    Idempotent: only specs that are neither generated nor already retired are recorded.
+    Their corpus_ids simply never appear in the corpus.
+    """
+    retired = ws.retired_ids()
+    generated = set()
+    for r in read_jsonl(ws.generated):
+        generated.update(r["corpus_ids"])
+    new = [
+        s
+        for s in ws.load_specs()
+        if s["round"] == 0
+        and s["neutral_kind"] == "minimal"
+        and s["corpus_id"] not in generated
+        and s["corpus_id"] not in retired
+    ]
+    for s in new:
+        append_jsonl(
+            ws.retired, {"corpus_id": s["corpus_id"], "reason": RETIRE_MINIMAL_REASON, "at": _now()}
+        )
+    return len(new)
+
+
+def recheck_date_rejections(ws: Workspace) -> dict[str, int]:
+    """Re-run checks on comments rejected only for "date" under the old weekday rule.
+
+    A comment that now passes (including the corpus-wide duplicate check) gets a new
+    ok row and goes to the judge like any new comment; one that now fails for another
+    reason gets a row with that reason. Genuine calendar dates stay rejected, unrecorded,
+    so a rerun is a no-op.
+    """
+    specs = {s["corpus_id"]: s for s in ws.load_specs()}
+    texts = ws.texts()
+    results = ws.check_results()
+    index = DuplicateIndex()
+    for cid, r in results.items():
+        if r["ok"]:
+            index.add(cid, texts[cid])
+    out = Counter()
+    for cid, r in results.items():
+        if r["ok"] or r["reasons"] != ["date"]:
+            continue
+        reasons = text_violations(texts[cid], specs[cid])
+        if "date" in reasons:  # a genuine calendar date: stays rejected as it was
+            out["still_date"] += 1
+            continue
+        other = None
+        if not reasons:
+            dup, other = index.find(texts[cid])
+            if dup:
+                reasons.append(dup)
+        ok = not reasons
+        if ok:
+            index.add(cid, texts[cid])
+        append_jsonl(
+            ws.checks,
+            {
+                "corpus_id": cid,
+                "ok": ok,
+                "reasons": reasons,
+                "duplicate_of": other,
+                "recheck": WEEKDAY_RECHECK,
+            },
+        )
+        out["reinstated" if ok else "rejected_other"] += 1
+    return dict(out)
 
 
 def stage_judge(ws: Workspace, api, template: str) -> int:
@@ -778,6 +952,7 @@ def select(ws: Workspace) -> dict[str, dict]:
         generated.update(r["corpus_ids"])
     checks = ws.check_results()
     labels = ws.judge_labels()
+    retired = ws.retired_ids()
     out = {}
     for s in specs:
         cid = s["corpus_id"]
@@ -787,7 +962,9 @@ def select(ws: Workspace) -> dict[str, dict]:
             "judge": labels.get(cid),
             "disagreement": False,
         }
-        if cid in generated:
+        if cid in retired and cid not in generated:
+            st.update(status="retired", reason=retired[cid])
+        elif cid in generated:
             c = checks.get(cid)
             if c is None:
                 st["status"] = "pending_checks"
@@ -815,6 +992,8 @@ def cell_counts(specs: list[dict], status: dict[str, dict]) -> dict[str, Counter
     out: dict[str, Counter] = defaultdict(Counter)
     for s in specs:
         st = status[s["corpus_id"]]["status"]
+        if st == "retired":  # never generated; neither a spec nor pending for its cell
+            continue
         out[s["cell"]]["specs"] += 1
         out[s["cell"]][st if st in ("accepted", "rejected") else "pending"] += 1
     return out
@@ -942,6 +1121,29 @@ def finalize(ws: Workspace, out_dir: Path, required: dict[str, int], *, complete
         },
         "rejections_by_reason": dict(Counter(r["reason"] for r in rejected).most_common()),
         "hard_case_judge_disagreements": dict(hard_disagree),
+        "retired_specs": dict(Counter(ws.retired_ids().values())),
+        "neutral_kind_mix_change": NEUTRAL_KIND_MIX_CHANGE,
+        "neutral_kinds_realised": {
+            "generated": dict(
+                Counter(
+                    s["neutral_kind"]
+                    for s in specs
+                    if s["neutral_kind"] and s["corpus_id"] in texts
+                )
+            ),
+            "accepted": dict(Counter(r["neutral_kind"] for r in accepted if r["neutral_kind"])),
+        },
+        "weekday_date_recheck": dict(
+            Counter(
+                "reinstated" if r["ok"] else "rejected_other"
+                for r in read_jsonl(ws.checks)
+                if r.get("recheck") == WEEKDAY_RECHECK
+            )
+        ),
+        "generation_batches_by_tier": dict(
+            Counter(r.get("tier", "free") for r in read_jsonl(ws.generated))
+        ),
+        "paid_tier": paid_summary(),
         "accepted": len(accepted),
         "rejected": len(rejected),
     }
@@ -988,6 +1190,12 @@ def run_full(ws: Workspace, api, params: prm.Parameters = prm.PARAMS) -> dict:
         for s in build_full_specs(params):
             append_jsonl(ws.specs, s)
         print(f"specs: {sum(required.values())} across {len(required)} cells")
+    retired = retire_ungenerated_minimal(ws)
+    if retired:
+        print(f"retired {retired} ungenerated round-0 minimal-neutral specs")
+    rechecked = recheck_date_rejections(ws)
+    if rechecked:
+        print(f"weekday recheck: {rechecked}")
     while True:
         stopped = run_pipeline(ws, api, gen_template=gen_t, judge_template=judge_t)
         specs = ws.load_specs()
@@ -1057,9 +1265,16 @@ def print_status(ws: Workspace, required: dict[str, int]) -> None:
         f"{len(short)} short"
     )
     print(
-        f"  requests today (Pacific): {GEN_MODEL} {counter.used(GEN_MODEL)}/"
-        f"{DAILY_CAP[GEN_MODEL]}, {JUDGE_MODEL} {counter.used(JUDGE_MODEL)}/"
-        f"{DAILY_CAP[JUDGE_MODEL]}"
+        f"  requests today (Pacific): {GEN_MODEL} free {counter.used(GEN_MODEL)}/"
+        f"{DAILY_CAP[GEN_MODEL]}, paid {counter.used(GEN_MODEL + '@paid')}; "
+        f"{JUDGE_MODEL} {counter.used(JUDGE_MODEL)}/{DAILY_CAP[JUDGE_MODEL]}"
+    )
+    tiers = Counter(r.get("tier", "free") for r in read_jsonl(ws.generated))
+    paid = paid_summary()
+    print(
+        f"  generation batches by tier: {dict(tiers)}; paid requests {paid['requests']}, "
+        f"tokens in/out {paid['input_tokens']}/{paid['output_tokens']}, "
+        f"estimated cost ${paid['estimated_cost_usd']:.2f} (list prices, not billing data)"
     )
 
 
@@ -1362,6 +1577,13 @@ def main(argv: list[str] | None = None) -> int:
         help=f"override today's local {GEN_MODEL} request cap (default {DAILY_CAP[GEN_MODEL]}), "
         "e.g. when requests were already spent outside this script",
     )
+    ap.add_argument("--paid", action="store_true", help=f"Flash-Lite on {PAID_KEY_VAR} (ADR-041)")
+    ap.add_argument(
+        "--paid-max-requests",
+        type=int,
+        default=PAID_MAX_REQUESTS_DEFAULT,
+        help="hard cap on paid Flash-Lite requests this session",
+    )
     args = ap.parse_args(argv)
 
     prm.validate_parameters()
@@ -1373,7 +1595,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.gen_cap is not None:
         caps[GEN_MODEL] = args.gen_cap
         print(f"{GEN_MODEL} cap for this invocation: {args.gen_cap}")
-    api = GeminiApi(RequestCounter(caps=caps))
+    if args.paid:
+        print(f"{GEN_MODEL} on the paid project; session cap {args.paid_max_requests} requests")
+    api = GeminiApi(
+        RequestCounter(caps=caps), paid=args.paid, paid_max_requests=args.paid_max_requests
+    )
     if args.test_batch:
         report = run_test_batch(TEST_ROOT / args.out_date, api)
         print_test_report(report)

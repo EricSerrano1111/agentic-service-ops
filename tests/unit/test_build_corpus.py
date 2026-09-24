@@ -173,7 +173,8 @@ SPEC = {"min_words": 1, "max_words": 60}
         ("they charged $300 for the switch swap", "money"),
         ("crew showed up at 9:30 and finished fast", "time"),
         ("booked for March 4 and nobody came", "date"),
-        ("came back on tuesday to finish cabling", "date"),
+        ("came back on 3/14 to finish cabling", "date"),
+        ("ordered the parts on the 4th", "date"),
         ("thanks to Dave for sorting the router", "name_like"),
         ("Hi team, the rack install went fine", "greeting_or_signoff"),
         ("rack install went fine. Thanks, Sam", "greeting_or_signoff"),
@@ -343,11 +344,7 @@ def test_daily_quota_429_stops_without_retry_loop(tmp_path):
             Models.calls += 1
             raise Err("RESOURCE_EXHAUSTED GenerateRequestsPerDayPerProjectPerModel")
 
-    api = object.__new__(bc.GeminiApi)
-    api.client = type("C", (), {"models": Models()})()
-    api.counter = bc.RequestCounter(tmp_path / "c.json", caps={}, today=lambda: "d")
-    api.pacer = bc.Pacer({})
-    api.configs = {bc.GEN_MODEL: None}
+    api = _api_with(Models(), tmp_path)
     with pytest.raises(bc.StopRun, match="daily quota"):
         api.request(bc.GEN_MODEL, "prompt")
     assert Models.calls == 1
@@ -500,13 +497,17 @@ def test_pacing_limits_match_today_request():
     assert bc.PACING[bc.JUDGE_MODEL] == {"tpm": 12_000}
 
 
-def _api_with(models, tmp_path, caps=None):
+def _api_with(models, tmp_path, caps=None, tier="free", paid_max=1000):
     api = object.__new__(bc.GeminiApi)
-    api.client = type("C", (), {"models": models})()
+    client = type("C", (), {"models": models})()
+    api.clients = {bc.GEN_MODEL: client, bc.JUDGE_MODEL: client}
+    api.tiers = {bc.GEN_MODEL: tier, bc.JUDGE_MODEL: "free"}
     api.counter = bc.RequestCounter(tmp_path / "c.json", caps=caps or {}, today=lambda: "d")
     clock = FakeClock()
     api.pacer = bc.Pacer({}, clock=clock, sleep=clock.sleep)
-    api.configs = {bc.GEN_MODEL: None}
+    api.configs = {bc.GEN_MODEL: None, bc.JUDGE_MODEL: None}
+    api.paid_max_requests, api.paid_requests = paid_max, 0
+    api.paid_log = tmp_path / "paid.jsonl"
     return api
 
 
@@ -541,7 +542,7 @@ def test_gen_cap_flag_overrides_todays_cap(tmp_path, monkeypatch):
     seen = {}
 
     class NoApi:
-        def __init__(self, counter, pacer=None):
+        def __init__(self, counter, pacer=None, **_):
             seen["caps"] = counter.caps
 
     monkeypatch.setattr(bc, "GeminiApi", NoApi)
@@ -579,3 +580,213 @@ def test_non_retryable_errors_still_raise(tmp_path):
 
     with pytest.raises(Err):
         _api_with(Models(), tmp_path).request(bc.GEN_MODEL, "p")
+
+
+# --------------------------------------------------------------------------- weekday exemption
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "installed tuesday, we'll see Monday if it holds",
+        "tech came back Wed to finish the rack",
+        "fine, see you next Fri",
+    ],
+)
+def test_weekday_names_are_allowed(text):
+    assert "date" not in bc.text_violations(text, SPEC)
+
+
+def _generated(ws, rows):
+    for batch, cid, text in rows:
+        bc.append_jsonl(
+            ws.generated,
+            {
+                "batch": batch,
+                "corpus_ids": [cid],
+                "texts": {cid: text},
+                "at": "2026-09-23T00:00:00-07:00",
+            },
+        )
+
+
+def test_recheck_reinstates_weekday_only_rejections(tmp_path):
+    specs = bc.build_test_specs()[:4]
+    for i, s in enumerate(specs):
+        s.update(batch=f"x-b{i}", min_words=1, max_words=60)
+    ws = _ws(tmp_path, specs)
+    a, b, c, d = (s["corpus_id"] for s in specs)
+    kept = "router firmware updated and the office network has been steady since"
+    _generated(
+        ws,
+        [
+            ("x-b0", a, "switch swapped out on tuesday and the ports all light up now"),
+            ("x-b1", b, "booked for March 4 and nobody showed up at all"),
+            ("x-b2", c, kept),
+            ("x-b3", d, kept + " monday"),  # weekday was hiding a near-duplicate
+        ],
+    )
+    for cid, ok, reasons in (
+        (a, False, ["date"]),
+        (b, False, ["date"]),
+        (c, True, []),
+        (d, False, ["date"]),
+    ):
+        bc.append_jsonl(
+            ws.checks, {"corpus_id": cid, "ok": ok, "reasons": reasons, "duplicate_of": None}
+        )
+    out = bc.recheck_date_rejections(ws)
+    assert out == {"reinstated": 1, "still_date": 1, "rejected_other": 1}
+    res = ws.check_results()
+    assert res[a]["ok"] and res[a]["recheck"] == bc.WEEKDAY_RECHECK
+    assert res[b]["reasons"] == ["date"]
+    assert res[d]["reasons"] == ["near_duplicate"]
+    assert bc.recheck_date_rejections(ws) == {"still_date": 1}  # idempotent
+    # A reinstated comment goes to the judge like any new one.
+    api = FakeApi()
+    bc.stage_judge(ws, api, JUDGE_T)
+    assert a in ws.judge_labels()
+
+
+# --------------------------------------------------------------------------- retired specs
+
+
+def test_retired_minimal_specs_are_never_generated(tmp_path):
+    specs = bc.build_test_specs()
+    ws = _ws(tmp_path, specs)
+    minimal = {s["corpus_id"] for s in specs if s["neutral_kind"] == "minimal"}
+    assert len(minimal) == 10
+    first_batch = sorted({s["batch"] for s in specs})[0]
+    bc.append_jsonl(
+        ws.generated,
+        {
+            "batch": first_batch,
+            "corpus_ids": [s["corpus_id"] for s in specs if s["batch"] == first_batch],
+            "texts": {},
+            "at": "2026-09-23T00:00:00-07:00",
+        },
+    )
+    generated_minimal = {
+        s["corpus_id"] for s in specs if s["batch"] == first_batch and s["corpus_id"] in minimal
+    }
+    n = bc.retire_ungenerated_minimal(ws)
+    assert n == len(minimal - generated_minimal) > 0
+    assert bc.retire_ungenerated_minimal(ws) == 0  # idempotent
+    api = FakeApi()
+    bc.stage_generate(ws, api, GEN_T)
+    retired = set(ws.retired_ids())
+    sent = {c for r in bc.read_jsonl(ws.generated) for c in r["corpus_ids"]}
+    assert not retired & sent
+    status = bc.select(ws)
+    assert all(status[c]["status"] == "retired" for c in retired)
+    counts = bc.cell_counts(ws.load_specs(), status)
+    assert sum(c["specs"] for c in counts.values()) == len(specs) - len(retired)
+
+
+def test_new_kind_mix_applies_to_new_specs():
+    mix = prm.PARAMS.corpus.neutral_kind_mix.value
+    assert dict(mix) == {"minimal": 0.15, "administrative": 0.50, "status": 0.35}
+    assert "435" in prm.PARAMS.corpus.neutral_kind_mix.note
+
+
+# --------------------------------------------------------------------------- paid tier
+
+
+class _Resp:
+    text = "[]"
+
+    class usage_metadata:  # noqa: N801
+        prompt_token_count = 1500
+        candidates_token_count = 800
+        thoughts_token_count = 0
+        total_token_count = 2300
+
+    def model_dump(self, mode):
+        return {}
+
+
+class _OkModels:
+    def generate_content(self, **_):
+        return _Resp()
+
+
+def test_paid_session_cap_stops_cleanly(tmp_path):
+    api = _api_with(_OkModels(), tmp_path, tier="paid", paid_max=2)
+    api.request(bc.GEN_MODEL, "p")
+    api.request(bc.GEN_MODEL, "p")
+    with pytest.raises(bc.StopRun, match="paid session cap 2"):
+        api.request(bc.GEN_MODEL, "p")
+    api.request(bc.JUDGE_MODEL, "p")  # the free-tier judge is not capped by it
+    assert api.counter.used(bc.GEN_MODEL + "@paid") == 2
+    assert api.counter.used(bc.GEN_MODEL) == 0  # paid never eats the free count
+
+
+def test_paid_cap_stops_pipeline_cleanly(tmp_path):
+    ws = _ws(tmp_path)
+
+    class Capped(FakeApi):
+        def __init__(self):
+            super().__init__()
+            self.paid = 0
+
+        def request(self, model, prompt):
+            if model == bc.GEN_MODEL:
+                if self.paid >= 1:
+                    raise bc.StopRun("paid session cap 1 reached")
+                self.paid += 1
+            return super().request(model, prompt)
+
+    stopped = bc.run_pipeline(ws, Capped(), gen_template=GEN_T, judge_template=JUDGE_T)
+    assert "paid session cap" in stopped
+    assert len(ws.generated_batches()) == 1
+
+
+def test_paid_requests_logged_with_cost(tmp_path):
+    api = _api_with(_OkModels(), tmp_path, tier="paid")
+    out = api.request(bc.GEN_MODEL, "p")
+    assert out["tier"] == "paid" and out["usage"] == {"input": 1500, "output": 800}
+    (row,) = bc.read_jsonl(api.paid_log)
+    assert row["input_tokens"] == 1500 and row["output_tokens"] == 800
+    assert row["cost_usd"] == pytest.approx(1500 * 0.30 / 1e6 + 800 * 2.50 / 1e6)
+    s = bc.paid_summary(api.paid_log)
+    assert s["requests"] == 1 and s["estimated_cost_usd"] == pytest.approx(0.00245, abs=1e-6)
+    assert bc.request_cost(1_000_000, 0) == pytest.approx(0.30)
+    assert bc.request_cost(0, 1_000_000) == pytest.approx(2.50)
+    free = _api_with(_OkModels(), tmp_path / "f", tier="free")
+    assert free.request(bc.GEN_MODEL, "p")["tier"] == "free"
+    assert not (tmp_path / "f" / "paid.jsonl").exists()
+
+
+def test_correct_key_per_model(tmp_path, monkeypatch, capsys):
+    import google.genai as genai
+
+    made = []
+
+    class FakeClient:
+        def __init__(self, api_key):
+            made.append(api_key)
+            self.api_key = api_key
+
+    monkeypatch.setattr(genai, "Client", FakeClient)
+    monkeypatch.setenv("GOOGLE_AI_API_KEY", "free-key-123")
+    monkeypatch.setenv("GOOGLE_AI_API_KEY_PAID", "paid-key-456")
+    counter = bc.RequestCounter(tmp_path / "c.json", caps={}, today=lambda: "d")
+    paid = bc.GeminiApi(counter, paid=True)
+    assert paid.clients[bc.GEN_MODEL].api_key == "paid-key-456"
+    assert paid.clients[bc.JUDGE_MODEL].api_key == "free-key-123"
+    assert paid.pacer.limits[bc.GEN_MODEL] == {"rpm": bc.PAID_RPM}
+    free = bc.GeminiApi(counter)
+    assert free.clients[bc.GEN_MODEL].api_key == "free-key-123"
+    assert free.pacer.limits[bc.GEN_MODEL] == {"rpm": 12}
+    out = capsys.readouterr()
+    assert "123" not in out.out + out.err and "456" not in out.out + out.err
+
+
+def test_paid_flag_needs_its_key(tmp_path, monkeypatch):
+    import google.genai as genai
+
+    monkeypatch.setattr(genai, "Client", lambda api_key: object())
+    monkeypatch.setenv("GOOGLE_AI_API_KEY", "free")
+    monkeypatch.setenv("GOOGLE_AI_API_KEY_PAID", "")
+    with pytest.raises(SystemExit, match="GOOGLE_AI_API_KEY_PAID is not set"):
+        bc.GeminiApi(bc.RequestCounter(tmp_path / "c.json", caps={}), paid=True)

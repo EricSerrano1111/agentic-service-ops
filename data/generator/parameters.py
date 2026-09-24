@@ -654,9 +654,12 @@ class Corpus:
         (1, 8), "Word-count band for minimal neutrals on any channel (ADR-036 decision 6)."
     )
     neutral_kind_mix: P = D(
-        {"minimal": 0.35, "administrative": 0.35, "status": 0.30},
-        "Kind of each neutral corpus comment (ADR-036 decision 3).",
-        chosen=True,
+        {"minimal": 0.15, "administrative": 0.50, "status": 0.35},
+        "Kind of each neutral corpus comment (ADR-036 decision 3). Changed 2026-09-24 from "
+        "minimal .35 / administrative .35 / status .30, because minimal neutrals saturated the "
+        "corpus-wide duplicate check (498 of 859 rejected). Round-0 specs generated before the "
+        "change keep the old mix; the 435 ungenerated round-0 minimal specs were retired; "
+        "top-up rounds draw from this mix. The realised mix is in provenance.json.",
     )
     writers: P = V(
         ("site contact", "office manager", "IT manager", "facilities lead"),

@@ -38,7 +38,7 @@
 - [ ] Committed corpus: `data/generator/corpus/feedback_text.jsonl` plus `provenance.json` (model ID, date, prompt, settings) — *in progress: full run started 2026-09-23; 429/655 round-0 batches generated, 4,741 comments accepted so far (partial `feedback_text.jsonl`, `provenance.json` complete=false). Minimal-neutral duplicate saturation awaiting a decision before resume*
 - [ ] Corpus label validation in `validate.py` — sample comments against their requested sentiment, reject exact and near duplicates — before the corpus is accepted
 - [ ] Validate signal is actually recoverable — plot seasonality, confirm sentiment/severity coupling shows up in the data
-- [ ] GCP budget alerts configured ($50, $80)
+- [x] GCP budget alerts configured ($50, $80) — *set up manually by the owner, 2026-09-24, before billing was linked (ADR-041)*
 - [x] Confirm Google AI student credit coverage and expiry (open item from ADR-006) — *confirmed not available; free tier adopted (ADR-029, 2026-09-22)*
 
 **Shipped:**
@@ -89,6 +89,7 @@
 - ADR-038 — generator parameters: text on every feedback row; account, regional and billing anomalies scored as z against effective noise; coherence rules; Poisson-quantile corpus sizing; `param_group` gains `world` and `feedback`.
 - ADR-039 — positive feedback on incident rows draws its comment from the no-incident positive cell for the same service type and style; the 28 positive-with-incident cells are removed (supersedes ADR-036 in part).
 - ADR-040 — sentiment labels are defined by the ADR-036 written specification (plain: judge-confirmed intent; hard cases: intent, judge disagreement reported); the human review becomes a ~30-comment sanity check with no agreement gate (supersedes ADR-036 in part).
+- ADR-041 — remaining Flash-Lite corpus generation runs on a separate paid, spend-capped project (own key, $10 budget alert, per-session request cap in code); the Gemma judge stays on the free tier (supersedes ADR-029 in part).
 
 ---
 

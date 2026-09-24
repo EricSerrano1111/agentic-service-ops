@@ -52,6 +52,7 @@
 | 038 | Generator parameters: text on every feedback row, anomalies, coherence rules, corpus sizing, param_group values | Accepted |
 | 039 | Positive feedback on incident rows uses no-incident positive comments | Accepted — supersedes ADR-036 in part |
 | 040 | Sentiment labels defined by the written specification; human review becomes a sanity check | Accepted — supersedes ADR-036 in part |
+| 041 | Remaining corpus generation on a separate paid, spend-capped project | Accepted — supersedes ADR-029 in part |
 
 ---
 
@@ -911,3 +912,34 @@ already consumed Sprint 1.
   hard-case accuracy is not inflated (R-13). Their judge disagreement rate is reported
   alongside.
 - No believability claim is made for the corpus.
+
+### ADR-041 — Remaining corpus generation runs on a separate paid, spend-capped project
+*Date: 2026-09-24. Supersedes ADR-029 in part: its rule that development inference
+stays on the free tier. The runtime model choices in ADR-029 and ADR-036 are unchanged.*
+
+**Decision:** Flash-Lite corpus generation after round-0 batch 429 runs on a separate
+Google Cloud project with billing enabled, using its own API key. The Gemma judge stays
+on the free tier. The paid project has a $10 budget alert, and `build_corpus.py`
+enforces a hard per-session request cap in code. The same project is reused for the
+Sprint 5 paid evaluation runs that ADR-029 anticipated.
+
+**Context:** At 480 free-tier requests per day, the remaining ~800 generation requests
+(round 0 plus top-ups) would take about two more days, with Sprint 1 already over. At
+list prices ($0.30/M input, $2.50/M output) the remaining generation costs about $2, and
+under $5 even if top-ups run long. ADR-029 already planned a separate spend-capped paid
+project for Sprint 5 evaluations, so this sets it up earlier rather than adding new
+infrastructure.
+
+**Alternatives considered:**
+- *Stay on the free tier* (rejected). Free, but about two more days on a schedule
+  already past its sprint boundary.
+- *Upgrade the existing project* (rejected). ADR-029 notes that a project upgraded to
+  paid is billed for all of its usage.
+
+**Consequences:**
+- The model ID is unchanged, and `provenance.json` records which batches ran on which
+  tier. Output quality is unaffected.
+- Cost is logged per request and summarized in provenance, as an estimate from list
+  prices.
+- The GCP budget alerts at $50/$80 (a Sprint 1 item) are set before billing is linked.
+- R-02 and R-11: paid spend now exists; the budget alerts and the code cap bound it.
