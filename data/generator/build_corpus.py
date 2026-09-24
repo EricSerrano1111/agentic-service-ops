@@ -319,8 +319,14 @@ class GeminiApi:
                 code = getattr(exc, "code", None)
                 if code == 429 and is_daily_quota_error(str(exc)):
                     raise StopRun(f"{model}: daily quota exhausted (429)") from exc
-                if code not in RETRYABLE_CODES or attempt >= MAX_RETRIES:
+                if code not in RETRYABLE_CODES:
                     raise
+                if attempt >= MAX_RETRIES:
+                    # A model outage (persistent 500/503, or 429s that never clear) is a
+                    # clean, resumable stop rather than a crash that skips finalize().
+                    raise StopRun(
+                        f"{model}: {code} persisted through {MAX_RETRIES} retries"
+                    ) from exc
                 retries[str(code)] += 1
                 delay = random.uniform(0, min(BACKOFF_CAP_S, BACKOFF_BASE_S * 2**attempt))
                 if code == 429:  # per-minute limit: back off past the window, then continue

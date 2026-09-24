@@ -550,3 +550,32 @@ def test_gen_cap_flag_overrides_todays_cap(tmp_path, monkeypatch):
     bc.main(["--run", "--gen-cap", "440"])
     assert seen["caps"][bc.GEN_MODEL] == 440
     assert bc.DAILY_CAP[bc.GEN_MODEL] == 480  # the default is untouched
+
+
+def test_persistent_server_errors_stop_cleanly(tmp_path, monkeypatch):
+    class Err(Exception):
+        code = 503
+
+    class Models:
+        calls = 0
+
+        def generate_content(self, **_):
+            Models.calls += 1
+            raise Err("503 UNAVAILABLE high demand")
+
+    monkeypatch.setattr(bc.time, "sleep", lambda _: None)
+    with pytest.raises(bc.StopRun, match="persisted through"):
+        _api_with(Models(), tmp_path).request(bc.GEN_MODEL, "p")
+    assert Models.calls == bc.MAX_RETRIES + 1
+
+
+def test_non_retryable_errors_still_raise(tmp_path):
+    class Err(Exception):
+        code = 400
+
+    class Models:
+        def generate_content(self, **_):
+            raise Err("400 INVALID_ARGUMENT")
+
+    with pytest.raises(Err):
+        _api_with(Models(), tmp_path).request(bc.GEN_MODEL, "p")
