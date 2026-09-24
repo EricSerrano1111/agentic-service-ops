@@ -141,9 +141,7 @@ def test_spec_line_notes():
     specs = bc.build_test_specs()
     for s in specs:
         line = bc.spec_line(1, s)
-        assert (bc.POSITIVE_INCIDENT_NOTE in line) == (
-            s["sentiment"] == "positive" and bool(s["incident_type"])
-        )
+        assert "Praise how it was handled" not in line  # removed by ADR-039
         assert (bc.MIXED_SERIOUS_NOTE in line) == (
             s["sentiment"] == "mixed" and s["context"] == "serious"
         )
@@ -449,3 +447,13 @@ def test_append_terminates_a_dangling_partial_line(tmp_path):
     path.write_text('{"a": 1}\n{"b": ', encoding="utf-8")
     bc.append_jsonl(path, {"c": 3})
     assert bc.read_jsonl(path) == [{"a": 1}, {"c": 3}]
+
+
+def test_status_reports_new_sizing(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr(bc, "COUNTER_PATH", tmp_path / "c.json")
+    required = bc.required_by_cell()
+    bc.print_status(bc.Workspace(tmp_path / "ws"), required)
+    out = capsys.readouterr().out
+    total = sum(required.values())
+    assert f"cells: {len(required)} ({total} comments required" in out
+    assert not any(k.startswith("positive|") and "|none|" not in k for k in required)

@@ -244,11 +244,13 @@ def test_allowed_cells():
 def test_corpus_cells_all_allowed_and_sized():
     cells = prm.expected_cell_counts()
     s = prm.corpus_summary()
-    assert s["cells"] == len(cells) == 7 * 5 + 6 * 2 * 7
+    # 7 (sentiment, style) pairs x 5 service types, plus incident cells for the 4
+    # non-positive pairs x 2 levels x 7 types (ADR-039 removed positive x incident).
+    assert s["cells"] == len(cells) == 7 * 5 + 4 * 2 * 7
     floor = prm.PARAMS.corpus.cell_floor.value
     doubles = {("neutral", "plain"), ("mixed", "plain")}
     for c in cells:
-        assert prm.is_allowed(c["sentiment"], c["style"], c["context"])
+        assert prm.is_corpus_cell(c["sentiment"], c["style"], c["context"])
         mult = 2.0 if (c["sentiment"], c["style"]) in doubles else 1.2
         q = prm.poisson_ppf(0.99, c["expected"])
         assert c["required"] == max(floor, math.ceil(q * mult))
@@ -408,3 +410,62 @@ def test_other_incident_type_has_a_phrasing():
     phr = prm.PARAMS.corpus.incident_type_phrasing.value
     assert phr["other"] == "a problem with the visit"
     assert set(phr) == set(prm.INCIDENT_TYPES)
+
+
+# --------------------------------------------------------------------------- ADR-039
+
+
+def test_no_positive_incident_cells_remain():
+    cells = prm.expected_cell_counts()
+    assert not [c for c in cells if c["sentiment"] == "positive" and c["context"] != "none"]
+    for ctx in ("minor", "serious"):
+        for st in ("plain", "implicit"):
+            assert prm.is_allowed("positive", st, ctx)  # still a valid feedback row
+            assert not prm.is_corpus_cell("positive", st, ctx)
+
+
+@pytest.mark.parametrize(
+    ("row", "cell"),
+    [
+        (("positive", "plain", "repair", "serious", "missed_sla"), "positive|plain|none|repair"),
+        (("positive", "implicit", "install", "minor", "other"), "positive|implicit|none|install"),
+        (("positive", "plain", "upgrade", "none", None), "positive|plain|none|upgrade"),
+        (
+            ("negative", "sarcastic", "repair", "serious", "billing_dispute"),
+            "negative|sarcastic|serious|billing_dispute",
+        ),
+        (("mixed", "plain", "inspection", "minor", "missed_sla"), "mixed|plain|minor|missed_sla"),
+        (("neutral", "plain", "maintenance", "none", None), "neutral|plain|none|maintenance"),
+    ],
+)
+def test_corpus_cell_for_row(row, cell):
+    assert prm.corpus_cell_for_row(*row) == cell
+    keys = {
+        prm.corpus_cell_key(
+            c["sentiment"], c["style"], c["context"], c["service_type"] or c["incident_type"]
+        )
+        for c in prm.expected_cell_counts()
+    }
+    assert cell in keys
+
+
+def test_corpus_cell_for_row_rejects_forbidden_rows():
+    with pytest.raises(ValueError):
+        prm.corpus_cell_for_row("neutral", "plain", "repair", "minor", "missed_sla")
+    with pytest.raises(ValueError):
+        prm.corpus_cell_for_row("negative", "plain", "repair", "serious", None)
+
+
+def test_enlarged_positive_cells_cover_combined_demand():
+    t = prm.expected_totals()
+    inc_pos = t["feedback_incident"] * prm.incident_row_sentiment()["positive"]
+    cells = [c for c in prm.expected_cell_counts() if c["sentiment"] == "positive"]
+    assert sum(c["expected_incident_rows"] for c in cells) == pytest.approx(inc_pos)
+    for c in cells:
+        assert c["expected"] == pytest.approx(
+            c["expected_no_incident"] + c["expected_incident_rows"]
+        )
+        assert c["expected_incident_rows"] > 0
+        assert c["required"] >= prm.poisson_ppf(0.99, c["expected"])
+    # Every feedback row still has a cell: expected rows across cells equal all feedback.
+    assert sum(c["expected"] for c in prm.expected_cell_counts()) == pytest.approx(t["feedback"])

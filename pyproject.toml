@@ -18,6 +18,7 @@ generator = [
     "google-genai==2.25.0",
     "numpy==2.5.3",
     "python-dotenv>=1.0",
+    "scipy==1.18.1",  # datasketch dependency, pinned so the dedup path is reproducible
     "tzdata==2026.4",
 ]
 

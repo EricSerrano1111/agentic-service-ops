@@ -84,7 +84,6 @@ NEAR_DUP_THRESHOLD = 0.6
 SHINGLE_K = 5
 NUM_PERM = 128
 
-POSITIVE_INCIDENT_NOTE = "Praise how it was handled without naming what went wrong."
 MIXED_SERIOUS_NOTE = "Name the problem and praise how it was handled."
 ADMIN_NOTE = (
     "An administrative note is a request or a piece of information, never a dispute or a "
@@ -272,9 +271,7 @@ class GeminiApi:
 # --------------------------------------------------------------------------- specs
 
 
-def cell_key(sentiment: str, style: str, context: str, detail: str) -> str:
-    """No-incident cells end in the service type, incident cells in the incident type."""
-    return f"{sentiment}|{style}|{context}|{detail}"
+cell_key = prm.corpus_cell_key
 
 
 def required_by_cell(params: prm.Parameters = prm.PARAMS) -> dict[str, int]:
@@ -425,9 +422,7 @@ def spec_line(i: int, s: dict, params: prm.Parameters = prm.PARAMS) -> str:
     if s["opening"]:
         parts.append(f"opening: {s['opening']}")
     note = None
-    if s["sentiment"] == "positive" and s["incident_type"]:
-        note = POSITIVE_INCIDENT_NOTE
-    elif s["sentiment"] == "mixed" and s["context"] == "serious":
+    if s["sentiment"] == "mixed" and s["context"] == "serious":
         note = MIXED_SERIOUS_NOTE
     elif s["neutral_kind"] == "administrative":
         note = ADMIN_NOTE
@@ -987,7 +982,12 @@ def print_status(ws: Workspace, required: dict[str, int]) -> None:
     print(f"specs {len(specs)}; " + ", ".join(f"{k} {v}" for k, v in sorted(by.items())))
     if reasons:
         print("  rejections: " + ", ".join(f"{k} {v}" for k, v in reasons.most_common()))
-    print(f"  cells: {len(required)} required, {len(short)} short")
+    total = sum(required.values())
+    print(
+        f"  cells: {len(required)} ({total} comments required, "
+        f"{math.ceil(total / BATCH_SIZE)} Flash-Lite requests at {BATCH_SIZE}/batch); "
+        f"{len(short)} short"
+    )
     print(
         f"  requests today (Pacific): {GEN_MODEL} {counter.used(GEN_MODEL)}/"
         f"{DAILY_CAP[GEN_MODEL]}, {JUDGE_MODEL} {counter.used(JUDGE_MODEL)}/"
@@ -998,6 +998,8 @@ def print_status(ws: Workspace, required: dict[str, int]) -> None:
 # --------------------------------------------------------------------------- test batch
 
 #: (group, sentiment, style, context, forced channel or None, neutral kind or None, count)
+#: The 2026-09-23 test batch as run. Its positive_incident group is why ADR-039 removed
+#: positive-with-incident corpus cells; it is kept so the batch stays reproducible.
 TEST_PLAN: tuple[tuple, ...] = (
     ("positive_incident", "positive", "plain", "minor", None, None, 4),
     ("positive_incident", "positive", "plain", "serious", None, None, 4),

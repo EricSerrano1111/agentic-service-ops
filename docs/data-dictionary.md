@@ -370,6 +370,8 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 
 Cell rules (ADR-036): no neutral on incident rows; sarcastic is negative only; implicit is positive and negative only.
 
+Positive feedback on an incident row draws its comment from the no-incident positive corpus cell with the same service type and style; the corpus has no positive-with-incident cells, so such comments never mention the incident (ADR-039).
+
 If your generated feedback ends up overwhelmingly negative, every accuracy number you report downstream is noise. Validate this distribution in Sprint 1 before building anything on top of it.
 
 ---

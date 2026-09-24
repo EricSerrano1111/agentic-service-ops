@@ -19,7 +19,7 @@ Names and categories are generic field service (R-08).
 Run as a script to print the derived summary (totals, solved sentiment, corpus sizing,
 anomaly strength). It prints numbers only.
 
-Docs: data-dictionary.md §2-§6; ADR-018, -019, -021, -030, -036, -037, -038.
+Docs: data-dictionary.md §2-§6; ADR-018, -019, -021, -030, -036, -037, -038, -039.
 """
 
 from __future__ import annotations
@@ -644,6 +644,12 @@ class Corpus:
         "Word-count band per channel for generated comments; SMS 2-12 in a loose style "
         "(ADR-036 decision 6).",
     )
+    positive_incident_rows_use_no_incident_cells: P = V(
+        True,
+        "Positive feedback on an incident row draws its comment from the no-incident positive "
+        "cell with the same service type and style; there are no positive-with-incident "
+        "cells (ADR-039).",
+    )
     minimal_neutral_band: P = V(
         (1, 8), "Word-count band for minimal neutrals on any channel (ADR-036 decision 6)."
     )
@@ -801,8 +807,46 @@ ALLOWED_CELLS: frozenset[tuple[str, str, str]] = frozenset(
 
 
 def is_allowed(sentiment: str, style: str, context: str) -> bool:
-    """True if (sentiment, style, incident context) is a possible cell under ADR-036."""
+    """True if (sentiment, style, incident context) is a possible feedback row (ADR-036)."""
     return (sentiment, style, context) in ALLOWED_CELLS
+
+
+def is_corpus_cell(sentiment: str, style: str, context: str) -> bool:
+    """True if the corpus has cells for this combination.
+
+    Every allowed row combination except positive on an incident row: ADR-039 removed
+    those cells, and such rows draw from the no-incident positive cells instead.
+    """
+    return is_allowed(sentiment, style, context) and not (
+        sentiment == "positive" and context != "none"
+    )
+
+
+def corpus_cell_key(sentiment: str, style: str, context: str, detail: str) -> str:
+    """Cell key: no-incident cells end in the service type, incident cells in the type."""
+    return f"{sentiment}|{style}|{context}|{detail}"
+
+
+def corpus_cell_for_row(
+    sentiment: str,
+    style: str,
+    service_type: str,
+    context: str,
+    incident_type: str | None = None,
+) -> str:
+    """The corpus cell a feedback row draws its comment from (generate.py uses this).
+
+    `context` is the row's incident level ("none", "minor", "serious"). A positive row
+    with an incident maps to the no-incident positive cell for its service type and style
+    (ADR-039); every other row maps to its own cell.
+    """
+    if not is_allowed(sentiment, style, context):
+        raise ValueError(f"({sentiment}, {style}, {context}) is not an allowed row (ADR-036)")
+    if context == "none" or sentiment == "positive":
+        return corpus_cell_key(sentiment, style, "none", service_type)
+    if incident_type is None:
+        raise ValueError("an incident row needs its incident_type")
+    return corpus_cell_key(sentiment, style, context, incident_type)
 
 
 # --------------------------------------------------------------------------- derivations
@@ -1043,10 +1087,13 @@ def style_given_sentiment(params: Parameters = PARAMS) -> dict[str, dict[str, fl
 
 
 def expected_cell_counts(params: Parameters = PARAMS) -> list[dict]:
-    """Expected feedback rows per ADR-036 corpus cell, and the corpus size each needs.
+    """Expected feedback rows per corpus cell, and the corpus size each needs.
 
     No-incident cells key on (sentiment, style, service_type); incident cells on
-    (sentiment, style, incident level, incident type) using the linked incident.
+    (sentiment, style, incident level, incident type) using the linked incident. There are
+    no positive-with-incident cells: positive incident rows draw from the no-incident
+    positive cell for their service type and style, so that demand is added there before
+    sizing (ADR-039). Incident rows are assumed to share the overall service mix.
     """
     tot = expected_totals(params)
     p0 = no_incident_sentiment(params)
@@ -1067,11 +1114,15 @@ def expected_cell_counts(params: Parameters = PARAMS) -> list[dict]:
     for lv in level_sent:
         level_sent[lv] = {se: v / level_p[lv] for se, v in level_sent[lv].items()}
 
+    inc_sent = incident_row_sentiment(params)
     cells = []
     for se in SENTIMENTS:
         for st in ALLOWED_STYLES[se]:
             for sv in SERVICE_TYPES:
-                exp = tot["feedback_no_incident"] * p0[se] * styles[se][st] * svc[sv]
+                own = tot["feedback_no_incident"] * p0[se] * styles[se][st] * svc[sv]
+                borrowed = 0.0
+                if se == "positive":  # ADR-039: positive incident rows draw from here
+                    borrowed = tot["feedback_incident"] * inc_sent[se] * styles[se][st] * svc[sv]
                 cells.append(
                     {
                         "sentiment": se,
@@ -1079,11 +1130,13 @@ def expected_cell_counts(params: Parameters = PARAMS) -> list[dict]:
                         "context": "none",
                         "service_type": sv,
                         "incident_type": None,
-                        "expected": exp,
+                        "expected_no_incident": own,
+                        "expected_incident_rows": borrowed,
+                        "expected": own + borrowed,
                     }
                 )
             for lv in ("minor", "serious"):
-                if not is_allowed(se, st, lv):
+                if not is_corpus_cell(se, st, lv):
                     continue
                 for it in INCIDENT_TYPES:
                     exp = (
@@ -1100,6 +1153,8 @@ def expected_cell_counts(params: Parameters = PARAMS) -> list[dict]:
                             "context": lv,
                             "service_type": None,
                             "incident_type": it,
+                            "expected_no_incident": 0.0,
+                            "expected_incident_rows": exp,
                             "expected": exp,
                         }
                     )

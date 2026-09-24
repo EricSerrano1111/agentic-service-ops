@@ -50,6 +50,7 @@
 | 036 | Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels | Accepted — supersedes ADR-019, ADR-021 and ADR-030 in part |
 | 037 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`; `corpus_id` added | Accepted |
 | 038 | Generator parameters: text on every feedback row, anomalies, coherence rules, corpus sizing, param_group values | Accepted |
+| 039 | Positive feedback on incident rows uses no-incident positive comments | Accepted — supersedes ADR-036 in part |
 
 ---
 
@@ -822,3 +823,45 @@ and that five of the seven parameter prefixes had no fitting `param_group`.
 Flash-Lite quota. `generate.py` must assign location states to hit the regional
 shares. The final paper reports anomaly strength as z-scores against the effective
 noise.
+
+### ADR-039 — Positive feedback on incident rows uses no-incident positive comments
+*Date: 2026-09-23. Supersedes ADR-036 in part: the positive-on-incident-row clause of
+decision 3, and the positive-with-incident cells of decisions 4 and 5. ADR-021's
+severity-sentiment coupling is unchanged.*
+
+**Decision:** The corpus has no positive-with-incident cells. When `generate.py`
+assigns positive sentiment to a feedback row on a request with an incident, it draws
+the comment from the no-incident positive cell with the same service type and style
+(plain or implicit). Those cells are enlarged to cover the combined expected demand,
+using the same Poisson q99 sizing (ADR-038). The comment does not mention the incident.
+
+**Context:** In the `build_corpus.py` test batch (2026-09-23), the judge labelled all
+14 judged positive-with-incident comments as mixed, across both styles and both
+severity levels. That includes 8 where a keyword heuristic found no mention of the
+problem. Writing a positive comment that is shaped by an incident without naming it
+proved unreliable: either the generator names the failure anyway, or any praised
+recovery reads as mixed. At a 0% plain acceptance rate, the 28 cells (487 comments)
+could not be filled even with three top-up rounds (~900 extra requests). Their implicit
+comments would also have entered the corpus labelled positive while the judge read them
+as mixed. The prompt route was already closed by ADR-036's stop rule.
+
+**Alternatives considered:**
+- *More prompt work* (rejected). The stop rule is closed, and the failure was total
+  rather than marginal.
+- *Positive-with-incident labelled mixed, i.e. no positive sentiment on incident rows*
+  (rejected). It is feasible for the overall mix, but it removes ADR-021's
+  handled-well exception entirely and makes an incident a near-certain signal of
+  "not positive."
+- *Keeping the cells without the judge filter* (rejected). It admits labels the judge
+  and, per the earlier human review, a human would dispute.
+
+**Consequences:**
+- ADR-021's exception survives at the label level: incident rows can still carry
+  positive sentiment. The text of those rows carries no incident-specific signal,
+  which is a realism cost stated in the paper.
+- The corpus loses 28 cells. The no-incident positive cells grow by the incident-row
+  positive demand (about 21% of incident-row feedback is positive).
+- The generator and judge prompts are unchanged (still v4). The positive-incident spec
+  note is removed from the code.
+- Failure analysis cannot report "positive despite an incident" as a text subgroup,
+  only as a label-level slice.
