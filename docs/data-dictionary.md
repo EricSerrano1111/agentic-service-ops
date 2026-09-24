@@ -247,7 +247,7 @@ Store the coupling strength as an explicit parameter (`incident_severity_sentime
 | Column | Type | Description |
 |---|---|---|
 | `feedback_id` | FK → service_feedback, PK | One label per feedback record |
-| `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was asked to write (ADR-030). Plain comments are confirmed by the judge (ADR-036); sarcastic and implicit comments are intent, verified by human sampling. |
+| `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was asked to write (ADR-030). Plain comments are confirmed by the judge (ADR-036); sarcastic and implicit comments are intent; their judge disagreement rate is reported (ADR-040). |
 | `label_confidence` | DECIMAL | Optional — if you want ambiguous cases to exist deliberately |
 | `hard_case_type` | ENUM (`none`, `sarcastic`, `implicit`), NOT NULL | Which kind of deliberately hard case the comment is, or `none` (ADR-037; replaces `is_sarcastic`). There are two hard-case types (ADR-036), and failure analysis reports subgroup accuracy per type. |
 | `corpus_id` | VARCHAR(32), NOT NULL, UNIQUE | ID of the corpus comment (`data/generator/corpus/feedback_text.jsonl`) that supplied the row's `feedback_text`, so the eval harness can join a label to its corpus metadata. UNIQUE enforces ADR-030's no-reuse rule (ADR-037). |

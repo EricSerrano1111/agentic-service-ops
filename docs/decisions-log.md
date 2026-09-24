@@ -51,6 +51,7 @@
 | 037 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`; `corpus_id` added | Accepted |
 | 038 | Generator parameters: text on every feedback row, anomalies, coherence rules, corpus sizing, param_group values | Accepted |
 | 039 | Positive feedback on incident rows uses no-incident positive comments | Accepted — supersedes ADR-036 in part |
+| 040 | Sentiment labels defined by the written specification; human review becomes a sanity check | Accepted — supersedes ADR-036 in part |
 
 ---
 
@@ -865,3 +866,48 @@ as mixed. The prompt route was already closed by ADR-036's stop rule.
   note is removed from the code.
 - Failure analysis cannot report "positive despite an incident" as a text subgroup,
   only as a label-level slice.
+
+### ADR-040 — Sentiment labels are defined by the written specification; human review becomes a sanity check
+*Date: 2026-09-23. Supersedes ADR-036 in part: decision 7's human review and its
+regeneration gate. ADR-036's label definitions and ADR-039 stand unchanged.*
+
+**Decision:**
+1. The ground truth for sentiment is the ADR-036 written label definitions. Plain labels
+   are the generator's intent confirmed by the Gemma judge. Sarcastic and implicit
+   labels are the generator's intent; the judge's disagreement rate on them is reported,
+   not used as a filter. Human reading is not the reference standard.
+2. The ~200-comment human review is replaced by a ~30-comment sanity spot-check that
+   flags only unusable comments: broken or off-domain text, prohibited content, or a
+   label plainly wrong under the written definitions. There is no agreement scoring, no
+   believability rating, and no regeneration gate based on human agreement.
+3. Reported validation evidence: judge acceptance rate per cell before filtering, judge
+   agreement on hard cases, automated check rejection rates by reason, and the achieved
+   class distribution against the 50/22/20/8 target.
+4. The problem-plus-recovery boundary stays as ADR-036 defines it and is not reopened.
+
+**Context:** The owner's blind reviews (bake-off v0-v3 and the corpus test batch) were a
+single non-specialist annotator, and they were unstable on the ambiguous boundary. The
+owner read problem-plus-recovery comments as mixed 5 of 6 times in v3, and as positive
+13 of 17 times in the test batch. Human-judge agreement ranged from 32/40 (v1) to 14/30
+(test batch). Sentiment in customer feedback is inherently ambiguous and annotators
+disagree, so a single annotator's reading is not a reliable reference. The disputed
+boundary affects about 1.6% of feedback rows (mixed on medium- or high-severity incident
+rows, ~125 of ~7,600). Sentiment is one of three specialists, and label design had
+already consumed Sprint 1.
+
+**Alternatives considered:**
+- *Revert to a verdict-based boundary* (rejected). It reopens ADR-036 and ADR-039 for
+  ~1.6% of rows, on the evidence of one reader who has read the category both ways.
+- *A second annotator* (rejected on schedule). Recorded as future work; it is the right
+  method for a real deployment.
+- *Keep the ~200-comment review* (rejected). It would measure one reader's variability,
+  not label quality.
+
+**Consequences:**
+- The paper states that labels are specification-defined and that sentiment accuracy is
+  measured against the specification. The owner's review results are reported as
+  evidence of the category's ambiguity.
+- Hard-case labels remain generator intent and are never filtered by the judge, so
+  hard-case accuracy is not inflated (R-13). Their judge disagreement rate is reported
+  alongside.
+- No believability claim is made for the corpus.
