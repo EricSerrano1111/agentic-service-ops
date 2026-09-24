@@ -628,7 +628,7 @@ def test_recheck_reinstates_weekday_only_rejections(tmp_path):
     )
     for cid, ok, reasons in (
         (a, False, ["date"]),
-        (b, False, ["date"]),
+        (b, False, ["date", "name_like"]),
         (c, True, []),
         (d, False, ["date"]),
     ):
@@ -636,12 +636,12 @@ def test_recheck_reinstates_weekday_only_rejections(tmp_path):
             ws.checks, {"corpus_id": cid, "ok": ok, "reasons": reasons, "duplicate_of": None}
         )
     out = bc.recheck_date_rejections(ws)
-    assert out == {"reinstated": 1, "still_date": 1, "rejected_other": 1}
+    assert out == {"reinstated": 1, "unchanged": 1, "rejected_other": 1}
     res = ws.check_results()
     assert res[a]["ok"] and res[a]["recheck"] == bc.WEEKDAY_RECHECK
-    assert res[b]["reasons"] == ["date"]
+    assert res[b]["reasons"] == ["date", "name_like"]
     assert res[d]["reasons"] == ["near_duplicate"]
-    assert bc.recheck_date_rejections(ws) == {"still_date": 1}  # idempotent
+    assert bc.recheck_date_rejections(ws) == {"unchanged": 1}  # idempotent
     # A reinstated comment goes to the judge like any new one.
     api = FakeApi()
     bc.stage_judge(ws, api, JUDGE_T)
@@ -790,3 +790,20 @@ def test_paid_flag_needs_its_key(tmp_path, monkeypatch):
     monkeypatch.setenv("GOOGLE_AI_API_KEY_PAID", "")
     with pytest.raises(SystemExit, match="GOOGLE_AI_API_KEY_PAID is not set"):
         bc.GeminiApi(bc.RequestCounter(tmp_path / "c.json", caps={}), paid=True)
+
+
+def test_capitalised_weekday_no_longer_trips_name_check(tmp_path):
+    text = "switch swapped Tuesday and the ports all light up now"
+    assert bc.text_violations(text, SPEC) == []
+    assert "name_like" in bc.text_violations("thanks to Velcro for the cable ties", SPEC)
+    specs = bc.build_test_specs()[:1]
+    specs[0].update(batch="x-b0", min_words=1, max_words=60)
+    ws = _ws(tmp_path, specs)
+    cid = specs[0]["corpus_id"]
+    _generated(ws, [("x-b0", cid, text)])
+    bc.append_jsonl(
+        ws.checks,
+        {"corpus_id": cid, "ok": False, "reasons": ["date", "name_like"], "duplicate_of": None},
+    )
+    assert bc.recheck_date_rejections(ws) == {"reinstated": 1}
+    assert ws.check_results()[cid]["ok"]

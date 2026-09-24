@@ -667,7 +667,27 @@ DATE = re.compile(
 WEEKDAY_RECHECK = "weekday_exemption_2026-09-24"
 #: Titlecase word not at the start of the text or of a sentence/clause.
 NAME_LIKE = re.compile(r"(?<![.!?:;]\s)(?<![.!?:;])(?<!^)(?<!\n)\b[A-Z][a-z]+\b")
-NAME_ALLOW = {"Wi", "Fi", "Ethernet", "Internet", "PoE"}
+NAME_ALLOW = {"Wi", "Fi", "Ethernet", "Internet", "PoE"} | {
+    # Weekday names are allowed since 2026-09-24 (they identify no date), so their
+    # capitalised forms must not trip the name check either.
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "Mon",
+    "Tue",
+    "Tues",
+    "Wed",
+    "Thu",
+    "Thur",
+    "Thurs",
+    "Fri",
+    "Sat",
+    "Sun",
+}
 GREETING = re.compile(
     r"^\W*(?:hi|hello|hey|dear|greetings|good (?:morning|afternoon|evening)"
     r"|to whom it may concern|to (?:the|your|our) (?:team|company|crew|office)|team\s*[,:])\b",
@@ -867,12 +887,13 @@ def retire_ungenerated_minimal(ws: Workspace) -> int:
 
 
 def recheck_date_rejections(ws: Workspace) -> dict[str, int]:
-    """Re-run checks on comments rejected only for "date" under the old weekday rule.
+    """Re-run checks, under the current rules, on comments rejected for "date" or
+    "name_like" -- the two checks the 2026-09-24 weekday exemption changed.
 
     A comment that now passes (including the corpus-wide duplicate check) gets a new
-    ok row and goes to the judge like any new comment; one that now fails for another
-    reason gets a row with that reason. Genuine calendar dates stay rejected, unrecorded,
-    so a rerun is a no-op.
+    ok row and goes to the judge like any new comment; one whose reasons changed gets a
+    row with its new reasons. One whose reasons are unchanged (a genuine calendar date or
+    name) is left as it was, so a rerun is a no-op.
     """
     specs = {s["corpus_id"]: s for s in ws.load_specs()}
     texts = ws.texts()
@@ -883,11 +904,11 @@ def recheck_date_rejections(ws: Workspace) -> dict[str, int]:
             index.add(cid, texts[cid])
     out = Counter()
     for cid, r in results.items():
-        if r["ok"] or r["reasons"] != ["date"]:
+        if r["ok"] or not {"date", "name_like"} & set(r["reasons"]):
             continue
         reasons = text_violations(texts[cid], specs[cid])
-        if "date" in reasons:  # a genuine calendar date: stays rejected as it was
-            out["still_date"] += 1
+        if reasons == r["reasons"]:  # a genuine date or name: stays rejected as it was
+            out["unchanged"] += 1
             continue
         other = None
         if not reasons:
