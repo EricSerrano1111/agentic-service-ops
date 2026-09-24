@@ -346,6 +346,7 @@ def test_daily_quota_429_stops_without_retry_loop(tmp_path):
     api = object.__new__(bc.GeminiApi)
     api.client = type("C", (), {"models": Models()})()
     api.counter = bc.RequestCounter(tmp_path / "c.json", caps={}, today=lambda: "d")
+    api.pacer = bc.Pacer({})
     api.configs = {bc.GEN_MODEL: None}
     with pytest.raises(bc.StopRun, match="daily quota"):
         api.request(bc.GEN_MODEL, "prompt")
@@ -457,3 +458,95 @@ def test_status_reports_new_sizing(tmp_path, capsys, monkeypatch):
     total = sum(required.values())
     assert f"cells: {len(required)} ({total} comments required" in out
     assert not any(k.startswith("positive|") and "|none|" not in k for k in required)
+
+
+# --------------------------------------------------------------------------- pacing
+
+
+class FakeClock:
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+    def sleep(self, d):
+        self.t += d
+
+
+def test_pacer_rpm():
+    clock = FakeClock()
+    pacer = bc.Pacer({"m": {"rpm": 12}}, clock=clock, sleep=clock.sleep)
+    for _ in range(12):
+        assert pacer.wait("m", 1) == 0
+        pacer.record("m", 1)
+    assert pacer.wait("m", 1) == pytest.approx(60.0)  # the 13th waits out the window
+
+
+def test_pacer_tpm_uses_reported_tokens():
+    clock = FakeClock()
+    pacer = bc.Pacer({"m": {"tpm": 12_000}}, clock=clock, sleep=clock.sleep)
+    pacer.record("m", 5_000)
+    pacer.correct_last("m", 11_500)  # the API reported more than estimated
+    assert pacer.wait("m", 1_000) > 0
+    clock.t = 0.0
+    pacer2 = bc.Pacer({"m": {"tpm": 12_000}}, clock=clock, sleep=clock.sleep)
+    pacer2.record("m", 5_000)
+    assert pacer2.wait("m", 1_000) == 0
+
+
+def test_pacing_limits_match_today_request():
+    assert bc.PACING[bc.GEN_MODEL] == {"rpm": 12}
+    assert bc.PACING[bc.JUDGE_MODEL] == {"tpm": 12_000}
+
+
+def _api_with(models, tmp_path, caps=None):
+    api = object.__new__(bc.GeminiApi)
+    api.client = type("C", (), {"models": models})()
+    api.counter = bc.RequestCounter(tmp_path / "c.json", caps=caps or {}, today=lambda: "d")
+    clock = FakeClock()
+    api.pacer = bc.Pacer({}, clock=clock, sleep=clock.sleep)
+    api.configs = {bc.GEN_MODEL: None}
+    return api
+
+
+def test_per_minute_429_backs_off_and_continues(tmp_path, monkeypatch):
+    class Err(Exception):
+        code = 429
+
+    class Resp:
+        text = "[]"
+        usage_metadata = None
+
+        def model_dump(self, mode):
+            return {}
+
+    class Models:
+        calls = 0
+
+        def generate_content(self, **_):
+            Models.calls += 1
+            if Models.calls == 1:
+                raise Err("RESOURCE_EXHAUSTED GenerateRequestsPerMinutePerProjectPerModel")
+            return Resp()
+
+    slept = []
+    monkeypatch.setattr(bc.time, "sleep", slept.append)
+    out = _api_with(Models(), tmp_path).request(bc.GEN_MODEL, "p")
+    assert out["retries"] == {"429": 1} and Models.calls == 2
+    assert slept and slept[0] >= bc.PER_MINUTE_429_MIN_WAIT_S
+
+
+def test_gen_cap_flag_overrides_todays_cap(tmp_path, monkeypatch):
+    seen = {}
+
+    class NoApi:
+        def __init__(self, counter, pacer=None):
+            seen["caps"] = counter.caps
+
+    monkeypatch.setattr(bc, "GeminiApi", NoApi)
+    monkeypatch.setattr(bc, "run_full", lambda ws, api: None)
+    monkeypatch.setattr(bc, "COUNTER_PATH", tmp_path / "c.json")
+    bc.main(["--run", "--gen-cap", "440"])
+    assert seen["caps"][bc.GEN_MODEL] == 440
+    assert bc.DAILY_CAP[bc.GEN_MODEL] == 480  # the default is untouched

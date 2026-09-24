@@ -73,6 +73,12 @@ RETRYABLE_CODES = {429, 500, 503}
 #: Local stop points, below the free-tier limits (ADR-029: 500 and 14.4K RPD).
 DAILY_CAP = {GEN_MODEL: 480, JUDGE_MODEL: 14_000}
 QUOTA_TZ = ZoneInfo("America/Los_Angeles")  # Gemini daily quotas reset at Pacific midnight
+#: Per-minute pacing, below the free-tier limits (ADR-029: Flash-Lite 15 RPM; Gemma 16K TPM).
+PACING = {GEN_MODEL: {"rpm": 12}, JUDGE_MODEL: {"tpm": 12_000}}
+#: Output tokens assumed per request when estimating a request's size before sending it.
+EXPECTED_OUTPUT_TOKENS = {GEN_MODEL: 1_000, JUDGE_MODEL: 350}
+#: A per-minute 429 waits at least this long before retrying (the window is a minute).
+PER_MINUTE_429_MIN_WAIT_S = 30.0
 
 TOPUP_ROUNDS = 3
 TOPUP_INFLATION = 1.5
@@ -211,13 +217,59 @@ def is_daily_quota_error(message: str) -> bool:
     return "perday" in m or "per_day" in m or "per day" in m or "requestsperday" in m
 
 
+# --------------------------------------------------------------------------- pacing
+
+
+def estimate_tokens(model: str, prompt: str) -> int:
+    """Rough request size: ~4 characters per prompt token plus the expected output."""
+    return len(prompt) // 4 + EXPECTED_OUTPUT_TOKENS.get(model, 0)
+
+
+class Pacer:
+    """Sliding one-minute window per model: waits so neither RPM nor TPM is exceeded."""
+
+    def __init__(self, limits: dict | None = None, clock=time.monotonic, sleep=time.sleep):
+        self.limits = limits if limits is not None else PACING
+        self.clock, self.sleep = clock, sleep
+        self.events: dict[str, list[tuple[float, int]]] = defaultdict(list)
+
+    def _window(self, model: str) -> list[tuple[float, int]]:
+        now = self.clock()
+        ev = [e for e in self.events[model] if now - e[0] < 60.0]
+        self.events[model] = ev
+        return ev
+
+    def wait(self, model: str, tokens: int) -> float:
+        """Block until a request of `tokens` fits; returns seconds waited."""
+        lim = self.limits.get(model, {})
+        waited = 0.0
+        while True:
+            ev = self._window(model)
+            rpm_ok = "rpm" not in lim or len(ev) < lim["rpm"]
+            tpm_ok = "tpm" not in lim or not ev or sum(t for _, t in ev) + tokens <= lim["tpm"]
+            if rpm_ok and tpm_ok:
+                return waited
+            delay = max(0.05, 60.0 - (self.clock() - ev[0][0]))
+            self.sleep(delay)
+            waited += delay
+
+    def record(self, model: str, tokens: int) -> None:
+        self.events[model].append((self.clock(), tokens))
+
+    def correct_last(self, model: str, tokens: int) -> None:
+        """Replace the last estimate with the API's reported token count."""
+        if self.events[model]:
+            t, _ = self.events[model][-1]
+            self.events[model][-1] = (t, tokens)
+
+
 # --------------------------------------------------------------------------- api
 
 
 class GeminiApi:
     """Real API. `request(model, prompt)` -> {"text", "raw", "latency_s", "retries"}."""
 
-    def __init__(self, counter: RequestCounter):
+    def __init__(self, counter: RequestCounter, pacer: Pacer | None = None):
         from dotenv import load_dotenv
         from google import genai
         from google.genai import types
@@ -228,6 +280,7 @@ class GeminiApi:
             raise SystemExit("GOOGLE_AI_API_KEY is not set (see .env.example)")
         self.client = genai.Client(api_key=key)
         self.counter = counter
+        self.pacer = pacer or Pacer()
 
         def config(temperature: float):
             return types.GenerateContentConfig(
@@ -242,13 +295,20 @@ class GeminiApi:
     def request(self, model: str, prompt: str) -> dict:
         retries: Counter = Counter()
         attempt = 0
+        est = estimate_tokens(model, prompt)
         while True:
+            self.pacer.wait(model, est)
             self.counter.take(model)
+            self.pacer.record(model, est)
             t0 = time.perf_counter()
             try:
                 resp = self.client.models.generate_content(
                     model=model, contents=prompt, config=self.configs[model]
                 )
+                usage = getattr(resp, "usage_metadata", None)
+                total = getattr(usage, "total_token_count", None)
+                if total:
+                    self.pacer.correct_last(model, int(total))
                 return {
                     "text": resp.text,
                     "raw": resp.model_dump(mode="json"),
@@ -263,6 +323,8 @@ class GeminiApi:
                     raise
                 retries[str(code)] += 1
                 delay = random.uniform(0, min(BACKOFF_CAP_S, BACKOFF_BASE_S * 2**attempt))
+                if code == 429:  # per-minute limit: back off past the window, then continue
+                    delay = max(delay, PER_MINUTE_429_MIN_WAIT_S)
                 print(f"    {model} {code}; retry {attempt + 1}/{MAX_RETRIES} in {delay:.1f}s")
                 time.sleep(delay)
                 attempt += 1
@@ -1288,6 +1350,12 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--top-up", metavar="CELL_KEY")
     ap.add_argument("--n", type=int, help="specs to add with --top-up")
     ap.add_argument("--out-date", default=datetime.now(QUOTA_TZ).date().isoformat())
+    ap.add_argument(
+        "--gen-cap",
+        type=int,
+        help=f"override today's local {GEN_MODEL} request cap (default {DAILY_CAP[GEN_MODEL]}), "
+        "e.g. when requests were already spent outside this script",
+    )
     args = ap.parse_args(argv)
 
     prm.validate_parameters()
@@ -1295,7 +1363,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.status:
         print_status(ws, required_by_cell())
         return 0
-    api = GeminiApi(RequestCounter())
+    caps = dict(DAILY_CAP)
+    if args.gen_cap is not None:
+        caps[GEN_MODEL] = args.gen_cap
+        print(f"{GEN_MODEL} cap for this invocation: {args.gen_cap}")
+    api = GeminiApi(RequestCounter(caps=caps))
     if args.test_batch:
         report = run_test_batch(TEST_ROOT / args.out_date, api)
         print_test_report(report)
