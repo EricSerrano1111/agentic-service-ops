@@ -100,7 +100,7 @@ Three layers, following current industry practice as of late 2026:
 **Agents:**
 
 - **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, and returns the specialist's verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
-- **Reporting/Metrics Agent** — Incident and quality metrics reporting. Fully deterministic outputs.
+- **Reporting/Metrics Agent** — Incident and quality metrics reporting. Figures are computed deterministically; one LLM call parses the question into a typed request (ADR-046).
 - **Sentiment Agent** — Sentiment classification on freeform customer feedback text.
 - **Forecast Agent** — Regression-based forward volume forecasting.
 - **QA Agent** — Reviews specialist output before it returns to the user. Can accept, or reject with revision guidance.
@@ -248,7 +248,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)
-- [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD in Sprint 5–6)*
+- [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD first for the reporting slice in Sprint 4 (ADR-045), completed in Sprints 5–6)*
 - [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035)*
 - [ ] API cost guardrails and per-run caps
 - [ ] README with architecture diagram and local setup that actually works from clean
@@ -302,13 +302,13 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 | Item | Approach | Est. |
 |---|---|---|
-| Postgres | **Local Docker through Sprint 4.** Cloud SQL only from Sprint 5 onward | ~$10–15 total |
+| Postgres | **Local Docker through Sprint 3.** Cloud SQL from Sprint 4 for the reporting slice, smallest instance, stopped when idle; all services from Sprint 5 (ADR-045) | ~$10–15 total |
 | Cloud Run (7 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic | ~$0–5 |
 | Artifact Registry / Cloud Build / Secret Manager | Free tier | ~$0–3 |
 | Runtime LLM | Gemini API free tier; separate spend-capped paid project (ADR-041) for corpus generation (done, ~$1.40), the Sprint 5 Pro-for-QA test and paid eval runs | ~$1.40 spent; Pro test ~$20–30 incl. thinking tokens, drawn from buffer |
 | Buffer | Overruns, a stronger QA model, demo-day headroom | ~$40 |
 
-**The Cloud SQL timing is the key move.** An always-on managed Postgres instance running all 12 weeks would consume roughly a third of the budget for no benefit during local development. Develop against Docker Postgres, migrate to Cloud SQL when deployment work actually begins, and keep the schema migration path (Alembic) identical for both so the switch is trivial.
+**The Cloud SQL timing is the key move.** An always-on managed Postgres instance running all 12 weeks would consume roughly a third of the budget for no benefit during local development. Develop against Docker Postgres, migrate to Cloud SQL when deployment work actually begins (the Sprint 4 reporting slice, ADR-045; storage bills while the instance is stopped), and keep the schema migration path (Alembic) identical for both so the switch is trivial.
 
 ### Runaway-cost guardrails
 
@@ -336,9 +336,7 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 | 3 | 2026-10-12 to 10-25 | `03-planning-management.md` (10-18); `04-design-solution-architecture.md` (10-18); weekly status reports |
 | 4 | 2026-10-26 to 11-08 | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports |
 | 5 | 2026-11-09 to 11-22 | Weekly status reports (the last covers the week ending 11-22) |
-| 6 | 2026-11-23 to 12-05 | Final product (12-05) |
-
-Several deliverables fall before the engineering they describe is built (e.g. `06` before the first deployment); these are open planning items in `sprint-log.md` Sprint 2, not resolved here.
+| 6 | 2026-11-23 to 12-05 | Final submission (12-05): presentation plus the completed project (ADR-044) |
 
 ### Sprint 1 (weeks 1–2, 2026-09-14 to 09-27) — Foundation
 **Increment:** Synthetic data generator producing validated, signal-bearing data; queryable locally.
@@ -350,10 +348,11 @@ Several deliverables fall before the engineering they describe is built (e.g. `0
 - **Academic:** `01-proposal-business-case.md` (due 09-27); weekly status report
 
 ### Sprint 2 (weeks 3–4, 2026-09-28 to 10-11) — First vertical slice
-**Increment:** Ask a natural-language question about incidents, get a verified answer, end to end.
+**Increment:** Ask a natural-language incident question; the orchestrator routes it over A2A to the reporting agent, which answers through the incidents MCP server; an e2e test confirms the figures match an independent SQL computation. *(Reworded at planning, 2026-09-25: the QA agent is Sprint 4.)*
 - MCP server #1 (incidents) with scoped tools + dedicated DB role
-- Reporting agent + A2A Agent Card
-- Minimal orchestrator routing to a single agent
+- Reporting agent + A2A Agent Card; question parsing per ADR-046
+- `packages/llm` (429 handling, token metering)
+- Minimal orchestrator: classification and routing to a single agent
 - **Academic:** `02-requirements-analysis.md` (due 10-04; completed in Sprint 1); weekly status reports
 
 *This is the most important sprint. It proves the entire MCP → A2A → orchestrator path on the simplest possible task, while there's still time to be wrong about the stack. Everything after is repetition and refinement.*
@@ -362,26 +361,30 @@ Several deliverables fall before the engineering they describe is built (e.g. `0
 **Increment:** All three specialists working; forecast beats a naive baseline or the gap is documented.
 - MCP servers #2 and #3, forecast agent + regression, sentiment agent + confidence scoring
 - Orchestrator routes across all three
+- Golden set and labelled routing set (ambiguous, multi-domain, out-of-scope, technician-level), feeding `05`
+- Fill `security-model.md` while drafting `04`; draft `05` in week 2 (10-19 to 10-25)
 - **Academic:** `03-planning-management.md` and `04-design-solution-architecture.md` (both due 10-18); weekly status reports
 
 ### Sprint 4 (weeks 7–8, 2026-10-26 to 11-08) — Verification
 **Increment:** QA agent operational with all three verification strategies; measurable catch rate.
 - QA agent, bounded retry loop, escalation path
 - Fault injection harness for QA catch-rate measurement
+- Minimal Cloud Run deploy of the reporting slice (orchestrator, `agent_reporting`, `mcp_incidents`) with Cloud SQL, 2026-11-02 to 11-04, timeboxed to 3 days; revision-serving check; stop rule per ADR-045
 - **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
 
 ### Sprint 5 (weeks 9–10, 2026-11-09 to 11-22) — Interface & evaluation
 **Increment:** Deployed system with a working UI; routing accuracy reported with failure analysis.
 - Routing eval harness + failure-case analysis
 - FastAPI gateway + thin React UI
-- Migrate to Cloud SQL; first Cloud Run deployment; **verify revision promotion immediately**
+- Extend deployment to all services; complete Cloud SQL migration; **verify revision promotion on every deploy**
 - **Academic:** weekly status reports (last one covers the week ending 11-22)
 
 ### Sprint 6 (weeks 11–12, 2026-11-23 to 12-05) — Hardening & delivery
 **Increment:** Production-grade checklist closed out; demo rehearsed.
 - Observability, CI/CD completion, graceful degradation, load/latency testing
 - Production-grade checklist (§7) audited item by item
-- **Academic:** final product due 2026-12-05 (end of Module 10)
+- Evaluation report (`docs/evaluation-report.md`) from the Sprint 5 eval runs, presentation, demo rehearsal (ADR-044)
+- **Academic:** final submission due 2026-12-05 (end of Module 10): presentation plus the completed project (ADR-044)
 
 **Protect Sprint 6.** It is genuine buffer, not planned work with a buffer label. Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) requires being genuinely ahead at the Sprint 4 boundary.
 
@@ -402,7 +405,8 @@ agentic-service-ops/
 │
 ├── docs/
 │   ├── architecture.md
-│   ├── security-model.md           # placeholder — currently empty
+│   ├── security-model.md           # placeholder — filled while drafting `04` in Sprint 3
+│   ├── evaluation-report.md        # Sprint 6: results and limitations (ADR-044)
 │   ├── data-dictionary.md
 │   ├── risk-register.md            # updated every sprint boundary
 │   ├── sprint-log.md               # planning, review, retro per sprint
@@ -445,7 +449,7 @@ agentic-service-ops/
 ├── services/
 │   ├── orchestrator/ # intent classification + A2A routing
 │   │
-│   ├── agent_reporting/ # deterministic — no model
+│   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046)
 │   │
 │   ├── agent_sentiment/
 │   │   ├── training/
@@ -474,7 +478,7 @@ agentic-service-ops/
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   ├── qa/                         # fault injection + catch rate
-│   └── results/                    # dated eval runs — evidence for the paper
+│   └── results/                    # dated eval runs — evidence for the evaluation report (ADR-044)
 │
 └── tests/
     ├── unit/                       # offline contract, generator and corpus tests
@@ -487,7 +491,7 @@ agentic-service-ops/
 - `agent_sentiment/models/` and `agent_forecast/models/` hold trained artifacts, not source — gitignored (`**/models/*.bin`, `**/models/*.pt`, `**/models/*.joblib` or equivalent). A transformer checkpoint can exceed 100MB; it has no business in git history. `training/train.py` in each is what produces the artifact — run deliberately, not something any agent triggers.
 - `data/generator/corpus/` is committed, unlike trained-model artifacts: it is the frozen `feedback_text` corpus and its provenance record, written once by `build_corpus.py`. `generate.py` reads it and never calls an API, so a normal generation run is reproducible from the seed alone (ADR-030).
 - `packages/llm/` exists specifically to keep the provider swap cheap and to centralize cost metering — both budget requirements from §9.
-- `evals/results/` being version-controlled and dated matters: the paper's results section should cite real dated runs, not numbers retyped from memory.
+- `evals/results/` being version-controlled and dated matters: the evaluation report's results section (ADR-044) should cite real dated runs, not numbers retyped from memory.
 - `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.
 - Each service owns its Dockerfile and tests. Resist the urge to centralize — it undermines the "these are independently deployable peers" claim.
 - Per-ADR files were deliberately collapsed into one running `decisions-log.md` — a folder-per-decision only pays for itself with multiple contributors, and this is a solo project.
@@ -516,7 +520,7 @@ Remaining:
 
 - [x] Reconcile the milestone plan against the course calendar — done 2026-09-25: actual deliverables and due dates mapped to sprints in §10 (R-09)
 - [ ] Check each deliverable's rubric content when drafting starts (R-09)
-- [ ] Final repo/project name
+- [x] Final repo/project name — `agentic-service-ops` (closed 2026-09-25)
 - [x] Sentiment approach — fine-tuned transformer classifier (BERT) trained on `sentiment_labels` (ADR-024)
 - [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029)
 - [x] Historical data window and granularity for the forecast — 36 months, weekly, univariate (ADR-018)

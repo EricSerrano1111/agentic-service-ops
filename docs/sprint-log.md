@@ -101,8 +101,8 @@ corpus consumed most of the sprint (four prompt rounds plus a test batch); see t
 
 The deliverables originally listed here (problem statement, project charter, initial risk
 register) were planning assumptions that did not match the course (R-09). The milestone plan
-was reconciled against the course calendar on 2026-09-25 (`architecture.md` §10). Whether a
-project charter is a separate deliverable is still open (see Sprint 2 planning note).
+was reconciled against the course calendar on 2026-09-25 (`architecture.md` §10). Confirmed
+from the course materials that no charter is due.
 
 **Decisions made this sprint:**
 - ADR-025 — grant enforcement details: column-level `service_feedback` grant for reporting, `PUBLIC` defaults revoked, the cross-table `completed_at` invariant left to QA rather than a trigger.
@@ -123,16 +123,28 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 - ADR-041 — remaining Flash-Lite corpus generation runs on a separate paid, spend-capped project (own key, $10 budget alert, per-session request cap in code); the Gemma judge stays on the free tier (supersedes ADR-029 in part).
 - ADR-042 — the generator writes explicit deterministic IDs (OVERRIDING SYSTEM VALUE), uses one timezone per state and committed name lists, and loads as `app_generator` in one transaction.
 - ADR-043 — generator world rules: incidents conditioned on SLA outcome (~0.25 vs ~0.08), a snapshot at window end + 12h, age-dependent incident and payment statuses, templated incident notes.
+- Account-drop anomaly (ADR-038 designed it invisible in weekly totals, z ≈ 1.4; `validate.py` measured a weekly-total dip of z 3.92): closed; realised z reported, no reseed.
 
 ---
 
 ## Sprint 2 (Weeks 3–4, 2026-09-28 to 2026-10-11) — First vertical slice
-**Goal (increment):** Ask a natural-language question about incidents, get a verified answer, end to end.
+**Goal (increment):** Ask a natural-language incident question; the orchestrator routes it over A2A to the reporting agent, which answers through the incidents MCP server; an e2e test confirms the figures match an independent SQL computation.
+
+*Reworded at planning (2026-09-25) because the QA agent is Sprint 4.*
 
 **Planned:**
-- [ ] MCP server #1 (incidents) with scoped tools + dedicated DB role — *the DB role half is done early: `app_reporting` exists with its §7 grants, asserted in CI since Sprint 1*
-- [ ] Reporting agent + A2A Agent Card
-- [ ] Minimal orchestrator routing to a single agent
+- [ ] Walking skeleton by 2026-10-02: pin MCP and A2A SDKs and confirm spec targets (R-12); one MCP tool (`get_incidents_by_date_range`) as `app_reporting`; reporting agent calls it over streamable HTTP and serves an Agent Card; orchestrator fetches the card and sends one blocking `message/send` with a hardcoded route; all in docker-compose; no LLM
+- [ ] `packages/llm` (budget 1.5 days): 429 handling lifted from `build_corpus.py`, separating per-minute (back off, retry after the stated delay) from daily quota (stop cleanly, typed error); free key default; paid only with an explicit flag, its own key and a required request cap; token metering on every call, logged as list-price equivalent; one provider; done = offline tests pass against a fake transport
+- [ ] Orchestrator classification (reporting, out-of-scope, other domain not yet available, multi-domain per ADR-032), with 20–30 seeded labelled intents as test fixtures
+- [ ] Reporting agent question parsing per ADR-046; two or three reporting tools covering the FR-06 examples; template-rendered answers; e2e test against independent SQL
+- [ ] Portable Alembic ruff hook (Alembic `module` runner if the installed version supports it); verified locally and in CI
+- [ ] Draft `03-planning-management.md` 2026-10-08 to 10-11, after checking its rubric
+
+R-06 checkpoint: skeleton hop working by 2026-10-02, or hold the scope conversation that day;
+LLM-classified question answered end to end in docker-compose by 2026-10-07. Log hours per
+layer (MCP, A2A, llm, orchestrator). Work a test can verify runs in Claude Code cloud sessions
+and returns as a PR; anything needing a real API key, `gcloud`, or a judgment call runs
+locally. The paid key never goes into a cloud environment.
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -152,32 +164,20 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 - `02-requirements-analysis.md` (due 2026-10-04): complete early, in Sprint 1.
 - Weekly status report due (maintained by Eric)
 
-**For Sprint 2 planning** *(noted 2026-09-25; conflicts flagged, not resolved)*:
-- `06-production-support.md` is due 2026-11-08 (end of Sprint 4), but the runbook and
-  incident playbook are planned for Sprint 6, and the first Cloud Run deployment and Cloud
-  SQL migration are Sprint 5. The document is due before there is a deployed system to
-  support.
-- `05-test-scenarios.md` is due 2026-11-01 (Sprint 4); the routing eval harness and eval
-  runs are Sprint 5. The labeled test set (routing intents incl. ambiguous, multi-domain,
-  out-of-scope and technician-level questions) must be complete by Sprint 4, and the QA
-  fault-injection harness is being built in the same sprint the document is due.
-- `03-planning-management.md` and `04-design-solution-architecture.md` are both due
-  2026-10-18, mid-Sprint 3, alongside MCP servers #2 and #3 and the sentiment and forecast
-  agents. `04` also has to describe components not yet built (QA agent in Sprint 4; gateway,
-  UI and deployment in Sprint 5).
-- Weekly status reports recur every week through 2026-11-22 and are not budgeted in any
-  sprint's capacity.
-- Project charter: the week-2 status report puts a charter on the course calendar about two
-  weeks out (i.e. Sprint 2), but no charter file exists and the `03` placeholder does not say
-  whether it contains one. Unconfirmed.
-- Sprint 6 still plans a "final paper, presentation, demo rehearsal", and several ADRs
-  (036, 038, 039, 040, 043) say limitations are stated in "the final paper". No final paper
-  appears on the course calendar; only the final product (due 2026-12-05).
-- The Sprint 4 eval-run decision (free tier split across days vs a paid project) is already
-  partly answered: ADR-041 says the paid, spend-capped project is reused for the Sprint 5
-  paid evaluation runs. Pricing a full routing eval run remains open.
+**For Sprint 2 planning** *(resolved 2026-09-25)*:
+- `06-production-support.md` (due 11-08) is supported by the Sprint 4 slice deploy (ADR-045).
+- The golden set and labelled routing set are Sprint 3 deliverables feeding
+  `05-test-scenarios.md` (due 11-01), drafted in Sprint 3 week 2.
+- `03` is drafted late in Sprint 2; `04` early in Sprint 3, after the R-06 checkpoint.
+- No charter is due (confirmed from the course materials).
+- No final paper (ADR-044).
+- The Sprint 4 eval-run item is reduced to pricing a full routing eval run (ADR-041 decided
+  the rest), counting two LLM calls per request (ADR-046).
 
 **Decisions made this sprint:**
+- ADR-044 — there is no final paper; limitations and results go in `docs/evaluation-report.md` (Sprint 6) and the final presentation.
+- ADR-045 — minimal Cloud Run deploy of the reporting slice with Cloud SQL in Sprint 4, 2026-11-02 to 11-04, with a stop rule (supersedes ADR-007 in part).
+- ADR-046 — specialists parse their own questions with one LLM call into a typed request; figures stay deterministic and answers are template-rendered.
 
 *Note: this is the highest-risk sprint in the plan — it proves the entire MCP → A2A → orchestrator path. If it slips, that's schedule signal worth taking seriously, not just noting.*
 
@@ -192,6 +192,10 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 - [ ] Sentiment agent + confidence scoring
 - [ ] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
 - [ ] Orchestrator routes across all three
+- [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
+- [ ] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
+- [ ] Fill `docs/security-model.md` while drafting `04`
+- [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -223,12 +227,18 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 - [ ] QA agent — deterministic re-check (reporting), backtest threshold (forecast), labeled-holdout scoring (sentiment)
 - [ ] Bounded retry loop (max 2), escalation path on final failure
 - [ ] Fault-injection harness for QA catch-rate measurement
-- [ ] Decide the eval-run approach before Sprint 5: split runs across
-  days on the free tier vs. a paid, spend-capped eval project. Price a
-  full routing eval run (~300-700 requests) on paid Flash-Lite using the
-  official pricing page, and add that cost to the budget alongside the
-  ~$20-30 Pro-for-QA test (ADR-029). *(Partly decided early: ADR-041 reuses the paid,
-  spend-capped project for Sprint 5 paid eval runs; the pricing remains.)*
+- [ ] Price a full routing eval run (~300-700 requests, two LLM calls per request per
+  ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
+  budget alongside the ~$20-30 Pro-for-QA test (ADR-029). ADR-041 already decided the runs
+  use the paid, spend-capped project.
+- [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045): orchestrator,
+  `agent_reporting` and `mcp_incidents` with the smallest Cloud SQL instance (stopped when
+  idle), 2026-11-02 to 11-04, timeboxed to 3 days. Cloud Build trigger with an explicit deploy
+  step; post-deploy check that the serving revision is the one just built at 100% traffic;
+  Secret Manager; IAM ID tokens between services; `alembic upgrade head` and the grants suite
+  against Cloud SQL. Stop rule: not verified serving by end of 11-04 → stop, record R-03 as
+  realised, write it up as the first incident in `06`, leave Sprint 5 unchanged. Carry order
+  if Sprint 4 overflows: the fault-injection harness moves to Sprint 5 first.
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -261,7 +271,7 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] FastAPI gateway + thin React UI
-- [ ] Migrate Postgres to Cloud SQL; first Cloud Run deployment
+- [ ] Extend deployment to all services; complete Cloud SQL migration
 - [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)
 
 **Shipped:**
@@ -292,7 +302,7 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing
 - [ ] Production-grade checklist (`architecture.md` §7) audited item by item
-- [ ] Final paper, presentation, demo rehearsal
+- [ ] Evaluation report (`docs/evaluation-report.md`), presentation, demo rehearsal (ADR-044)
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -318,11 +328,11 @@ project charter is a separate deliverable is still open (see Sprint 2 planning n
 ---
 
 ## Cumulative Summary
-*(fill in progressively — one line per sprint, for a fast look-back when writing the final paper)*
+*(fill in progressively — one line per sprint, for a fast look-back when writing the evaluation report and final presentation)*
 
 | Sprint | Goal met? | Key learning | Scope change? |
 |---|---|---|---|
-| 1 | | | |
+| 1 | Yes, 2026-09-25, two days inside the sprint | Iteration with pass bars but no stop rule consumed most of the sprint; it ended by redefining the criterion (ADR-040), an option available from the start | Yes: corpus design reshaped (ADR-036 to 041); paid, spend-capped project added (~$1.40); human review cut from 200 to 30; deliverable plan rebuilt from the course calendar |
 | 2 | | | |
 | 3 | | | |
 | 4 | | | |
