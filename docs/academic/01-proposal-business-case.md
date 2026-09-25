@@ -8,6 +8,8 @@ Author(s): Eric Serrano
 
 Keywords: Agentic, AI, Multi-Agent, Field Service, Operations, Business Intelligence, Multi Context Protocol (MCP), Agent to Agent (A2A), Capstone
 
+Due Date: September 27 **(Assignment Completed)**
+
 ## **Document Revision History**
 
 | **Version** | **Date**  | **Author**   | **Changes Made** |
