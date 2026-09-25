@@ -191,7 +191,7 @@ Quality events requiring investigation. Not every request has one; some have sev
 | `reported_at` | TIMESTAMPTZ | No | When the customer reported it |
 | `reported_by_contact_id` | FK → contacts | No | Reuses the contacts table — no duplicate caller fields |
 | `resolved_at` | TIMESTAMPTZ | Yes | **Added on review** — without this there's no incident-resolution-time metric, and time-to-resolve is a core quality KPI |
-| `incident_notes` | TEXT | Yes | Internal staff account of what happened. **Never fed to the sentiment agent** |
+| `incident_notes` | TEXT | Yes | Internal staff account of what happened. **Never fed to the sentiment agent.** Generated as short templated staff notes (2-3 sentences: incident type, root cause when known, status) from committed phrase lists in `data/generator/reference_data.py`, with no names or contact details; null only for some still-open incidents (ADR-043) |
 | `credit_issued_amount` | DECIMAL(10,2) | Yes | Explicit — replaces the ambiguous `IncidentCost` |
 | `created_by_user_id` | FK → internal_users | No | |
 | `created_at` | TIMESTAMPTZ | No | When the record was logged (can differ from `reported_at`) |
@@ -234,6 +234,8 @@ The true parameters used to generate the synthetic dataset. Written once by the 
 | `generated_at` | TIMESTAMPTZ | Generation run timestamp — lets you regenerate reproducibly |
 
 Also persist the **random seed** here. Without it your dataset isn't reproducible, and a capstone reviewer asking "can you regenerate this?" should get a yes.
+
+As generated (ADR-042, ADR-043): `seed.master_seed` and `seed.stage_keys` persist the seed, and `seed.corpus_sha256` records the SHA-256 of the corpus file the dataset was drawn from, so seed plus corpus reproduce it. Derived values are stored too, including `derived_incidents.incident_rate_given_sla` — P(incident | SLA missed) ≈ 0.252 and P(incident | SLA met) ≈ 0.081, solved so the overall incident rate is 10% of completed requests and missed_sla is 25% of incidents — and `derived_billing.expected_pending_share`.
 
 **Severity → sentiment coupling — decided: yes, with noise.** Incident severity influences the sentiment of the associated feedback. The earlier concern about leakage doesn't apply now that the forecast is locked as univariate — it never sees incidents or sentiment, so there's no path for it to learn a shortcut. And this correlation is precisely one of the ground-truth relationships the synthetic world needs; without it you have three unrelated random streams rather than a coherent business.
 
@@ -356,6 +358,8 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 | `archived_requests` | ~90% of requests | Remainder cancelled |
 | `incidents` | 8–12% of completed requests | Realistic field service incident rate |
 | `service_feedback` | 35–50% of completed requests (~7,200 rows) | Realistic survey response rate. Every row has `feedback_text`; only `rating` may be null (ADR-038) |
+
+**Realised (loaded 2026-09-25, seed 20260923):** 20,230 requests, 18,063 completed, 2,067 incidents (10.2% of completed requests have one; missed_sla is 24.4% of incidents), 7,521 feedback rows (41.6% of completed). Sentiment mix 50.2% positive / 22.4% neutral / 19.6% negative / 7.8% mixed; hard cases 14.9%. Payment status: 94.8% paid, 4.1% disputed, 1.1% pending (pending only within six weeks of the snapshot, ADR-043).
 
 ### Sentiment distribution — **locked**
 

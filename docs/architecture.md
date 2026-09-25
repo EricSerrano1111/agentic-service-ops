@@ -410,7 +410,9 @@ agentic-service-ops/
 │   │   ├── experiments/            # model bake-off, prompt rounds, corpus test batch (evidence)
 │   │   ├── corpus/                 # committed: feedback_text.jsonl, provenance.json, rejected.jsonl
 │   │   │   └── work/               # gitignored: stage files, raw responses, request counts
+│   │   ├── reference_data.py       # committed name, place, timezone and note-phrase lists (ADR-042)
 │   │   ├── generate.py             # reads the frozen corpus; never calls an API
+│   │   ├── load.py                 # one-transaction reload into Postgres as app_generator (ADR-042)
 │   │   └── validate.py             # confirms signal is recoverable; samples corpus labels
 │   └── migrations/                 # Alembic — identical local ↔ Cloud SQL
 │

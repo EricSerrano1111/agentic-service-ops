@@ -53,6 +53,8 @@
 | 039 | Positive feedback on incident rows uses no-incident positive comments | Accepted — supersedes ADR-036 in part |
 | 040 | Sentiment labels defined by the written specification; human review becomes a sanity check | Accepted — supersedes ADR-036 in part |
 | 041 | Remaining corpus generation on a separate paid, spend-capped project | Accepted — supersedes ADR-029 in part |
+| 042 | Generator: explicit deterministic IDs, per-state timezones, committed name lists, loads as app_generator | Accepted |
+| 043 | Generator world rules: SLA-conditioned incidents, snapshot semantics, age-dependent statuses, templated incident notes | Accepted |
 
 ---
 
@@ -943,3 +945,92 @@ infrastructure.
   prices.
 - The GCP budget alerts at $50/$80 (a Sprint 1 item) are set before billing is linked.
 - R-02 and R-11: paid spend now exists; the budget alerts and the code cap bound it.
+
+### ADR-042 — Generator writes explicit deterministic IDs, uses per-state timezones and committed name lists, and loads as `app_generator`
+*Date: 2026-09-25. Extends ADR-015, ADR-018, ADR-030 and ADR-038. Supersedes nothing.*
+
+**Decision:**
+1. Every surrogate key is assigned by `generate.py` in generation order and inserted
+   with `OVERRIDING SYSTEM VALUE`. The columns stay `GENERATED ALWAYS AS IDENTITY`
+   (ADR-015).
+2. Each location's state maps to one IANA timezone (`reference_data.STATE_TIMEZONE`),
+   the zone where most of the state's population lives. Hour-of-day weights apply in
+   site-local time, and all timestamps are stored as UTC.
+3. Names, companies, streets, and cities come from short committed lists in
+   `reference_data.py`. Phones use 555-01XX and emails use example.com
+   (`data-dictionary.md` §9).
+4. `load.py` connects as `app_generator`, never as a superuser. It validates the
+   dataset, then truncates and reloads every generated table in one transaction.
+5. `generate.py` is pure: no database access, no clock reads, no network. All
+   generation constants live in `parameters.py` and are recorded in
+   `generation_parameters`, together with the corpus file's SHA-256.
+
+**Context:** ADR-030 requires that the same seed and corpus reproduce the same dataset.
+If the database assigned IDs, they would depend on insert order and sequence state, so
+foreign keys built in memory couldn't be trusted, and a partial reload would silently
+renumber rows. Generating hour-of-day patterns in UTC would shift western sites'
+business hours by 3-10 hours, which is the naive-timezone error §6 forbids. A faker
+library would add a dependency whose output can change between versions. The §7 access
+matrix already gives `app_generator` everything a load needs.
+
+**Alternatives considered:**
+- *Database-assigned IDs with a lookup pass after insert* (rejected). Not reproducible,
+  and more complex.
+- *Deriving the timezone from the ZIP code* (rejected). More precision than a synthetic
+  dataset needs.
+- *Faker* (rejected). A source of drift unless pinned, and still opaque.
+- *Loading as the admin role* (rejected). It breaks ADR-023's least-privilege model.
+
+**Consequences:**
+- Identity sequences are left behind the loaded IDs, and `app_generator` has no sequence
+  privileges to advance them. Any future writer that relies on auto-generated IDs must
+  reset the sequences first. No current writer does.
+- States that span two timezones are simplified to one.
+- Every load replaces the whole dataset; there are no incremental loads.
+- A dataset can be traced to both its seed and its corpus through `generation_parameters`.
+
+### ADR-043 — Generator world rules: SLA-conditioned incidents, snapshot semantics, age-dependent statuses, templated incident notes
+*Date: 2026-09-25. Extends ADR-021 and ADR-038. Supersedes nothing.*
+
+**Decision:**
+1. **Incidents depend on SLA outcome.** A request that missed its SLA gets an incident
+   with a higher probability than one that met it (about 0.25 vs 0.08, derived so the
+   overall rate is 10% and missed_sla is 25% of incidents). A missed request with
+   incidents carries exactly one missed_sla. Both rates are derived parameters in
+   `generation_parameters`.
+2. **The dataset is a snapshot at the window end plus 12 hours.** Events after the
+   snapshot don't exist, and statuses reflect it: an unfinished job is in progress, an
+   undispatched one is open, and a survey not yet received has no row.
+3. **Statuses depend on age.** Only recent incidents are open or investigating
+   (ADR-038). Only invoices completed within the last 6 weeks can be pending, with a
+   probability that falls with age. Disputed stays at 4% overall.
+4. **Incident notes are short templated staff notes**, built from committed phrase lists
+   by incident type and root cause, with no names or contact details. They are never
+   readable by the sentiment role (§7).
+5. The other rules `parameters.py` had left open (inactive-account stop dates, technician
+   status dates and regional assignment, cancellation timing, the anomaly account's
+   identity, repeat-visit scheduling) are implemented as `generate.py` does, with their
+   constants recorded in `generation_parameters`.
+
+**Context:** Building `generate.py` exposed rules that `parameters.py` had left open. An
+independent incident draw cannot hold both the 10% incident rate and the 25% missed_sla
+share, because only about 11% of requests miss their SLA. A flat 8% pending rate
+produced invoices still pending after two years. And leaving `incident_notes` null made
+the staff-notes/customer-text boundary (ADR-014, §7) a boundary around an empty column.
+
+**Alternatives considered:**
+- *Independent incident draws* (rejected). They cannot satisfy both targets without
+  dropping the missed_sla coherence rule (ADR-038).
+- *A flat pending rate* (rejected). It is unrealistic at any age beyond a few weeks.
+- *Null incident notes* (rejected). They make the §7 boundary claim vacuous, and they
+  give the reporting agent no staff text to handle.
+- *LLM-generated notes* (rejected). Nothing trains on notes, so templates are enough,
+  and they cost nothing and are fully deterministic.
+
+**Consequences:**
+- The SLA-incident relationship is planted. When the reporting agent surfaces it, that
+  is recovery of a known signal, useful for evaluation, and the paper says so.
+- The overall pending share falls below the old flat 8%; the realised figure is
+  recorded.
+- Templated notes are repetitive by design. They are internal staff shorthand, not a
+  modelled text source.
