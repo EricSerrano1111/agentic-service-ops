@@ -77,8 +77,19 @@ corpus consumed most of the sprint (four prompt rounds plus a test batch); see t
 
 **Retro:**
 - What went well:
+  -  Claims enforced, then tested against the live system. Least privilege is enforced by grants and asserted by a 401-case integration suite, which was itself checked by drifting the matrix both ways. Migrations are frozen snapshots verified by up/down/up cycles. Repeat: every security or data claim gets a test that fails when the claim is false, and the test is broken on purpose once to prove it.
+  - Pipelines built to be interrupted. build_corpus.py's append-only stage files and clean stops (daily-quota 429, Gemma 500/503, billing errors) absorbed a free-to-paid switch mid-run, a crash-truncated line, and malformed JSON without losing work. This is the pattern for packages/llm.
+  - Truth read from the database, not constants: validate.py reads generation_parameters as app_qa and the forecast columns as app_forecast (66/66 passed). Two generations hash identically.
+  - Spending money was decided on a written comparison (ADR-041): about $1.40 bought back about two days.
+
 - What didn't:
+  - The label-design loop had pass bars but no stop rule. It ran four prompt rounds plus a test batch and produced three superseding ADRs in three days (036, 039, 040). Neutral never met its bar (8/20, then 10/20, against 14). The loop ended by changing the criterion (specification-defined labels, and the review cut from 200 comments to 30, ADR-040), not by passing it. That option existed before round one. It cost most of the sprint: the goal was met 09-25, the same day the register had logged it as missed.
+  - Assumptions became requirements by repetition. The project charter began as a planning guess. It was then copied into the sprint log, the week-2 status report, and the risk review, and carried into Sprint 2 planning as an open conflict. The course materials have no charter. "The final paper" followed the same path: five ADRs name it as where limitations get stated, and there is no final paper. Neither was checked against the source it claimed to come from, and each repetition made it look more checked. R-09 was the same failure at the scale of the whole plan.
+  - ADR-037 and ADR-038 replaced decisions from ADR-019 and ADR-030 while their headers said "supersedes nothing." The index caught it; the entries didn't. This is the answer to R-01's question, "what would a reviewer have flagged?"
+
 - What changes next sprint:
+  1. Any fact about an external requirement (deliverable, rubric, quota, price, SDK capability) is written with its source the first time, or marked UNCONFIRMED. Nothing marked UNCONFIRMED is planned against or copied into a second file.
+  2. Every design loop starts with a written stop rule and budget: maximum rounds or dates, and what happens at the limit (accept, change the criterion, or cut). Write it in the sprint log before round one. First uses: packages/llm and the R-06 A2A checkpoint.
 
 **Academic deliverable status:**
 - `01-proposal-business-case.md` (due 2026-09-27): complete.
