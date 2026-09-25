@@ -2,7 +2,7 @@
 
 **Domain:** Network/hardware technician field service dispatch (installs, repairs, maintenance visits)
 
-**Status:** Draft — column names and enum values are placeholders for you to refine, not final
+**Status:** Implemented — schema and vocabularies locked (ADR-020) and implemented in `packages/db_models/` through Alembic head `9135d8de9f27` (§10). Where this document and the models disagree, the models are right.
 
 **Companion to:** `architecture.md`
 
@@ -154,7 +154,7 @@ Active/open service engagements. This is your "records" table.
 | `created_by_user_id` | FK → internal_users | No | Dispatch user who logged the request |
 
 ### `archived_requests`
-Completed requests with final billing. 1:1 with `service_requests`, created when `request_status` reaches `completed`.
+Completed requests with final billing. 0..1 with `service_requests` (see the cardinality note below), created when `request_status` reaches `completed`.
 
 | Column | Type | Nullable | Description |
 |---|---|---|---|
@@ -228,7 +228,7 @@ The true parameters used to generate the synthetic dataset. Written once by the 
 | Column | Type | Description |
 |---|---|---|
 | `param_key` | VARCHAR(100), PK | e.g. `seasonality_amplitude`, `trend_slope_monthly`, `incident_rate_baseline`, `incident_sentiment_corr`, `anomaly_window_start` |
-| `param_value` | JSONB or NUMERIC | Value; JSONB handles the windowed/array cases |
+| `param_value` | JSONB | Value. Implemented as JSONB throughout (scalars as well as windowed/array cases), so callers have one decode path |
 | `param_group` | ENUM (`volume`, `incidents`, `sentiment`, `billing`, `anomalies`, `world`, `feedback`) | Groups params by which model they govern. Seven values (ADR-038): `world` holds the seed, window, reference counts, regions and request lifecycle; `feedback` holds response rates, channels and corpus sizing |
 | `notes` | TEXT | Human explanation of what this parameter controls |
 | `generated_at` | TIMESTAMPTZ | Generation run timestamp — lets you regenerate reproducibly |
@@ -250,7 +250,7 @@ Store the coupling strength as an explicit parameter (`incident_severity_sentime
 |---|---|---|
 | `feedback_id` | FK → service_feedback, PK | One label per feedback record |
 | `true_sentiment` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | Assigned at generation time, before any model sees the text. It is the sentiment the corpus model was asked to write (ADR-030). Plain comments are confirmed by the judge (ADR-036); sarcastic and implicit comments are intent; their judge disagreement rate is reported (ADR-040). |
-| `label_confidence` | DECIMAL | Optional — if you want ambiguous cases to exist deliberately |
+| `label_confidence` | NUMERIC(4,3), nullable | Null on every generated row: genuinely ambiguous comments are excluded from the corpus (ADR-036), so labels carry no graded confidence |
 | `hard_case_type` | ENUM (`none`, `sarcastic`, `implicit`), NOT NULL | Which kind of deliberately hard case the comment is, or `none` (ADR-037; replaces `is_sarcastic`). There are two hard-case types (ADR-036), and failure analysis reports subgroup accuracy per type. |
 | `corpus_id` | VARCHAR(32), NOT NULL, UNIQUE | ID of the corpus comment (`data/generator/corpus/feedback_text.jsonl`) that supplied the row's `feedback_text`, so the eval harness can join a label to its corpus metadata. UNIQUE enforces ADR-030's no-reuse rule (ADR-037). |
 
@@ -359,7 +359,9 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 | `incidents` | 8–12% of completed requests | Realistic field service incident rate |
 | `service_feedback` | 35–50% of completed requests (~7,200 rows) | Realistic survey response rate. Every row has `feedback_text`; only `rating` may be null (ADR-038) |
 
-**Realised (loaded 2026-09-25, seed 20260923):** 20,230 requests, 18,063 completed, 2,067 incidents (10.2% of completed requests have one; missed_sla is 24.4% of incidents), 7,521 feedback rows (41.6% of completed). Sentiment mix 50.2% positive / 22.4% neutral / 19.6% negative / 7.8% mixed; hard cases 14.9%. Payment status: 94.8% paid, 4.1% disputed, 1.1% pending (pending only within six weeks of the snapshot, ADR-043).
+**Realised (loaded 2026-09-25, seed 20260923):** 20,230 requests, 18,063 completed, 2,067 incidents (10.2% of completed requests have one; missed_sla is 24.4% of incidents), 7,521 feedback rows (41.6% of completed). Sentiment mix 50.2% positive / 22.4% neutral / 19.6% negative / 7.8% mixed; hard cases 14.9%. Payment status: 94.8% paid, 4.1% disputed, 1.1% pending (pending only within six weeks of the snapshot, ADR-043). Cancellation rate 10.2%. Reference tables: 50 accounts, 198 contacts, 197 locations, 32 technicians (63 skill rows), 15 internal users; 140 `generation_parameters` rows.
+
+**Signal as recovered by `validate.py` (2026-09-25, 66/66 checks pass, `data/generator/validation/2026-09-25/report.json`):** annual growth 8.5% (designed 8%); seasonal peak-to-trough 0.39 against 0.42 designed in the same K=3 basis; residual sd of log weekly volume 11.7% (designed effective ~10.6%); regional drop z 3.53; account drop 93% at account level; 150 direct-bill invoices at the 0.10 surcharge inside the billing window and 0 outside. Note: the account drop's dip in *weekly totals* measured z 3.92 (report-only check), against the ~1.4 designed, so it is not invisible in weekly totals as the anomaly row above describes.
 
 ### Sentiment distribution — **locked**
 
@@ -378,7 +380,7 @@ Positive feedback on an incident row draws its comment from the no-incident posi
 
 **Feedback corpus (final, 2026-09-25).** 13,184 accepted comments in 91 cells (`data/generator/corpus/feedback_text.jsonl`). The corpus is complete when every cell's accepted count is at least its Poisson q99 demand estimate (ADR-038); the 2x plain-neutral / plain-mixed build factor is generation headroom for judge rejections, not a requirement. Minimum coverage is 1.2x q99. Accepted neutrals are 73% administrative, 19% status and 8% minimal: most minimal comments were rejected as corpus-wide duplicates, and the judge accepted administrative notes (78%) far more often than status (27%) or minimal (52%) ones. The text checks allow weekday names but reject calendar dates and times.
 
-If your generated feedback ends up overwhelmingly negative, every accuracy number you report downstream is noise. Validate this distribution in Sprint 1 before building anything on top of it.
+If your generated feedback ends up overwhelmingly negative, every accuracy number you report downstream is noise. Validate this distribution in Sprint 1 before building anything on top of it. *(Done 2026-09-25: the realised mix above is within ±1.5 pp of every target.)*
 
 ---
 
@@ -419,7 +421,7 @@ Five things this matrix enforces that a code convention wouldn't:
 4. **The sentiment agent cannot read `service_feedback.rating`.** The rating stays a genuinely independent signal for the QA agent to check sentiment against (R-04, ADR-027).
 5. **The forecast agent cannot read billing or any customer or technician identifier.** It sees three columns of `service_requests` and nothing else (ADR-035).
 
-Note that `role_qa` is deliberately broad: verification requires cross-checking sources the specialists can't see. That's the point — but it also makes the QA agent the highest-value target in the system, which is worth one paragraph in the threat model.
+Note that `app_qa` is deliberately broad: verification requires cross-checking sources the specialists can't see. That's the point — but it also makes the QA agent the highest-value target in the system, which is worth one paragraph in the threat model.
 
 ---
 
@@ -474,27 +476,28 @@ All seven open questions resolved. Recorded here so the reasoning survives into 
 | 3 | **`technician_skills` join table** | Delimited strings break 1NF and force wrong substring matching |
 | 4 | **Snapshot `sla_window_minutes` onto the request** | Live tier lookup would retroactively change historical compliance reports |
 | 5 | **Weekly volume, all statuses, 36 months, univariate** | ~156 points; forecasts demand rather than confounding it with cancellation behavior |
-| 6 | **50/22/20/8 sentiment split, 15% hard cases** | Realistic class balance; enough hard cases for credible subgroup reporting |
+| 6 | **50/22/20/8 sentiment split, 15% hard cases** | Realistic class balance; enough hard cases for credible subgroup reporting. Hard-case types later set to sarcastic and implicit (ADR-036, ADR-037) |
 | 7 | **Enums locked; `upgrade` added to `service_type`; VARCHAR+CHECK implementation** | Hardware refresh is a real category with its own seasonality; CHECK constraints avoid painful enum migrations |
 | 8 | **Severity influences sentiment, with noise** | No leakage path given a univariate forecast; the correlation is what makes the synthetic world coherent |
 
-### DDL status — **implemented** (2026-09-20)
+### DDL status — **implemented** (2026-09-20; current through Alembic head `9135d8de9f27`, 2026-09-23)
 
-The schema in this document is now implemented in code:
+The schema in this document is now implemented in code. Migration chain: `0f3c81a47b21` → `7d54e0c9a318` → `1ee8342c81a7` → `fae4b8c9814c` → `4c6589542b27` → `9135d8de9f27` (head).
 
 | Artifact | Location |
 |---|---|
 | SQLAlchemy models (all 12 tables) | `packages/db_models/src/db_models/` |
 | Controlled vocabularies | `packages/db_models/src/db_models/enums.py` |
 | §7 access matrix, as data | `packages/db_models/src/db_models/access_matrix.py` |
-| Initial migration — tables, constraints, §9 indexes | `data/migrations/versions/*_initial_schema.py` |
-| Roles and grants migration (frozen, ADR-027) | `data/migrations/versions/*_roles_and_grants.py` |
-| Sentiment column-level feedback grant (ADR-027) | `data/migrations/versions/*_sentiment_feedback_column_grant.py` |
-| Forecast column-level `service_requests` grant (ADR-035) | `data/migrations/versions/*_forecast_service_requests_column_grant.py` |
+| Initial migration — tables, constraints, §9 indexes (`0f3c81a47b21`) | `data/migrations/versions/*_initial_schema.py` |
+| Roles and grants migration (frozen, ADR-027; `7d54e0c9a318`) | `data/migrations/versions/*_roles_and_grants.py` |
+| Sentiment column-level feedback grant (ADR-027, `1ee8342c81a7`) | `data/migrations/versions/*_sentiment_feedback_column_grant.py` |
+| Forecast column-level `service_requests` grant (ADR-035, `fae4b8c9814c`) | `data/migrations/versions/*_forecast_service_requests_column_grant.py` |
 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`, `corpus_id` added (ADR-037, `4c6589542b27`) | `data/migrations/versions/*_sentiment_labels_hard_case_type_and_.py` |
 | `generation_parameters.param_group` gains `world` and `feedback` (ADR-038, `9135d8de9f27`) | `data/migrations/versions/*_param_group_world_and_feedback.py` |
 | Contract tests | `tests/unit/` |
-| Live grant tests (reads and writes, per role) | `tests/integration/` |
+| Live grant tests (reads and writes, per role; run in CI) | `tests/integration/` |
+| Generator, loader and validation (ADR-042, ADR-043); dataset loaded 2026-09-25 | `data/generator/` |
 
 **The models are the source of truth from here.** When this document and `db_models` disagree, the code is right and this file needs correcting — `alembic check` enforces that the migrations match the models, but nothing enforces that either matches this prose.
 

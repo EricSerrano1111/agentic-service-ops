@@ -22,7 +22,7 @@
 
 ---
 
-## Sprint 1 (Weeks 1–2) — Foundation
+## Sprint 1 (Weeks 1–2, 2026-09-14 to 2026-09-27) — Foundation
 **Goal (increment):** Synthetic data generator producing validated, signal-bearing data; queryable locally.
 
 **Planned:**
@@ -81,16 +81,17 @@ corpus consumed most of the sprint (four prompt rounds plus a test batch); see t
 - What changes next sprint:
 
 **Academic deliverable status:**
-- Proposal/Business Case: complete (`docs/academic/proposal-business-case.md`).
-- Detailed Requirements Analysis: complete (`docs/academic/requirements-analysis.md`).
-- Weekly status report (week 2): complete, submitted; not yet in `docs/academic/`.
-- `docs/academic/` also holds three empty placeholders — `design-solution-architecture.md`,
-  `planning-management.md`, `final-paper.md` — not due yet; their names will be revisited
-  when the milestone plan is reconciled (R-09).
+- `01-proposal-business-case.md` (due 2026-09-27): complete.
+- `02-requirements-analysis.md` (due 2026-10-04, in Sprint 2): complete early, in Sprint 1.
+- Weekly status report (week 2, 09-21 to 09-27): complete, submitted; in
+  `docs/academic/00-Weekly-Status-Reports.md` (maintained by Eric).
+- `docs/academic/` also holds placeholders for `03` to `06`, due in Sprints 3 and 4
+  (`architecture.md` §10).
 
 The deliverables originally listed here (problem statement, project charter, initial risk
-register) were planning assumptions that did not match the course (R-09); the milestone plan
-is being reconciled against the actual deliverables.
+register) were planning assumptions that did not match the course (R-09). The milestone plan
+was reconciled against the course calendar on 2026-09-25 (`architecture.md` §10). Whether a
+project charter is a separate deliverable is still open (see Sprint 2 planning note).
 
 **Decisions made this sprint:**
 - ADR-025 — grant enforcement details: column-level `service_feedback` grant for reporting, `PUBLIC` defaults revoked, the cross-table `completed_at` invariant left to QA rather than a trigger.
@@ -114,11 +115,11 @@ is being reconciled against the actual deliverables.
 
 ---
 
-## Sprint 2 (Weeks 3–4) — First vertical slice
+## Sprint 2 (Weeks 3–4, 2026-09-28 to 2026-10-11) — First vertical slice
 **Goal (increment):** Ask a natural-language question about incidents, get a verified answer, end to end.
 
 **Planned:**
-- [ ] MCP server #1 (incidents) with scoped tools + dedicated DB role
+- [ ] MCP server #1 (incidents) with scoped tools + dedicated DB role — *the DB role half is done early: `app_reporting` exists with its §7 grants, asserted in CI since Sprint 1*
 - [ ] Reporting agent + A2A Agent Card
 - [ ] Minimal orchestrator routing to a single agent
 
@@ -136,7 +137,34 @@ is being reconciled against the actual deliverables.
 - What didn't:
 - What changes next sprint:
 
-**Academic deliverable status:** Literature review, architecture documentation — *(status)*
+**Academic deliverable status:**
+- `02-requirements-analysis.md` (due 2026-10-04): complete early, in Sprint 1.
+- Weekly status report due (maintained by Eric)
+
+**For Sprint 2 planning** *(noted 2026-09-25; conflicts flagged, not resolved)*:
+- `06-production-support.md` is due 2026-11-08 (end of Sprint 4), but the runbook and
+  incident playbook are planned for Sprint 6, and the first Cloud Run deployment and Cloud
+  SQL migration are Sprint 5. The document is due before there is a deployed system to
+  support.
+- `05-test-scenarios.md` is due 2026-11-01 (Sprint 4); the routing eval harness and eval
+  runs are Sprint 5. The labeled test set (routing intents incl. ambiguous, multi-domain,
+  out-of-scope and technician-level questions) must be complete by Sprint 4, and the QA
+  fault-injection harness is being built in the same sprint the document is due.
+- `03-planning-management.md` and `04-design-solution-architecture.md` are both due
+  2026-10-18, mid-Sprint 3, alongside MCP servers #2 and #3 and the sentiment and forecast
+  agents. `04` also has to describe components not yet built (QA agent in Sprint 4; gateway,
+  UI and deployment in Sprint 5).
+- Weekly status reports recur every week through 2026-11-22 and are not budgeted in any
+  sprint's capacity.
+- Project charter: the week-2 status report puts a charter on the course calendar about two
+  weeks out (i.e. Sprint 2), but no charter file exists and the `03` placeholder does not say
+  whether it contains one. Unconfirmed.
+- Sprint 6 still plans a "final paper, presentation, demo rehearsal", and several ADRs
+  (036, 038, 039, 040, 043) say limitations are stated in "the final paper". No final paper
+  appears on the course calendar; only the final product (due 2026-12-05).
+- The Sprint 4 eval-run decision (free tier split across days vs a paid project) is already
+  partly answered: ADR-041 says the paid, spend-capped project is reused for the Sprint 5
+  paid evaluation runs. Pricing a full routing eval run remains open.
 
 **Decisions made this sprint:**
 
@@ -144,7 +172,7 @@ is being reconciled against the actual deliverables.
 
 ---
 
-## Sprint 3 (Weeks 5–6) — Analytical agents
+## Sprint 3 (Weeks 5–6, 2026-10-12 to 2026-10-25) — Analytical agents
 **Goal (increment):** All three specialists working; forecast beats a naive baseline or the gap is documented.
 
 **Planned:**
@@ -168,13 +196,16 @@ is being reconciled against the actual deliverables.
 - What didn't:
 - What changes next sprint:
 
-**Academic deliverable status:** Methodology section, mid-point status deliverable — *(status)*
+**Academic deliverable status:**
+- `03-planning-management.md` (due 2026-10-18) — *(status)*
+- `04-design-solution-architecture.md` (due 2026-10-18) — *(status)*
+- Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
 
 ---
 
-## Sprint 4 (Weeks 7–8) — Verification
+## Sprint 4 (Weeks 7–8, 2026-10-26 to 2026-11-08) — Verification
 **Goal (increment):** QA agent operational with all three verification strategies; measurable catch rate.
 
 **Planned:**
@@ -185,7 +216,8 @@ is being reconciled against the actual deliverables.
   days on the free tier vs. a paid, spend-capped eval project. Price a
   full routing eval run (~300-700 requests) on paid Flash-Lite using the
   official pricing page, and add that cost to the budget alongside the
-  ~$20-30 Pro-for-QA test (ADR-029).
+  ~$20-30 Pro-for-QA test (ADR-029). *(Partly decided early: ADR-041 reuses the paid,
+  spend-capped project for Sprint 5 paid eval runs; the pricing remains.)*
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -201,7 +233,10 @@ is being reconciled against the actual deliverables.
 - What didn't:
 - What changes next sprint:
 
-**Academic deliverable status:** Ethics & responsible-AI section, security design documentation — *(status)*
+**Academic deliverable status:**
+- `05-test-scenarios.md` (due 2026-11-01) — *(status)*
+- `06-production-support.md` (due 2026-11-08) — *(status)*
+- Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
 
@@ -209,7 +244,7 @@ is being reconciled against the actual deliverables.
 
 ---
 
-## Sprint 5 (Weeks 9–10) — Interface & evaluation
+## Sprint 5 (Weeks 9–10, 2026-11-09 to 2026-11-22) — Interface & evaluation
 **Goal (increment):** Deployed system with a working UI; routing accuracy reported with failure analysis.
 
 **Planned:**
@@ -232,13 +267,15 @@ is being reconciled against the actual deliverables.
 - What didn't:
 - What changes next sprint:
 
-**Academic deliverable status:** Results/evaluation writeup begins, draft final paper — *(status)*
+**Academic deliverable status:**
+- No numbered deliverable due.
+- Weekly status report due (maintained by Eric) — the last report covers the week ending 2026-11-22
 
 **Decisions made this sprint:**
 
 ---
 
-## Sprint 6 (Weeks 11–12) — Hardening & delivery
+## Sprint 6 (Weeks 11–12, 2026-11-23 to 2026-12-05) — Hardening & delivery
 **Goal (increment):** Production-grade checklist closed out; demo rehearsed.
 
 **Planned:**
@@ -260,7 +297,8 @@ is being reconciled against the actual deliverables.
 - What didn't:
 - What changes next sprint: *(n/a — final sprint; note instead what you'd do differently on a future project)*
 
-**Academic deliverable status:** Final paper, presentation, demo — *(status)*
+**Academic deliverable status:**
+- Final product due 2026-12-05 (end of Module 10) — *(status)*
 
 **Decisions made this sprint:**
 

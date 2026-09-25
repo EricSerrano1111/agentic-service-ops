@@ -17,7 +17,7 @@
 | 003 | QA agent as a verification stage, not a formality | Accepted |
 | 004 | Solo / Agile / Python project parameters | Accepted (course-selected) |
 | 005 | GCP over Azure | Accepted |
-| 006 | Claude Pro for development; Gemini credits for runtime inference | Accepted |
+| 006 | Claude Pro for development; Gemini credits for runtime inference | Accepted — superseded in part by ADR-029 |
 | 007 | Cloud SQL deferred to Sprint 5; local Docker Postgres before | Accepted |
 | 008 | Three MCP servers, one per specialist domain | Accepted |
 | 009 | React over Streamlit for the UI | Accepted |
@@ -30,24 +30,24 @@
 | 016 | `technician_skills` join table, not a delimited string | Accepted |
 | 017 | SLA window snapshotted onto the request, not looked up live | Accepted |
 | 018 | Forecast: weekly, univariate, all statuses, 36-month history | Accepted |
-| 019 | Sentiment distribution: 50/22/20/8, 15% deliberately hard | Accepted |
+| 019 | Sentiment distribution: 50/22/20/8, 15% deliberately hard | Accepted — superseded in part by ADR-036; `is_sarcastic` replaced by ADR-037 |
 | 020 | Enums as VARCHAR + CHECK; `upgrade` added to `service_type` | Accepted |
-| 021 | Incident severity influences sentiment, with noise | Accepted |
+| 021 | Incident severity influences sentiment, with noise | Accepted — superseded in part by ADR-036 |
 | 022 | QA retries bounded at 2, then escalate | Accepted |
 | 023 | Per-agent least-privilege DB roles + narrow MCP tools | Accepted |
 | 024 | Trained models behind sentiment and forecast tools; training is offline | Accepted |
-| 025 | Grant enforcement details: column-level feedback grant, PUBLIC revoked, cross-table invariant left to QA | Accepted |
+| 025 | Grant enforcement details: column-level feedback grant, PUBLIC revoked, cross-table invariant left to QA | Accepted — superseded in part by ADR-027 |
 | 026 | SQLAlchemy models separate from Pydantic schemas | Accepted |
 | 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
 | 028 | Role names required, never defaulted: a blank `DB_ROLE_*_USER` fails like a blank password | Accepted |
-| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part |
-| 030 | `feedback_text` LLM-generated once and frozen as a committed corpus | Accepted |
+| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part; superseded in part by ADR-041 |
+| 030 | `feedback_text` LLM-generated once and frozen as a committed corpus | Accepted — superseded in part by ADR-036; corpus sizing replaced by ADR-038 |
 | 031 | Single-shot interaction committed; multi-turn is conditional stretch | Accepted |
 | 032 | Compound routing out of scope; multi-domain questions detected and split by the user | Accepted |
 | 033 | Metrics reportable per individual technician, framed as decision support | Accepted |
 | 034 | 120-second end-to-end timeout ceiling; latency measured, not targeted | Accepted |
 | 035 | Forecast agent narrowed to three columns of `service_requests` | Accepted |
-| 036 | Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels | Accepted — supersedes ADR-019, ADR-021 and ADR-030 in part |
+| 036 | Feedback corpus design: models, label definitions, cell rules, judge-confirmed plain labels | Accepted — supersedes ADR-019, ADR-021 and ADR-030 in part; superseded in part by ADR-039, ADR-040 |
 | 037 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`; `corpus_id` added | Accepted |
 | 038 | Generator parameters: text on every feedback row, anomalies, coherence rules, corpus sizing, param_group values | Accepted |
 | 039 | Positive feedback on incident rows uses no-incident positive comments | Accepted — supersedes ADR-036 in part |

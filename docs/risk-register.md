@@ -15,14 +15,14 @@
 | ID | Category | Risk | Likelihood | Impact | Status |
 |---|---|---|---|---|---|
 | R-01 | Process | Solo build — no peer review | High | Medium | Open |
-| R-02 | Budget | Runtime budget depends on unconfirmed Google AI credit coverage | Medium | High | Mitigating |
+| R-02 | Budget | Runtime budget depends on unconfirmed Google AI credit coverage (credits ruled out 2026-09-22; exposure is now free-tier limits and paid spend) | Medium | High | Mitigating |
 | R-03 | Deployment | Cloud Run build/deploy decoupling (recurred before) | Medium-High | Medium | Open |
 | R-04 | ML / Verification | Sentiment task has weak natural verifiability | Medium | Medium-High | Mitigating |
 | R-05 | Cost / Technical | QA retry loop cost or latency runaway | Low-Medium | Medium | Mitigating |
 | R-06 | Schedule / Scope | A2A overhead consumes disproportionate solo dev time | Medium | Medium | Open |
 | R-07 | Data | Synthetic generator produces a degenerate distribution | Medium | High | Monitoring |
 | R-08 | Compliance | Schema/data drifts toward resembling employer's real system | Low | High | Mitigating |
-| R-09 | Academic | Course rubric diverges from the assumed deliverable plan | Medium | Medium-High | Mitigating |
+| R-09 | Academic | Course rubric diverges from the assumed deliverable plan | Medium | Medium-High | Monitoring |
 | R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Open |
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Low-Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Open |
@@ -36,6 +36,8 @@
 **Description:** No second person to catch design blind spots, review code, or push back on a bad assumption before it's built on top of.
 **Mitigation:** CI with real test coverage; eval harnesses (routing, forecast backtest, sentiment holdout, QA catch rate) substitute for a reviewer's judgment with measurable output instead; sprint retros are the deliberate moment to self-audit rather than assume things are fine.
 **Review trigger:** Every sprint retro — explicitly ask "what would a reviewer have flagged this sprint?"
+
+**Update 2026-09-25:** CI is live (GitHub Actions: ruff lint, the offline unit suite, and the live grants integration suite against a Postgres 16 service container, with `REQUIRE_INTEGRATION_DB=1` so a missing database fails rather than skips). The eval harnesses are still to be built. Status stays Open.
 
 ### R-02 — Runtime budget depends on unconfirmed credit coverage
 **Description:** The cost plan assumes Google AI student credits cover Gemini runtime inference for all five agents across 12 weeks. Coverage and expiry haven't been confirmed.
@@ -87,11 +89,13 @@
 ### R-09 — Course rubric diverges from the assumed deliverable plan
 **Description:** The academic deliverable sequencing in `architecture.md` §10 is a reasonable guess at typical capstone requirements, not a confirmed match to the actual rubric.
 **Mitigation:** Reconcile explicitly against the real rubric — flagged as an open item since the plan was first drafted and still unresolved.
-**Review trigger:** Should be closed in Sprint 1. If still open at the Sprint 2 retro, treat that as a process failure worth naming.
+**Review trigger:** Should be closed in Sprint 1. If still open at the Sprint 2 retro, treat that as a process failure worth naming. Added 2026-09-25: each deliverable's rubric is checked when drafting starts.
 
 **Update 2026-09-25:** Still open at the end of Sprint 1. Per this entry's review trigger, if it is still open at the Sprint 2 retro, that is a process failure to name there.
 
 **Update 2026-09-25:** The actual deliverables for weeks 1-2 are now known — Proposal/Business Case, Detailed Requirements Analysis, and weekly status reports — and they differ from the assumed plan in `architecture.md` §10 and the sprint log. Partly realised. Reconciling the full milestone plan is the next step, after the academic documents are reviewed. Weekly status reports are a recurring deliverable the plan must budget. Status: Mitigating.
+
+**Update 2026-09-25 (calendar reconciled):** The actual deliverable calendar is now known and mapped to sprints in `architecture.md` §10 and `sprint-log.md`: `01` (due 09-27) and `02` (due 10-04) complete; `03` and `04` due 10-18 (Sprint 3); `05` due 11-01 and `06` due 11-08 (Sprint 4); weekly status reports through 11-22; final product due 12-05. The remaining exposure is per-deliverable rubric content, which is not yet known, and the schedule conflicts flagged for Sprint 2 planning (`sprint-log.md`): `06` due before the first deployment and before the Sprint 6 runbook work; `05` due before the eval runs, with the golden set needed by Sprint 4; `03` and `04` both due mid-Sprint 3; and whether a separate project charter is due. Status: Mitigating → Monitoring.
 
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
@@ -101,6 +105,8 @@
 **Update 2026-09-25:** The Sprint 1 goal was missed: the generator carries into Sprint 2, which is also the highest-risk sprint (first vertical slice through A2A and MCP). Kept Open; the Sprint 1 retro decides whether this counts as realised.
 
 **Update 2026-09-25 (goal met):** The Sprint 1 goal was met on 2026-09-25, inside the sprint; the remaining Sprint 1 items (CI, the Alembic ruff hook) are being finished in Sprint 1 rather than carried over. This supersedes the earlier same-day note that the goal was missed. Status stays Open: the buffer risk applies to every sprint.
+
+**Update 2026-09-25 (Sprint 3 academic load):** With the calendar reconciled, Sprint 3 carries two academic deliverables due the same day (`03` Planning & Management and `04` Design & Solution Architecture, both 2026-10-18) on top of the heaviest engineering sprint after Sprint 2 (MCP servers #2 and #3, the sentiment and forecast agents, and three-way routing). Sprint 4 then carries `05` and `06`. Any Sprint 2 slip lands directly on that load. Status stays Open.
 
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).

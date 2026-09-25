@@ -12,7 +12,7 @@
 
 - **Type:** Northwestern University capstone — final project of a B.S. in Information Systems (Data Science & AI concentration)
 
-- **Timeline:** 10–12 weeks from mid-September 2026
+- **Timeline:** six two-week sprints, 2026-09-14 to 2026-12-05; the final product is due 2026-12-05, the end of Module 10 (§10)
 
 - **Target quality bar:** Enterprise/production-grade system, despite operating on synthetic data
 
@@ -166,7 +166,7 @@ Plus reference tables: `accounts`, `contacts`, `locations`, `technicians`, `tech
 - A seasonality pattern in request volume (e.g., quarterly cycle, month-end spikes)
 - An underlying trend (growth/decline over the historical window)
 - A plausible relationship between incident rate and negative feedback sentiment
-- One or two injected billing or volume anomalies worth catching
+- Injected billing and volume anomalies worth catching (three: account, regional, billing — ADR-038)
 - Realistic noise on top — enough that recovery is non-trivial but achievable
 
 Generate records *from* those parameters, persist the parameters, and validate against them. Everything downstream depends on getting this right first.
@@ -184,8 +184,8 @@ Security is a first-class design requirement, not a section in the writeup. MCP'
 **Layer 1 — No raw SQL as an MCP tool.** Never expose a generic `run_query` tool, even read-only. Prompt injection via a malicious string in customer feedback text could craft a query reaching into the billing archive. Expose narrow, purpose-built functions only:
 
 - `get_incidents_by_date_range(start, end, filters)` — reads `incidents` + `service_requests`
-- `get_feedback_batch(date_range, limit)` — reads `service_feedback` only; no grant on `incidents` or `sentiment_labels`
-- `get_order_volume_history(granularity, window)` — weekly request counts for the univariate forecast series
+- `get_feedback_batch(date_range, limit)` — reads four columns of `service_feedback` only, `rating` withheld (ADR-027); no grant on `incidents` or `sentiment_labels`
+- `get_order_volume_history(granularity, window)` — weekly request counts for the univariate forecast series, from three columns of `service_requests` (ADR-035)
 
 Each scoped to exactly the tables and fields it needs. This is also a better MCP demonstration — authoring a server with a real capability boundary, not "database access."
 
@@ -217,6 +217,9 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
 | Runtime LLM | **Gemini API free tier** (primary); Flash-Lite default | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
+| Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
+| ORM + migrations | SQLAlchemy 2.0 + Alembic, psycopg 3 | Models in `packages/db_models/` (ADR-026); migrations are frozen snapshots (ADR-027) |
+| CI | GitHub Actions | Lint (ruff), offline unit tests, and integration against a Postgres 16 service container (live since 2026-09-25) |
 | Sentiment | Fine-tuned transformer classifier (BERT), trained on `sentiment_labels` (ADR-024) | Softmax confidence for QA thresholding |
 | API layer | FastAPI | |
 | UI | Thin React/Next.js front end | See note below |
@@ -243,10 +246,10 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Health checks and readiness probes on every service
 - [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-034)
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
-- [ ] Test suite — unit and integration
+- [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)
-- [ ] CI pipeline
-- [ ] Least-privilege database roles per agent
+- [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD in Sprint 5–6)*
+- [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035)*
 - [ ] API cost guardrails and per-run caps
 - [ ] README with architecture diagram and local setup that actually works from clean
 
@@ -324,48 +327,61 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 Every sprint ends with a **demoable increment** and a **sprint review + retro entry** in `sprint-log.md`. Academic deliverables are interleaved, not bolted on at the end. Risk register is reviewed and updated every sprint boundary.
 
-### Sprint 1 (weeks 1–2) — Foundation
+**Calendar.** Sprint 1 started Monday 2026-09-14. **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.
+
+| Sprint | Dates | Academic deliverables due |
+|---|---|---|
+| 1 | 2026-09-14 to 09-27 | `01-proposal-business-case.md` (09-27) — complete; weekly status report |
+| 2 | 2026-09-28 to 10-11 | `02-requirements-analysis.md` (10-04) — completed early, in Sprint 1; weekly status reports |
+| 3 | 2026-10-12 to 10-25 | `03-planning-management.md` (10-18); `04-design-solution-architecture.md` (10-18); weekly status reports |
+| 4 | 2026-10-26 to 11-08 | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports |
+| 5 | 2026-11-09 to 11-22 | Weekly status reports (the last covers the week ending 11-22) |
+| 6 | 2026-11-23 to 12-05 | Final product (12-05) |
+
+Several deliverables fall before the engineering they describe is built (e.g. `06` before the first deployment); these are open planning items in `sprint-log.md` Sprint 2, not resolved here.
+
+### Sprint 1 (weeks 1–2, 2026-09-14 to 09-27) — Foundation
 **Increment:** Synthetic data generator producing validated, signal-bearing data; queryable locally.
 - Repo scaffold, CI skeleton, docker-compose, local Postgres
 - Schema + generation parameters defined and documented
 - Data generator + ground-truth tables (`sentiment_labels`, `generation_parameters`)
 - Validate the signal actually exists — plot it, confirm seasonality and correlation are recoverable
 - GCP budget alerts configured
-- **Academic:** problem statement, project charter, initial risk register
+- **Academic:** `01-proposal-business-case.md` (due 09-27); weekly status report
 
-### Sprint 2 (weeks 3–4) — First vertical slice
+### Sprint 2 (weeks 3–4, 2026-09-28 to 10-11) — First vertical slice
 **Increment:** Ask a natural-language question about incidents, get a verified answer, end to end.
 - MCP server #1 (incidents) with scoped tools + dedicated DB role
 - Reporting agent + A2A Agent Card
 - Minimal orchestrator routing to a single agent
-- **Academic:** literature review, architecture documentation
+- **Academic:** `02-requirements-analysis.md` (due 10-04; completed in Sprint 1); weekly status reports
 
 *This is the most important sprint. It proves the entire MCP → A2A → orchestrator path on the simplest possible task, while there's still time to be wrong about the stack. Everything after is repetition and refinement.*
 
-### Sprint 3 (weeks 5–6) — Analytical agents
+### Sprint 3 (weeks 5–6, 2026-10-12 to 10-25) — Analytical agents
 **Increment:** All three specialists working; forecast beats a naive baseline or the gap is documented.
 - MCP servers #2 and #3, forecast agent + regression, sentiment agent + confidence scoring
 - Orchestrator routes across all three
-- **Academic:** methodology section, mid-point status deliverable
+- **Academic:** `03-planning-management.md` and `04-design-solution-architecture.md` (both due 10-18); weekly status reports
 
-### Sprint 4 (weeks 7–8) — Verification
+### Sprint 4 (weeks 7–8, 2026-10-26 to 11-08) — Verification
 **Increment:** QA agent operational with all three verification strategies; measurable catch rate.
 - QA agent, bounded retry loop, escalation path
 - Fault injection harness for QA catch-rate measurement
-- **Academic:** ethics & responsible-AI section, security design documentation
+- **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
 
-### Sprint 5 (weeks 9–10) — Interface & evaluation
+### Sprint 5 (weeks 9–10, 2026-11-09 to 11-22) — Interface & evaluation
 **Increment:** Deployed system with a working UI; routing accuracy reported with failure analysis.
 - Routing eval harness + failure-case analysis
 - FastAPI gateway + thin React UI
 - Migrate to Cloud SQL; first Cloud Run deployment; **verify revision promotion immediately**
-- **Academic:** results/evaluation writeup, draft final paper
+- **Academic:** weekly status reports (last one covers the week ending 11-22)
 
-### Sprint 6 (weeks 11–12) — Hardening & delivery
+### Sprint 6 (weeks 11–12, 2026-11-23 to 12-05) — Hardening & delivery
 **Increment:** Production-grade checklist closed out; demo rehearsed.
 - Observability, CI/CD completion, graceful degradation, load/latency testing
 - Production-grade checklist (§7) audited item by item
-- **Academic:** final paper, presentation, demo
+- **Academic:** final product due 2026-12-05 (end of Module 10)
 
 **Protect Sprint 6.** It is genuine buffer, not planned work with a buffer label. Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) requires being genuinely ahead at the Sprint 4 boundary.
 
@@ -373,7 +389,7 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 
 ## 11. Repository Layout
 
-Monorepo, separate service processes, uv or Poetry workspace.
+Monorepo, separate service processes. Installed with pip today (editable installs, as CI does); the root `pyproject.toml` is already shaped as a uv workspace.
 
 ```
 agentic-service-ops/
@@ -386,17 +402,19 @@ agentic-service-ops/
 │
 ├── docs/
 │   ├── architecture.md
-│   ├── security-model.md
+│   ├── security-model.md           # placeholder — currently empty
 │   ├── data-dictionary.md
 │   ├── risk-register.md            # updated every sprint boundary
 │   ├── sprint-log.md               # planning, review, retro per sprint
 │   ├── decisions-log.md            # ADR — single running file for architectural decisions
-│   └── academic/                   # rubric deliverables
-│       ├── proposal-business-case.md
-│       ├── requirements-analysis.md
-│       ├── planning-management.md
-│       ├── design-solution-architecture.md
-│       └── final-paper.md
+│   └── academic/                   # course deliverables (numbered, due dates in §10)
+│       ├── 00-Weekly-Status-Reports.md        # rolling weekly report, maintained by Eric only
+│       ├── 01-proposal-business-case.md       # submitted; reference copy kept factually in sync
+│       ├── 02-requirements-analysis.md        # submitted; reference copy kept factually in sync
+│       ├── 03-planning-management.md
+│       ├── 04-design-solution-architecture.md
+│       ├── 05-test-scenarios.md
+│       └── 06-production-support.md
 │
 ├── infra/
 │   ├── terraform/                  # Cloud Run, Cloud SQL, IAM, Secret Manager
@@ -413,10 +431,12 @@ agentic-service-ops/
 │   │   ├── reference_data.py       # committed name, place, timezone and note-phrase lists (ADR-042)
 │   │   ├── generate.py             # reads the frozen corpus; never calls an API
 │   │   ├── load.py                 # one-transaction reload into Postgres as app_generator (ADR-042)
-│   │   └── validate.py             # confirms signal is recoverable; samples corpus labels
+│   │   ├── validate.py             # confirms signal is recoverable; rechecks corpus integrity
+│   │   └── validation/<date>/      # committed validate.py output: report.json, plots, spot_check.csv
 │   └── migrations/                 # Alembic — identical local ↔ Cloud SQL
 │
 ├── packages/                       # shared libraries
+│   ├── db_models/                  # SQLAlchemy models, 22 vocabularies, §7 access matrix (ADR-026)
 │   ├── common/                     # config, structured logging, trace IDs, errors
 │   ├── a2a_core/                   # Agent Card helpers, task lifecycle client/server
 │   ├── llm/                        # provider-agnostic model interface + cost metering
@@ -428,13 +448,13 @@ agentic-service-ops/
 │   ├── agent_reporting/ # deterministic — no model
 │   │
 │   ├── agent_sentiment/
-│   ├── training/
-│   │   └── train.py # fine-tunes BERT model on sentiment_labels
+│   │   ├── training/
+│   │   │   └── train.py # fine-tunes BERT model on sentiment_labels
 │   │   └── models/ # trained artifact — gitignored, not committed
 │   │
 │   ├── agent_forecast/
-│   ├── training/
-│   │   └── train.py # fits the regression on weekly volume history
+│   │   ├── training/
+│   │   │   └── train.py # fits the regression on weekly volume history
 │   │   └── models/ # trained artifact — gitignored, not committed
 │   │
 │   ├── agent_qa/ # deterministic — no model
@@ -457,7 +477,8 @@ agentic-service-ops/
 │   └── results/                    # dated eval runs — evidence for the paper
 │
 └── tests/
-    ├── integration/
+    ├── unit/                       # offline contract, generator and corpus tests
+    ├── integration/                # live grants suite (needs a migrated Postgres)
     └── e2e/
 ```
 
@@ -493,15 +514,16 @@ Keep this context file updated as decisions change. A stale context document is 
 
 Remaining:
 
-- [ ] Confirm exact capstone rubric requirements and reconcile against the milestone table above
+- [x] Reconcile the milestone plan against the course calendar — done 2026-09-25: actual deliverables and due dates mapped to sprints in §10 (R-09)
+- [ ] Check each deliverable's rubric content when drafting starts (R-09)
 - [ ] Final repo/project name
 - [x] Sentiment approach — fine-tuned transformer classifier (BERT) trained on `sentiment_labels` (ADR-024)
 - [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029)
 - [x] Historical data window and granularity for the forecast — 36 months, weekly, univariate (ADR-018)
 - [x] Whether the UI supports conversational follow-up or single-shot intents — single-shot committed; multi-turn only as a scope expansion decided at the Sprint 4 boundary (ADR-031)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
-- [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` (paid, spend-capped) (ADR-029)
-- [ ] Sprint ceremony cadence and whether the instructor expects to see sprint artifacts at specific checkpoints
+- [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — scheduled as a Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` on the paid, spend-capped project (ADR-029, ADR-041); decided by that measurement
+- [ ] Sprint ceremony cadence and whether the instructor expects to see sprint artifacts at specific checkpoints *(partly known: a weekly status report is due every week through 2026-11-22)*
 
 ---
 
