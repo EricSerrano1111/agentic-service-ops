@@ -361,7 +361,7 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 
 **Realised (loaded 2026-09-25, seed 20260923):** 20,230 requests, 18,063 completed, 2,067 incidents (10.2% of completed requests have one; missed_sla is 24.4% of incidents), 7,521 feedback rows (41.6% of completed). Sentiment mix 50.2% positive / 22.4% neutral / 19.6% negative / 7.8% mixed; hard cases 14.9%. Payment status: 94.8% paid, 4.1% disputed, 1.1% pending (pending only within six weeks of the snapshot, ADR-043). Cancellation rate 10.2%. Reference tables: 50 accounts, 198 contacts, 197 locations, 32 technicians (63 skill rows), 15 internal users; 140 `generation_parameters` rows.
 
-**Signal as recovered by `validate.py` (2026-09-25, 66/66 checks pass, `data/generator/validation/2026-09-25/report.json`):** annual growth 8.5% (designed 8%); seasonal peak-to-trough 0.39 against 0.42 designed in the same K=3 basis; residual sd of log weekly volume 11.7% (designed effective ~10.6%); regional drop z 3.53; account drop 93% at account level; 150 direct-bill invoices at the 0.10 surcharge inside the billing window and 0 outside. Note: the account drop's dip in *weekly totals* measured z 3.92 (report-only check), against the ~1.4 designed, so it is not invisible in weekly totals as the anomaly row above describes.
+**Signal as recovered by `validate.py` (2026-09-25, 66/66 checks pass, `data/generator/validation/2026-09-25/report.json`):** annual growth 8.5% (designed 8%); seasonal peak-to-trough 0.39 against 0.42 designed in the same K=3 basis; residual sd of log weekly volume 11.7% (designed effective ~10.6%); regional drop z 3.53; account drop 93% at account level; 150 direct-bill invoices at the 0.10 surcharge inside the billing window and 0 outside. Note: the account drop's dip in *weekly totals* measured z 3.92 (report-only check), against the ~1.4 designed, so it is not invisible in weekly totals as the anomaly row above describes. Closed 2026-09-25: realised z reported, no reseed.
 
 ### Sentiment distribution — **locked**
 
@@ -467,7 +467,7 @@ That last set doubles as your data-generator validation suite. Run it immediatel
 
 ## 10. Decisions Log
 
-All seven open questions resolved. Recorded here so the reasoning survives into the ADRs and the final paper.
+All seven open questions resolved. Recorded here so the reasoning survives into the ADRs and the evaluation report (ADR-044).
 
 | # | Decision | Rationale |
 |---|---|---|

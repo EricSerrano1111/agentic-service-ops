@@ -18,7 +18,7 @@
 | 004 | Solo / Agile / Python project parameters | Accepted (course-selected) |
 | 005 | GCP over Azure | Accepted |
 | 006 | Claude Pro for development; Gemini credits for runtime inference | Accepted — superseded in part by ADR-029 |
-| 007 | Cloud SQL deferred to Sprint 5; local Docker Postgres before | Accepted |
+| 007 | Cloud SQL deferred to Sprint 5; local Docker Postgres before | Accepted — superseded in part by ADR-045 |
 | 008 | Three MCP servers, one per specialist domain | Accepted |
 | 009 | React over Streamlit for the UI | Accepted |
 | 010 | Reporting agent built first, in Sprint 2 | Accepted |
@@ -55,6 +55,9 @@
 | 041 | Remaining corpus generation on a separate paid, spend-capped project | Accepted — supersedes ADR-029 in part |
 | 042 | Generator: explicit deterministic IDs, per-state timezones, committed name lists, loads as app_generator | Accepted |
 | 043 | Generator world rules: SLA-conditioned incidents, snapshot semantics, age-dependent statuses, templated incident notes | Accepted |
+| 044 | No final paper: limitations and results go in the evaluation report | Accepted |
+| 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part |
+| 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 
 ---
 
@@ -1034,3 +1037,102 @@ the staff-notes/customer-text boundary (ADR-014, §7) a boundary around an empty
   recorded.
 - Templated notes are repetitive by design. They are internal staff shorthand, not a
   modelled text source.
+
+### ADR-044 — There is no final paper; limitations and results go in the evaluation report
+*Date: 2026-09-25. Supersedes nothing formally; re-points the "final paper" references in
+ADR-036, ADR-038, ADR-039, ADR-040 and ADR-043.*
+
+**Decision:** The final submission (due 2026-12-05) is a presentation plus the completed
+project: the code and the deployed system. The limitations and evaluation results that
+ADR-036, ADR-038, ADR-039, ADR-040 and ADR-043 assign to "the final paper" or "the paper" are
+published in `docs/evaluation-report.md`, written in Sprint 6 from the Sprint 5 eval runs, and
+summarized in the final presentation.
+
+**Context:** Confirmed from the course materials: there is no final paper deliverable. The
+paper was a planning assumption, repeated across `architecture.md`, the sprint log, the risk
+register and five ADRs until it read as a requirement.
+
+Clarification, recorded here because those entries cannot be edited: ADR-037 replaced
+ADR-019's `is_sarcastic` flag, and ADR-038 replaced ADR-030's corpus sizing rule (15-20%
+spares per cell, replaced by Poisson q99 sizing), although both headers said "supersedes
+nothing". The index Status column records both.
+
+**Alternatives considered:**
+- *Write a paper anyway* (rejected). No deliverable asks for one, and it would compete with
+  Sprint 6's protected buffer.
+- *Scatter the limitations across `04` to `06`* (rejected). Those documents are due before
+  the Sprint 5 eval runs exist, so the results and several limitations cannot be stated in
+  them yet.
+
+**Consequences:**
+- Every commitment of the form "the paper states X" in ADR-036 to ADR-043 is a commitment for
+  `docs/evaluation-report.md`.
+- Sprint 6 plans the evaluation report, presentation and demo rehearsal in place of a final
+  paper.
+- `evals/results/` is the evidence the report cites.
+
+### ADR-045 — Minimal Cloud Run deploy of the reporting slice in Sprint 4
+*Date: 2026-09-25. Supersedes ADR-007 in part: Cloud SQL is provisioned in Sprint 4 for the
+reporting slice rather than from Sprint 5. ADR-007's reasoning (no managed database during
+local development) stands.*
+
+**Decision:** Deploy three services, the orchestrator, `agent_reporting` and
+`mcp_incidents`, to Cloud Run in Sprint 4 week 2 (2026-11-02 to 11-04), timeboxed to 3 days.
+Provision the smallest Cloud SQL instance then and stop it when not in use. The full Cloud SQL
+migration and the remaining services stay in Sprint 5.
+
+- In scope: a Cloud Build trigger with an explicit deploy step; a post-deploy check that the
+  serving revision is the one just built and holds 100% of traffic; secrets in Secret Manager;
+  service-to-service calls authenticated with IAM ID tokens; `alembic upgrade head` and the
+  grants suite run against Cloud SQL.
+- Out of scope: Terraform, the API gateway, the UI, the QA agent.
+- Stop rule: if the revision is not verified serving by the end of 2026-11-04, stop. Record
+  R-03 as realised, write it up as the first incident in `06-production-support.md`, and leave
+  the Sprint 5 plan unchanged.
+
+**Context:** R-03 (build/deploy decoupling, which recurred on a prior project) would
+otherwise surface in Sprint 5, alongside Cloud SQL, the gateway, the UI and the routing eval.
+R-14: every migration, grant and load so far has run against local Docker Postgres with a true
+superuser, while Cloud SQL provides `cloudsqlsuperuser`, not SUPERUSER. And
+`06-production-support.md` is due 2026-11-08; with this deploy it can describe a real deployed
+system.
+
+**Alternatives considered:**
+- *Keep the first deploy in Sprint 5* (rejected). It stacks the riskiest work into the most
+  loaded sprint.
+- *Deploy in Sprint 3* (rejected). `03` and `04` are due 10-18, alongside two new agents.
+- *Deploy against Postgres on a VM or container* (rejected). Not the production path, and it
+  does not test R-14.
+
+**Consequences:**
+- Sprint 4 carries one more engineering item. If Sprint 4 overflows, the fault-injection
+  harness carries to Sprint 5 first, accepting that the Sprint 4 goal's "measurable catch
+  rate" may slip.
+- `05-test-scenarios.md` is drafted in Sprint 3 week 2 (2026-10-19 to 10-25).
+- Cloud SQL instance-hours start in Sprint 4; storage bills while the instance is stopped.
+
+### ADR-046 — Specialists parse their own questions; figures stay deterministic
+*Date: 2026-09-25. Supersedes nothing.*
+
+**Decision:** The orchestrator classifies and routes, sending the question text over A2A.
+Each specialist makes one LLM call through `packages/llm` to map the question to a typed,
+enum-constrained Pydantic request (`packages/schemas`), then computes its answer without a
+model. The parsed request is returned alongside the answer. Answers are rendered from
+templates; no LLM-written prose surrounds the figures.
+
+**Context:** No document specified where natural language becomes tool arguments.
+`architecture.md` §11 marked `agent_reporting` "deterministic — no model", which would have
+left extraction to the orchestrator.
+
+**Alternatives considered:**
+- *The orchestrator extracts all parameters* (rejected). The orchestrator would have to know
+  every specialist's schema, the coupling ADR-001 cites against collapsing agents into MCP
+  tools. It would save one LLM call per request.
+
+**Consequences:**
+- Two LLM calls per request (classification, then parsing). The Sprint 4 eval-run pricing
+  counts both.
+- "Deterministic" means the figures, not the parsing.
+- Because the parsed request is returned, the Sprint 4 QA agent can check it against the
+  question.
+- The same pattern applies to the sentiment and forecast agents.
