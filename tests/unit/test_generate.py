@@ -371,7 +371,7 @@ def test_non_terminal_statuses_only_in_final_two_weeks(full):
 
 
 def test_every_request_is_in_the_window_and_timestamps_ordered(full):
-    as_of = WINDOW_END + gen.AS_OF_AFTER_WINDOW_END
+    as_of = WINDOW_END + timedelta(hours=P.window.snapshot_offset_hours.value)
     for r in full["service_requests"]:
         assert WINDOW_START <= r["scheduled_datetime"] < WINDOW_END
         assert r["created_at"] <= r["scheduled_datetime"]
@@ -413,7 +413,7 @@ def test_inactive_accounts_stop_partway(full_state, full):
         # Nothing scheduled from the stop week on (local Sunday evenings can spill a few
         # hours past the UTC week boundary).
         assert max(r["scheduled_datetime"] for r in mine) < stop + timedelta(hours=12)
-        lo, hi = gen.INACTIVE_STOP_SPAN
+        lo, hi = P.reference.inactive_stop_span.value
         assert WINDOW_START + (WINDOW_END - WINDOW_START) * lo <= stop
         assert stop <= WINDOW_START + (WINDOW_END - WINDOW_START) * hi
 
@@ -497,8 +497,11 @@ def test_billing_surcharge_anomaly(full):
 def test_billing_distributions(full):
     arch = full["archived_requests"]
     status = Counter(a["payment_status"] for a in arch)
-    for s, share in P.billing.payment_status_mix.value.items():
-        assert status[s] / len(arch) == pytest.approx(share, abs=0.01), s
+    assert set(status) <= set(prm.PAYMENT_STATUSES)
+    assert status["disputed"] / len(arch) == pytest.approx(
+        P.billing.payment_disputed_share.value, abs=0.01
+    )
+    assert status["pending"] / len(arch) == pytest.approx(prm.expected_pending_share(), abs=0.005)
     reqs = by_id(full["service_requests"], "request_id")
     changed = np.mean(
         [a["payment_method_final"] != reqs[a["request_id"]]["payment_method"] for a in arch]
@@ -767,7 +770,7 @@ def test_local_hour_of_day_matches_weights(full):
     assert set(hours) <= set(weights)
     for h, w in weights.items():
         assert hours[h] / len(reqs) == pytest.approx(w, abs=0.01), h
-    assert set(minutes) <= set(gen.SCHEDULE_MINUTES)
+    assert set(minutes) <= set(P.requests.schedule_minutes.value)
     # Not hour-of-day in UTC: the West's share alone shifts that by hours.
     utc_hours = Counter(r["scheduled_datetime"].hour for r in reqs)
     assert utc_hours != hours
@@ -844,3 +847,77 @@ def test_insert_statements_override_identity_only_where_needed():
         identity = any(c.identity is not None for c in db_models.metadata.tables[table].columns)
         assert ("OVERRIDING SYSTEM VALUE" in stmt) == identity, table
         assert (table in load.IDENTITY_TABLES) == identity
+
+
+# --------------------------------------------------------------------------- ADR-043
+
+
+def _as_of() -> datetime:
+    return WINDOW_END + timedelta(hours=P.window.snapshot_offset_hours.value)
+
+
+def test_pending_only_within_window_and_falls_with_age(full):
+    window = P.billing.payment_pending_window_weeks.value
+    ages = defaultdict(Counter)
+    for a in full["archived_requests"]:
+        age = (_as_of() - a["completed_at"]) / timedelta(weeks=1)
+        if a["payment_status"] == "pending":
+            assert age < window
+        if age < window:
+            ages[int(age)][a["payment_status"]] += 1
+    first = ages[0]["pending"] / sum(ages[0].values())
+    last = ages[window - 1]["pending"] / sum(ages[window - 1].values())
+    assert first > last
+
+
+def test_incident_notes_are_templated_staff_notes(full):
+    phrases = (
+        {p for v in ref.NOTE_TYPE_PHRASES.values() for p in v},
+        {p for v in ref.NOTE_CAUSE_PHRASES.values() for p in v},
+        {p for v in ref.NOTE_STATUS_PHRASES.values() for p in v},
+    )
+    allowed = set().union(*phrases)
+    written = 0
+    for i in full["incidents"]:
+        note = i["incident_notes"]
+        if note is None:
+            assert i["incident_status"] == "open"
+            continue
+        written += 1
+        sentences = re.findall(r"[^.]+(?:\.|$)", note)
+        parts = [x.strip() for x in sentences if x.strip()]
+        assert 2 <= len(parts) <= 3
+        joined = " ".join(parts)
+        assert joined == note
+        assert not re.search(r"\d|@|\"", note)
+        type_phrase = next(
+            p for p in ref.NOTE_TYPE_PHRASES[i["incident_type"]] if note.startswith(p)
+        )
+        assert type_phrase
+        assert note.endswith(tuple(ref.NOTE_STATUS_PHRASES[i["incident_status"]]))
+        if i["root_cause_category"] is not None:
+            assert any(p in note for p in ref.NOTE_CAUSE_PHRASES[i["root_cause_category"]])
+    assert written >= 0.95 * len(full["incidents"])
+    assert allowed
+
+
+def test_incident_notes_draw_from_their_own_stage(full_state):
+    assert prm.STAGE_INCIDENT_NOTES in full_state.rngs
+
+
+def test_expected_totals_match_full_scale_generation(full):
+    """parameters.expected_totals() against what generate.py actually produces."""
+    t = prm.expected_totals()
+    reqs = full["service_requests"]
+    completed = len(full["archived_requests"])
+    incs = full["incidents"]
+    with_inc = len({i["request_id"] for i in incs})
+    children = sum(1 for r in reqs if r["parent_request_id"] is not None)
+    assert len(reqs) == pytest.approx(t["requests"], rel=0.03)
+    assert completed == pytest.approx(t["completed"], rel=0.03)
+    assert with_inc / completed == pytest.approx(t["incident_requests"] / t["completed"], abs=0.01)
+    assert len(incs) == pytest.approx(t["incidents"], rel=0.06)
+    missed = sum(1 for i in incs if i["incident_type"] == "missed_sla")
+    assert missed / len(incs) == pytest.approx(t["missed_sla_incidents"] / t["incidents"], abs=0.03)
+    assert children == pytest.approx(t["child_requests"], rel=0.15)
+    assert len(full["service_feedback"]) == pytest.approx(t["feedback"], rel=0.04)

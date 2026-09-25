@@ -19,11 +19,12 @@ Names and categories are generic field service (R-08).
 Run as a script to print the derived summary (totals, solved sentiment, corpus sizing,
 anomaly strength). It prints numbers only.
 
-Docs: data-dictionary.md §2-§6; ADR-018, -019, -021, -030, -036, -037, -038, -039.
+Docs: data-dictionary.md §2-§6; ADR-018, -019, -021, -030, -036 to -039, -042, -043.
 """
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import math
@@ -79,6 +80,7 @@ STAGE_SENTIMENT = "sentiment"
 STAGE_CORPUS_ASSIGNMENT = "corpus_assignment"
 STAGE_ANOMALIES = "anomalies"
 STAGE_CORPUS_SPECS = "corpus_specs"
+STAGE_INCIDENT_NOTES = "incident_notes"
 STAGES: tuple[str, ...] = (
     STAGE_REFERENCE,
     STAGE_VOLUME,
@@ -90,6 +92,7 @@ STAGES: tuple[str, ...] = (
     STAGE_CORPUS_ASSIGNMENT,
     STAGE_ANOMALIES,
     STAGE_CORPUS_SPECS,
+    STAGE_INCIDENT_NOTES,
 )
 
 
@@ -132,6 +135,7 @@ SEVERITIES = ("low", "medium", "high")
 SENTIMENTS = ("positive", "neutral", "negative", "mixed")
 STYLES = ("plain", "implicit", "sarcastic")  # ADR-036; stored as hard_case_type (ADR-037)
 INCIDENT_CONTEXTS = ("none", "minor", "serious")  # ADR-036 §5: minor=low, serious=med/high
+PAYMENT_STATUSES = ("paid", "pending", "disputed")  # paid absorbs what is not the other two
 HARD_CASE_BY_STYLE = {"plain": "none", "implicit": "implicit", "sarcastic": "sarcastic"}
 
 
@@ -149,6 +153,12 @@ class Window:
     open_status_share_by_week_from_end: P = V(
         {1: 0.60, 2: 0.25},
         "Share of non-cancelled requests still non-terminal, by week counted from the end.",
+        chosen=True,
+    )
+    snapshot_offset_hours: P = V(
+        12,
+        "The dataset is a snapshot this many hours after the window end (Monday 00:00 UTC); "
+        "events after it don't exist, and statuses reflect it (ADR-043).",
         chosen=True,
     )
     open_status_mix: P = D(
@@ -226,6 +236,57 @@ class Reference:
     )
     internal_user_status_counts: P = V(
         {"active": 13, "inactive": 2}, "Exact internal user status counts.", chosen=True
+    )
+    onboarded_years_before: P = V(
+        (0.5, 6.0),
+        "Requesting accounts were onboarded this many years before the window start (uniform).",
+        chosen=True,
+    )
+    prospect_recent_weeks: P = V(
+        26,
+        "Prospect accounts were created within this many final weeks of the window.",
+        chosen=True,
+    )
+    inactive_stop_span: P = V(
+        (0.25, 0.85),
+        "An inactive account's requests stop from a week drawn uniformly from this span of the "
+        "window (fractions of n_weeks); its volume share passes to the accounts still active.",
+        chosen=True,
+    )
+    terminated_span: P = V(
+        (0.15, 0.95),
+        "A terminated technician's termination date falls in this span of the window "
+        "(fractions); no assignments after it.",
+        chosen=True,
+    )
+    on_leave_weeks_before_end: P = V(
+        (1, 12),
+        "An on-leave technician's leave began this many weeks before the window end (uniform).",
+        chosen=True,
+    )
+    inactive_user_span: P = V(
+        (0.25, 0.90),
+        "An inactive internal user was deactivated at a point in this span of the window.",
+        chosen=True,
+    )
+    home_region_preference: P = V(
+        0.80,
+        "P(a request's technician comes from the site's region, when one is available there).",
+        chosen=True,
+    )
+    site_contact_weight: P = V(
+        3.0,
+        "Weight of site contacts when choosing a request's contact; other roles weigh 1.",
+        chosen=True,
+    )
+    request_creator_roles: P = V(("dispatcher",), "Internal roles that log requests.", chosen=True)
+    incident_creator_roles: P = V(
+        ("supervisor", "qa_analyst"), "Internal roles that log incidents.", chosen=True
+    )
+    region_count_slack: P = V(
+        2,
+        "A region's location count may exceed its share by this many while balancing volume.",
+        chosen=True,
     )
     largest_account_volume_share: P = V(
         0.12, "Largest account's share of request volume; shares are Zipf over accounts."
@@ -365,6 +426,25 @@ class Requests:
         "(lo, hi, prob) bins, uniform within a bin: mostly 1-5 with a long tail.",
         chosen=True,
     )
+    schedule_minutes: P = V(
+        (0, 15, 30, 45), "Scheduled minutes are quarter-hour slots.", chosen=True
+    )
+    booking_lead: P = V(
+        {"median_hours": {"standard": 72.0, "urgent": 12.0, "critical": 2.0}, "sigma": 0.8},
+        "Booking lead time before the scheduled slot: lognormal, median hours by priority.",
+        chosen=True,
+    )
+    no_show_cancel_hours: P = V(
+        (0.5, 3.0),
+        "A client no-show is cancelled this many hours after dispatch (uniform).",
+        chosen=True,
+    )
+    cancellation_timing: P = V(
+        "A client_no_show is dispatched, then cancelled no_show_cancel_hours later; every other "
+        "cancellation falls at a uniform point between booking and the scheduled slot.",
+        "Cancellation timing rule (ADR-043).",
+        chosen=True,
+    )
     repeat_child_rule: P = V(
         "A completed request with at least one repeat_visit_required incident gets exactly "
         "one child request (parent_request_id set), same account, location and service type.",
@@ -419,8 +499,30 @@ class Billing:
         "P(payment_method_final differs from requested); the new method is uniform over "
         "the others.",
     )
-    payment_status_mix: P = D(
-        {"paid": 0.88, "pending": 0.08, "disputed": 0.04}, "Final payment status mix."
+    payment_disputed_share: P = V(
+        0.04,
+        "Share of completed invoices disputed, overall (billing-dispute incidents included).",
+    )
+    payment_pending_window_weeks: P = V(
+        6,
+        "Only invoices completed within this many weeks before the snapshot can be pending "
+        "(ADR-043); older undisputed invoices are paid.",
+    )
+    payment_pending_share_at_end: P = V(
+        0.80,
+        "P(pending) for an undisputed invoice completed at the snapshot; falls linearly with "
+        "age to 0 at the pending window's edge.",
+        chosen=True,
+    )
+    archive_delay_hours: P = V(
+        (1.0, 48.0),
+        "Archive record written this many hours after completion (uniform).",
+        chosen=True,
+    )
+    dispute_update_days: P = V(
+        (1.0, 30.0),
+        "A disputed invoice is updated this many days after archiving (uniform).",
+        chosen=True,
     )
     billing_dispute_to_disputed: P = V(
         0.60,
@@ -521,6 +623,31 @@ class Incidents:
         "credits on one request is capped at its total_invoice.",
         chosen=True,
     )
+    report_delay: P = V(
+        {"median_hours": 18.0, "sigma": 1.0},
+        "Customer reports an incident this long after completion: lognormal.",
+        chosen=True,
+    )
+    log_delay_hours: P = V(
+        (0.0, 4.0),
+        "Staff log an incident this many hours after it is reported (uniform).",
+        chosen=True,
+    )
+    resolve_delay: P = V(
+        {"median_days": 5.0, "sigma": 0.8},
+        "A finished incident was resolved this long after logging: lognormal.",
+        chosen=True,
+    )
+    incident_note_slots: P = V(
+        ("type", "cause", "status"),
+        "Incident notes are templated staff notes: one phrase per slot, from committed lists in "
+        "reference_data.py (type, then root cause when known, then status); 2-3 sentences, no "
+        "names or contact details (ADR-043).",
+    )
+    incident_notes_null_share_open: P = V(
+        0.05,
+        "P(incident_notes is null | status open): an open incident may not be written up yet.",
+    )
     incident_active_window_weeks: P = V(
         8,
         "Incidents reported this many or more weeks before the window end are resolved or "
@@ -550,6 +677,12 @@ class Feedback:
     response_rate_incident: P = V(0.55, "Survey response rate, completed with an incident.")
     feedback_text_always: P = V(True, "Every feedback row has feedback_text (from the corpus).")
     rating_null_rate: P = V(0.10, "Share of feedback rows with no numeric rating.")
+    response_delay: P = V(
+        {"median_hours": 20.0, "sigma": 0.9},
+        "A survey response arrives this long after completion (never before the linked "
+        "incident is logged): lognormal. Responses after the snapshot don't exist.",
+        chosen=True,
+    )
     channel_mix: P = D(
         {"email_survey": 0.45, "sms_survey": 0.25, "portal": 0.20, "phone_followup": 0.10},
         "Response channel mix.",
@@ -870,9 +1003,48 @@ def _raw_daily_season(d: date, params: Parameters) -> float:
     return params.volume.seasonality_monthly_raw.value[d.month]
 
 
-def _season_norm(params: Parameters) -> float:
+def _season_key(params: Parameters) -> tuple:
+    trough = params.volume.late_december_trough.value
+    monthly = params.volume.seasonality_monthly_raw.value
+    return tuple(sorted(monthly.items())), tuple(sorted(trough.items()))
+
+
+@functools.lru_cache(maxsize=64)
+def _season_norm_cached(monthly: tuple, trough: tuple) -> float:
+    m, t = dict(monthly), dict(trough)
+    tday = int(t["from"][3:])
     days = [date(2025, 1, 1) + timedelta(days=i) for i in range(365)]
-    return sum(_raw_daily_season(d, params) for d in days) / len(days)
+    vals = [
+        t["factor"]
+        if (d.month == 12 and d.day >= tday) or (d.month == 1 and d.day == 1)
+        else m[d.month]
+        for d in days
+    ]
+    return sum(vals) / len(vals)
+
+
+def _season_norm(params: Parameters) -> float:
+    """Mean raw daily factor over a year; cached on the seasonality values themselves."""
+    return _season_norm_cached(*_season_key(params))
+
+
+def daily_seasonal_factors(
+    days, params: Parameters = PARAMS, *, normalized: bool = True
+) -> np.ndarray:
+    """Seasonal factor for each date in `days`, as an array.
+
+    normalized=False gives the raw factors, identical floats to the per-day rule; within one
+    week the normalization cancels in relative day weights, which is how generate.py uses it.
+    """
+    monthly = params.volume.seasonality_monthly_raw.value
+    trough = params.volume.late_december_trough.value
+    tday = int(trough["from"][3:])
+    lut = np.array([0.0] + [monthly[m] for m in range(1, 13)])
+    months = np.array([d.month for d in days])
+    dom = np.array([d.day for d in days])
+    raw = lut[months]
+    raw[((months == 12) & (dom >= tday)) | ((months == 1) & (dom == 1))] = trough["factor"]
+    return raw / _season_norm(params) if normalized else raw
 
 
 def seasonal_factor(d: date, params: Parameters = PARAMS) -> float:
@@ -992,13 +1164,71 @@ def mean_incidents_per_request(params: Parameters = PARAMS) -> float:
     return sum(k * p for k, p in params.incidents.incidents_per_request_mix.value.items())
 
 
-def child_prob_given_incident(params: Parameters = PARAMS) -> float:
-    """P(at least one repeat_visit_required among a request's incidents | any incident)."""
-    q = params.incidents.incident_type_mix.value["repeat_visit_required"]
-    return sum(
-        pk * (1 - (1 - q) ** k)
-        for k, pk in params.incidents.incidents_per_request_mix.value.items()
+def incident_rates_by_sla(params: Parameters = PARAMS) -> dict[str, float]:
+    """P(incident | SLA missed) and P(incident | SLA met) for a completed request (ADR-043).
+
+    A missed request with incidents carries exactly one missed_sla incident, and a met one
+    none, so missed_sla occurs only on misses (ADR-038). Solved so the overall request
+    incident rate and missed_sla's share of incident_type_mix both hold at the expected SLA
+    miss rate. Raises ValueError if either rate leaves [0, 1].
+    """
+    inc = params.incidents
+    m = expected_sla_miss_rate(params)
+    rate = inc.request_incident_rate.value
+    missed_per_completed = (
+        inc.incident_type_mix.value["missed_sla"] * rate * mean_incidents_per_request(params)
     )
+    p_miss = missed_per_completed / m
+    p_met = (rate - missed_per_completed) / (1 - m)
+    if not (0 <= p_miss <= 1 and 0 <= p_met <= 1):
+        raise ValueError(f"infeasible incident rates: missed {p_miss:.3f}, met {p_met:.3f}")
+    return {"sla_missed": p_miss, "sla_met": p_met}
+
+
+def child_prob_given_incident(params: Parameters = PARAMS) -> float:
+    """P(at least one repeat_visit_required among a request's incidents | any incident).
+
+    Matches generate.py: a missed request's first incident is missed_sla and its other k-1
+    are drawn from the type mix without missed_sla; a met request's k incidents all are.
+    (generate.py also skips repeat_visit when a child could not fit before the window end,
+    a small effect not modelled here.)
+    """
+    inc = params.incidents
+    mix = inc.incident_type_mix.value
+    q = mix["repeat_visit_required"] / (1 - mix["missed_sla"])
+    k_mix = inc.incidents_per_request_mix.value
+    rates = incident_rates_by_sla(params)
+    m = expected_sla_miss_rate(params)
+    frac_missed = m * rates["sla_missed"] / inc.request_incident_rate.value
+    on_missed = sum(pk * (1 - (1 - q) ** (k - 1)) for k, pk in k_mix.items())
+    on_met = sum(pk * (1 - (1 - q) ** k) for k, pk in k_mix.items())
+    return frac_missed * on_missed + (1 - frac_missed) * on_met
+
+
+def pending_share_by_age(age_weeks: float, params: Parameters = PARAMS) -> float:
+    """P(pending) for an undisputed invoice completed `age_weeks` before the snapshot."""
+    b = params.billing
+    window = b.payment_pending_window_weeks.value
+    if age_weeks >= window:
+        return 0.0
+    return b.payment_pending_share_at_end.value * (1 - max(age_weeks, 0.0) / window)
+
+
+def expected_pending_share(params: Parameters = PARAMS) -> float:
+    """Expected share of all completed invoices that are pending at the snapshot."""
+    tot = expected_totals(params)
+    weekly = weekly_expected_new(params)
+    scale = tot["requests"] / tot["new_requests"]
+    cancel = params.requests.cancel_rate.value
+    shares = params.window.open_status_share_by_week_from_end.value
+    n = params.window.n_weeks.value
+    snapshot = params.window.snapshot_offset_hours.value / (24 * 7)
+    pending = 0.0
+    for back in range(1, params.billing.payment_pending_window_weeks.value + 2):
+        done = weekly[n - back] * scale * (1 - cancel) * (1 - shares.get(back, 0.0))
+        mid_age = back - 0.5 + snapshot
+        pending += done * pending_share_by_age(mid_age, params)
+    return pending * (1 - params.billing.payment_disputed_share.value) / tot["completed"]
 
 
 def expected_totals(params: Parameters = PARAMS) -> dict[str, float]:
@@ -1342,6 +1572,7 @@ GROUP_BY_DOMAIN: Mapping[str, str] = MappingProxyType(
         "derived_volume": "volume",
         "derived_requests": "world",
         "derived_incidents": "incidents",
+        "derived_billing": "billing",
         "derived_sentiment": "sentiment",
         "derived_anomalies": "anomalies",
     }
@@ -1419,6 +1650,19 @@ def to_generation_parameters_rows(params: Parameters = PARAMS) -> list[tuple[str
         ),
         (
             "derived_incidents",
+            "incident_rate_given_sla",
+            incident_rates_by_sla(params),
+            "P(incident | SLA missed) and P(incident | SLA met), solved so the overall rate is "
+            "request_incident_rate and missed_sla is its incident_type_mix share (ADR-043).",
+        ),
+        (
+            "derived_billing",
+            "expected_pending_share",
+            expected_pending_share(params),
+            "Expected share of completed invoices still pending at the snapshot (ADR-043).",
+        ),
+        (
+            "derived_incidents",
             "expected_active_incidents",
             expected_active_incidents(params),
             "Expected incidents still open or investigating at window end.",
@@ -1482,7 +1726,7 @@ def _vocab_checks(params: Parameters) -> list[str]:
         ("sla tiers", set(r.sla_window_minutes.value), vals(e.ContractTier)),
         ("payment_method_mix", set(b.payment_method_mix.value), vals(e.PaymentMethod)),
         ("surcharge_rate_by_method", set(b.surcharge_rate_by_method.value), vals(e.PaymentMethod)),
-        ("payment_status_mix", set(b.payment_status_mix.value), vals(e.PaymentStatus)),
+        ("payment statuses", set(PAYMENT_STATUSES), vals(e.PaymentStatus)),
         ("incident_type_mix", set(i.incident_type_mix.value), vals(e.IncidentType)),
         ("severity_mix", set(i.severity_mix.value), vals(e.Severity)),
         (
@@ -1656,6 +1900,14 @@ def validate_parameters(params: Parameters = PARAMS) -> None:
         params.billing.surcharge_rate_by_method.value
     ):
         problems.append("billing anomaly payment_method unknown")
+
+    # Incident rates conditioned on SLA outcome are feasible (ADR-043).
+    try:
+        incident_rates_by_sla(params)
+    except ValueError as exc:
+        problems.append(str(exc))
+    if not 0 <= params.billing.payment_disputed_share.value <= 1:
+        problems.append("payment_disputed_share outside [0, 1]")
 
     # 6. SLA matrix shape (the §2 comparison is a unit test, ADR-038), and the Zipf solve.
     sla = params.requests.sla_window_minutes.value

@@ -165,7 +165,7 @@ def test_new_stage_does_not_change_existing():
 
 def test_stage_seeds_differ():
     states = {tuple(prm.derive_seed(s).generate_state(4)) for s in prm.STAGES}
-    assert len(states) == len(prm.STAGES) == 10
+    assert len(states) == len(prm.STAGES) == 11
     assert prm.stage_key("volume") != prm.stage_key("Volume")
 
 
@@ -273,7 +273,7 @@ def test_generation_parameters_rows():
         json.dumps(value)  # JSON-safe
     assert rows[0] == ("seed.master_seed", prm.MASTER_SEED, "world", rows[0][3])
     n_params = sum(1 for _ in prm.iter_params())
-    assert len(rows) == n_params + 2 + 10
+    assert len(rows) == n_params + 2 + 12
     by_key = {r[0]: r for r in rows}
     assert by_key["regions.states"][2] == "world"
     assert by_key["corpus.cell_floor"][2] == "feedback"
@@ -469,3 +469,64 @@ def test_enlarged_positive_cells_cover_combined_demand():
         assert c["required"] >= prm.poisson_ppf(0.99, c["expected"])
     # Every feedback row still has a cell: expected rows across cells equal all feedback.
     assert sum(c["expected"] for c in prm.expected_cell_counts()) == pytest.approx(t["feedback"])
+
+
+# --------------------------------------------------------------------------- ADR-042/043
+
+
+def test_incident_rates_by_sla_hold_both_targets():
+    r = prm.incident_rates_by_sla()
+    m = prm.expected_sla_miss_rate()
+    rate = prm.PARAMS.incidents.request_incident_rate.value
+    assert m * r["sla_missed"] + (1 - m) * r["sla_met"] == pytest.approx(rate)
+    missed_incidents = m * r["sla_missed"]  # one missed_sla per missed request with incidents
+    share = missed_incidents / (rate * prm.mean_incidents_per_request())
+    assert share == pytest.approx(prm.PARAMS.incidents.incident_type_mix.value["missed_sla"])
+    assert r["sla_missed"] == pytest.approx(0.25, abs=0.01)
+    assert r["sla_met"] == pytest.approx(0.08, abs=0.01)
+
+
+def test_pending_share_by_age():
+    w = prm.PARAMS.billing.payment_pending_window_weeks.value
+    top = prm.PARAMS.billing.payment_pending_share_at_end.value
+    assert prm.pending_share_by_age(0) == top
+    assert prm.pending_share_by_age(w / 2) == pytest.approx(top / 2)
+    assert prm.pending_share_by_age(w) == 0 and prm.pending_share_by_age(100) == 0
+    assert 0 < prm.expected_pending_share() < 0.08  # below the old flat 8%
+
+
+def test_daily_seasonal_factors_match_the_per_day_rule():
+    from datetime import date, timedelta
+
+    days = [date(2024, 1, 1) + timedelta(days=i) for i in range(366)]
+    raw = prm.daily_seasonal_factors(days, normalized=False)
+    assert list(raw) == [prm._raw_daily_season(d, prm.PARAMS) for d in days]
+    norm = prm.daily_seasonal_factors(days)
+    assert list(norm) == pytest.approx([prm.seasonal_factor(d) for d in days])
+
+
+def test_season_normalization_is_cached():
+    prm._season_norm_cached.cache_clear()
+    prm.expected_totals()
+    info = prm._season_norm_cached.cache_info()
+    assert info.misses == 1 and info.hits > 100
+
+
+def test_moved_generation_constants_are_parameters():
+    rows = {r[0] for r in prm.to_generation_parameters_rows()}
+    for key in (
+        "window.snapshot_offset_hours",
+        "reference.inactive_stop_span",
+        "reference.terminated_span",
+        "reference.home_region_preference",
+        "requests.booking_lead",
+        "requests.cancellation_timing",
+        "incidents.report_delay",
+        "incidents.resolve_delay",
+        "feedback.response_delay",
+        "billing.archive_delay_hours",
+        "incidents.incident_note_slots",
+        "derived_incidents.incident_rate_given_sla",
+        "derived_billing.expected_pending_share",
+    ):
+        assert key in rows, key

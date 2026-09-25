@@ -173,3 +173,86 @@ SITE_NAMES: tuple[str, ...] = (
 PHONE_AREA_CODES: tuple[str, ...] = ("212", "312", "404", "415", "512", "617", "702", "206")
 
 EMAIL_DOMAIN = "example.com"
+
+# --------------------------------------------------------------------------- incident notes
+# Templated internal staff notes (ADR-043): one phrase per slot, in the order of
+# parameters.incident_note_slots. Staff shorthand, not customer text: no names, contact
+# details, prices, dates, or quoted customer words.
+
+NOTE_TYPE_PHRASES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "missed_sla": (
+            "Job completed after the SLA window.",
+            "Work finished outside the committed response window.",
+            "SLA window exceeded on this visit.",
+        ),
+        "wrong_dispatch_info": (
+            "Technician dispatched with incorrect job details.",
+            "Parts or site details on the work order did not match the job.",
+            "Dispatch information on the work order was wrong.",
+        ),
+        "repeat_visit_required": (
+            "Issue not resolved on the first visit; follow-up visit needed.",
+            "A second visit is required to complete the work.",
+            "First-visit fix not achieved.",
+        ),
+        "technician_conduct": (
+            "Site contact raised a concern about technician conduct.",
+            "Conduct complaint logged against the visit.",
+            "Unprofessional behaviour reported during the visit.",
+        ),
+        "equipment_damage": (
+            "Site equipment damaged during the visit.",
+            "Damage to customer hardware reported after the job.",
+            "Hardware damaged in the course of the work.",
+        ),
+        "billing_dispute": (
+            "Account disputes the invoice for this job.",
+            "Billing discrepancy raised on the final invoice.",
+            "Invoice amount queried by the account.",
+        ),
+        "other": (
+            "Account reported a problem with the visit.",
+            "Service issue logged for follow-up.",
+            "Visit-related complaint recorded.",
+        ),
+    }
+)
+
+NOTE_CAUSE_PHRASES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "dispatch_error": (
+            "Traced to a dispatch scheduling error.",
+            "Dispatch assigned the job without the required details.",
+        ),
+        "technician_error": (
+            "Attributed to technician error.",
+            "Review found a workmanship issue.",
+        ),
+        "equipment_failure": (
+            "Caused by an equipment failure on site.",
+            "Replacement hardware failed after installation.",
+        ),
+        "client_site_issue": (
+            "Caused by a site access or readiness issue.",
+            "Site was not ready when the technician arrived.",
+        ),
+        "communication_breakdown": (
+            "Caused by a communication gap between dispatch and the site.",
+            "Site was not told about the schedule change.",
+        ),
+        "other": (
+            "Cause recorded as other.",
+            "Cause did not fit a standard category.",
+        ),
+    }
+)
+
+NOTE_STATUS_PHRASES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "open": ("Awaiting review.", "Logged; not yet reviewed."),
+        "investigating": ("Under review by service quality.", "Investigation in progress."),
+        "resolved": ("Resolved with the account.", "Corrective action completed."),
+        "closed": ("Closed after follow-up.", "Case closed; no further action."),
+    }
+)

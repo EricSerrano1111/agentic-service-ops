@@ -15,6 +15,7 @@ Each stage draws only from its own `derive_seed(<stage>)` generator:
     feedback           survey responses and their timing
     sentiment          true sentiment, style (hard case) and rating
     corpus_assignment  which corpus comment each feedback row receives
+    incident_notes     templated staff notes on each incident (ADR-043)
 
 The three anomalies are fixed multipliers inside the volume and billing stages, so the
 `anomalies` stage makes no draws.
@@ -23,9 +24,10 @@ Surrogate keys are explicit and assigned in generation order (load.py inserts th
 OVERRIDING SYSTEM VALUE). Timestamps are UTC-aware; scheduled hours follow the hour-of-day
 weights in each site's local time (reference_data.STATE_TIMEZONE).
 
-Rules that parameters.py leaves open are the constants under "Rules chosen here".
+Every world rule and constant lives in parameters.py (ADR-042, ADR-043), so all of them
+are recorded in generation_parameters.
 
-Docs: data-dictionary.md §2-§8; ADR-018, -021, -030, -036 to -039.
+Docs: data-dictionary.md §2-§8; ADR-018, -021, -030, -036 to -039, -042, -043.
 """
 
 from __future__ import annotations
@@ -65,47 +67,9 @@ TABLES: tuple[str, ...] = (
     "generation_parameters",
 )
 
-# --------------------------------------------------------------------------- rules chosen here
-# parameters.py leaves these open. They are candidates to move into parameters.py so they
-# are persisted to generation_parameters (see the feat/generate report).
+# --------------------------------------------------------------------------- constants
+# World rules and their constants live in parameters.py (ADR-043); these are structural.
 
-#: The dataset is a snapshot taken this long after the window end (Monday 00:00 UTC).
-AS_OF_AFTER_WINDOW_END = timedelta(hours=12)
-#: Requesting accounts were onboarded this many years before the window start (uniform).
-ONBOARDED_YEARS_BEFORE = (0.5, 6.0)
-#: Prospect accounts were created within this many final weeks of the window.
-PROSPECT_RECENT_WEEKS = 26
-#: An inactive account's requests stop from a week drawn uniformly from this span of the
-#: window (fractions of n_weeks); its volume share passes to the remaining accounts.
-INACTIVE_STOP_SPAN = (0.25, 0.85)
-#: A terminated technician's change date is drawn from this span of the window.
-TERMINATED_SPAN = (0.15, 0.95)
-#: An on-leave technician's leave began this many weeks before the window end (uniform).
-ON_LEAVE_WEEKS_BEFORE_END = (1, 12)
-#: An inactive internal user was deactivated at a point drawn from this span of the window.
-INACTIVE_USER_SPAN = (0.25, 0.90)
-#: P(a request's technician comes from the site's region, when one is available there).
-HOME_REGION_PREFERENCE = 0.80
-#: Weight of site contacts when choosing a request's contact; other roles weigh 1.
-SITE_CONTACT_WEIGHT = 3.0
-REQUEST_CREATOR_ROLES = ("dispatcher",)
-INCIDENT_CREATOR_ROLES = ("supervisor", "qa_analyst")
-#: Scheduled minutes are quarter-hour slots.
-SCHEDULE_MINUTES = (0, 15, 30, 45)
-#: Booking lead time before the scheduled slot: lognormal, median hours by priority.
-LEAD_MEDIAN_HOURS = {"standard": 72.0, "urgent": 12.0, "critical": 2.0}
-LEAD_SIGMA = 0.8
-#: A no-show is cancelled this many hours after dispatch; other cancellations fall at a
-#: uniform point between booking and the scheduled slot.
-NO_SHOW_CANCEL_HOURS = (0.5, 3.0)
-INCIDENT_REPORT_MEDIAN_HOURS, INCIDENT_REPORT_SIGMA = 18.0, 1.0
-INCIDENT_LOG_HOURS = (0.0, 4.0)
-INCIDENT_RESOLVE_MEDIAN_DAYS, INCIDENT_RESOLVE_SIGMA = 5.0, 0.8
-FEEDBACK_MEDIAN_HOURS, FEEDBACK_SIGMA = 20.0, 0.9
-ARCHIVE_HOURS = (1.0, 48.0)
-DISPUTE_UPDATE_DAYS = (1.0, 30.0)
-#: Region location counts may exceed their share by this many while balancing volume.
-REGION_COUNT_SLACK = 2
 SEVERITY_RANK = {"low": 0, "medium": 1, "high": 2}
 
 CENT = Decimal("0.01")
@@ -258,6 +222,7 @@ class _Incident:
     resolved_at: datetime | None
     created_by_user_id: int
     credit: Decimal | None = None
+    notes: str | None = None
 
 
 @dataclass(slots=True)
@@ -311,7 +276,7 @@ class _Generator:
         self.n_weeks: int = w.n_weeks.value
         self.window_start = datetime.combine(self.start_day, time(), tzinfo=UTC)
         self.window_end = self.window_start + timedelta(weeks=self.n_weeks)
-        self.as_of = self.window_end + AS_OF_AFTER_WINDOW_END
+        self.as_of = self.window_end + timedelta(hours=w.snapshot_offset_hours.value)
         self.weekly_expected = prm.weekly_expected_new(params)
         self.rngs: dict[str, np.random.Generator] = {}
         self.tables: dict[str, list[dict]] = {t: [] for t in TABLES}
@@ -364,15 +329,15 @@ class _Generator:
             aid = i + 1
             status = statuses[i]
             if status == "prospect":
-                created = self.window_end - timedelta(weeks=PROSPECT_RECENT_WEEKS) * _uniform(
-                    rng, 0.0, 1.0
-                )
+                created = self.window_end - timedelta(
+                    weeks=r.prospect_recent_weeks.value
+                ) * _uniform(rng, 0.0, 1.0)
             else:
-                years = _uniform(rng, *ONBOARDED_YEARS_BEFORE)
+                years = _uniform(rng, *r.onboarded_years_before.value)
                 created = self.window_start - timedelta(days=365.25 * years)
             stop_at = None
             if status == "inactive":
-                lo, hi = (math.floor(f * self.n_weeks) for f in INACTIVE_STOP_SPAN)
+                lo, hi = (math.floor(f * self.n_weeks) for f in r.inactive_stop_span.value)
                 stop_week = int(rng.integers(lo, hi + 1))
                 stop_at = self.window_start + timedelta(weeks=stop_week)
             self.accounts[aid] = {
@@ -447,7 +412,7 @@ class _Generator:
                         "contact_role": crole,
                     }
                 )
-                weight = SITE_CONTACT_WEIGHT if crole == "site_contact" else 1.0
+                weight = r.site_contact_weight.value if crole == "site_contact" else 1.0
                 self.contacts_by_account[aid].append((cid, weight))
 
     def _build_locations(self, rng) -> None:
@@ -470,7 +435,7 @@ class _Generator:
 
         shares = self.p.regions.share.value
         regions = list(shares)
-        cap = {g: round(shares[g] * len(sites)) + REGION_COUNT_SLACK for g in regions}
+        cap = {g: round(shares[g] * len(sites)) + r.region_count_slack.value for g in regions}
         vol = dict.fromkeys(regions, 0.0)
         cnt = dict.fromkeys(regions, 0)
         region_of: dict[int, str] = {}
@@ -547,9 +512,9 @@ class _Generator:
             tid = i + 1
             change_at = None
             if status[i] == "terminated":
-                change_at = self.window_point(rng, TERMINATED_SPAN)
+                change_at = self.window_point(rng, r.terminated_span.value)
             elif status[i] == "on_leave":
-                weeks = _uniform(rng, *ON_LEAVE_WEEKS_BEFORE_END)
+                weeks = _uniform(rng, *r.on_leave_weeks_before_end.value)
                 change_at = _minute(self.window_end - timedelta(weeks=weeks))
             self.tables["technicians"].append(
                 {
@@ -572,7 +537,11 @@ class _Generator:
         self.users: list[dict] = []
         for i in range(n_user):
             uid = i + 1
-            until = self.window_point(rng, INACTIVE_USER_SPAN) if ustatus[i] == "inactive" else None
+            until = (
+                self.window_point(rng, r.inactive_user_span.value)
+                if ustatus[i] == "inactive"
+                else None
+            )
             self.tables["internal_users"].append(
                 {
                     "user_id": uid,
@@ -588,7 +557,8 @@ class _Generator:
         if not avail:
             raise RuntimeError(f"no technician available at {at}")
         local = [t for t in avail if t["region"] == region]
-        pool = local if local and rng.random() < HOME_REGION_PREFERENCE else avail
+        pref = self.p.reference.home_region_preference.value
+        pool = local if local and rng.random() < pref else avail
         return pool[int(rng.integers(len(pool)))]["id"]
 
     def pick_user(self, rng, roles: tuple[str, ...], at: datetime) -> int:
@@ -637,7 +607,8 @@ class _Generator:
         for _ in range(1000):
             d = day_dist.draw(rng) if day_dist is not None else day
             hour = self.hour_dist.draw(rng)
-            minute = SCHEDULE_MINUTES[int(rng.integers(len(SCHEDULE_MINUTES)))]
+            slots = self.p.requests.schedule_minutes.value
+            minute = slots[int(rng.integers(len(slots)))]
             t = datetime.combine(d, time(hour, minute), tzinfo=tz).astimezone(UTC)
             if t < limit:
                 return t
@@ -655,7 +626,8 @@ class _Generator:
         self.open_mix = _Dist(self.p.window.open_status_mix.value)
         self.mu = prm.completion_ratio_mu(self.p)
         inc = self.p.incidents
-        self.inc_rates = self.incident_rates()
+        rates = prm.incident_rates_by_sla(self.p)
+        self.inc_rates = (rates["sla_missed"], rates["sla_met"])
         self.inc_k = _Dist(inc.incidents_per_request_mix.value)
         self.inc_types = _Dist(inc.incident_type_mix.value)
         self.inc_sev = _Dist(inc.severity_mix.value)
@@ -668,11 +640,10 @@ class _Generator:
         for w in range(self.n_weeks):
             monday = self.start_day + timedelta(weeks=w)
             days = [monday + timedelta(days=i) for i in range(7)]
-            # Within a week, seasonal_factor's normalization cancels, so the raw daily
-            # factor gives the same day weights (seasonal_factor recomputes it per call).
-            day_dist = _Dist(
-                {d: dow[i] * prm._raw_daily_season(d, self.p) for i, d in enumerate(days)}
-            )
+            # Within a week the seasonal normalization cancels, so raw daily factors give
+            # the same day weights (and the same floats as before this used the array API).
+            season = prm.daily_seasonal_factors(days, self.p, normalized=False)
+            day_dist = _Dist({d: dow[i] * float(season[i]) for i, d in enumerate(days)})
             svc = _Dist(prm.service_mix_for_week(w, self.p))
             slots = []
             for j, lid in enumerate(self.volume_lids):
@@ -712,8 +683,9 @@ class _Generator:
         else:
             cands = self.contacts_by_account[aid]
             contact = cands[_Dist({i: c[1] for i, c in enumerate(cands)}).draw(rng)][0]
+            lead = rq.booking_lead.value
             created = scheduled - timedelta(
-                hours=_lognormal(rng, LEAD_MEDIAN_HOURS[priority], LEAD_SIGMA)
+                hours=_lognormal(rng, lead["median_hours"][priority], lead["sigma"])
             )
         created = _minute(created)
         req = _Request(
@@ -729,7 +701,9 @@ class _Generator:
             sla_window=rq.sla_window_minutes.value[acc["contract_tier"]][priority],
             payment_method=payment,
             created_at=created,
-            created_by_user_id=self.pick_user(rng, REQUEST_CREATOR_ROLES, created),
+            created_by_user_id=self.pick_user(
+                rng, tuple(self.p.reference.request_creator_roles.value), created
+            ),
             parent_id=parent.request_id if parent else None,
         )
         self.requests.append(req)
@@ -747,7 +721,7 @@ class _Generator:
                 # The technician went; the client was not there.
                 req.dispatched_at = min(dispatched, self.as_of)
                 req.technician_id = self.pick_technician(rng, loc["region"], req.dispatched_at)
-                wait = timedelta(hours=_uniform(rng, *NO_SHOW_CANCEL_HOURS))
+                wait = timedelta(hours=_uniform(rng, *rq.no_show_cancel_hours.value))
                 req.cancelled_at = min(req.dispatched_at + wait, self.as_of)
             else:
                 req.cancelled_at = created + (scheduled - created) * _uniform(rng, 0.0, 1.0)
@@ -796,28 +770,6 @@ class _Generator:
 
     # ----------------------------------------------------------------- incidents
 
-    def incident_rates(self) -> tuple[float, float]:
-        """P(incident | SLA missed) and P(incident | SLA met).
-
-        A request that missed its SLA and has incidents carries exactly one missed_sla
-        incident, so missed_sla incidents occur only on SLA misses (ADR-038). The two
-        rates are solved so the overall request incident rate and the missed_sla share of
-        incident_type_mix both hold at the parameters' expected SLA miss rate.
-        """
-        inc = self.p.incidents
-        m = prm.expected_sla_miss_rate(self.p)
-        rate = inc.request_incident_rate.value
-        missed_per_completed = (
-            inc.incident_type_mix.value["missed_sla"]
-            * rate
-            * prm.mean_incidents_per_request(self.p)
-        )
-        p_miss = missed_per_completed / m
-        p_met = (rate - missed_per_completed) / (1 - m)
-        if not (0 <= p_miss <= 1 and 0 <= p_met <= 1):
-            raise ValueError(f"infeasible incident rates: miss {p_miss:.3f}, met {p_met:.3f}")
-        return p_miss, p_met
-
     def build_incidents(self, gen: list[_Request]) -> None:
         rng = self.rng(prm.STAGE_INCIDENTS)
         p_miss, p_met = self.inc_rates
@@ -844,11 +796,10 @@ class _Generator:
     def new_incident(self, rng, req: _Request, itype: str) -> None:
         inc = self.p.incidents
         severity = self.inc_sev.draw(rng)
-        delay = timedelta(
-            hours=_lognormal(rng, INCIDENT_REPORT_MEDIAN_HOURS, INCIDENT_REPORT_SIGMA)
-        )
+        rd = inc.report_delay.value
+        delay = timedelta(hours=_lognormal(rng, rd["median_hours"], rd["sigma"]))
         reported = _minute(self.before_as_of(rng, req.completed_at, req.completed_at + delay))
-        logged = reported + timedelta(hours=_uniform(rng, *INCIDENT_LOG_HOURS))
+        logged = reported + timedelta(hours=_uniform(rng, *inc.log_delay_hours.value))
         created = _minute(self.before_as_of(rng, reported, logged))
         age = max(0, (self.window_end - reported) // timedelta(weeks=1))
         resolved = None
@@ -856,9 +807,8 @@ class _Generator:
             status = self.inc_active.draw(rng)
         else:
             status = self.inc_terminal.draw(rng)
-            took = timedelta(
-                days=_lognormal(rng, INCIDENT_RESOLVE_MEDIAN_DAYS, INCIDENT_RESOLVE_SIGMA)
-            )
+            res = inc.resolve_delay.value
+            took = timedelta(days=_lognormal(rng, res["median_days"], res["sigma"]))
             resolved = _minute(self.before_as_of(rng, created, created + took))
         cause = None if status == "open" else self.inc_cause[itype].draw(rng)
         attributed = (
@@ -875,7 +825,9 @@ class _Generator:
             reported_at=reported,
             created_at=created,
             resolved_at=resolved,
-            created_by_user_id=self.pick_user(rng, INCIDENT_CREATOR_ROLES, created),
+            created_by_user_id=self.pick_user(
+                rng, tuple(self.p.reference.incident_creator_roles.value), created
+            ),
         )
         req.incidents.append(incident)
         self.incidents.append(incident)
@@ -889,7 +841,6 @@ class _Generator:
         rates = b.surcharge_rate_by_method.value
         anomaly = self.p.anomalies.billing_surcharge.value
         anomaly_weeks = range(anomaly["start_week"], anomaly["start_week"] + anomaly["n_weeks"])
-        status_mix = b.payment_status_mix.value
         completed = [r for r in self.requests if r.status == "completed"]
         disputed_req = {
             r.request_id
@@ -897,16 +848,13 @@ class _Generator:
             if any(i.incident_type == "billing_dispute" for i in r.incidents)
         }
         # P(disputed) on requests without a billing_dispute incident, so the overall
-        # disputed share still matches payment_status_mix.
+        # disputed share still matches payment_disputed_share. Undisputed invoices are
+        # pending only if completed within the pending window, with a probability falling
+        # linearly with age (ADR-043); paid absorbs the rest.
         f = len(disputed_req) / len(completed) if completed else 0.0
         to_disputed = b.billing_dispute_to_disputed.value
-        p_other = max(0.0, (status_mix["disputed"] - f * to_disputed) / (1 - f))
-        undisputed = {k: v for k, v in status_mix.items() if k != "disputed"}
-        u_tot = sum(undisputed.values())
-        status_plain = _Dist(
-            {"disputed": p_other, **{k: v / u_tot * (1 - p_other) for k, v in undisputed.items()}}
-        )
-        status_after = _Dist(undisputed)
+        p_other = max(0.0, (b.payment_disputed_share.value - f * to_disputed) / (1 - f))
+        week = timedelta(weeks=1)
 
         for req in completed:
             lab = b.labor_charge.value[req.service_type]
@@ -933,22 +881,24 @@ class _Generator:
                 rate = Decimal(repr(anomaly["surcharge_rate"]))
             rate = rate.quantize(RATE)
             has_dispute = req.request_id in disputed_req
-            if has_dispute and rng.random() < to_disputed:
+            if rng.random() < (to_disputed if has_dispute else p_other):
                 pay_status = "disputed"
             else:
-                pay_status = (status_after if has_dispute else status_plain).draw(rng)
+                age = (self.as_of - req.completed_at) / week
+                pending = rng.random() < prm.pending_share_by_age(age, self.p)
+                pay_status = "pending" if pending else "paid"
             reference = None
             if pay_status != "pending":
                 reference = self.payment_reference(rng, final, req)
             archived = self.before_as_of(
                 rng,
                 req.completed_at,
-                req.completed_at + timedelta(hours=_uniform(rng, *ARCHIVE_HOURS)),
+                req.completed_at + timedelta(hours=_uniform(rng, *b.archive_delay_hours.value)),
             )
             archived = max(_minute(archived), req.completed_at)
             updated = archived
             if pay_status == "disputed":
-                later = archived + timedelta(days=_uniform(rng, *DISPUTE_UPDATE_DAYS))
+                later = archived + timedelta(days=_uniform(rng, *b.dispute_update_days.value))
                 updated = max(_minute(self.before_as_of(rng, archived, later)), archived)
             req.total_invoice = total_invoice(labor, parts, rate)
             self.tables["archived_requests"].append(
@@ -993,6 +943,32 @@ class _Generator:
             return f"CHK-{int(rng.integers(1_000, 100_000))}"
         return f"INV-{100_000 + req.request_id}"
 
+    # ----------------------------------------------------------------- incident notes
+
+    def build_incident_notes(self) -> None:
+        """Templated staff notes from committed phrase lists (ADR-043), drawn from their own
+        stage so no other stream shifts. One phrase per slot: incident type, then root cause
+        when known, then status. An open incident may have none yet."""
+        rng = self.rng(prm.STAGE_INCIDENT_NOTES)
+        inc = self.p.incidents
+        null_open = inc.incident_notes_null_share_open.value
+        slots = inc.incident_note_slots.value
+        for i in self.incidents:
+            if i.status == "open" and rng.random() < null_open:
+                continue
+            parts = []
+            for slot in slots:
+                if slot == "type":
+                    options = ref.NOTE_TYPE_PHRASES[i.incident_type]
+                elif slot == "cause":
+                    if i.root_cause is None:
+                        continue
+                    options = ref.NOTE_CAUSE_PHRASES[i.root_cause]
+                else:
+                    options = ref.NOTE_STATUS_PHRASES[i.status]
+                parts.append(options[int(rng.integers(len(options)))])
+            i.notes = " ".join(parts)
+
     # ----------------------------------------------------------------- feedback
 
     @staticmethod
@@ -1016,7 +992,8 @@ class _Generator:
             rate = fb.response_rate_incident.value if link else fb.response_rate_no_incident.value
             if rng.random() >= rate:
                 continue
-            delay = timedelta(hours=_lognormal(rng, FEEDBACK_MEDIAN_HOURS, FEEDBACK_SIGMA))
+            rd = fb.response_delay.value
+            delay = timedelta(hours=_lognormal(rng, rd["median_hours"], rd["sigma"]))
             submitted = req.completed_at + delay
             if link is not None:
                 submitted = max(submitted, link.created_at)
@@ -1140,7 +1117,7 @@ class _Generator:
                     "reported_at": i.reported_at,
                     "reported_by_contact_id": i.request.contact_id,
                     "resolved_at": i.resolved_at,
-                    "incident_notes": None,
+                    "incident_notes": i.notes,
                     "credit_issued_amount": i.credit,
                     "created_by_user_id": i.created_by_user_id,
                     "created_at": i.created_at,
@@ -1169,6 +1146,7 @@ class _Generator:
         counts = self.build_volume()
         self.build_requests(counts)
         self.build_billing()
+        self.build_incident_notes()
         rows = self.build_feedback()
         self.build_sentiment(rows)
         self.assign_corpus(rows)

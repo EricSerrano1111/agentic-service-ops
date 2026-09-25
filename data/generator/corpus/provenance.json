@@ -528,7 +528,7 @@
       "pending": 0
     },
     "negative|sarcastic|none|repair": {
-      "required": 105,
+      "required": 104,
       "generated": 113,
       "accepted": 108,
       "rejected": 5,
@@ -612,14 +612,14 @@
       "pending": 0
     },
     "neutral|plain|none|repair": {
-      "required": 1266,
+      "required": 1264,
       "generated": 2659,
       "accepted": 1231,
       "rejected": 1428,
       "pending": 0
     },
     "neutral|plain|none|upgrade": {
-      "required": 438,
+      "required": 436,
       "generated": 951,
       "accepted": 415,
       "rejected": 536,
@@ -654,7 +654,7 @@
       "pending": 0
     },
     "positive|implicit|none|upgrade": {
-      "required": 106,
+      "required": 105,
       "generated": 114,
       "accepted": 109,
       "rejected": 5,
@@ -668,7 +668,7 @@
       "pending": 0
     },
     "positive|plain|none|install": {
-      "required": 747,
+      "required": 746,
       "generated": 1034,
       "accepted": 748,
       "rejected": 286,
@@ -1346,10 +1346,10 @@
       },
       "negative|sarcastic|none|repair": {
         "accepted": 108,
-        "q99_demand": 87,
-        "build_target": 105,
-        "coverage_q99": 1.241,
-        "coverage_build_target": 1.029,
+        "q99_demand": 86,
+        "build_target": 104,
+        "coverage_q99": 1.256,
+        "coverage_build_target": 1.038,
         "meets_q99": true
       },
       "negative|sarcastic|none|upgrade": {
@@ -1442,18 +1442,18 @@
       },
       "neutral|plain|none|repair": {
         "accepted": 1231,
-        "q99_demand": 633,
-        "build_target": 1266,
-        "coverage_q99": 1.945,
-        "coverage_build_target": 0.972,
+        "q99_demand": 632,
+        "build_target": 1264,
+        "coverage_q99": 1.948,
+        "coverage_build_target": 0.974,
         "meets_q99": true
       },
       "neutral|plain|none|upgrade": {
         "accepted": 415,
-        "q99_demand": 219,
-        "build_target": 438,
-        "coverage_q99": 1.895,
-        "coverage_build_target": 0.947,
+        "q99_demand": 218,
+        "build_target": 436,
+        "coverage_q99": 1.904,
+        "coverage_build_target": 0.952,
         "meets_q99": true
       },
       "positive|implicit|none|inspection": {
@@ -1490,10 +1490,10 @@
       },
       "positive|implicit|none|upgrade": {
         "accepted": 109,
-        "q99_demand": 88,
-        "build_target": 106,
-        "coverage_q99": 1.239,
-        "coverage_build_target": 1.028,
+        "q99_demand": 87,
+        "build_target": 105,
+        "coverage_q99": 1.253,
+        "coverage_build_target": 1.038,
         "meets_q99": true
       },
       "positive|plain|none|inspection": {
@@ -1506,10 +1506,10 @@
       },
       "positive|plain|none|install": {
         "accepted": 748,
-        "q99_demand": 622,
-        "build_target": 747,
-        "coverage_q99": 1.203,
-        "coverage_build_target": 1.001,
+        "q99_demand": 621,
+        "build_target": 746,
+        "coverage_q99": 1.205,
+        "coverage_build_target": 1.003,
         "meets_q99": true
       },
       "positive|plain|none|maintenance": {
