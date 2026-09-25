@@ -1,5 +1,5 @@
 {
-  "complete": false,
+  "complete": true,
   "models": {
     "generator": "gemini-3.5-flash-lite",
     "judge": "gemma-4-31b-it"
@@ -54,661 +54,1488 @@
   "master_seed": 20260923,
   "run_dates": [
     "2026-09-23",
-    "2026-09-24"
+    "2026-09-24",
+    "2026-09-25"
   ],
   "cells": {
     "mixed|plain|minor|billing_dispute": {
       "required": 46,
-      "generated": 36,
-      "accepted": 24,
-      "rejected": 12,
-      "pending": 10
+      "generated": 64,
+      "accepted": 51,
+      "rejected": 13,
+      "pending": 0
     },
     "mixed|plain|minor|equipment_damage": {
       "required": 40,
-      "generated": 25,
-      "accepted": 24,
+      "generated": 42,
+      "accepted": 41,
       "rejected": 1,
-      "pending": 15
+      "pending": 0
     },
     "mixed|plain|minor|missed_sla": {
       "required": 86,
-      "generated": 54,
-      "accepted": 52,
-      "rejected": 2,
-      "pending": 32
+      "generated": 94,
+      "accepted": 88,
+      "rejected": 6,
+      "pending": 0
     },
     "mixed|plain|minor|other": {
       "required": 40,
-      "generated": 29,
-      "accepted": 27,
-      "rejected": 2,
-      "pending": 11
+      "generated": 46,
+      "accepted": 42,
+      "rejected": 4,
+      "pending": 0
     },
     "mixed|plain|minor|repeat_visit_required": {
       "required": 70,
-      "generated": 44,
-      "accepted": 38,
-      "rejected": 6,
-      "pending": 26
+      "generated": 82,
+      "accepted": 72,
+      "rejected": 10,
+      "pending": 0
     },
     "mixed|plain|minor|technician_conduct": {
       "required": 34,
-      "generated": 21,
-      "accepted": 21,
+      "generated": 34,
+      "accepted": 34,
       "rejected": 0,
-      "pending": 13
+      "pending": 0
     },
     "mixed|plain|minor|wrong_dispatch_info": {
       "required": 56,
-      "generated": 32,
-      "accepted": 29,
-      "rejected": 3,
-      "pending": 24
+      "generated": 62,
+      "accepted": 58,
+      "rejected": 4,
+      "pending": 0
     },
     "mixed|plain|none|inspection": {
       "required": 118,
-      "generated": 86,
-      "accepted": 82,
-      "rejected": 4,
-      "pending": 32
+      "generated": 136,
+      "accepted": 123,
+      "rejected": 13,
+      "pending": 0
     },
     "mixed|plain|none|install": {
       "required": 168,
-      "generated": 116,
-      "accepted": 110,
-      "rejected": 6,
-      "pending": 52
+      "generated": 182,
+      "accepted": 170,
+      "rejected": 12,
+      "pending": 0
     },
     "mixed|plain|none|maintenance": {
       "required": 224,
-      "generated": 141,
-      "accepted": 132,
-      "rejected": 9,
-      "pending": 83
+      "generated": 251,
+      "accepted": 232,
+      "rejected": 19,
+      "pending": 0
     },
     "mixed|plain|none|repair": {
       "required": 304,
-      "generated": 212,
-      "accepted": 195,
-      "rejected": 17,
-      "pending": 92
+      "generated": 339,
+      "accepted": 312,
+      "rejected": 27,
+      "pending": 0
     },
     "mixed|plain|none|upgrade": {
       "required": 112,
-      "generated": 65,
-      "accepted": 62,
-      "rejected": 3,
-      "pending": 47
+      "generated": 120,
+      "accepted": 114,
+      "rejected": 6,
+      "pending": 0
     },
     "mixed|plain|serious|billing_dispute": {
       "required": 50,
-      "generated": 34,
-      "accepted": 26,
+      "generated": 62,
+      "accepted": 54,
       "rejected": 8,
-      "pending": 16
+      "pending": 0
     },
     "mixed|plain|serious|equipment_damage": {
       "required": 42,
-      "generated": 31,
-      "accepted": 30,
+      "generated": 44,
+      "accepted": 43,
       "rejected": 1,
-      "pending": 11
+      "pending": 0
     },
     "mixed|plain|serious|missed_sla": {
       "required": 90,
-      "generated": 58,
-      "accepted": 53,
-      "rejected": 5,
-      "pending": 32
+      "generated": 105,
+      "accepted": 92,
+      "rejected": 13,
+      "pending": 0
     },
     "mixed|plain|serious|other": {
       "required": 42,
-      "generated": 24,
-      "accepted": 21,
-      "rejected": 3,
-      "pending": 18
+      "generated": 50,
+      "accepted": 43,
+      "rejected": 7,
+      "pending": 0
     },
     "mixed|plain|serious|repeat_visit_required": {
       "required": 74,
-      "generated": 48,
-      "accepted": 42,
-      "rejected": 6,
-      "pending": 26
+      "generated": 85,
+      "accepted": 78,
+      "rejected": 7,
+      "pending": 0
     },
     "mixed|plain|serious|technician_conduct": {
       "required": 36,
-      "generated": 24,
-      "accepted": 22,
-      "rejected": 2,
-      "pending": 12
+      "generated": 41,
+      "accepted": 38,
+      "rejected": 3,
+      "pending": 0
     },
     "mixed|plain|serious|wrong_dispatch_info": {
       "required": 60,
-      "generated": 36,
-      "accepted": 35,
-      "rejected": 1,
-      "pending": 24
+      "generated": 65,
+      "accepted": 61,
+      "rejected": 4,
+      "pending": 0
     },
     "negative|implicit|minor|billing_dispute": {
       "required": 11,
-      "generated": 5,
-      "accepted": 5,
+      "generated": 11,
+      "accepted": 11,
       "rejected": 0,
-      "pending": 6
+      "pending": 0
     },
     "negative|implicit|minor|equipment_damage": {
       "required": 10,
-      "generated": 8,
-      "accepted": 8,
+      "generated": 10,
+      "accepted": 10,
       "rejected": 0,
-      "pending": 2
+      "pending": 0
     },
     "negative|implicit|minor|missed_sla": {
       "required": 18,
-      "generated": 11,
-      "accepted": 11,
+      "generated": 18,
+      "accepted": 18,
       "rejected": 0,
-      "pending": 7
+      "pending": 0
     },
     "negative|implicit|minor|other": {
       "required": 10,
-      "generated": 9,
-      "accepted": 8,
+      "generated": 12,
+      "accepted": 11,
       "rejected": 1,
-      "pending": 1
+      "pending": 0
     },
     "negative|implicit|minor|repeat_visit_required": {
       "required": 16,
-      "generated": 9,
-      "accepted": 9,
+      "generated": 16,
+      "accepted": 16,
       "rejected": 0,
-      "pending": 7
+      "pending": 0
     },
     "negative|implicit|minor|technician_conduct": {
       "required": 9,
-      "generated": 4,
-      "accepted": 4,
+      "generated": 9,
+      "accepted": 9,
       "rejected": 0,
-      "pending": 5
+      "pending": 0
     },
     "negative|implicit|minor|wrong_dispatch_info": {
       "required": 12,
-      "generated": 7,
-      "accepted": 7,
+      "generated": 12,
+      "accepted": 12,
       "rejected": 0,
-      "pending": 5
+      "pending": 0
     },
     "negative|implicit|none|inspection": {
       "required": 33,
-      "generated": 26,
-      "accepted": 24,
-      "rejected": 2,
-      "pending": 7
+      "generated": 33,
+      "accepted": 33,
+      "rejected": 0,
+      "pending": 0
     },
     "negative|implicit|none|install": {
       "required": 46,
-      "generated": 26,
-      "accepted": 25,
-      "rejected": 1,
-      "pending": 20
+      "generated": 51,
+      "accepted": 48,
+      "rejected": 3,
+      "pending": 0
     },
     "negative|implicit|none|maintenance": {
       "required": 60,
-      "generated": 38,
-      "accepted": 38,
-      "rejected": 0,
-      "pending": 22
+      "generated": 63,
+      "accepted": 61,
+      "rejected": 2,
+      "pending": 0
     },
     "negative|implicit|none|repair": {
       "required": 81,
-      "generated": 48,
-      "accepted": 42,
-      "rejected": 6,
-      "pending": 33
+      "generated": 87,
+      "accepted": 83,
+      "rejected": 4,
+      "pending": 0
     },
     "negative|implicit|none|upgrade": {
       "required": 32,
-      "generated": 20,
-      "accepted": 18,
-      "rejected": 2,
-      "pending": 12
+      "generated": 35,
+      "accepted": 32,
+      "rejected": 3,
+      "pending": 0
     },
     "negative|implicit|serious|billing_dispute": {
       "required": 15,
-      "generated": 10,
-      "accepted": 10,
+      "generated": 15,
+      "accepted": 15,
       "rejected": 0,
-      "pending": 5
+      "pending": 0
     },
     "negative|implicit|serious|equipment_damage": {
       "required": 14,
-      "generated": 9,
-      "accepted": 9,
+      "generated": 14,
+      "accepted": 14,
       "rejected": 0,
-      "pending": 5
+      "pending": 0
     },
     "negative|implicit|serious|missed_sla": {
       "required": 27,
-      "generated": 19,
-      "accepted": 17,
-      "rejected": 2,
-      "pending": 8
-    },
-    "negative|implicit|serious|other": {
-      "required": 14,
-      "generated": 9,
-      "accepted": 9,
-      "rejected": 0,
-      "pending": 5
-    },
-    "negative|implicit|serious|repeat_visit_required": {
-      "required": 22,
-      "generated": 18,
-      "accepted": 17,
-      "rejected": 1,
-      "pending": 4
-    },
-    "negative|implicit|serious|technician_conduct": {
-      "required": 11,
-      "generated": 7,
-      "accepted": 7,
-      "rejected": 0,
-      "pending": 4
-    },
-    "negative|implicit|serious|wrong_dispatch_info": {
-      "required": 18,
-      "generated": 11,
-      "accepted": 11,
-      "rejected": 0,
-      "pending": 7
-    },
-    "negative|plain|minor|billing_dispute": {
-      "required": 33,
-      "generated": 26,
-      "accepted": 23,
-      "rejected": 3,
-      "pending": 7
-    },
-    "negative|plain|minor|equipment_damage": {
-      "required": 28,
-      "generated": 19,
-      "accepted": 18,
-      "rejected": 1,
-      "pending": 9
-    },
-    "negative|plain|minor|missed_sla": {
-      "required": 59,
-      "generated": 41,
-      "accepted": 35,
-      "rejected": 6,
-      "pending": 18
-    },
-    "negative|plain|minor|other": {
-      "required": 28,
-      "generated": 15,
-      "accepted": 13,
-      "rejected": 2,
-      "pending": 13
-    },
-    "negative|plain|minor|repeat_visit_required": {
-      "required": 48,
-      "generated": 35,
-      "accepted": 30,
-      "rejected": 5,
-      "pending": 13
-    },
-    "negative|plain|minor|technician_conduct": {
-      "required": 23,
-      "generated": 16,
-      "accepted": 12,
-      "rejected": 4,
-      "pending": 7
-    },
-    "negative|plain|minor|wrong_dispatch_info": {
-      "required": 39,
-      "generated": 25,
-      "accepted": 24,
-      "rejected": 1,
-      "pending": 14
-    },
-    "negative|plain|none|inspection": {
-      "required": 114,
-      "generated": 70,
-      "accepted": 68,
-      "rejected": 2,
-      "pending": 44
-    },
-    "negative|plain|none|install": {
-      "required": 165,
-      "generated": 113,
-      "accepted": 104,
-      "rejected": 9,
-      "pending": 52
-    },
-    "negative|plain|none|maintenance": {
-      "required": 222,
-      "generated": 148,
-      "accepted": 136,
-      "rejected": 12,
-      "pending": 74
-    },
-    "negative|plain|none|repair": {
-      "required": 303,
-      "generated": 194,
-      "accepted": 168,
-      "rejected": 26,
-      "pending": 109
-    },
-    "negative|plain|none|upgrade": {
-      "required": 108,
-      "generated": 76,
-      "accepted": 72,
-      "rejected": 4,
-      "pending": 32
-    },
-    "negative|plain|serious|billing_dispute": {
-      "required": 47,
-      "generated": 28,
-      "accepted": 25,
-      "rejected": 3,
-      "pending": 19
-    },
-    "negative|plain|serious|equipment_damage": {
-      "required": 41,
       "generated": 30,
       "accepted": 28,
       "rejected": 2,
-      "pending": 11
+      "pending": 0
     },
-    "negative|plain|serious|missed_sla": {
-      "required": 88,
-      "generated": 57,
-      "accepted": 48,
-      "rejected": 9,
-      "pending": 31
-    },
-    "negative|plain|serious|other": {
-      "required": 41,
-      "generated": 30,
-      "accepted": 29,
-      "rejected": 1,
-      "pending": 11
-    },
-    "negative|plain|serious|repeat_visit_required": {
-      "required": 72,
-      "generated": 47,
-      "accepted": 42,
-      "rejected": 5,
-      "pending": 25
-    },
-    "negative|plain|serious|technician_conduct": {
-      "required": 34,
-      "generated": 22,
-      "accepted": 17,
-      "rejected": 5,
-      "pending": 12
-    },
-    "negative|plain|serious|wrong_dispatch_info": {
-      "required": 57,
-      "generated": 35,
-      "accepted": 33,
-      "rejected": 2,
-      "pending": 22
-    },
-    "negative|sarcastic|minor|billing_dispute": {
+    "negative|implicit|serious|other": {
       "required": 14,
-      "generated": 10,
-      "accepted": 10,
-      "rejected": 0,
-      "pending": 4
-    },
-    "negative|sarcastic|minor|equipment_damage": {
-      "required": 12,
-      "generated": 7,
-      "accepted": 7,
-      "rejected": 0,
-      "pending": 5
-    },
-    "negative|sarcastic|minor|missed_sla": {
-      "required": 23,
-      "generated": 18,
-      "accepted": 18,
-      "rejected": 0,
-      "pending": 5
-    },
-    "negative|sarcastic|minor|other": {
-      "required": 12,
-      "generated": 5,
-      "accepted": 5,
-      "rejected": 0,
-      "pending": 7
-    },
-    "negative|sarcastic|minor|repeat_visit_required": {
-      "required": 20,
-      "generated": 16,
+      "generated": 14,
       "accepted": 14,
-      "rejected": 2,
-      "pending": 4
-    },
-    "negative|sarcastic|minor|technician_conduct": {
-      "required": 10,
-      "generated": 4,
-      "accepted": 4,
       "rejected": 0,
-      "pending": 6
+      "pending": 0
     },
-    "negative|sarcastic|minor|wrong_dispatch_info": {
-      "required": 16,
+    "negative|implicit|serious|repeat_visit_required": {
+      "required": 22,
+      "generated": 25,
+      "accepted": 23,
+      "rejected": 2,
+      "pending": 0
+    },
+    "negative|implicit|serious|technician_conduct": {
+      "required": 11,
       "generated": 13,
       "accepted": 12,
       "rejected": 1,
-      "pending": 3
+      "pending": 0
+    },
+    "negative|implicit|serious|wrong_dispatch_info": {
+      "required": 18,
+      "generated": 18,
+      "accepted": 18,
+      "rejected": 0,
+      "pending": 0
+    },
+    "negative|plain|minor|billing_dispute": {
+      "required": 33,
+      "generated": 38,
+      "accepted": 33,
+      "rejected": 5,
+      "pending": 0
+    },
+    "negative|plain|minor|equipment_damage": {
+      "required": 28,
+      "generated": 33,
+      "accepted": 28,
+      "rejected": 5,
+      "pending": 0
+    },
+    "negative|plain|minor|missed_sla": {
+      "required": 59,
+      "generated": 74,
+      "accepted": 62,
+      "rejected": 12,
+      "pending": 0
+    },
+    "negative|plain|minor|other": {
+      "required": 28,
+      "generated": 30,
+      "accepted": 29,
+      "rejected": 1,
+      "pending": 0
+    },
+    "negative|plain|minor|repeat_visit_required": {
+      "required": 48,
+      "generated": 57,
+      "accepted": 49,
+      "rejected": 8,
+      "pending": 0
+    },
+    "negative|plain|minor|technician_conduct": {
+      "required": 23,
+      "generated": 31,
+      "accepted": 24,
+      "rejected": 7,
+      "pending": 0
+    },
+    "negative|plain|minor|wrong_dispatch_info": {
+      "required": 39,
+      "generated": 41,
+      "accepted": 40,
+      "rejected": 1,
+      "pending": 0
+    },
+    "negative|plain|none|inspection": {
+      "required": 114,
+      "generated": 119,
+      "accepted": 116,
+      "rejected": 3,
+      "pending": 0
+    },
+    "negative|plain|none|install": {
+      "required": 165,
+      "generated": 182,
+      "accepted": 169,
+      "rejected": 13,
+      "pending": 0
+    },
+    "negative|plain|none|maintenance": {
+      "required": 222,
+      "generated": 245,
+      "accepted": 229,
+      "rejected": 16,
+      "pending": 0
+    },
+    "negative|plain|none|repair": {
+      "required": 303,
+      "generated": 353,
+      "accepted": 316,
+      "rejected": 37,
+      "pending": 0
+    },
+    "negative|plain|none|upgrade": {
+      "required": 108,
+      "generated": 117,
+      "accepted": 111,
+      "rejected": 6,
+      "pending": 0
+    },
+    "negative|plain|serious|billing_dispute": {
+      "required": 47,
+      "generated": 56,
+      "accepted": 49,
+      "rejected": 7,
+      "pending": 0
+    },
+    "negative|plain|serious|equipment_damage": {
+      "required": 41,
+      "generated": 44,
+      "accepted": 42,
+      "rejected": 2,
+      "pending": 0
+    },
+    "negative|plain|serious|missed_sla": {
+      "required": 88,
+      "generated": 108,
+      "accepted": 95,
+      "rejected": 13,
+      "pending": 0
+    },
+    "negative|plain|serious|other": {
+      "required": 41,
+      "generated": 43,
+      "accepted": 42,
+      "rejected": 1,
+      "pending": 0
+    },
+    "negative|plain|serious|repeat_visit_required": {
+      "required": 72,
+      "generated": 81,
+      "accepted": 75,
+      "rejected": 6,
+      "pending": 0
+    },
+    "negative|plain|serious|technician_conduct": {
+      "required": 34,
+      "generated": 43,
+      "accepted": 34,
+      "rejected": 9,
+      "pending": 0
+    },
+    "negative|plain|serious|wrong_dispatch_info": {
+      "required": 57,
+      "generated": 63,
+      "accepted": 58,
+      "rejected": 5,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|billing_dispute": {
+      "required": 14,
+      "generated": 16,
+      "accepted": 15,
+      "rejected": 1,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|equipment_damage": {
+      "required": 12,
+      "generated": 14,
+      "accepted": 13,
+      "rejected": 1,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|missed_sla": {
+      "required": 23,
+      "generated": 23,
+      "accepted": 23,
+      "rejected": 0,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|other": {
+      "required": 12,
+      "generated": 12,
+      "accepted": 12,
+      "rejected": 0,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|repeat_visit_required": {
+      "required": 20,
+      "generated": 22,
+      "accepted": 21,
+      "rejected": 1,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|technician_conduct": {
+      "required": 10,
+      "generated": 13,
+      "accepted": 11,
+      "rejected": 2,
+      "pending": 0
+    },
+    "negative|sarcastic|minor|wrong_dispatch_info": {
+      "required": 16,
+      "generated": 18,
+      "accepted": 17,
+      "rejected": 1,
+      "pending": 0
     },
     "negative|sarcastic|none|inspection": {
       "required": 42,
-      "generated": 29,
-      "accepted": 26,
+      "generated": 47,
+      "accepted": 44,
       "rejected": 3,
-      "pending": 13
+      "pending": 0
     },
     "negative|sarcastic|none|install": {
       "required": 59,
-      "generated": 43,
-      "accepted": 39,
-      "rejected": 4,
-      "pending": 16
+      "generated": 67,
+      "accepted": 62,
+      "rejected": 5,
+      "pending": 0
     },
     "negative|sarcastic|none|maintenance": {
       "required": 77,
-      "generated": 47,
-      "accepted": 42,
-      "rejected": 5,
-      "pending": 30
+      "generated": 88,
+      "accepted": 81,
+      "rejected": 7,
+      "pending": 0
     },
     "negative|sarcastic|none|repair": {
       "required": 105,
-      "generated": 67,
-      "accepted": 64,
-      "rejected": 3,
-      "pending": 38
+      "generated": 113,
+      "accepted": 108,
+      "rejected": 5,
+      "pending": 0
     },
     "negative|sarcastic|none|upgrade": {
       "required": 40,
-      "generated": 27,
-      "accepted": 25,
+      "generated": 43,
+      "accepted": 41,
       "rejected": 2,
-      "pending": 13
+      "pending": 0
     },
     "negative|sarcastic|serious|billing_dispute": {
       "required": 18,
-      "generated": 12,
-      "accepted": 12,
-      "rejected": 0,
-      "pending": 6
+      "generated": 20,
+      "accepted": 19,
+      "rejected": 1,
+      "pending": 0
     },
     "negative|sarcastic|serious|equipment_damage": {
       "required": 16,
-      "generated": 8,
-      "accepted": 8,
-      "rejected": 0,
-      "pending": 8
-    },
-    "negative|sarcastic|serious|missed_sla": {
-      "required": 33,
-      "generated": 21,
-      "accepted": 19,
-      "rejected": 2,
-      "pending": 12
-    },
-    "negative|sarcastic|serious|other": {
-      "required": 16,
-      "generated": 12,
-      "accepted": 12,
-      "rejected": 0,
-      "pending": 4
-    },
-    "negative|sarcastic|serious|repeat_visit_required": {
-      "required": 28,
       "generated": 16,
       "accepted": 16,
       "rejected": 0,
-      "pending": 12
+      "pending": 0
+    },
+    "negative|sarcastic|serious|missed_sla": {
+      "required": 33,
+      "generated": 36,
+      "accepted": 34,
+      "rejected": 2,
+      "pending": 0
+    },
+    "negative|sarcastic|serious|other": {
+      "required": 16,
+      "generated": 16,
+      "accepted": 16,
+      "rejected": 0,
+      "pending": 0
+    },
+    "negative|sarcastic|serious|repeat_visit_required": {
+      "required": 28,
+      "generated": 30,
+      "accepted": 29,
+      "rejected": 1,
+      "pending": 0
     },
     "negative|sarcastic|serious|technician_conduct": {
       "required": 14,
-      "generated": 10,
-      "accepted": 10,
+      "generated": 14,
+      "accepted": 14,
       "rejected": 0,
-      "pending": 4
+      "pending": 0
     },
     "negative|sarcastic|serious|wrong_dispatch_info": {
       "required": 22,
-      "generated": 17,
-      "accepted": 16,
-      "rejected": 1,
-      "pending": 5
+      "generated": 24,
+      "accepted": 22,
+      "rejected": 2,
+      "pending": 0
     },
     "neutral|plain|none|inspection": {
       "required": 462,
-      "generated": 316,
-      "accepted": 123,
-      "rejected": 193,
-      "pending": 146
+      "generated": 1055,
+      "accepted": 449,
+      "rejected": 606,
+      "pending": 0
     },
     "neutral|plain|none|install": {
       "required": 674,
-      "generated": 433,
-      "accepted": 172,
-      "rejected": 261,
-      "pending": 241
+      "generated": 1500,
+      "accepted": 662,
+      "rejected": 838,
+      "pending": 0
     },
     "neutral|plain|none|maintenance": {
       "required": 918,
-      "generated": 581,
-      "accepted": 243,
-      "rejected": 338,
-      "pending": 337
+      "generated": 2034,
+      "accepted": 885,
+      "rejected": 1149,
+      "pending": 0
     },
     "neutral|plain|none|repair": {
       "required": 1266,
-      "generated": 851,
-      "accepted": 362,
-      "rejected": 489,
-      "pending": 415
+      "generated": 2659,
+      "accepted": 1231,
+      "rejected": 1428,
+      "pending": 0
     },
     "neutral|plain|none|upgrade": {
       "required": 438,
-      "generated": 300,
-      "accepted": 126,
-      "rejected": 174,
-      "pending": 138
+      "generated": 951,
+      "accepted": 415,
+      "rejected": 536,
+      "pending": 0
     },
     "positive|implicit|none|inspection": {
       "required": 111,
-      "generated": 75,
-      "accepted": 70,
-      "rejected": 5,
-      "pending": 36
+      "generated": 117,
+      "accepted": 113,
+      "rejected": 4,
+      "pending": 0
     },
     "positive|implicit|none|install": {
       "required": 160,
-      "generated": 114,
-      "accepted": 108,
-      "rejected": 6,
-      "pending": 46
+      "generated": 168,
+      "accepted": 163,
+      "rejected": 5,
+      "pending": 0
     },
     "positive|implicit|none|maintenance": {
       "required": 215,
-      "generated": 140,
-      "accepted": 133,
-      "rejected": 7,
-      "pending": 75
+      "generated": 227,
+      "accepted": 219,
+      "rejected": 8,
+      "pending": 0
     },
     "positive|implicit|none|repair": {
       "required": 293,
-      "generated": 198,
-      "accepted": 183,
-      "rejected": 15,
-      "pending": 95
+      "generated": 320,
+      "accepted": 302,
+      "rejected": 18,
+      "pending": 0
     },
     "positive|implicit|none|upgrade": {
       "required": 106,
-      "generated": 73,
-      "accepted": 68,
+      "generated": 114,
+      "accepted": 109,
       "rejected": 5,
-      "pending": 33
+      "pending": 0
     },
     "positive|plain|none|inspection": {
       "required": 508,
-      "generated": 329,
-      "accepted": 250,
-      "rejected": 79,
-      "pending": 179
+      "generated": 690,
+      "accepted": 526,
+      "rejected": 164,
+      "pending": 0
     },
     "positive|plain|none|install": {
       "required": 747,
-      "generated": 428,
-      "accepted": 315,
-      "rejected": 113,
-      "pending": 319
+      "generated": 1034,
+      "accepted": 748,
+      "rejected": 286,
+      "pending": 0
     },
     "positive|plain|none|maintenance": {
       "required": 1022,
-      "generated": 52,
-      "accepted": 0,
-      "rejected": 52,
-      "pending": 970
+      "generated": 1303,
+      "accepted": 1040,
+      "rejected": 263,
+      "pending": 0
     },
     "positive|plain|none|repair": {
       "required": 1413,
-      "generated": 63,
-      "accepted": 0,
-      "rejected": 63,
-      "pending": 1350
+      "generated": 1906,
+      "accepted": 1414,
+      "rejected": 492,
+      "pending": 0
     },
     "positive|plain|none|upgrade": {
       "required": 480,
-      "generated": 34,
-      "accepted": 0,
-      "rejected": 34,
-      "pending": 446
+      "generated": 641,
+      "accepted": 495,
+      "rejected": 146,
+      "pending": 0
     }
   },
   "rejections_by_reason": {
-    "judge_disagreement": 1019,
-    "exact_duplicate": 314,
-    "length": 308,
-    "near_duplicate": 231,
-    "date": 164,
-    "technician_opener": 20,
-    "time": 6,
-    "name_like": 3
+    "judge_disagreement": 4038,
+    "length": 899,
+    "exact_duplicate": 681,
+    "near_duplicate": 620,
+    "technician_opener": 48,
+    "time": 16,
+    "name_like": 13
   },
   "hard_case_judge_disagreements": {
-    "sarcastic": 37,
-    "implicit": 124
+    "sarcastic": 69,
+    "implicit": 201
   },
-  "accepted": 4741,
-  "rejected": 2065
+  "retired_specs": {
+    "neutral_kind_mix changed 2026-09-24 (minimal .35 -> .15)": 435
+  },
+  "neutral_kind_mix_change": {
+    "date": "2026-09-24",
+    "from": {
+      "minimal": 0.35,
+      "administrative": 0.35,
+      "status": 0.3
+    },
+    "to": {
+      "minimal": 0.15,
+      "administrative": 0.5,
+      "status": 0.35
+    },
+    "rule": "round-0 specs generated before the change keep the old mix; ungenerated round-0 minimal specs are retired; top-up rounds draw from the new mix"
+  },
+  "neutral_kinds_realised": {
+    "generated": {
+      "minimal": 1564,
+      "status": 2873,
+      "administrative": 3762
+    },
+    "accepted": {
+      "minimal": 275,
+      "administrative": 2672,
+      "status": 695
+    },
+    "judge_acceptance": {
+      "administrative": {
+        "agrees": 2672,
+        "judged": 3421,
+        "rate": 0.781
+      },
+      "minimal": {
+        "agrees": 275,
+        "judged": 527,
+        "rate": 0.522
+      },
+      "status": {
+        "agrees": 695,
+        "judged": 2592,
+        "rate": 0.268
+      }
+    },
+    "accepted_share": {
+      "administrative": 0.734,
+      "minimal": 0.076,
+      "status": 0.191
+    }
+  },
+  "weekday_date_recheck": {
+    "reinstated": 152,
+    "rejected_other": 13
+  },
+  "generation_batches_by_tier": {
+    "free": 429,
+    "paid": 570
+  },
+  "judge_batches_by_tier": {
+    "free": 863,
+    "evidence": "GeminiApi routes the judge model only to the free-tier client; judge rows record their tier from 2026-09-25, and earlier rows are free by that construction (the paid request log holds only the generator model)"
+  },
+  "requests_by_model_and_tier": {
+    "gemini-3.5-flash-lite": {
+      "free": 440,
+      "paid": 574
+    },
+    "gemma-4-31b-it": {
+      "free": 2232
+    }
+  },
+  "paid_tier": {
+    "requests": 573,
+    "input_tokens": 944141,
+    "output_tokens": 446531,
+    "estimated_cost_usd": 1.39957,
+    "prices_per_million_tokens": {
+      "input": 0.3,
+      "output": 2.5
+    },
+    "note": "estimate from list prices, not billing data"
+  },
+  "accepted": 13184,
+  "rejected": 6315,
+  "completion": {
+    "rule": "complete when nothing is pending and every cell's accepted count is at least its Poisson q99 demand estimate (ADR-038); the 2x plain-neutral / plain-mixed factor in the build target is generation headroom for judge rejections, not a requirement",
+    "holds": true,
+    "pending": 0,
+    "min_coverage_q99": 1.2,
+    "cells_below_q99": [],
+    "cells_below_build_target": [
+      "neutral|plain|none|inspection",
+      "neutral|plain|none|install",
+      "neutral|plain|none|maintenance",
+      "neutral|plain|none|repair",
+      "neutral|plain|none|upgrade"
+    ],
+    "cells": {
+      "mixed|plain|minor|billing_dispute": {
+        "accepted": 51,
+        "q99_demand": 23,
+        "build_target": 46,
+        "coverage_q99": 2.217,
+        "coverage_build_target": 1.109,
+        "meets_q99": true
+      },
+      "mixed|plain|minor|equipment_damage": {
+        "accepted": 41,
+        "q99_demand": 20,
+        "build_target": 40,
+        "coverage_q99": 2.05,
+        "coverage_build_target": 1.025,
+        "meets_q99": true
+      },
+      "mixed|plain|minor|missed_sla": {
+        "accepted": 88,
+        "q99_demand": 43,
+        "build_target": 86,
+        "coverage_q99": 2.047,
+        "coverage_build_target": 1.023,
+        "meets_q99": true
+      },
+      "mixed|plain|minor|other": {
+        "accepted": 42,
+        "q99_demand": 20,
+        "build_target": 40,
+        "coverage_q99": 2.1,
+        "coverage_build_target": 1.05,
+        "meets_q99": true
+      },
+      "mixed|plain|minor|repeat_visit_required": {
+        "accepted": 72,
+        "q99_demand": 35,
+        "build_target": 70,
+        "coverage_q99": 2.057,
+        "coverage_build_target": 1.029,
+        "meets_q99": true
+      },
+      "mixed|plain|minor|technician_conduct": {
+        "accepted": 34,
+        "q99_demand": 17,
+        "build_target": 34,
+        "coverage_q99": 2.0,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "mixed|plain|minor|wrong_dispatch_info": {
+        "accepted": 58,
+        "q99_demand": 28,
+        "build_target": 56,
+        "coverage_q99": 2.071,
+        "coverage_build_target": 1.036,
+        "meets_q99": true
+      },
+      "mixed|plain|none|inspection": {
+        "accepted": 123,
+        "q99_demand": 59,
+        "build_target": 118,
+        "coverage_q99": 2.085,
+        "coverage_build_target": 1.042,
+        "meets_q99": true
+      },
+      "mixed|plain|none|install": {
+        "accepted": 170,
+        "q99_demand": 84,
+        "build_target": 168,
+        "coverage_q99": 2.024,
+        "coverage_build_target": 1.012,
+        "meets_q99": true
+      },
+      "mixed|plain|none|maintenance": {
+        "accepted": 232,
+        "q99_demand": 112,
+        "build_target": 224,
+        "coverage_q99": 2.071,
+        "coverage_build_target": 1.036,
+        "meets_q99": true
+      },
+      "mixed|plain|none|repair": {
+        "accepted": 312,
+        "q99_demand": 152,
+        "build_target": 304,
+        "coverage_q99": 2.053,
+        "coverage_build_target": 1.026,
+        "meets_q99": true
+      },
+      "mixed|plain|none|upgrade": {
+        "accepted": 114,
+        "q99_demand": 56,
+        "build_target": 112,
+        "coverage_q99": 2.036,
+        "coverage_build_target": 1.018,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|billing_dispute": {
+        "accepted": 54,
+        "q99_demand": 25,
+        "build_target": 50,
+        "coverage_q99": 2.16,
+        "coverage_build_target": 1.08,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|equipment_damage": {
+        "accepted": 43,
+        "q99_demand": 21,
+        "build_target": 42,
+        "coverage_q99": 2.048,
+        "coverage_build_target": 1.024,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|missed_sla": {
+        "accepted": 92,
+        "q99_demand": 45,
+        "build_target": 90,
+        "coverage_q99": 2.044,
+        "coverage_build_target": 1.022,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|other": {
+        "accepted": 43,
+        "q99_demand": 21,
+        "build_target": 42,
+        "coverage_q99": 2.048,
+        "coverage_build_target": 1.024,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|repeat_visit_required": {
+        "accepted": 78,
+        "q99_demand": 37,
+        "build_target": 74,
+        "coverage_q99": 2.108,
+        "coverage_build_target": 1.054,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|technician_conduct": {
+        "accepted": 38,
+        "q99_demand": 18,
+        "build_target": 36,
+        "coverage_q99": 2.111,
+        "coverage_build_target": 1.056,
+        "meets_q99": true
+      },
+      "mixed|plain|serious|wrong_dispatch_info": {
+        "accepted": 61,
+        "q99_demand": 30,
+        "build_target": 60,
+        "coverage_q99": 2.033,
+        "coverage_build_target": 1.017,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|billing_dispute": {
+        "accepted": 11,
+        "q99_demand": 9,
+        "build_target": 11,
+        "coverage_q99": 1.222,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|equipment_damage": {
+        "accepted": 10,
+        "q99_demand": 8,
+        "build_target": 10,
+        "coverage_q99": 1.25,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|missed_sla": {
+        "accepted": 18,
+        "q99_demand": 15,
+        "build_target": 18,
+        "coverage_q99": 1.2,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|other": {
+        "accepted": 11,
+        "q99_demand": 8,
+        "build_target": 10,
+        "coverage_q99": 1.375,
+        "coverage_build_target": 1.1,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|repeat_visit_required": {
+        "accepted": 16,
+        "q99_demand": 13,
+        "build_target": 16,
+        "coverage_q99": 1.231,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|technician_conduct": {
+        "accepted": 9,
+        "q99_demand": 7,
+        "build_target": 9,
+        "coverage_q99": 1.286,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|minor|wrong_dispatch_info": {
+        "accepted": 12,
+        "q99_demand": 10,
+        "build_target": 12,
+        "coverage_q99": 1.2,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|none|inspection": {
+        "accepted": 33,
+        "q99_demand": 27,
+        "build_target": 33,
+        "coverage_q99": 1.222,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|none|install": {
+        "accepted": 48,
+        "q99_demand": 38,
+        "build_target": 46,
+        "coverage_q99": 1.263,
+        "coverage_build_target": 1.043,
+        "meets_q99": true
+      },
+      "negative|implicit|none|maintenance": {
+        "accepted": 61,
+        "q99_demand": 50,
+        "build_target": 60,
+        "coverage_q99": 1.22,
+        "coverage_build_target": 1.017,
+        "meets_q99": true
+      },
+      "negative|implicit|none|repair": {
+        "accepted": 83,
+        "q99_demand": 67,
+        "build_target": 81,
+        "coverage_q99": 1.239,
+        "coverage_build_target": 1.025,
+        "meets_q99": true
+      },
+      "negative|implicit|none|upgrade": {
+        "accepted": 32,
+        "q99_demand": 26,
+        "build_target": 32,
+        "coverage_q99": 1.231,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|billing_dispute": {
+        "accepted": 15,
+        "q99_demand": 12,
+        "build_target": 15,
+        "coverage_q99": 1.25,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|equipment_damage": {
+        "accepted": 14,
+        "q99_demand": 11,
+        "build_target": 14,
+        "coverage_q99": 1.273,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|missed_sla": {
+        "accepted": 28,
+        "q99_demand": 22,
+        "build_target": 27,
+        "coverage_q99": 1.273,
+        "coverage_build_target": 1.037,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|other": {
+        "accepted": 14,
+        "q99_demand": 11,
+        "build_target": 14,
+        "coverage_q99": 1.273,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|repeat_visit_required": {
+        "accepted": 23,
+        "q99_demand": 18,
+        "build_target": 22,
+        "coverage_q99": 1.278,
+        "coverage_build_target": 1.045,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|technician_conduct": {
+        "accepted": 12,
+        "q99_demand": 9,
+        "build_target": 11,
+        "coverage_q99": 1.333,
+        "coverage_build_target": 1.091,
+        "meets_q99": true
+      },
+      "negative|implicit|serious|wrong_dispatch_info": {
+        "accepted": 18,
+        "q99_demand": 15,
+        "build_target": 18,
+        "coverage_q99": 1.2,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|plain|minor|billing_dispute": {
+        "accepted": 33,
+        "q99_demand": 27,
+        "build_target": 33,
+        "coverage_q99": 1.222,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|plain|minor|equipment_damage": {
+        "accepted": 28,
+        "q99_demand": 23,
+        "build_target": 28,
+        "coverage_q99": 1.217,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|plain|minor|missed_sla": {
+        "accepted": 62,
+        "q99_demand": 49,
+        "build_target": 59,
+        "coverage_q99": 1.265,
+        "coverage_build_target": 1.051,
+        "meets_q99": true
+      },
+      "negative|plain|minor|other": {
+        "accepted": 29,
+        "q99_demand": 23,
+        "build_target": 28,
+        "coverage_q99": 1.261,
+        "coverage_build_target": 1.036,
+        "meets_q99": true
+      },
+      "negative|plain|minor|repeat_visit_required": {
+        "accepted": 49,
+        "q99_demand": 40,
+        "build_target": 48,
+        "coverage_q99": 1.225,
+        "coverage_build_target": 1.021,
+        "meets_q99": true
+      },
+      "negative|plain|minor|technician_conduct": {
+        "accepted": 24,
+        "q99_demand": 19,
+        "build_target": 23,
+        "coverage_q99": 1.263,
+        "coverage_build_target": 1.043,
+        "meets_q99": true
+      },
+      "negative|plain|minor|wrong_dispatch_info": {
+        "accepted": 40,
+        "q99_demand": 32,
+        "build_target": 39,
+        "coverage_q99": 1.25,
+        "coverage_build_target": 1.026,
+        "meets_q99": true
+      },
+      "negative|plain|none|inspection": {
+        "accepted": 116,
+        "q99_demand": 95,
+        "build_target": 114,
+        "coverage_q99": 1.221,
+        "coverage_build_target": 1.018,
+        "meets_q99": true
+      },
+      "negative|plain|none|install": {
+        "accepted": 169,
+        "q99_demand": 137,
+        "build_target": 165,
+        "coverage_q99": 1.234,
+        "coverage_build_target": 1.024,
+        "meets_q99": true
+      },
+      "negative|plain|none|maintenance": {
+        "accepted": 229,
+        "q99_demand": 185,
+        "build_target": 222,
+        "coverage_q99": 1.238,
+        "coverage_build_target": 1.032,
+        "meets_q99": true
+      },
+      "negative|plain|none|repair": {
+        "accepted": 316,
+        "q99_demand": 252,
+        "build_target": 303,
+        "coverage_q99": 1.254,
+        "coverage_build_target": 1.043,
+        "meets_q99": true
+      },
+      "negative|plain|none|upgrade": {
+        "accepted": 111,
+        "q99_demand": 90,
+        "build_target": 108,
+        "coverage_q99": 1.233,
+        "coverage_build_target": 1.028,
+        "meets_q99": true
+      },
+      "negative|plain|serious|billing_dispute": {
+        "accepted": 49,
+        "q99_demand": 39,
+        "build_target": 47,
+        "coverage_q99": 1.256,
+        "coverage_build_target": 1.043,
+        "meets_q99": true
+      },
+      "negative|plain|serious|equipment_damage": {
+        "accepted": 42,
+        "q99_demand": 34,
+        "build_target": 41,
+        "coverage_q99": 1.235,
+        "coverage_build_target": 1.024,
+        "meets_q99": true
+      },
+      "negative|plain|serious|missed_sla": {
+        "accepted": 95,
+        "q99_demand": 73,
+        "build_target": 88,
+        "coverage_q99": 1.301,
+        "coverage_build_target": 1.08,
+        "meets_q99": true
+      },
+      "negative|plain|serious|other": {
+        "accepted": 42,
+        "q99_demand": 34,
+        "build_target": 41,
+        "coverage_q99": 1.235,
+        "coverage_build_target": 1.024,
+        "meets_q99": true
+      },
+      "negative|plain|serious|repeat_visit_required": {
+        "accepted": 75,
+        "q99_demand": 60,
+        "build_target": 72,
+        "coverage_q99": 1.25,
+        "coverage_build_target": 1.042,
+        "meets_q99": true
+      },
+      "negative|plain|serious|technician_conduct": {
+        "accepted": 34,
+        "q99_demand": 28,
+        "build_target": 34,
+        "coverage_q99": 1.214,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|plain|serious|wrong_dispatch_info": {
+        "accepted": 58,
+        "q99_demand": 47,
+        "build_target": 57,
+        "coverage_q99": 1.234,
+        "coverage_build_target": 1.018,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|billing_dispute": {
+        "accepted": 15,
+        "q99_demand": 11,
+        "build_target": 14,
+        "coverage_q99": 1.364,
+        "coverage_build_target": 1.071,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|equipment_damage": {
+        "accepted": 13,
+        "q99_demand": 10,
+        "build_target": 12,
+        "coverage_q99": 1.3,
+        "coverage_build_target": 1.083,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|missed_sla": {
+        "accepted": 23,
+        "q99_demand": 19,
+        "build_target": 23,
+        "coverage_q99": 1.211,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|other": {
+        "accepted": 12,
+        "q99_demand": 10,
+        "build_target": 12,
+        "coverage_q99": 1.2,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|repeat_visit_required": {
+        "accepted": 21,
+        "q99_demand": 16,
+        "build_target": 20,
+        "coverage_q99": 1.312,
+        "coverage_build_target": 1.05,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|technician_conduct": {
+        "accepted": 11,
+        "q99_demand": 8,
+        "build_target": 10,
+        "coverage_q99": 1.375,
+        "coverage_build_target": 1.1,
+        "meets_q99": true
+      },
+      "negative|sarcastic|minor|wrong_dispatch_info": {
+        "accepted": 17,
+        "q99_demand": 13,
+        "build_target": 16,
+        "coverage_q99": 1.308,
+        "coverage_build_target": 1.062,
+        "meets_q99": true
+      },
+      "negative|sarcastic|none|inspection": {
+        "accepted": 44,
+        "q99_demand": 35,
+        "build_target": 42,
+        "coverage_q99": 1.257,
+        "coverage_build_target": 1.048,
+        "meets_q99": true
+      },
+      "negative|sarcastic|none|install": {
+        "accepted": 62,
+        "q99_demand": 49,
+        "build_target": 59,
+        "coverage_q99": 1.265,
+        "coverage_build_target": 1.051,
+        "meets_q99": true
+      },
+      "negative|sarcastic|none|maintenance": {
+        "accepted": 81,
+        "q99_demand": 64,
+        "build_target": 77,
+        "coverage_q99": 1.266,
+        "coverage_build_target": 1.052,
+        "meets_q99": true
+      },
+      "negative|sarcastic|none|repair": {
+        "accepted": 108,
+        "q99_demand": 87,
+        "build_target": 105,
+        "coverage_q99": 1.241,
+        "coverage_build_target": 1.029,
+        "meets_q99": true
+      },
+      "negative|sarcastic|none|upgrade": {
+        "accepted": 41,
+        "q99_demand": 33,
+        "build_target": 40,
+        "coverage_q99": 1.242,
+        "coverage_build_target": 1.025,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|billing_dispute": {
+        "accepted": 19,
+        "q99_demand": 15,
+        "build_target": 18,
+        "coverage_q99": 1.267,
+        "coverage_build_target": 1.056,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|equipment_damage": {
+        "accepted": 16,
+        "q99_demand": 13,
+        "build_target": 16,
+        "coverage_q99": 1.231,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|missed_sla": {
+        "accepted": 34,
+        "q99_demand": 27,
+        "build_target": 33,
+        "coverage_q99": 1.259,
+        "coverage_build_target": 1.03,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|other": {
+        "accepted": 16,
+        "q99_demand": 13,
+        "build_target": 16,
+        "coverage_q99": 1.231,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|repeat_visit_required": {
+        "accepted": 29,
+        "q99_demand": 23,
+        "build_target": 28,
+        "coverage_q99": 1.261,
+        "coverage_build_target": 1.036,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|technician_conduct": {
+        "accepted": 14,
+        "q99_demand": 11,
+        "build_target": 14,
+        "coverage_q99": 1.273,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "negative|sarcastic|serious|wrong_dispatch_info": {
+        "accepted": 22,
+        "q99_demand": 18,
+        "build_target": 22,
+        "coverage_q99": 1.222,
+        "coverage_build_target": 1.0,
+        "meets_q99": true
+      },
+      "neutral|plain|none|inspection": {
+        "accepted": 449,
+        "q99_demand": 231,
+        "build_target": 462,
+        "coverage_q99": 1.944,
+        "coverage_build_target": 0.972,
+        "meets_q99": true
+      },
+      "neutral|plain|none|install": {
+        "accepted": 662,
+        "q99_demand": 337,
+        "build_target": 674,
+        "coverage_q99": 1.964,
+        "coverage_build_target": 0.982,
+        "meets_q99": true
+      },
+      "neutral|plain|none|maintenance": {
+        "accepted": 885,
+        "q99_demand": 459,
+        "build_target": 918,
+        "coverage_q99": 1.928,
+        "coverage_build_target": 0.964,
+        "meets_q99": true
+      },
+      "neutral|plain|none|repair": {
+        "accepted": 1231,
+        "q99_demand": 633,
+        "build_target": 1266,
+        "coverage_q99": 1.945,
+        "coverage_build_target": 0.972,
+        "meets_q99": true
+      },
+      "neutral|plain|none|upgrade": {
+        "accepted": 415,
+        "q99_demand": 219,
+        "build_target": 438,
+        "coverage_q99": 1.895,
+        "coverage_build_target": 0.947,
+        "meets_q99": true
+      },
+      "positive|implicit|none|inspection": {
+        "accepted": 113,
+        "q99_demand": 92,
+        "build_target": 111,
+        "coverage_q99": 1.228,
+        "coverage_build_target": 1.018,
+        "meets_q99": true
+      },
+      "positive|implicit|none|install": {
+        "accepted": 163,
+        "q99_demand": 133,
+        "build_target": 160,
+        "coverage_q99": 1.226,
+        "coverage_build_target": 1.019,
+        "meets_q99": true
+      },
+      "positive|implicit|none|maintenance": {
+        "accepted": 219,
+        "q99_demand": 179,
+        "build_target": 215,
+        "coverage_q99": 1.223,
+        "coverage_build_target": 1.019,
+        "meets_q99": true
+      },
+      "positive|implicit|none|repair": {
+        "accepted": 302,
+        "q99_demand": 244,
+        "build_target": 293,
+        "coverage_q99": 1.238,
+        "coverage_build_target": 1.031,
+        "meets_q99": true
+      },
+      "positive|implicit|none|upgrade": {
+        "accepted": 109,
+        "q99_demand": 88,
+        "build_target": 106,
+        "coverage_q99": 1.239,
+        "coverage_build_target": 1.028,
+        "meets_q99": true
+      },
+      "positive|plain|none|inspection": {
+        "accepted": 526,
+        "q99_demand": 423,
+        "build_target": 508,
+        "coverage_q99": 1.243,
+        "coverage_build_target": 1.035,
+        "meets_q99": true
+      },
+      "positive|plain|none|install": {
+        "accepted": 748,
+        "q99_demand": 622,
+        "build_target": 747,
+        "coverage_q99": 1.203,
+        "coverage_build_target": 1.001,
+        "meets_q99": true
+      },
+      "positive|plain|none|maintenance": {
+        "accepted": 1040,
+        "q99_demand": 851,
+        "build_target": 1022,
+        "coverage_q99": 1.222,
+        "coverage_build_target": 1.018,
+        "meets_q99": true
+      },
+      "positive|plain|none|repair": {
+        "accepted": 1414,
+        "q99_demand": 1177,
+        "build_target": 1413,
+        "coverage_q99": 1.201,
+        "coverage_build_target": 1.001,
+        "meets_q99": true
+      },
+      "positive|plain|none|upgrade": {
+        "accepted": 495,
+        "q99_demand": 400,
+        "build_target": 480,
+        "coverage_q99": 1.238,
+        "coverage_build_target": 1.031,
+        "meets_q99": true
+      }
+    }
+  }
 }

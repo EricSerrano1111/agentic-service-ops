@@ -236,6 +236,25 @@ class RequestCounter:
         os.replace(tmp, self.path)
 
 
+_BILLING_MARKERS = (
+    "billing",
+    "prepay",
+    "prepaid",
+    "credit balance",
+    "credits are depleted",
+    "insufficient",
+    "out of credit",
+    "payment",
+)
+
+
+def is_billing_error(message: str) -> bool:
+    """A billing or balance problem on the paid project (e.g. prepaid credit exhausted,
+    billing disabled). It will not clear by retrying, so the run stops cleanly."""
+    m = message.lower()
+    return any(k in m for k in _BILLING_MARKERS)
+
+
 def is_daily_quota_error(message: str) -> bool:
     """A 429 whose quota is per day (free-tier RPD), as opposed to per minute."""
     m = message.lower()
@@ -414,6 +433,12 @@ class GeminiApi:
                 }
             except Exception as exc:  # SDK raises ClientError/ServerError with .code
                 code = getattr(exc, "code", None)
+                if code in (400, 402, 403, 429) and is_billing_error(str(exc)):
+                    # Retrying cannot fix a billing problem; stop like the daily cap does.
+                    raise StopRun(
+                        f"{model} ({tier} tier): billing error {code}; check the project's "
+                        "balance and billing, then rerun to resume"
+                    ) from exc
                 if code == 429 and is_daily_quota_error(str(exc)):
                     raise StopRun(f"{model}: daily quota exhausted (429)") from exc
                 if code not in RETRYABLE_CODES:
@@ -954,6 +979,7 @@ def stage_judge(ws: Workspace, api, template: str) -> int:
                     "corpus_ids": ids,
                     "labels": got,
                     "model": JUDGE_MODEL,
+                    "tier": res.get("tier", "free"),
                     "at": _now(),
                     "latency_s": res.get("latency_s"),
                     "retries": res.get("retries", {}),
@@ -1031,6 +1057,65 @@ def deficits(required: dict[str, int], counts: dict[str, Counter]) -> dict[str, 
     return out
 
 
+# --------------------------------------------------------------------------- completion
+
+COMPLETION_RULE = (
+    "complete when nothing is pending and every cell's accepted count is at least its "
+    "Poisson q99 demand estimate (ADR-038); the 2x plain-neutral / plain-mixed factor in "
+    "the build target is generation headroom for judge rejections, not a requirement"
+)
+
+
+def q99_by_cell(params: prm.Parameters = prm.PARAMS) -> dict[str, int]:
+    return {
+        cell_key(
+            c["sentiment"], c["style"], c["context"], c["service_type"] or c["incident_type"]
+        ): c["poisson_q"]
+        for c in prm.expected_cell_counts(params)
+    }
+
+
+def completion(counts: dict[str, Counter], q99: dict[str, int], required: dict[str, int]) -> dict:
+    """Per-cell coverage against q99 demand and the build target, and whether the rule holds."""
+    cells = {}
+    for key in sorted(q99):
+        acc = counts.get(key, Counter())["accepted"]
+        q, target = q99[key], required.get(key, 0)
+        cells[key] = {
+            "accepted": acc,
+            "q99_demand": q,
+            "build_target": target,
+            "coverage_q99": round(acc / q, 3) if q else None,
+            "coverage_build_target": round(acc / target, 3) if target else None,
+            "meets_q99": acc >= q,
+        }
+    ratios = [c["coverage_q99"] for c in cells.values() if c["coverage_q99"] is not None]
+    pending = sum(c["pending"] for c in counts.values())
+    return {
+        "rule": COMPLETION_RULE,
+        "holds": pending == 0 and all(c["meets_q99"] for c in cells.values()),
+        "pending": pending,
+        "min_coverage_q99": min(ratios) if ratios else None,
+        "cells_below_q99": [k for k, c in cells.items() if not c["meets_q99"]],
+        "cells_below_build_target": [
+            k for k, c in cells.items() if c["accepted"] < c["build_target"]
+        ],
+        "cells": cells,
+    }
+
+
+def requests_by_model_and_tier(path: Path | None = None) -> dict[str, dict[str, int]]:
+    """Totals from the local request counter (all days). "@paid" keys are the paid tier."""
+    path = path or COUNTER_PATH
+    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    out: dict[str, Counter] = defaultdict(Counter)
+    for day in data.values():
+        for key, n in day.items():
+            model, _, tier = key.partition("@")
+            out[model][tier or "free"] += n
+    return {m: dict(c) for m, c in sorted(out.items())}
+
+
 # --------------------------------------------------------------------------- outputs
 
 OUTPUT_FIELDS = (
@@ -1057,8 +1142,19 @@ OUTPUT_FIELDS = (
 )
 
 
-def finalize(ws: Workspace, out_dir: Path, required: dict[str, int], *, complete: bool) -> dict:
-    """Write feedback_text.jsonl, rejected.jsonl and provenance.json from the stage files."""
+def finalize(
+    ws: Workspace,
+    out_dir: Path,
+    required: dict[str, int],
+    *,
+    stopped: bool,
+    q99: dict[str, int] | None = None,
+) -> dict:
+    """Write feedback_text.jsonl, rejected.jsonl and provenance.json from the stage files.
+
+    With `q99`, `complete` follows COMPLETION_RULE; without it (the test batch), it only
+    means the run was not stopped.
+    """
     specs = ws.load_specs()
     texts = ws.texts()
     status = select(ws)
@@ -1097,7 +1193,7 @@ def finalize(ws: Workspace, out_dir: Path, required: dict[str, int], *, complete
     )
     dates = sorted({r["at"][:10] for r in read_jsonl(ws.generated) + read_jsonl(ws.judged)})
     provenance = {
-        "complete": complete,
+        "complete": None,  # set below, once the counts are known
         "models": {"generator": GEN_MODEL, "judge": JUDGE_MODEL},
         "settings": {
             "generator": {
@@ -1164,10 +1260,42 @@ def finalize(ws: Workspace, out_dir: Path, required: dict[str, int], *, complete
         "generation_batches_by_tier": dict(
             Counter(r.get("tier", "free") for r in read_jsonl(ws.generated))
         ),
+        "judge_batches_by_tier": {
+            **dict(Counter(r.get("tier", "free") for r in read_jsonl(ws.judged))),
+            "evidence": "GeminiApi routes the judge model only to the free-tier client; judge "
+            "rows record their tier from 2026-09-25, and earlier rows are free by that "
+            "construction (the paid request log holds only the generator model)",
+        },
+        "requests_by_model_and_tier": requests_by_model_and_tier(),
         "paid_tier": paid_summary(),
         "accepted": len(accepted),
         "rejected": len(rejected),
     }
+    labels = ws.judge_labels()
+    kinds: dict[str, Counter] = defaultdict(Counter)
+    for s in specs:
+        k = s["neutral_kind"]
+        if k and s["corpus_id"] in labels:
+            kinds[k]["judged"] += 1
+            kinds[k]["judge_agrees"] += labels[s["corpus_id"]] == s["sentiment"]
+    provenance["neutral_kinds_realised"]["judge_acceptance"] = {
+        k: {
+            "agrees": c["judge_agrees"],
+            "judged": c["judged"],
+            "rate": round(c["judge_agrees"] / c["judged"], 3),
+        }
+        for k, c in sorted(kinds.items())
+    }
+    acc_kinds = provenance["neutral_kinds_realised"]["accepted"]
+    total = sum(acc_kinds.values())
+    provenance["neutral_kinds_realised"]["accepted_share"] = (
+        {k: round(v / total, 3) for k, v in sorted(acc_kinds.items())} if total else {}
+    )
+    if q99 is not None:
+        provenance["completion"] = completion(counts, q99, required)
+        provenance["complete"] = not stopped and provenance["completion"]["holds"]
+    else:
+        provenance["complete"] = not stopped
     (out_dir / "provenance.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
     return provenance
 
@@ -1228,14 +1356,36 @@ def run_full(ws: Workspace, api, params: prm.Parameters = prm.PARAMS) -> dict:
         for s in new:
             append_jsonl(ws.specs, s)
         print(f"top-up round {round_no + 1}: {len(new)} specs for {len(short)} short cells")
-    prov = finalize(ws, CORPUS_DIR, required, complete=not stopped and not short)
+    prov = finalize(ws, CORPUS_DIR, required, stopped=bool(stopped), q99=q99_by_cell(params))
     print_status(ws, required)
     if stopped:
         print(f"stopped cleanly ({stopped}); rerun --run to resume")
     elif short:
-        print(f"{len(short)} cells still short after {TOPUP_ROUNDS} top-up rounds:")
+        print(f"{len(short)} cells below their build target after {TOPUP_ROUNDS} top-up rounds:")
         for key, n in sorted(short.items()):
             print(f"  {key}: short {n}")
+    print_completion(prov)
+    return prov
+
+
+def print_completion(prov: dict) -> None:
+    c = prov.get("completion")
+    if not c:
+        return
+    print(
+        f"completion (q99 rule): {'COMPLETE' if prov['complete'] else 'NOT complete'}; "
+        f"min coverage of q99 demand {c['min_coverage_q99']}; cells below q99: "
+        f"{len(c['cells_below_q99'])}; below build target: {len(c['cells_below_build_target'])}; "
+        f"pending {c['pending']}"
+    )
+
+
+def run_finalize(ws: Workspace, params: prm.Parameters = prm.PARAMS) -> dict:
+    """Rebuild the corpus outputs from the stage files. No API calls."""
+    prov = finalize(
+        ws, CORPUS_DIR, required_by_cell(params), stopped=False, q99=q99_by_cell(params)
+    )
+    print_completion(prov)
     return prov
 
 
@@ -1262,7 +1412,9 @@ def run_topup(ws: Workspace, api, key: str, n: int | None, params: prm.Parameter
         gen_template=load_prompt(GEN_PROMPT_PATH),
         judge_template=load_prompt(JUDGE_PROMPT_PATH),
     )
-    finalize(ws, CORPUS_DIR, required, complete=False)
+    print_completion(
+        finalize(ws, CORPUS_DIR, required, stopped=bool(stopped), q99=q99_by_cell(params))
+    )
     print_status(ws, required)
     if stopped:
         print(f"stopped cleanly ({stopped}); rerun to resume")
@@ -1554,7 +1706,7 @@ def run_test_batch(out: Path, api) -> dict:
         judge_template=load_prompt(JUDGE_PROMPT_PATH),
     )
     required = Counter(s["cell"] for s in ws.load_specs())
-    finalize(ws, out, dict(required), complete=not stopped)
+    finalize(ws, out, dict(required), stopped=bool(stopped))
     report = test_batch_report(ws)
     report["review_rows"] = write_test_review(ws, out)
     report["stopped"] = stopped
@@ -1590,6 +1742,9 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--run", action="store_true")
     g.add_argument("--status", action="store_true")
     g.add_argument("--top-up", metavar="CELL_KEY")
+    g.add_argument(
+        "--finalize", action="store_true", help="rebuild corpus outputs from stage files (no API)"
+    )
     ap.add_argument("--n", type=int, help="specs to add with --top-up")
     ap.add_argument("--out-date", default=datetime.now(QUOTA_TZ).date().isoformat())
     ap.add_argument(
@@ -1611,6 +1766,9 @@ def main(argv: list[str] | None = None) -> int:
     ws = Workspace(WORK_DIR)
     if args.status:
         print_status(ws, required_by_cell())
+        return 0
+    if args.finalize:
+        run_finalize(ws)
         return 0
     caps = dict(DAILY_CAP)
     if args.gen_cap is not None:
