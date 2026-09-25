@@ -372,6 +372,8 @@ Cell rules (ADR-036): no neutral on incident rows; sarcastic is negative only; i
 
 Positive feedback on an incident row draws its comment from the no-incident positive corpus cell with the same service type and style; the corpus has no positive-with-incident cells, so such comments never mention the incident (ADR-039).
 
+**Feedback corpus (final, 2026-09-25).** 13,184 accepted comments in 91 cells (`data/generator/corpus/feedback_text.jsonl`). The corpus is complete when every cell's accepted count is at least its Poisson q99 demand estimate (ADR-038); the 2x plain-neutral / plain-mixed build factor is generation headroom for judge rejections, not a requirement. Minimum coverage is 1.2x q99. Accepted neutrals are 73% administrative, 19% status and 8% minimal: most minimal comments were rejected as corpus-wide duplicates, and the judge accepted administrative notes (78%) far more often than status (27%) or minimal (52%) ones. The text checks allow weekday names but reject calendar dates and times.
+
 If your generated feedback ends up overwhelmingly negative, every accuracy number you report downstream is noise. Validate this distribution in Sprint 1 before building anything on top of it.
 
 ---

@@ -155,8 +155,9 @@ Plus reference tables: `accounts`, `contacts`, `locations`, `technicians`, `tech
 
 - **History:** 36 months; ~15,000–25,000 requests
 - **Forecast series:** weekly request count, all statuses, **univariate** (date → volume)
-- **Signal:** Q4 peak seasonality (±25%), ~+8%/yr trend, 1–2 anomaly windows
-- **Sentiment mix:** 50% positive / 22% neutral / 20% negative / 8% mixed, with ~15% deliberately hard cases
+- **Signal:** Q4 peak seasonality (±25%), ~+8%/yr trend, three anomalies in the training span — account drop, regional drop, billing surcharge (ADR-038)
+- **Sentiment mix:** 50% positive / 22% neutral / 20% negative / 8% mixed, with ~15% deliberately hard cases, sarcastic or implicit (ADR-036)
+- **Feedback text:** drawn from the frozen, committed corpus (ADR-030); labels are specification-defined — the ADR-036 written definitions, judge-confirmed for plain comments (ADR-040)
 
 ### Synthetic data generation — the biggest technical trap
 
@@ -214,9 +215,9 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | MCP | Official Python SDK, 2026-07-28 spec | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
 | A2A | A2A v1.0 SDK | Agent Cards + task lifecycle |
 | Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
-| Runtime LLM | **Gemini API free tier** (primary); Flash-Lite default | Model-agnostic by design — see §9 and ADR-029 |
+| Runtime LLM | **Gemini API free tier** (primary); Flash-Lite default | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
-| Sentiment | Transformer classifier or LLM w/ confidence scoring | Must emit confidence for QA thresholding |
+| Sentiment | Fine-tuned transformer classifier (BERT), trained on `sentiment_labels` (ADR-024) | Softmax confidence for QA thresholding |
 | API layer | FastAPI | |
 | UI | Thin React/Next.js front end | See note below |
 | Containers | Docker + docker-compose (local), Cloud Run (deployed) | |
@@ -269,7 +270,7 @@ Report routing accuracy across N test intents with a documented failure-case ana
 ### Other evals
 
 - **Forecast:** RMSE/MAPE against holdout, compared to a naive baseline (seasonal naive). A model that doesn't beat the baseline is a finding worth reporting honestly.
-- **Sentiment:** Precision/recall/F1 against the `sentiment_labels` holdout; calibration of the confidence threshold used for human-review flagging.
+- **Sentiment:** Precision/recall/F1 against the `sentiment_labels` holdout, scored against specification-defined labels (ADR-040); neutral reported per kind (minimal, administrative, status) and hard cases per type (sarcastic, implicit) with the judge disagreement rates alongside; calibration of the confidence threshold used for human-review flagging.
 - **QA agent:** Catch rate on deliberately injected faulty outputs. Inject known-bad results and measure detection.
 - **End-to-end:** Latency and token cost per request type.
 
@@ -292,6 +293,8 @@ This distinction is easy to miss and would blow the budget if discovered in week
 
 Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) during development and moves to a Flash-class model only where Flash-Lite measurably underperforms. Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across two candidates: Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
 
+**Paid project (ADR-041).** A separate paid project, `A2A-agentic-service-ops-gcp`, with its own API key, holds all paid inference: it finished the feedback corpus generation (~$1.40 estimated) and will run the Sprint 5 Pro-for-QA test and paid eval runs. It is capped by a $5 prepaid balance with auto-reload off, a $10 project budget alert, and a per-session request cap enforced in code; the existing project stays on the free tier, since a project upgraded to paid is billed for all of its usage (ADR-029).
+
 ### Infrastructure cost plan
 
 | Item | Approach | Est. |
@@ -299,7 +302,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 | Postgres | **Local Docker through Sprint 4.** Cloud SQL only from Sprint 5 onward | ~$10–15 total |
 | Cloud Run (7 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic | ~$0–5 |
 | Artifact Registry / Cloud Build / Secret Manager | Free tier | ~$0–3 |
-| Runtime LLM | Gemini API free tier; separate spend-capped paid project only for a Sprint 5 Pro-for-QA test | ~$0 (Pro test ~$20–30 incl. thinking tokens, drawn from buffer) |
+| Runtime LLM | Gemini API free tier; separate spend-capped paid project (ADR-041) for corpus generation (done, ~$1.40), the Sprint 5 Pro-for-QA test and paid eval runs | ~$1.40 spent; Pro test ~$20–30 incl. thinking tokens, drawn from buffer |
 | Buffer | Overruns, a stronger QA model, demo-day headroom | ~$40 |
 
 **The Cloud SQL timing is the key move.** An always-on managed Postgres instance running all 12 weeks would consume roughly a third of the budget for no benefit during local development. Develop against Docker Postgres, migrate to Cloud SQL when deployment work actually begins, and keep the schema migration path (Alembic) identical for both so the switch is trivial.
@@ -311,7 +314,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 - Aggressive caching of static context (schemas, tool definitions, system prompts) separate from dynamic context
 - Cost logging per request, surfaced in the eval harness
 - Development-mode circuit breaker on cumulative spend
-- GCP budget alert at $50 and $80 — set it in Sprint 1, not after the first surprise
+- GCP budget alert at $50 and $80 — set in Sprint 1 (2026-09-24), plus a $10 alert and a $5 prepaid cap on the paid project (ADR-041)
 
 **Context engineering note:** Model correctness degrades well before context limits are reached — meaningful degradation appears around 32k tokens, with information buried mid-context getting ignored. Curate minimum high-signal context per agent. Place critical instructions at the beginning or end, never the middle. Use just-in-time retrieval rather than pre-loading.
 
@@ -403,7 +406,10 @@ agentic-service-ops/
 │   ├── generator/                  # synthetic data generation from known params
 │   │   ├── parameters.py           # the ground truth of this synthetic world
 │   │   ├── build_corpus.py         # one-off: LLM writes feedback_text (ADR-030)
-│   │   ├── corpus/                 # committed: feedback_text.jsonl + provenance.json
+│   │   ├── prompts/                # versioned generator + judge prompts (generator_v4.txt, judge_v4.txt)
+│   │   ├── experiments/            # model bake-off, prompt rounds, corpus test batch (evidence)
+│   │   ├── corpus/                 # committed: feedback_text.jsonl, provenance.json, rejected.jsonl
+│   │   │   └── work/               # gitignored: stage files, raw responses, request counts
 │   │   ├── generate.py             # reads the frozen corpus; never calls an API
 │   │   └── validate.py             # confirms signal is recoverable; samples corpus labels
 │   └── migrations/                 # Alembic — identical local ↔ Cloud SQL
@@ -487,9 +493,9 @@ Remaining:
 
 - [ ] Confirm exact capstone rubric requirements and reconcile against the milestone table above
 - [ ] Final repo/project name
-- [ ] Sentiment approach: fine-tuned transformer vs. LLM-with-confidence — decide by week 5
+- [x] Sentiment approach — fine-tuned transformer classifier (BERT) trained on `sentiment_labels` (ADR-024)
 - [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029)
-- [ ] Historical data window and granularity for the forecast (drives seasonality realism)
+- [x] Historical data window and granularity for the forecast — 36 months, weekly, univariate (ADR-018)
 - [x] Whether the UI supports conversational follow-up or single-shot intents — single-shot committed; multi-turn only as a scope expansion decided at the Sprint 4 boundary (ADR-031)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
 - [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` (paid, spend-capped) (ADR-029)

@@ -359,7 +359,7 @@ def test_outputs_match_schema(tmp_path):
     out = tmp_path / "out"
     out.mkdir()
     required = dict(Counter(s["cell"] for s in ws.load_specs()))
-    prov = bc.finalize(ws, out, required, complete=True)
+    prov = bc.finalize(ws, out, required, stopped=False)
     accepted = bc.read_jsonl(out / "feedback_text.jsonl")
     rejected = bc.read_jsonl(out / "rejected.jsonl")
     assert accepted and rejected
@@ -807,3 +807,120 @@ def test_capitalised_weekday_no_longer_trips_name_check(tmp_path):
     )
     assert bc.recheck_date_rejections(ws) == {"reinstated": 1}
     assert ws.check_results()[cid]["ok"]
+
+
+# --------------------------------------------------------------------------- billing errors
+
+
+@pytest.mark.parametrize(
+    ("code", "message"),
+    [
+        (429, "RESOURCE_EXHAUSTED Your prepayment credits are depleted."),
+        (403, "PERMISSION_DENIED Billing is disabled for this project."),
+        (400, "FAILED_PRECONDITION billing account not in good standing"),
+        (402, "Insufficient balance"),
+    ],
+)
+def test_billing_error_stops_cleanly_without_retries(tmp_path, code, message):
+    class Err(Exception):
+        pass
+
+    Err.code = code
+
+    class Models:
+        calls = 0
+
+        def generate_content(self, **_):
+            Models.calls += 1
+            raise Err(message)
+
+    api = _api_with(Models(), tmp_path, tier="paid")
+    with pytest.raises(bc.StopRun, match="billing error"):
+        api.request(bc.GEN_MODEL, "p")
+    assert Models.calls == 1
+
+
+def test_billing_error_stops_pipeline_cleanly(tmp_path):
+    ws = _ws(tmp_path)
+
+    class Broke(FakeApi):
+        def request(self, model, prompt):
+            if model == bc.GEN_MODEL and self.calls:
+                raise bc.StopRun("gemini-3.5-flash-lite (paid tier): billing error 429")
+            return super().request(model, prompt)
+
+    stopped = bc.run_pipeline(ws, Broke(), gen_template=GEN_T, judge_template=JUDGE_T)
+    assert "billing error" in stopped
+    assert len(ws.generated_batches()) == 1
+
+
+def test_billing_detection_does_not_catch_rate_limits():
+    assert not bc.is_billing_error("429 RESOURCE_EXHAUSTED GenerateRequestsPerMinutePerProject")
+    assert not bc.is_billing_error("503 UNAVAILABLE high demand")
+
+
+# --------------------------------------------------------------------------- completion rule
+
+
+def test_completion_rule_uses_q99_not_build_target():
+    counts = {
+        "a": Counter(accepted=120, pending=0),  # above target
+        "b": Counter(accepted=90, pending=0),  # below the 2x target, above q99
+    }
+    out = bc.completion(counts, q99={"a": 100, "b": 60}, required={"a": 120, "b": 120})
+    assert out["holds"] and out["cells_below_q99"] == []
+    assert out["cells_below_build_target"] == ["b"]
+    assert out["min_coverage_q99"] == 1.2
+    assert out["cells"]["b"]["coverage_build_target"] == 0.75
+
+
+def test_completion_fails_below_q99_or_with_pending():
+    counts = {"a": Counter(accepted=59, pending=0)}
+    out = bc.completion(counts, q99={"a": 60}, required={"a": 120})
+    assert not out["holds"] and out["cells_below_q99"] == ["a"]
+    pending = bc.completion({"a": Counter(accepted=80, pending=3)}, {"a": 60}, {"a": 120})
+    assert not pending["holds"] and pending["pending"] == 3
+
+
+def test_finalize_records_completion_and_provenance_fields(tmp_path, monkeypatch):
+    monkeypatch.setattr(bc, "COUNTER_PATH", tmp_path / "counts.json")
+    monkeypatch.setattr(bc, "PAID_LOG_PATH", tmp_path / "paid.jsonl")
+    ws = _ws(tmp_path)
+    bc.run_pipeline(ws, FakeApi(label="positive"), gen_template=GEN_T, judge_template=JUDGE_T)
+    out = tmp_path / "out"
+    out.mkdir()
+    counts = bc.cell_counts(ws.load_specs(), bc.select(ws))
+    q99 = {k: c["accepted"] for k, c in counts.items()}  # exactly met, some zero-demand
+    prov = bc.finalize(ws, out, {k: 2 * v for k, v in q99.items()}, stopped=False, q99=q99)
+    assert prov["completion"]["holds"] and prov["complete"] is True
+    too_high = {k: v + 1 for k, v in q99.items()}
+    prov = bc.finalize(ws, out, too_high, stopped=False, q99=too_high)
+    assert prov["complete"] is False
+    assert bc.finalize(ws, out, q99, stopped=True, q99=q99)["complete"] is False
+    kinds = prov["neutral_kinds_realised"]
+    assert {"generated", "accepted", "accepted_share", "judge_acceptance"} <= set(kinds)
+    assert "free" in prov["judge_batches_by_tier"]
+    for key in ("requests_by_model_and_tier", "paid_tier", "run_dates"):
+        assert key in prov
+
+
+def test_judge_rows_record_tier(tmp_path):
+    ws = _ws(tmp_path)
+    bc.run_pipeline(ws, FakeApi(), gen_template=GEN_T, judge_template=JUDGE_T)
+    assert all(r["tier"] == "free" for r in bc.read_jsonl(ws.judged))
+
+
+def test_requests_by_model_and_tier(tmp_path):
+    path = tmp_path / "c.json"
+    path.write_text(
+        json.dumps(
+            {
+                "d1": {"gemini-3.5-flash-lite": 440, "gemma-4-31b-it": 500},
+                "d2": {"gemini-3.5-flash-lite@paid": 574, "gemma-4-31b-it": 100},
+            }
+        )
+    )
+    assert bc.requests_by_model_and_tier(path) == {
+        "gemini-3.5-flash-lite": {"free": 440, "paid": 574},
+        "gemma-4-31b-it": {"free": 600},
+    }
