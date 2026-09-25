@@ -27,7 +27,7 @@
 
 **Planned:**
 - [x] Repo scaffold, docker-compose, local Postgres — *Postgres running in Docker; both migrations applied and `alembic check` clean (2026-09-22)*
-- [ ] CI skeleton
+- [x] CI skeleton — *`.github/workflows/ci.yml`: lint, unit and integration jobs; green on first run 2026-09-25*
 - [x] Schema finalized in `data-dictionary.md` (done ahead of Sprint 1 — see decisions log)
 - [x] Data generator + ground-truth tables (`sentiment_labels`, `generation_parameters`) — *`generate.py` and `load.py` shipped; dataset loaded into local Postgres 2026-09-25*
 - [x] `data/generator/build_corpus.py` — one-off script that generates `feedback_text` through Google's API (ADR-030) — *built 2026-09-23, full run 2026-09-23 to 09-25*
@@ -63,11 +63,11 @@
 - Generator and loader: `generate.py` (pure, deterministic: explicit IDs, per-state timezones, committed name lists) and `load.py` (one-transaction reload as `app_generator`), with every world rule and constant in `parameters.py` (ADR-042, ADR-043). Loaded into local Postgres on 2026-09-25: 20,230 requests, 18,063 archived, 2,067 incidents, 7,521 feedback rows with labels, 140 generation_parameters rows (plus 50 accounts, 198 contacts, 197 locations, 32 technicians, 63 skills, 15 users); about 10 s of inserts, 14 s end to end. Read-back invariants hold; the grants suite passes with data (401); two generations hash identically.
 - `data/generator/validate.py` run against local Postgres on 2026-09-25: **66 of 66 checks pass** — 22 invariants plus 6 SQL cross-checks (all 0), distributions, signal recovery (growth 8.5% vs 8%, seasonal range 0.39 vs 0.42 designed in the same K=3 basis, residual sd 11.7%), anomalies (regional z 3.53, account drop 93%, billing 150/0), couplings (all p >= 0.07), and corpus integrity. Read as `app_forecast` (three columns, ADR-035) and `app_qa`; truth from `generation_parameters`. Output: `data/generator/validation/2026-09-25/`.
 - ADR-040 sanity spot-check: 30/30 comments usable (no broken, off-domain, prohibited, contradictory, or plainly mislabelled comments), 2026-09-25 (`data/generator/validation/2026-09-25/spot_check.csv`).
+- CI skeleton (2026-09-25): `.github/workflows/ci.yml` runs on every push and on PRs to main, Python 3.12 with pip caching, installing exactly as local development does. Jobs: lint (ruff check and format --check), unit (the offline suite), and integration (a Postgres 16 service container, `alembic upgrade head`, `alembic check`, then the grants suite). CI-only ephemeral role credentials in the workflow; `REQUIRE_INTEGRATION_DB=1` turns any integration skip into a failure. ruff pinned to 0.16.8 so local and CI format identically. Green on the first run (lint 29 s, unit 44 s, integration 46 s).
+- Alembic ruff post-write hook fixed (2026-09-25): the `console_scripts` runner failed because ruff ships as a binary with no Python entry point; it now uses the `exec` runner on the venv's ruff. Verified with a throwaway revision that the hook reformatted, then deleted; `alembic heads` unchanged.
 - Docs: ADR-025 added; three corrections to `data-dictionary.md` that writing the DDL exposed.
 
 **Carried over:**
-- CI skeleton.
-- The broken Alembic ruff post-write hook (`Could not find entrypoint console_scripts.ruff`).
 
 Sprint goal met 2026-09-25, inside the sprint (ends 2026-09-27). Label design for the
 corpus consumed most of the sprint (four prompt rounds plus a test batch); see the retro.
