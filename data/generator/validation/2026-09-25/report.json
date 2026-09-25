@@ -1,0 +1,881 @@
+{
+  "meta": {
+    "source": "local Postgres: weekly series as app_forecast, all else as app_qa",
+    "run_date": "2026-09-25",
+    "corpus_sha256": "03da307c7b21ad7cd0297b16bb8d2c8b802f25744a1df669ab75229958acf906",
+    "master_seed": 20260923,
+    "rows": {
+      "accounts": 50,
+      "service_requests": 20230,
+      "archived_requests": 18063,
+      "incidents": 2067,
+      "service_feedback": 7521,
+      "sentiment_labels": 7521,
+      "generation_parameters": 140
+    }
+  },
+  "tolerances_fixed_before_results": {
+    "sentiment_pp": 0.015,
+    "hard_case_share": [
+      0.13,
+      0.17
+    ],
+    "incident_request_rate": [
+      0.08,
+      0.12
+    ],
+    "missed_sla_share": [
+      0.2,
+      0.3
+    ],
+    "feedback_per_completed": [
+      0.35,
+      0.5
+    ],
+    "cancel_rate": [
+      0.08,
+      0.12
+    ],
+    "sla_met_pp": 0.03,
+    "service_mix_pp": 0.02,
+    "disputed_share": [
+      0.03,
+      0.05
+    ],
+    "pending_pp": 0.01,
+    "trend_growth_pp": 0.03,
+    "season_range_pp": 0.06,
+    "residual_sd": [
+      0.08,
+      0.13
+    ],
+    "regional_z_min": 3.0,
+    "account_drop_min": 0.8,
+    "alpha": 0.01
+  },
+  "summary": {
+    "PASS": 66
+  },
+  "checks": [
+    {
+      "id": "A01",
+      "group": "A invariants",
+      "name": "completed request without exactly one archive row",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A02",
+      "group": "A invariants",
+      "name": "archive row on a cancelled or non-completed request",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A03",
+      "group": "A invariants",
+      "name": "archived completed_at before scheduled_datetime",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A04",
+      "group": "A invariants",
+      "name": "credits exceed total_invoice",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A05",
+      "group": "A invariants",
+      "name": "feedback row without a sentiment_labels row",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A06",
+      "group": "A invariants",
+      "name": "incident or feedback on an unknown request",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A07",
+      "group": "A invariants",
+      "name": "cancelled_at set iff cancelled (violations)",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A08",
+      "group": "A invariants",
+      "name": "cancellation_reason on a non-cancelled request",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A09",
+      "group": "A invariants",
+      "name": "feedback or incident on a non-completed request",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A10",
+      "group": "A invariants",
+      "name": "request with two feedback rows",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A11",
+      "group": "A invariants",
+      "name": "missed_sla incident on a request that met its SLA",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A12",
+      "group": "A invariants",
+      "name": "missed request with incidents lacking exactly one missed_sla",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A13",
+      "group": "A invariants",
+      "name": "repeat-visit parent without exactly one child, or child without one",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A14",
+      "group": "A invariants",
+      "name": "child differs from parent in account, site or service type",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A15",
+      "group": "A invariants",
+      "name": "feedback not linked to the most severe (then earliest) incident",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A16",
+      "group": "A invariants",
+      "name": "incident active outside the active window, or resolved_at mismatch",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A17",
+      "group": "A invariants",
+      "name": "incident_notes null on a non-open incident",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A18",
+      "group": "A invariants",
+      "name": "pending invoice outside the pending window",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A19",
+      "group": "A invariants",
+      "name": "payment_reference null iff pending (violations)",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A20",
+      "group": "A invariants",
+      "name": "non-terminal request outside the final weeks",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A21",
+      "group": "A invariants",
+      "name": "event after the snapshot",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A22",
+      "group": "A invariants",
+      "name": "request on a prospect account",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A-sql01",
+      "group": "A invariants (SQL, app_qa)",
+      "name": "completed request without an archive row",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A-sql02",
+      "group": "A invariants (SQL, app_qa)",
+      "name": "archive row on a non-completed request",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A-sql03",
+      "group": "A invariants (SQL, app_qa)",
+      "name": "credits exceed total_invoice",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A-sql04",
+      "group": "A invariants (SQL, app_qa)",
+      "name": "feedback without a sentiment_labels row",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A-sql05",
+      "group": "A invariants (SQL, app_qa)",
+      "name": "incident or feedback on an unknown request",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "A-sql06",
+      "group": "A invariants (SQL, app_qa)",
+      "name": "archived completed_at before scheduled_datetime",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-sent-mixed",
+      "group": "B distributions",
+      "name": "sentiment share: mixed",
+      "value": 0.0778,
+      "tolerance": "0.08 \u00b1 1.5 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-sent-neutral",
+      "group": "B distributions",
+      "name": "sentiment share: neutral",
+      "value": 0.2239,
+      "tolerance": "0.22 \u00b1 1.5 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-sent-negative",
+      "group": "B distributions",
+      "name": "sentiment share: negative",
+      "value": 0.196,
+      "tolerance": "0.20 \u00b1 1.5 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-sent-positive",
+      "group": "B distributions",
+      "name": "sentiment share: positive",
+      "value": 0.5023,
+      "tolerance": "0.50 \u00b1 1.5 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-hard",
+      "group": "B distributions",
+      "name": "hard-case share of feedback",
+      "value": 0.1493,
+      "tolerance": "0.13-0.17",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-inc",
+      "group": "B distributions",
+      "name": "completed requests with an incident",
+      "value": 0.1018,
+      "tolerance": "0.08-0.12",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-missed",
+      "group": "B distributions",
+      "name": "missed_sla share of incidents",
+      "value": 0.2443,
+      "tolerance": "0.20-0.30",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-fb",
+      "group": "B distributions",
+      "name": "feedback rows per completed request",
+      "value": 0.4164,
+      "tolerance": "0.35-0.50",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-cancel",
+      "group": "B distributions",
+      "name": "cancellation rate",
+      "value": 0.1016,
+      "tolerance": "0.08-0.12",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-sla-urgent",
+      "group": "B distributions",
+      "name": "sla_met rate: urgent",
+      "value": 0.87,
+      "tolerance": "0.87 \u00b1 3 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "n": 3916
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "B-sla-critical",
+      "group": "B distributions",
+      "name": "sla_met rate: critical",
+      "value": 0.831,
+      "tolerance": "0.82 \u00b1 3 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "n": 1408
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "B-sla-standard",
+      "group": "B distributions",
+      "name": "sla_met rate: standard",
+      "value": 0.8999,
+      "tolerance": "0.90 \u00b1 3 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "n": 12739
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "B-svc-inspection",
+      "group": "B distributions",
+      "name": "service mix: inspection",
+      "value": 0.1199,
+      "tolerance": "0.118 \u00b1 2 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-svc-install",
+      "group": "B distributions",
+      "name": "service mix: install",
+      "value": 0.1809,
+      "tolerance": "0.178 \u00b1 2 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-svc-maintenance",
+      "group": "B distributions",
+      "name": "service mix: maintenance",
+      "value": 0.245,
+      "tolerance": "0.247 \u00b1 2 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-svc-repair",
+      "group": "B distributions",
+      "name": "service mix: repair",
+      "value": 0.3462,
+      "tolerance": "0.346 \u00b1 2 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-svc-upgrade",
+      "group": "B distributions",
+      "name": "service mix: upgrade",
+      "value": 0.108,
+      "tolerance": "0.111 \u00b1 2 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-disputed",
+      "group": "B distributions",
+      "name": "disputed invoices",
+      "value": 0.0415,
+      "tolerance": "0.03-0.05",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "B-pending",
+      "group": "B distributions",
+      "name": "pending invoices",
+      "value": 0.0106,
+      "tolerance": "0.0115 (recorded) \u00b1 1 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "C-trend",
+      "group": "C signal recovery",
+      "name": "recovered annual growth",
+      "value": 0.0853,
+      "tolerance": "0.08 \u00b1 3 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "true": 0.08,
+        "weeks_fitted": 123
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "C-season",
+      "group": "C signal recovery",
+      "name": "recovered seasonal peak-to-trough",
+      "value": 0.3927,
+      "tolerance": "0.423 (designed, same K=3 basis) \u00b1 6 pp",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "designed_k3": 0.4231,
+        "designed_raw_weekly": 0.4992,
+        "nominal": "\u00b125% amplitude, peak-to-trough ~0.50 before weekly and K=3 smoothing"
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "C-noise",
+      "group": "C signal recovery",
+      "name": "residual sd of log weekly volume",
+      "value": 0.1166,
+      "tolerance": "0.08-0.13",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "designed_effective": 0.1060459760217237
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "D-regional",
+      "group": "D anomalies",
+      "name": "regional drop: z over its window",
+      "value": 3.53,
+      "tolerance": ">= 3",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "weeks": [
+          76,
+          77
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "D-account",
+      "group": "D anomalies",
+      "name": "account drop at account level",
+      "value": 0.9263,
+      "tolerance": ">= 0.80",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "account_id": 3,
+        "weekly_during": 1.0,
+        "weekly_around": 13.5625
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "D-account-total",
+      "group": "D anomalies",
+      "name": "account drop: weekly-total dip z (designed ~1.4)",
+      "value": 3.92,
+      "tolerance": "report only",
+      "passed": true,
+      "hard": false,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "D-billing",
+      "group": "D anomalies",
+      "name": "billing: direct-bill invoices at 0.10 inside / outside the window",
+      "value": "150 / 0",
+      "tolerance": "> 0 inside, 0 outside, none missed inside",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "inside": 150,
+        "outside": 0,
+        "inside_at_other_rate": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-sev-low",
+      "group": "E couplings",
+      "name": "severity -> sentiment: low",
+      "value": {
+        "mixed": 0.255,
+        "negative": 0.433,
+        "positive": 0.313
+      },
+      "tolerance": "chi-square vs designed {'mixed': 0.25, 'neutral': 0.0, 'negative': 0.45, 'positive': 0.3}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.7378980852107249,
+        "n": 467,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-sev-high",
+      "group": "E couplings",
+      "name": "severity -> sentiment: high",
+      "value": {
+        "mixed": 0.226,
+        "negative": 0.64,
+        "positive": 0.134
+      },
+      "tolerance": "chi-square vs designed {'mixed': 0.2, 'neutral': 0.0, 'negative': 0.7, 'positive': 0.1}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.1506986520050958,
+        "n": 186,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-sev-medium",
+      "group": "E couplings",
+      "name": "severity -> sentiment: medium",
+      "value": {
+        "mixed": 0.233,
+        "negative": 0.612,
+        "positive": 0.155
+      },
+      "tolerance": "chi-square vs designed {'mixed': 0.25, 'neutral': 0.0, 'negative': 0.6, 'positive': 0.15}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.7718312738684194,
+        "n": 343,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-sla_missed",
+      "group": "E couplings",
+      "name": "P(incident | sla missed)",
+      "value": 0.2498,
+      "tolerance": "binomial vs derived 0.252, p >= 0.01",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.817767706473326,
+        "k": 505,
+        "n": 2022,
+        "derived": 0.25221238938053103
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-sla_met",
+      "group": "E couplings",
+      "name": "P(incident | sla met)",
+      "value": 0.0831,
+      "tolerance": "binomial vs derived 0.081, p >= 0.01",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.24599024687073856,
+        "k": 1333,
+        "n": 16041,
+        "derived": 0.080608793686584
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-rating-mixed",
+      "group": "E couplings",
+      "name": "rating given sentiment: mixed",
+      "value": {
+        "2": 0.166,
+        "3": 0.543,
+        "4": 0.291
+      },
+      "tolerance": "chi-square vs designed {'2': 0.2, '3': 0.5, '4': 0.3}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.07390081323607132,
+        "n": 530,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-rating-neutral",
+      "group": "E couplings",
+      "name": "rating given sentiment: neutral",
+      "value": {
+        "2": 0.183,
+        "3": 0.516,
+        "4": 0.301
+      },
+      "tolerance": "chi-square vs designed {'2': 0.2, '3': 0.5, '4': 0.3}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.22200014084055228,
+        "n": 1510,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-rating-negative",
+      "group": "E couplings",
+      "name": "rating given sentiment: negative",
+      "value": {
+        "1": 0.497,
+        "2": 0.349,
+        "3": 0.154
+      },
+      "tolerance": "chi-square vs designed {'1': 0.5, '2': 0.35, '3': 0.15}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.9237971285710209,
+        "n": 1319,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "E-rating-positive",
+      "group": "E couplings",
+      "name": "rating given sentiment: positive",
+      "value": {
+        "3": 0.056,
+        "4": 0.347,
+        "5": 0.597
+      },
+      "tolerance": "chi-square vs designed {'3': 0.05, '4': 0.35, '5': 0.6}, p >= 0.01; none impossible",
+      "passed": true,
+      "hard": true,
+      "detail": {
+        "p": 0.27803124889307457,
+        "n": 3413,
+        "impossible": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "id": "F-text",
+      "group": "F corpus",
+      "name": "duplicate feedback_text across rows",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "F-id",
+      "group": "F corpus",
+      "name": "duplicate corpus_id",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    },
+    {
+      "id": "F-cells",
+      "group": "F corpus",
+      "name": "labels breaking the ADR-036 cell rules",
+      "value": 0,
+      "tolerance": "= 0",
+      "passed": true,
+      "hard": true,
+      "detail": {},
+      "status": "PASS"
+    }
+  ]
+}

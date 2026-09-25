@@ -16,6 +16,7 @@ dependencies = []
 generator = [
     "datasketch==2.0.0",
     "google-genai==2.25.0",
+    "matplotlib==3.11.2",  # validate.py plots
     "numpy==2.5.3",
     "python-dotenv>=1.0",
     "scipy==1.18.1",  # datasketch dependency, pinned so the dedup path is reproducible
