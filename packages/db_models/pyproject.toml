@@ -14,7 +14,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+# ruff is pinned exactly so local lint and CI format identically.
+dev = ["pytest>=8.0", "ruff==0.16.8"]
 
 [build-system]
 requires = ["hatchling"]

@@ -22,7 +22,7 @@
 | R-06 | Schedule / Scope | A2A overhead consumes disproportionate solo dev time | Medium | Medium | Open |
 | R-07 | Data | Synthetic generator produces a degenerate distribution | Medium | High | Monitoring |
 | R-08 | Compliance | Schema/data drifts toward resembling employer's real system | Low | High | Mitigating |
-| R-09 | Academic | Course rubric diverges from the assumed deliverable plan | Medium | Medium-High | Open |
+| R-09 | Academic | Course rubric diverges from the assumed deliverable plan | Medium | Medium-High | Mitigating |
 | R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Open |
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Low-Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Open |
@@ -91,12 +91,16 @@
 
 **Update 2026-09-25:** Still open at the end of Sprint 1. Per this entry's review trigger, if it is still open at the Sprint 2 retro, that is a process failure to name there.
 
+**Update 2026-09-25:** The actual deliverables for weeks 1-2 are now known — Proposal/Business Case, Detailed Requirements Analysis, and weekly status reports — and they differ from the assumed plan in `architecture.md` §10 and the sprint log. Partly realised. Reconciling the full milestone plan is the next step, after the academic documents are reviewed. Weekly status reports are a recurring deliverable the plan must budget. Status: Mitigating.
+
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
 **Mitigation:** Treat any missed sprint goal as an immediate scope conversation at that sprint's retro, not something to "catch up on later." Scope expansion is only considered if genuinely ahead, per the working agreement.
 **Review trigger:** Every sprint retro — explicitly compare actual progress against the plan, not just against what felt productive.
 
 **Update 2026-09-25:** The Sprint 1 goal was missed: the generator carries into Sprint 2, which is also the highest-risk sprint (first vertical slice through A2A and MCP). Kept Open; the Sprint 1 retro decides whether this counts as realised.
+
+**Update 2026-09-25 (goal met):** The Sprint 1 goal was met on 2026-09-25, inside the sprint; the remaining Sprint 1 items (CI, the Alembic ruff hook) are being finished in Sprint 1 rather than carried over. This supersedes the earlier same-day note that the goal was missed. Status stays Open: the buffer risk applies to every sprint.
 
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).

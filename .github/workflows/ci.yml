@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Installs exactly as local development does (CLAUDE.md): the root generator extra plus
+# packages/db_models[dev], editable. No .env, no API keys: nothing here calls a model.
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            packages/db_models/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[generator]" -e "packages/db_models[dev]"
+      - name: ruff check
+        run: ruff check packages data tests
+      - name: ruff format --check
+        run: ruff format --check packages data tests
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            packages/db_models/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[generator]" -e "packages/db_models[dev]"
+      - name: Unit tests (offline)
+        run: python -m pytest tests/unit -q
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci_admin
+          POSTGRES_PASSWORD: ci_admin_ephemeral
+          POSTGRES_DB: service_ops
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_admin -d service_ops"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      # EPHEMERAL, CI-ONLY VALUES. They exist only for this job's throwaway Postgres
+      # service container, which is destroyed when the job ends; they are not secrets and
+      # match nothing outside CI. ADR-028 requires every role name and password to be set,
+      # so the roles migration gets explicit values here. Never the real .env.
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: service_ops
+      POSTGRES_ADMIN_USER: ci_admin
+      POSTGRES_ADMIN_PASSWORD: ci_admin_ephemeral
+      DB_ROLE_REPORTING_USER: app_reporting
+      DB_ROLE_REPORTING_PASSWORD: ci_reporting_ephemeral
+      DB_ROLE_SENTIMENT_USER: app_sentiment
+      DB_ROLE_SENTIMENT_PASSWORD: ci_sentiment_ephemeral
+      DB_ROLE_FORECAST_USER: app_forecast
+      DB_ROLE_FORECAST_PASSWORD: ci_forecast_ephemeral
+      DB_ROLE_QA_USER: app_qa
+      DB_ROLE_QA_PASSWORD: ci_qa_ephemeral
+      DB_ROLE_GENERATOR_USER: app_generator
+      DB_ROLE_GENERATOR_PASSWORD: ci_generator_ephemeral
+      # Missing, unreachable or unmigrated database = failure here, never a skip.
+      REQUIRE_INTEGRATION_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            packages/db_models/pyproject.toml
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[generator]" -e "packages/db_models[dev]"
+      - name: alembic upgrade head
+        run: python -m alembic upgrade head
+      - name: alembic check
+        run: python -m alembic check
+      - name: Integration tests (live database, skips fail)
+        run: python -m pytest tests/integration -q -rs

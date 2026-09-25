@@ -53,12 +53,23 @@ def _connect(user: str, password: str) -> psycopg.Connection:
     )
 
 
+#: CI sets this to "1": there, a database that is missing, unreachable or unmigrated is a
+#: failure, not a skip, so the integration job can never pass by silently skipping.
+REQUIRE_DB_VAR = "REQUIRE_INTEGRATION_DB"
+
+
+def _unavailable(reason: str) -> None:
+    if os.environ.get(REQUIRE_DB_VAR) == "1":
+        pytest.fail(f"{reason} ({REQUIRE_DB_VAR}=1: skipping is not allowed)", pytrace=False)
+    pytest.skip(reason)
+
+
 @pytest.fixture(scope="session")
 def live_database() -> None:
-    """Skip the dependent test unless a migrated database is reachable."""
+    """Skip the dependent test unless a migrated database is reachable (fail under CI)."""
     missing = [name for name in _ADMIN_VARS if not os.environ.get(name)]
     if missing:
-        pytest.skip(f"no database configured (missing {', '.join(missing)})")
+        _unavailable(f"no database configured (missing {', '.join(missing)})")
 
     try:
         with _connect(
@@ -66,10 +77,10 @@ def live_database() -> None:
         ) as conn:
             migrated = conn.execute("SELECT to_regclass('public.alembic_version')").fetchone()
     except psycopg.OperationalError as exc:
-        pytest.skip(f"no database reachable: {exc}".splitlines()[0])
+        _unavailable(f"no database reachable: {exc}".splitlines()[0])
 
     if migrated is None or migrated[0] is None:
-        pytest.skip("database reachable but not migrated — run `alembic upgrade head`")
+        _unavailable("database reachable but not migrated — run `alembic upgrade head`")
 
 
 @pytest.fixture(scope="session")
