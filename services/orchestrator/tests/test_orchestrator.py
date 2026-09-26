@@ -67,7 +67,7 @@ class FakeLLM:
         return LLMResult(
             text=self.decision.model_dump_json(),
             parsed=self.decision,
-            model="gemini-3.7-flash",
+            model="gemini-3.5-flash-lite",
             input_tokens=600,
             output_tokens=30,
             cost_usd=0.0006,

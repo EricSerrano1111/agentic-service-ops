@@ -691,17 +691,17 @@ async def test_request_rejection_logs_status_and_googles_message(log_lines):
 def test_thinking_level_is_per_role(monkeypatch):
     for name, value in {
         "GOOGLE_AI_API_KEY": KEY,
-        "GEMINI_MODEL_ORCHESTRATOR": "gemini-3.7-flash",
+        "GEMINI_MODEL_ORCHESTRATOR": MODEL,
         "GEMINI_MODEL_SPECIALIST": MODEL,
         "GEMINI_MODEL_QA": MODEL,
     }.items():
         monkeypatch.setenv(name, value)
     for name in ("LLM_MODE", "LLM_THINKING_LEVEL_ORCHESTRATOR", "LLM_THINKING_LEVEL_SPECIALIST"):
         monkeypatch.delenv(name, raising=False)
-    # gemini-3.7-flash rejects "minimal"; the orchestrator's default must not be it.
+    # Every role is on Flash-Lite, which accepts "minimal" (ADR-049).
+    for role in ("orchestrator", "specialist", "qa"):
+        assert LLMSettings.from_env(role).thinking_level == "minimal"
+    # A role moved to a model that rejects "minimal" (gemini-3.7-flash does) is set alone.
+    monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", "low")
     assert LLMSettings.from_env("orchestrator").thinking_level == "low"
-    assert LLMSettings.from_env("specialist").thinking_level == "minimal"
-    assert LLMSettings.from_env("qa").thinking_level == "minimal"
-    monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", "medium")
-    assert LLMSettings.from_env("orchestrator").thinking_level == "medium"
     assert LLMSettings.from_env("specialist").thinking_level == "minimal"  # unaffected

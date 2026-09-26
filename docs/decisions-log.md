@@ -40,7 +40,7 @@
 | 026 | SQLAlchemy models separate from Pydantic schemas | Accepted |
 | 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
 | 028 | Role names required, never defaulted: a blank `DB_ROLE_*_USER` fails like a blank password | Accepted |
-| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part; superseded in part by ADR-041, ADR-049 |
+| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part; superseded in part by ADR-041 |
 | 030 | `feedback_text` LLM-generated once and frozen as a committed corpus | Accepted — superseded in part by ADR-036; corpus sizing replaced by ADR-038 |
 | 031 | Single-shot interaction committed; multi-turn is conditional stretch | Accepted |
 | 032 | Compound routing out of scope; multi-domain questions detected and split by the user | Accepted |
@@ -60,7 +60,7 @@
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
 | 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
-| 049 | Per-role runtime models: orchestrator `gemini-3.7-flash`, specialists and QA `gemini-3.5-flash-lite` | Accepted — supersedes ADR-029 in part |
+| 049 | Per-role runtime models and thinking levels; the orchestrator stays on `gemini-3.5-flash-lite` (seed set: 28/28 vs 3.7 Flash 27/28) | Accepted |
 | 050 | Reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer | Accepted |
 
 ---
@@ -1312,49 +1312,71 @@ now build on them.
   each when it first occurs (`scripts/capture_gemini_429.py` for the first).
 - `generate` is async, since every caller runs inside an async A2A server.
 
-### ADR-049 — Per-role runtime models: orchestrator on `gemini-3.7-flash`
-*Date: 2026-09-26. Supersedes ADR-029 in part: its rule that every agent defaults to
-Flash-Lite and moves to Flash only where Flash-Lite measurably underperforms. ADR-029's
-free-tier funding, ADR-041's paid project and ADR-048's client policy are unchanged.*
+### ADR-049 — Per-role runtime models: the orchestrator stays on Flash-Lite, on measured evidence
+*Date: 2026-09-26. Supersedes nothing. Confirms ADR-029's Flash-Lite default for the
+orchestrator with a measurement, and makes model and thinking level per-role settings.
+Edited in place before merge: the first version chose `gemini-3.7-flash` for the
+orchestrator, and the seed-set comparison below reversed that.*
 
-**Decision:** Runtime models are set per caller role, through the existing variables:
+**Decision:** Runtime models and thinking levels are set per caller role:
 
-| Role | Variable | Model |
+| Role | Model (`GEMINI_MODEL_<ROLE>`) | Thinking level (`LLM_THINKING_LEVEL_<ROLE>`) |
 |---|---|---|
-| Orchestrator (routing) | `GEMINI_MODEL_ORCHESTRATOR` | `gemini-3.7-flash` |
-| Specialists (question parsing, ADR-046) | `GEMINI_MODEL_SPECIALIST` | `gemini-3.5-flash-lite` |
-| QA | `GEMINI_MODEL_QA` | `gemini-3.5-flash-lite` (unchanged; the value in `.env.example`) |
+| Orchestrator (routing) | `gemini-3.5-flash-lite` | `minimal` |
+| Specialists (question parsing, ADR-046) | `gemini-3.5-flash-lite` | `minimal` |
+| QA | `gemini-3.5-flash-lite` (the value in `.env.example`) | `minimal` |
 
-**Context:** Routing is the entry point for every request. A misroute sends a question
-to the wrong specialist, or declines a question the system could answer. That costs more
-than the price difference between Flash and Flash-Lite, which is $0.45/M input and
-$1.25/M output at list price (`llm/prices.toml`). This is the owner's choice, made
-before any routing measurement exists.
+**Evidence:** The routing seed set (`evals/routing/seed_v1.jsonl`, 28 questions) ran
+through the orchestrator's own `Router` and prompt `route_v1` (sha `d2b285c19d9e`) on
+both candidates. There were no errors on either run. Results are in `evals/results/`:
+- `gemini-3.5-flash-lite`: 28/28, on the free key, $0.0075 list-price equivalent
+  (`routing_seed_v1_gemini-3.5-flash-lite_route_v1_20260926T201614Z.json`).
+- `gemini-3.7-flash`: 27/28, on the paid key, $0.0201
+  (`routing_seed_v1_gemini-3.7-flash_route_v1_20260926T202518Z.json`). The one miss
+  was s16, "Are complaints going up?", labelled reporting and routed to sentiment.
+  That label is the seed set's most contestable (`evals/routing/README.md`), so the
+  miss says little either way.
+
+**Context:** The first version of this entry put the orchestrator on
+`gemini-3.7-flash`, reasoning that a misroute costs more than the price difference.
+That choice was made before any routing measurement existed.
+
+**Why Flash-Lite:**
+- 3.7 Flash showed no accuracy advantage on the seed set.
+- 3.7 Flash has a twentieth of Flash-Lite's free daily quota (20 against 500 requests
+  per day; 5 against 15 per minute, ADR-029). The orchestrator is the first hop of every
+  request, so on the free key the whole system would answer about 20 questions a day.
+- The free-tier 3.7 Flash produced the R-15 "high demand" 503s: in the 2026-09-26
+  capture run, and three times in a row during the checkpoint e2e.
+
+**Caveat:** The seed set is small and mostly easy: 14 of 28 questions are clear, and
+both models got every one of those right. It cannot separate two strong routers. The
+Sprint 3 routing set adds harder ambiguous items and near-miss out-of-scope items,
+written by the owner in dispatch phrasing, and re-tests both models. A clear accuracy
+advantage for Flash there reopens this decision in a new ADR.
+
+**Thinking level is per role because support differs by model.** `gemini-3.7-flash`
+rejects thinking level `minimal` with a 400 `INVALID_ARGUMENT` ("Thinking level MINIMAL
+is not supported for this model"). With one global setting inherited from
+`build_corpus.py`, that failed every routing call in the first checkpoint e2e run
+(2026-09-26). The level is now set per role (`llm.config.ROLE_THINKING_LEVELS`,
+overridable with `LLM_THINKING_LEVEL_<ROLE>`). A role that moves to another model must
+check that model's supported levels. The per-role live smoke tests (`tests/live/`)
+exercise each role's real model and settings.
 
 **Alternatives considered:**
-- *Flash-Lite everywhere until an eval shows it underperforming* (ADR-029's rule;
-  rejected for the orchestrator). It is still the rule for specialists and QA.
+- *`gemini-3.7-flash` for the orchestrator* (the first version of this entry;
+  rejected on the evidence above).
 - *Flash for every role* (rejected). Parsing a date range and the deterministic QA
   checks don't need it, and Flash's free-tier limits are far tighter.
 
 **Consequences:**
-- **Validated, not assumed.** The Sprint 3 routing eval runs the routing prompt on both
-  `gemini-3.7-flash` and `gemini-3.5-flash-lite`. If Flash-Lite routes as accurately,
-  this decision is revisited in a new ADR. `evals/routing/run_seed.py --model` gives an
-  early read on the seed set.
-- **Free-tier capacity is the real cost.** ADR-029 recorded the free-tier limits for all
-  Flash models as 5 RPM and 20 requests per day, against Flash-Lite's 15 RPM and 500 RPD.
-  With the orchestrator as the first hop of every request, the whole system answers
-  about 20 questions a day on the free key. That covers development and the e2e test,
-  but not a seed-set run plus manual testing on the same day, nor any eval run. ADR-029
-  already noted that moving an agent to Flash on the free tier implies the paid tier.
-  Eval runs on Flash go through the paid, spend-capped key (`LLM_MODE=paid`, ADR-041 and
-  ADR-048), or are split across days. Limits change without notice; AI Studio is
-  authoritative.
-- **Capacity risk.** The free-tier `gemini-3.7-flash` has already returned a "high
-  demand" 503 (2026-09-26 capture run). R-15 records this risk.
-- **Pricing.** 3.7 Flash's list price rises on 2027-01-01, after the project ends
-  (`llm/prices.toml`).
+- Every role runs on the free tier's most generous Flash-Lite quota. Eval volume still
+  exceeds 500 requests a day on some runs; ADR-029's split-across-days or paid-key rule
+  still applies.
+- R-15's likelihood drops, since Flash-Lite had no 503s in either seed run, but it is
+  not closed: Flash-Lite can also return 503s.
+- `llm/prices.toml` keeps its 3.7 Flash entry for the Sprint 3 comparison.
 
 ### ADR-050 — Reporting answers resolve relative dates against a fixed as-of date
 *Date: 2026-09-26. Supersedes nothing. Implements the date handling ADR-046 left open.*

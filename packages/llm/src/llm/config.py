@@ -39,9 +39,10 @@ DEFAULT_TEMPERATURE = 0.0  # parsing and classification: least variance
 DEFAULT_THINKING_LEVEL = "minimal"  # as build_corpus.py; cheapest thinking setting
 #: Thinking level per role, because support differs by model: gemini-3.5-flash-lite
 #: accepts "minimal", but gemini-3.7-flash rejects it with a 400 INVALID_ARGUMENT
-#: ("Thinking level MINIMAL is not supported for this model", 2026-09-26), so the
-#: orchestrator (ADR-049) uses "low". Override with LLM_THINKING_LEVEL_<ROLE>.
-ROLE_THINKING_LEVELS = {"orchestrator": "low", "specialist": "minimal", "qa": "minimal"}
+#: ("Thinking level MINIMAL is not supported for this model", 2026-09-26). Every role
+#: runs on Flash-Lite today (ADR-049); a role moved to another model must check that
+#: model's supported levels. Override with LLM_THINKING_LEVEL_<ROLE>.
+ROLE_THINKING_LEVELS = {"orchestrator": "minimal", "specialist": "minimal", "qa": "minimal"}
 
 
 class Secret:

@@ -201,6 +201,8 @@ locally. The paid key never goes into a cloud environment.
 - [ ] Orchestrator routes across all three
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
 - [ ] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
+  - Includes harder ambiguous items and near-miss out-of-scope items, written by Eric in dispatch phrasing; the seed set was too easy to separate the models (ADR-049).
+  - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
 - [ ] Fill `docs/security-model.md` while drafting `04`
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
 

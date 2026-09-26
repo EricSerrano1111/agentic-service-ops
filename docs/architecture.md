@@ -217,7 +217,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | MCP | Official Python SDK, 2026-07-28 spec — **`mcp==2.2.0`** (pinned 2026-09-25, ADR-047) | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
 | A2A | A2A v1.0 SDK — **`a2a-sdk==1.1.5`** (pinned 2026-09-25, ADR-047) | Agent Card discovery + blocking `SendMessage` only; no streaming, push or `input-required` (ADR-047) |
 | Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
-| Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator `gemini-3.7-flash`; specialists `gemini-3.5-flash-lite`; QA `gemini-3.5-flash-lite` | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
+| Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator, specialists and QA all `gemini-3.5-flash-lite`, thinking level `minimal` | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
 | Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
 | ORM + migrations | SQLAlchemy 2.0 + Alembic, psycopg 3 | Models in `packages/db_models/` (ADR-026); migrations are frozen snapshots (ADR-027) |
@@ -296,7 +296,7 @@ This distinction is easy to miss and would blow the budget if discovered in week
 
 ### Runtime model strategy
 
-Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Specialists and QA default to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) and move to a Flash-class model only where Flash-Lite measurably underperforms. The orchestrator runs on `gemini-3.7-flash`, because a misroute costs more than the price difference; the Sprint 3 routing eval checks that against Flash-Lite (ADR-049). Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across two candidates: Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
+Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) and moves to a Flash-class model only where Flash-Lite measurably underperforms. On the routing seed set Flash-Lite matched 3.7 Flash (28/28 vs 27/28), so the orchestrator stays on it; the Sprint 3 routing set re-tests both (ADR-049). Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across two candidates: Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
 
 **Paid project (ADR-041).** A separate paid project, `A2A-agentic-service-ops-gcp`, with its own API key, holds all paid inference: it finished the feedback corpus generation (~$1.40 estimated) and will run the Sprint 5 Pro-for-QA test and paid eval runs. It is capped by a $5 prepaid balance with auto-reload off, a $10 project budget alert, and a per-session request cap enforced in code; the existing project stays on the free tier, since a project upgraded to paid is billed for all of its usage (ADR-029).
 
@@ -315,7 +315,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 ### Runaway-cost guardrails
 
 - Hard per-run token/cost cap, enforced in code — QA loops fan out usage fast
-- **Model tiering, only where measured:** specialists and QA start on Flash-Lite and move up (Flash; Pro for QA as a Sprint 5 test) only when an eval shows Flash-Lite underperforming (ADR-029). The orchestrator starts on Flash, to be checked against Flash-Lite in the Sprint 3 routing eval (ADR-049)
+- **Model tiering, only where measured:** every agent starts on Flash-Lite and moves up (Flash; Pro for QA as a Sprint 5 test) only when an eval shows Flash-Lite underperforming (ADR-029). The orchestrator's first measurement (routing seed set) kept it on Flash-Lite (ADR-049)
 - Aggressive caching of static context (schemas, tool definitions, system prompts) separate from dynamic context
 - Cost logging per request, surfaced in the eval harness
 - Development-mode circuit breaker on cumulative spend
@@ -532,7 +532,7 @@ Remaining:
 - [ ] Check each deliverable's rubric content when drafting starts (R-09)
 - [x] Final repo/project name — `agentic-service-ops` (closed 2026-09-25)
 - [x] Sentiment approach — fine-tuned transformer classifier (BERT) trained on `sentiment_labels` (ADR-024)
-- [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029); orchestrator moved to `gemini-3.7-flash` (ADR-049)
+- [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029); confirmed for the orchestrator on the routing seed set (ADR-049)
 - [x] Historical data window and granularity for the forecast — 36 months, weekly, univariate (ADR-018)
 - [x] Whether the UI supports conversational follow-up or single-shot intents — single-shot committed; multi-turn only as a scope expansion decided at the Sprint 4 boundary (ADR-031)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
