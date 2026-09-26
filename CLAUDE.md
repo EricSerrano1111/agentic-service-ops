@@ -69,8 +69,8 @@ uv lock                                           # after changing any dependenc
 
 .venv\Scripts\python -m pytest tests/unit services -q   # offline: schema, access matrix, generator, corpus, services
 .venv\Scripts\python -m pytest tests/integration -q -rs   # grants + MCP figures; needs migrated, loaded Postgres
-.venv\Scripts\python -m ruff check packages data tests services
-.venv\Scripts\python -m ruff format packages data tests services   # ruff pinned (0.16.8) so local = CI
+.venv\Scripts\python -m ruff check packages data tests services scripts
+.venv\Scripts\python -m ruff format packages data tests services scripts   # ruff pinned (0.16.8) so local = CI
 
 docker compose up -d --build                      # walking skeleton: postgres, mcp_incidents, agent_reporting, orchestrator
 .venv\Scripts\python -m orchestrator ask "How many incidents last quarter?"

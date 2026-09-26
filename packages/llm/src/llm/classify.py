@@ -2,17 +2,20 @@
 
 Lifted from `data/generator/build_corpus.py` (`GeminiApi.request`, `is_billing_error`,
 `is_daily_quota_error`), which ran the corpus build through daily-quota, 5xx and billing
-stops. One change of method, not of policy: build_corpus.py matched quota identifiers in
+stops. Two changes of method, not of policy: build_corpus.py matched quota identifiers in
 `str(exc)`. That string is rendered from `APIError.details`, the parsed error body, so
 here the same identifiers are read from the structured field. Text matching remains only
-as a fallback for a body without the structured detail.
+as a fallback for a body without the structured detail. And a structured quota 429 is
+classified before the billing text check, because the real quota message itself says
+"billing details" (captured 2026-09-26, tests/fixtures/gemini_errors/).
 
 Error body shape (google-genai 2.25.0 `errors.APIError.details`):
     {"error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message": "...",
                "details": [{"@type": "type.googleapis.com/google.rpc.QuotaFailure",
                             "violations": [{"quotaId": "GenerateRequestsPerDay..."}]},
                            {"@type": "type.googleapis.com/google.rpc.RetryInfo",
-                            "retryDelay": "7s"}]}}
+                            "retryDelay": "36s"}]}}
+Real bodies are in tests/fixtures/gemini_errors/.
 """
 
 from __future__ import annotations
@@ -121,25 +124,34 @@ def classify(exc: BaseException) -> Classified:
             return Classified(Kind.TRANSIENT, None, message=message)
         return Classified(Kind.REQUEST, None, message=message)
 
-    # Billing first, as in build_corpus.py: a depleted prepaid balance arrives as a 429.
+    ids = quota_ids(body) if code == 429 else []
+    if ids:
+        # A structured QuotaFailure decides on its own, before any text match. The real
+        # quota message says "please check your plan and billing details", so the billing
+        # text check below would misread every quota 429 as a billing error (observed
+        # 2026-09-26, tests/fixtures/gemini_errors/; build_corpus.py has the same order
+        # but never received a 429). Any per-day violation means don't retry: a body can
+        # list per-minute and per-day violations together (limit 0: no free quota).
+        daily = next((q for q in ids if _is_daily(q)), None)
+        if daily:
+            return Classified(Kind.DAILY_QUOTA, code, quota_id=daily, message=message)
+        return Classified(
+            Kind.RATE_LIMIT,
+            code,
+            quota_id=ids[0],
+            retry_delay_s=retry_delay_s(body),
+            message=message,
+        )
+
+    # Billing next, as in build_corpus.py: a depleted prepaid balance arrives as a 429
+    # (with no QuotaFailure, by assumption: that body has not been observed).
     if code in _BILLING_CODES and any(m in message.lower() for m in _BILLING_MARKERS):
         return Classified(Kind.BILLING, code, message=message)
     if code in (401, 403) or _reasons(body) & _AUTH_REASONS:
         return Classified(Kind.AUTH, code, message=message)
 
     if code == 429:
-        ids = quota_ids(body)
-        if ids:  # the structured field exists: decide on it alone
-            daily = next((q for q in ids if _is_daily(q)), None)
-            if daily:
-                return Classified(Kind.DAILY_QUOTA, code, quota_id=daily, message=message)
-            return Classified(
-                Kind.RATE_LIMIT,
-                code,
-                quota_id=ids[0],
-                retry_delay_s=retry_delay_s(body),
-                message=message,
-            )
+        # No structured detail: fall back to build_corpus.py's text markers.
         if any(m in str(exc).lower() for m in _DAILY_TEXT_MARKERS):
             return Classified(Kind.DAILY_QUOTA, code, message=message)
         # A 429 without a daily marker is per-minute, as build_corpus.py treated it.

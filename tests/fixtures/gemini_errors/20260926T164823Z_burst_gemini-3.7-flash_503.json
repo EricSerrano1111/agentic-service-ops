@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-09-26T16:48:23+00:00",
+  "step": "burst",
+  "model": "gemini-3.7-flash",
+  "attempt": 2,
+  "http_code": 503,
+  "exception_type": "google.genai.errors.ServerError",
+  "sdk": "google-genai 2.25.0",
+  "note": "APIError.details, key and project identifiers redacted",
+  "body": {
+    "error": {
+      "code": 503,
+      "message": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.",
+      "status": "UNAVAILABLE"
+    }
+  }
+}

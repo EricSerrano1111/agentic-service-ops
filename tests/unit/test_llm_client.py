@@ -1,40 +1,44 @@
 """Offline tests for packages/llm, against a fake transport. No network, no key.
 
 The fake raises the SDK's real exception classes (`google.genai.errors.ClientError` /
-`ServerError`, google-genai 2.25.0), built from error bodies of the real shape.
-Where each shape comes from:
+`ServerError`, google-genai 2.25.0) with error bodies of the real shape. Each fixture is
+marked OBSERVED (a real body, captured by scripts/capture_gemini_429.py into
+tests/fixtures/gemini_errors/ on 2026-09-26, free key) or ASSEMBLED (built to the
+observed shape where no real body of that kind exists yet).
 
-- **Envelope** `{"error": {"code", "status", "message", "details"}}`: the body
-  `google.genai.errors.APIError` parses. It reads `code`, `status` and `message` from
-  under `"error"` (errors.py `_get_code` / `_get_status` / `_get_message`) and keeps the
-  whole body as `.details`, which is what `str(exc)` prints.
-- **Quota identifiers** `GenerateRequestsPerMinutePerProjectPerModel` and
-  `GenerateRequestsPerDayPerProjectPerModel-FreeTier`, with status
-  `RESOURCE_EXHAUSTED`: build_corpus.py's 429 handling, as exercised in
-  tests/unit/test_build_corpus.py (`test_daily_quota_error_detection`, lines 327-329;
-  `test_per_minute_429_backs_off_and_continues`, line 531).
-- **Billing messages** ("Your prepayment credits are depleted", "Billing is disabled for
-  this project", "billing account not in good standing") with codes 429/403/400:
-  tests/unit/test_build_corpus.py `test_billing_error_stops_cleanly_without_retries`,
-  lines 818-820.
-- **5xx**: 500 INTERNAL and 503 UNAVAILABLE, the codes build_corpus.py retried and its
-  run logs record for gemma-4-31b-it (data/generator/corpus/work/run_2026-09-24_*.log;
-  the logs keep the code, not the body). "high demand" is from test_build_corpus.py:859.
-- **Detail objects** `google.rpc.QuotaFailure` (violations[].quotaId) and
-  `google.rpc.RetryInfo` (retryDelay "Ns"): Google's standard error-detail types
-  (googleapis google/rpc/error_details.proto), which is where the quota identifiers above
-  sit in the body. No real 429 body was ever logged in this repo: the corpus build's
-  local daily caps always stopped it first. The live test cannot provoke one either, so
-  these two detail shapes are the one part not observed here. Capture a real 429 body
-  when one first occurs and replace them.
+OBSERVED:
+- `REAL_NO_QUOTA_429`: gemini-3.1-pro-preview on the free key. 429 RESOURCE_EXHAUSTED
+  with google.rpc.Help, a QuotaFailure listing four violations at once (requests and
+  input tokens, per minute and per day, all "limit: 0") and RetryInfo "36s". The
+  message says "please check your plan and billing details", which exposed a
+  billing-before-quota ordering bug (fixed in llm/classify.py).
+- `REAL_503`: gemini-3.7-flash under load. 503 UNAVAILABLE, "high demand", no details.
+
+ASSEMBLED (not yet observed):
+- `per_minute_429()`: the burst in step (a) hit a 503 before any 429, so no pure
+  per-minute 429 exists. Built from REAL_NO_QUOTA_429 with only the per-minute
+  violations kept and RetryInfo set to the delay under test. The per-minute quotaId
+  comes from that real body (it carries the -FreeTier suffix that build_corpus.py's
+  test strings lack).
+- `daily_429()`: step (b) returned the zero-limit shape (per-minute and per-day
+  violations together), not a daily quota used up after normal traffic. Built from
+  REAL_NO_QUOTA_429 with only the per-day violations kept.
+- `BILLING`: messages and codes from tests/unit/test_build_corpus.py
+  `test_billing_error_stops_cleanly_without_retries` (lines 818-820). No real billing
+  error body has been observed.
+- 500 INTERNAL: the code build_corpus.py's run logs record for gemma-4-31b-it
+  (data/generator/corpus/work/run_2026-09-24_*.log keep codes, not bodies), in the
+  REAL_503 envelope.
 """
 
 from __future__ import annotations
 
+import copy
 import io
 import json
 import logging
 import traceback
+from pathlib import Path
 
 import pytest
 from google.genai import errors as genai_errors
@@ -71,6 +75,17 @@ def anyio_backend():
 
 # --------------------------------------------------------------------------- payloads
 
+FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "gemini_errors"
+
+
+def _real(name: str) -> dict:
+    """The redacted `APIError.details` body of a captured error."""
+    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))["body"]
+
+
+REAL_NO_QUOTA_429 = _real("20260926T164824Z_pro_gemini-3.1-pro-preview_429.json")
+REAL_503 = _real("20260926T164823Z_burst_gemini-3.7-flash_503.json")
+
 
 def _body(code: int, status: str, message: str, details: list | None = None) -> dict:
     error = {"code": code, "status": status, "message": message}
@@ -79,48 +94,39 @@ def _body(code: int, status: str, message: str, details: list | None = None) -> 
     return {"error": error}
 
 
-def _quota(quota_id: str) -> dict:
-    return {
-        "@type": "type.googleapis.com/google.rpc.QuotaFailure",
-        "violations": [
-            {
-                "quotaMetric": (
-                    "generativelanguage.googleapis.com/generate_content_free_tier_requests"
-                ),
-                "quotaId": quota_id,
-            }
-        ],
-    }
-
-
-def _retry(seconds: str) -> dict:
-    return {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": seconds}
-
-
-QUOTA_MSG = "You exceeded your current quota, please check your plan and billing details."
+def _from_real_429(keep, delay: str | None) -> dict:
+    """ASSEMBLED: the real 429 body with only the violations `keep` accepts."""
+    body = copy.deepcopy(REAL_NO_QUOTA_429)
+    details = []
+    for entry in body["error"]["details"]:
+        kind = entry["@type"]
+        if kind.endswith("QuotaFailure"):
+            entry["violations"] = [v for v in entry["violations"] if keep(v["quotaId"])]
+        if kind.endswith("RetryInfo"):
+            if delay is None:
+                continue
+            entry["retryDelay"] = delay
+        details.append(entry)
+    body["error"]["details"] = details
+    return body
 
 
 def per_minute_429(delay: str | None = "7s") -> genai_errors.ClientError:
-    details = [_quota("GenerateRequestsPerMinutePerProjectPerModel")]
-    if delay is not None:
-        details.append(_retry(delay))
-    # The real quota message mentions "billing details"; the structured quotaId must win
-    # over a naive billing text match. Hence "plan and billing" is kept in the message.
-    return genai_errors.ClientError(
-        429, _body(429, "RESOURCE_EXHAUSTED", "Quota exceeded.", details)
-    )
+    body = _from_real_429(lambda q: "PerMinute" in q, delay)
+    return genai_errors.ClientError(429, body)
 
 
 def daily_429() -> genai_errors.ClientError:
-    details = [_quota("GenerateRequestsPerDayPerProjectPerModel-FreeTier"), _retry("41s")]
-    return genai_errors.ClientError(
-        429, _body(429, "RESOURCE_EXHAUSTED", "Quota exceeded.", details)
-    )
+    body = _from_real_429(lambda q: "PerDay" in q, "36s")
+    return genai_errors.ClientError(429, body)
 
 
 def server_error(code: int = 503) -> genai_errors.ServerError:
-    status = {500: "INTERNAL", 503: "UNAVAILABLE"}[code]
-    return genai_errors.ServerError(code, _body(code, status, "The model is under high demand."))
+    if code == 503:
+        return genai_errors.ServerError(503, copy.deepcopy(REAL_503))
+    body = copy.deepcopy(REAL_503)
+    body["error"].update(code=code, status={500: "INTERNAL"}[code])
+    return genai_errors.ServerError(code, body)
 
 
 BILLING = [
@@ -213,11 +219,43 @@ class Parsed(BaseModel):
 # --------------------------------------------------------------------------- classification
 
 
+def test_real_zero_quota_429_is_daily_not_billing():
+    """OBSERVED body. Its message mentions "billing details"; the QuotaFailure decides."""
+    c = classify(genai_errors.ClientError(429, copy.deepcopy(REAL_NO_QUOTA_429)))
+    assert c.kind is Kind.DAILY_QUOTA
+    assert c.quota_id == "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+
+
+def test_real_quota_message_mentions_billing():
+    # Guards the regression: if Google drops the phrase, this documents why the order
+    # in classify() mattered.
+    assert "billing" in REAL_NO_QUOTA_429["error"]["message"].lower()
+
+
+def test_real_503_is_transient():
+    assert classify(genai_errors.ServerError(503, copy.deepcopy(REAL_503))).kind is Kind.TRANSIENT
+
+
+def test_real_retry_delay_parses():
+    assert classify(per_minute_429("36s")).retry_delay_s == 36.0
+
+
+async def test_real_zero_quota_429_raises_daily_without_retry():
+    c, transport, sleeps = client(
+        genai_errors.ClientError(429, copy.deepcopy(REAL_NO_QUOTA_429)), Response("never")
+    )
+    with pytest.raises(LLMDailyQuotaExhausted, match="PerDay"):
+        await c.generate("hi", trace_id="t")
+    assert transport.calls == 1 and sleeps.delays == []
+
+
 def test_structured_quota_id_decides_daily_vs_per_minute():
     assert classify(per_minute_429()).kind is Kind.RATE_LIMIT
     assert classify(per_minute_429()).retry_delay_s == 7.0
     assert classify(daily_429()).kind is Kind.DAILY_QUOTA
     assert classify(daily_429()).quota_id == "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+    # The assembled per-minute 429 keeps the real message, "billing details" included.
+    assert "billing" in str(per_minute_429()).lower()
 
 
 def test_text_fallback_only_without_structured_detail():

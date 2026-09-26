@@ -1228,7 +1228,10 @@ these policies:
    applies in both modes; the free-mode default is 1,000.
 2. **Per-minute and daily quota 429s are told apart.** The decision reads the
    `quotaId` in the error's `google.rpc.QuotaFailure` detail (`...PerDay...` means
-   daily), from the SDK's structured `APIError.details`. A per-minute 429 waits the
+   daily), from the SDK's structured `APIError.details`. A structured quota 429 is
+   classified before any billing text check, because the real quota message says
+   "please check your plan and billing details". A body listing both per-minute and
+   per-day violations counts as daily. A per-minute 429 waits the
    `RetryInfo.retryDelay` the error states, or 30 s if it states none (as
    `build_corpus.py` did). It then retries, within `LLM_MAX_RETRY_WAIT_S` of total
    waiting (default 30 s, well inside ADR-034's 120 s), and raises `LLMRateLimited`
@@ -1259,11 +1262,29 @@ bursts on Gemma, and billing stops on the paid project. Its policy is lifted her
 rather than reinvented. It detected the daily quota by matching the quota identifier
 in the error's string. That string is rendered from the structured error body, so this
 client reads the same identifier from the structured field. Text matching remains only
-as a fallback for a body without that detail. No real 429 body was ever logged in this
-repo: the corpus build's local caps always stopped it first. So the test fixtures take
-the quota identifiers, billing messages and 5xx codes from `build_corpus.py`'s handling
-and logs. The `QuotaFailure` and `RetryInfo` shapes are Google's standard error details
-and were not observed here.
+as a fallback for a body without that detail. The corpus build's local caps always
+stopped it before Gemini sent a 429, so no real 429 body existed in the repo when the
+client was first written.
+
+*Observed error shapes (updated 2026-09-26, before merge):* `scripts/capture_gemini_429.py`
+captured real bodies on the free key into `tests/fixtures/gemini_errors/`, and the tests
+now build on them.
+- **Observed:** a 429 from `gemini-3.1-pro-preview`, which has no free-tier quota:
+  `RESOURCE_EXHAUSTED` with `google.rpc.Help`, a `QuotaFailure` listing four violations
+  at once (requests and input tokens, per minute and per day, all "limit: 0"), and
+  `RetryInfo` `"36s"`. Its message contains "billing details", which exposed an
+  ordering bug: billing text was checked before the quota detail, so every real quota
+  429 would have raised `LLMAuthError`. `build_corpus.py` has the same order but never
+  received a 429. The client now checks the structured quota detail first. The real
+  per-minute `quotaId` carries a `-FreeTier` suffix.
+- **Observed:** a 503 `UNAVAILABLE` ("high demand") with no details, from
+  `gemini-3.7-flash`.
+- **Still assembled:** a pure per-minute 429, because the burst hit a 503 before any
+  429. A daily quota used up after normal traffic is also still assembled: the Pro call
+  returned the zero-limit shape, with per-minute and per-day violations together, not
+  a per-day violation on its own. Both are built from the observed 429 by keeping only
+  the matching violations. Billing error bodies are assembled from `build_corpus.py`'s
+  test messages, and the 500 body reuses the observed 503 envelope.
 
 **Alternatives considered:**
 - *Retry every 429 with backoff, as the SDK's own retry option would* (rejected). A
@@ -1284,6 +1305,7 @@ and were not observed here.
   reaches a log line, an exception, a traceback or a `repr`.
 - The retry policy lives in one place. The SDK's own retries are off (`attempts=1`),
   so every wait counts once against `LLM_MAX_RETRY_WAIT_S`.
-- The first real 429 should be captured and its body checked against the fixtures.
-  The `RetryInfo` and `QuotaFailure` shapes are the one part not observed here.
+- `QuotaFailure` and `RetryInfo` are now observed. A pure per-minute 429, a daily
+  quota used up after normal traffic, and a billing error remain assembled. Capture
+  each when it first occurs (`scripts/capture_gemini_429.py` for the first).
 - `generate` is async, since every caller runs inside an async A2A server.
