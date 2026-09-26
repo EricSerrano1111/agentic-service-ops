@@ -20,11 +20,12 @@ reporting agent → MCP → incidents server → Postgres, with no LLM yet (ADR-
 
 ## Local setup
 
-Requires Python 3.12+ and (for the database) Docker Desktop.
+Requires Python 3.12, [uv](https://docs.astral.sh/uv/) (CI uses 0.12.19), and (for the
+database) Docker Desktop. `uv.lock` pins every dependency; local, CI and the service
+images all install from it (ADR-047).
 
 ```
-py -m venv .venv
-.venv\Scripts\pip install -e ".[generator]" -e "packages/db_models[dev]" -e packages/common -e packages/schemas -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
+uv sync --locked --all-packages --all-extras --python 3.12
 
 copy .env.example .env      # then fill in POSTGRES_*, DB_ROLE_*_USER and DB_ROLE_*_PASSWORD
 ```

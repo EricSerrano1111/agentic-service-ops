@@ -61,8 +61,8 @@ for the current sprint, update it directly rather than waiting to be asked.
 Windows paths shown; on POSIX substitute `.venv/bin/`.
 
 ```
-py -m venv .venv                                  # first time only
-.venv\Scripts\pip install -e ".[generator]" -e "packages/db_models[dev]" -e packages/common -e packages/schemas -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator   # same as CI
+uv sync --locked --all-packages --all-extras --python 3.12   # same as CI: builds .venv from uv.lock
+uv lock                                           # after changing any dependency in a pyproject.toml; commit uv.lock with it
 
 .venv\Scripts\python -m pytest tests/unit services -q   # offline: schema, access matrix, generator, corpus, services
 .venv\Scripts\python -m pytest tests/integration -q -rs   # grants + MCP figures; needs migrated, loaded Postgres

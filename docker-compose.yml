@@ -29,9 +29,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?set POSTGRES_ADMIN_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-service_ops}
     ports:
-      # Host port from .env so it can be moved off 5432 if something else owns it;
-      # the container always listens on 5432.
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Localhost only, because dev passwords.
+      - "127.0.0.1:5432:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     healthcheck:

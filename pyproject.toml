@@ -31,10 +31,19 @@ build-backend = "hatchling.build"
 # Root is a workspace container, not a distributable package.
 bypass-selection = true
 
-# Picked up by uv if/when the toolchain moves off plain pip. Ignored by pip today,
-# so adding it now costs nothing and avoids restructuring later.
+# uv workspace: `uv.lock` pins every dependency of every member, and CI and the
+# service images install from it (ADR-047). Members are listed explicitly because the
+# placeholder directories under packages/ and services/ have no pyproject.toml yet;
+# add each new service here when it gets one.
 [tool.uv.workspace]
-members = ["packages/*", "services/*"]
+members = [
+    "packages/db_models",
+    "packages/common",
+    "packages/schemas",
+    "services/mcp_incidents",
+    "services/agent_reporting",
+    "services/orchestrator",
+]
 
 [tool.ruff]
 line-length = 100

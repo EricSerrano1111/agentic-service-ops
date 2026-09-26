@@ -14,6 +14,11 @@ dependencies = [
     "uvicorn>=0.31",
 ]
 
+# Siblings resolve to the workspace members, never PyPI.
+[tool.uv.sources]
+service-ops-common = { workspace = true }
+service-ops-schemas = { workspace = true }
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

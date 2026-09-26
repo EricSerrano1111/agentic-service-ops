@@ -66,6 +66,8 @@ Three layers, following current industry practice as of late 2026:
 
 **Rationale for using both rather than MCP alone:** MCP is a client-tool model — call, wait, single response, caller must know the schema. A2A is peer-to-peer between autonomous agents — capability-level contracts via Agent Cards, task lifecycle (submitted / working / input-required / completed), tolerant of long-running or clarification-seeking sub-agents, and indifferent to the sub-agent's internal framework. Collapsing sub-agents into MCP "tools" would flatten them into stateless functions and tangle the tool-permission model together with the agent-trust model.
 
+**What this system actually uses:** the minimal A2A subset (ADR-047) — Agent Card discovery and blocking `SendMessage`. It uses no streaming, push notifications or `input-required`, because single-shot requests (ADR-031) and the 120 s ceiling (ADR-034) never exercise them. The lifecycle features above are why A2A suits agent-to-agent work in general. The benefits this system relies on are the capability-level contract (the orchestrator routes on an agent's advertised skills and never sees its tool schemas; ADR-046) and keeping tool permissions separate from agent trust.
+
 **Honest caveat to carry into interviews and the writeup:** At this scale (5 agents, one codebase, one owner), in-process orchestration would technically suffice. A2A is a *deliberate* choice to demonstrate protocol fluency and to keep the orchestration contract swappable for third-party agents later. State it that way. Do not claim it was strictly necessary — an informed interviewer will ask, and the deliberate answer is stronger than the defensive one.
 
 ### Agent topology
@@ -240,7 +242,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 
 "Production-grade" is the phrase most likely to be hand-waved at submission. It is pinned here to a concrete artifact checklist. Deliver these, or explicitly scope one out with a documented reason — a defensible "deferred because X" reads better than a vague claim.
 
-- [ ] Containerized services, reproducible builds *(in progress: the three skeleton services have Dockerfiles and run in docker-compose; dependencies other than the protocol SDKs are not yet locked, ADR-047)*
+- [ ] Containerized services, reproducible builds *(in progress: the three skeleton services have Dockerfiles and run in docker-compose; every dependency is pinned by `uv.lock`, and CI and the images install from it, ADR-047)*
 - [ ] Config and secrets management — no hardcoded credentials
 - [ ] Structured logging with trace IDs correlated across agent hops *(in progress: JSON lines with one trace id across orchestrator → A2A → agent → MCP, `packages/common`; asserted by the e2e test)*
 - [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on the skeleton services, used by compose; no readiness probe yet)*
@@ -392,12 +394,13 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 
 ## 11. Repository Layout
 
-Monorepo, separate service processes. Installed with pip today (editable installs, as CI does); the root `pyproject.toml` is already shaped as a uv workspace.
+Monorepo, separate service processes. A uv workspace: `uv.lock` pins every dependency, and local development, CI and the service images all install from it with `uv sync --locked` (ADR-047).
 
 ```
 agentic-service-ops/
 ├── README.md                      # architecture diagram, clean-machine setup
-├── pyproject.toml                 # workspace root
+├── pyproject.toml                 # uv workspace root
+├── uv.lock                        # every dependency pinned (ADR-047)
 ├── docker-compose.yml             # full local stack incl. Postgres
 ├── Makefile                       # make dev / test / eval / deploy
 ├── .env.example
@@ -490,6 +493,7 @@ agentic-service-ops/
 
 - `agent_sentiment/models/` and `agent_forecast/models/` hold trained artifacts, not source — gitignored (`**/models/*.bin`, `**/models/*.pt`, `**/models/*.joblib` or equivalent). A transformer checkpoint can exceed 100MB; it has no business in git history. `training/train.py` in each is what produces the artifact — run deliberately, not something any agent triggers.
 - `data/generator/corpus/` is committed, unlike trained-model artifacts: it is the frozen `feedback_text` corpus and its provenance record, written once by `build_corpus.py`. `generate.py` reads it and never calls an API, so a normal generation run is reproducible from the seed alone (ADR-030).
+- **Every A2A data part is validated against a `packages/schemas` model on receipt.** The A2A v1.0 SDK carries data parts as protobuf `Value`s, which turn integers into floats (344 arrives as 344.0); validating against the shared model restores the types and rejects a mismatched shape before any figure is passed on (ADR-047). For the same reason, `Decimal` money values travel as strings, never floats.
 - `packages/llm/` exists specifically to keep the provider swap cheap and to centralize cost metering — both budget requirements from §9.
 - `evals/results/` being version-controlled and dated matters: the evaluation report's results section (ADR-044) should cite real dated runs, not numbers retyped from memory.
 - `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.

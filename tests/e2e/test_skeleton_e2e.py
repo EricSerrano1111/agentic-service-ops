@@ -71,7 +71,7 @@ def answer() -> dict:
 
 def _independent_figures(start: str, end: str) -> dict:
     with psycopg.connect(
-        host=os.environ.get("POSTGRES_HOST", "localhost"),
+        host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
         port=os.environ.get("POSTGRES_PORT", "5432"),
         dbname=os.environ["POSTGRES_DB"],
         user=os.environ["DB_ROLE_QA_USER"],

@@ -1202,7 +1202,10 @@ That is exactly the surface the R-06 fallback would have hand-rolled.
 - The MCP server keeps DNS-rebinding protection on, with explicit allowed hosts.
 - The task store is in memory. A task finishes inside the call that created it, so no
   task outlives its request or needs sharing across replicas.
-- Only the protocol SDKs are pinned exactly. Other runtime dependencies have lower
-  bounds only, so a rebuilt image can pick up newer FastAPI or SQLAlchemy releases.
-  Reproducible images need a lock file. That is deferred to container hardening in
-  Sprints 5 and 6 and recorded here so it is not forgotten.
+- The protocol SDKs are pinned exactly in `pyproject.toml`. Every other dependency is
+  pinned by `uv.lock`, which covers the whole uv workspace: 89 packages, resolved with
+  uv 0.12.19. A lock file is required before the Sprint 4 slice deploy (ADR-045), and it
+  was added now rather than scheduled. CI (`uv sync --locked`) and the service images
+  (`uv sync --locked --package <service>`) install from it, so CI, local and images get
+  identical versions. `--locked` fails the build if the lock is stale against any
+  `pyproject.toml`, so a dependency change must come with `uv lock` in the same commit.

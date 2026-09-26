@@ -13,9 +13,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Installs exactly as local development does (CLAUDE.md): the root generator extra,
-# packages/db_models[dev], the shared packages and the services, all editable. No .env,
-# no API keys: nothing here calls a model.
+# Installs exactly as local development does (CLAUDE.md): every workspace member and
+# extra, at the versions in uv.lock (ADR-047). No .env, no API keys: nothing here calls
+# a model.
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -24,15 +24,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            pyproject.toml
-            packages/*/pyproject.toml
-            services/*/pyproject.toml
-      - name: Install
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.19"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      # --locked: fail if uv.lock is stale against any pyproject.toml, never re-resolve.
+      - name: Install (from uv.lock)
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[generator]" -e "packages/db_models[dev]"             -e packages/common -e packages/schemas             -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
+          uv sync --locked --all-packages --all-extras --python 3.12
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: ruff check
         run: ruff check packages data tests services
       - name: ruff format --check
@@ -45,15 +46,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            pyproject.toml
-            packages/*/pyproject.toml
-            services/*/pyproject.toml
-      - name: Install
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.19"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      # --locked: fail if uv.lock is stale against any pyproject.toml, never re-resolve.
+      - name: Install (from uv.lock)
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[generator]" -e "packages/db_models[dev]"             -e packages/common -e packages/schemas             -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
+          uv sync --locked --all-packages --all-extras --python 3.12
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       # Includes each service's own tests/ and the compose isolation test, which calls
       # `docker compose config` (Docker is preinstalled on ubuntu-latest).
       - name: Unit tests (offline)
@@ -102,15 +104,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            pyproject.toml
-            packages/*/pyproject.toml
-            services/*/pyproject.toml
-      - name: Install
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.19"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      # --locked: fail if uv.lock is stale against any pyproject.toml, never re-resolve.
+      - name: Install (from uv.lock)
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[generator]" -e "packages/db_models[dev]"             -e packages/common -e packages/schemas             -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
+          uv sync --locked --all-packages --all-extras --python 3.12
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: alembic upgrade head
         run: python -m alembic upgrade head
       - name: alembic check
