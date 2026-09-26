@@ -19,6 +19,7 @@ from urllib.parse import quote_plus
 
 import db_models
 from alembic import context
+from common import connect_timeout_s
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
@@ -110,6 +111,8 @@ def run_migrations_online() -> None:
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # Fail, don't hang, when the database is unreachable (POSTGRES_CONNECT_TIMEOUT_S).
+        connect_args={"connect_timeout": connect_timeout_s()},
     )
 
     with connectable.connect() as connection:

@@ -70,6 +70,9 @@ requires-dist = [
 name = "agentic-service-ops"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "service-ops-common" },
+]
 
 [package.optional-dependencies]
 generator = [
@@ -90,6 +93,7 @@ requires-dist = [
     { name = "numpy", marker = "extra == 'generator'", specifier = "==2.5.3" },
     { name = "python-dotenv", marker = "extra == 'generator'", specifier = ">=1.0" },
     { name = "scipy", marker = "extra == 'generator'", specifier = "==1.18.1" },
+    { name = "service-ops-common", editable = "packages/common" },
     { name = "tzdata", marker = "extra == 'generator'", specifier = "==2026.4" },
 ]
 provides-extras = ["generator"]

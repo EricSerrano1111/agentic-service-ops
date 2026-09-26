@@ -1,10 +1,12 @@
-"""Shared runtime helpers for every service: JSON-line logging and trace-id propagation.
+"""Shared runtime helpers: JSON-line logging, trace-id propagation, and the database
+connect timeout the host-side scripts use.
 
 Deliberately dependency-free, so it costs nothing in any container that installs it.
 """
 
 from __future__ import annotations
 
+from .db import CONNECT_TIMEOUT_VAR, DEFAULT_CONNECT_TIMEOUT_S, connect_timeout_s
 from .logging import (
     TRACE_ID_KEY,
     JsonFormatter,
@@ -15,6 +17,9 @@ from .logging import (
 )
 
 __all__ = [
+    "CONNECT_TIMEOUT_VAR",
+    "DEFAULT_CONNECT_TIMEOUT_S",
+    "connect_timeout_s",
     "TRACE_ID_KEY",
     "JsonFormatter",
     "bind_trace_id",

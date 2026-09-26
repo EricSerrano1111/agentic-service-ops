@@ -1041,6 +1041,7 @@ def print_summary(checks: list[Check]) -> None:
 
 def _conn(user_var: str, password_var: str):
     import psycopg
+    from common import connect_timeout_s
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", override=False)
@@ -1048,14 +1049,25 @@ def _conn(user_var: str, password_var: str):
     missing = [v for v in need if not os.environ.get(v)]
     if missing:
         raise SystemExit(f"Missing environment variables: {', '.join(missing)}")
-    return psycopg.connect(
-        host=os.environ["POSTGRES_HOST"],
-        port=os.environ["POSTGRES_PORT"],
-        dbname=os.environ["POSTGRES_DB"],
-        user=os.environ[user_var],
-        password=os.environ[password_var],
-        options="-c timezone=UTC",
-    )
+    timeout = connect_timeout_s()
+    try:
+        return psycopg.connect(
+            host=os.environ["POSTGRES_HOST"],
+            port=os.environ["POSTGRES_PORT"],
+            dbname=os.environ["POSTGRES_DB"],
+            user=os.environ[user_var],
+            password=os.environ[password_var],
+            options="-c timezone=UTC",
+            # Fail, don't hang, when the database is unreachable (POSTGRES_CONNECT_TIMEOUT_S).
+            connect_timeout=timeout,
+        )
+    except psycopg.OperationalError as exc:
+        first_line = str(exc).strip().splitlines()[0] if str(exc).strip() else type(exc).__name__
+        raise SystemExit(
+            f"Cannot connect to Postgres at {os.environ['POSTGRES_HOST']}:"
+            f"{os.environ['POSTGRES_PORT']} as {os.environ[user_var]} "
+            f"(connect_timeout={timeout}s): {first_line}"
+        ) from None
 
 
 QA_TABLES = (
