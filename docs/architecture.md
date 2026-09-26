@@ -446,7 +446,7 @@ agentic-service-ops/
 │   ├── db_models/                  # SQLAlchemy models, 22 vocabularies, §7 access matrix (ADR-026)
 │   ├── common/                     # config, structured logging, trace IDs, errors
 │   ├── a2a_core/                   # Agent Card helpers, task lifecycle client/server
-│   ├── llm/                        # provider-agnostic model interface + cost metering
+│   ├── llm/                        # the one LLM client: Gemini, free by default, typed errors, metering (ADR-048)
 │   └── schemas/                    # Pydantic contracts shared across services
 │
 ├── services/
@@ -494,7 +494,7 @@ agentic-service-ops/
 - `agent_sentiment/models/` and `agent_forecast/models/` hold trained artifacts, not source — gitignored (`**/models/*.bin`, `**/models/*.pt`, `**/models/*.joblib` or equivalent). A transformer checkpoint can exceed 100MB; it has no business in git history. `training/train.py` in each is what produces the artifact — run deliberately, not something any agent triggers.
 - `data/generator/corpus/` is committed, unlike trained-model artifacts: it is the frozen `feedback_text` corpus and its provenance record, written once by `build_corpus.py`. `generate.py` reads it and never calls an API, so a normal generation run is reproducible from the seed alone (ADR-030).
 - **Every A2A data part is validated against a `packages/schemas` model on receipt.** The A2A v1.0 SDK carries data parts as protobuf `Value`s, which turn integers into floats (344 arrives as 344.0); validating against the shared model restores the types and rejects a mismatched shape before any figure is passed on (ADR-047). For the same reason, `Decimal` money values travel as strings, never floats.
-- `packages/llm/` exists specifically to keep the provider swap cheap and to centralize cost metering — both budget requirements from §9.
+- `packages/llm/` is the one client every agent uses for model calls (ADR-048): `LLMClient.generate(prompt, *, model=None, response_model=None, trace_id)` returns an `LLMResult` with the text, the Pydantic-parsed object when `response_model` is given, tokens, list-price cost, latency and attempts. It uses the free key by default. Paid calls need `LLM_MODE=paid`, their own key, a request cap and a spend cap, checked at startup. A per-minute 429 waits the delay the error states, within `LLM_MAX_RETRY_WAIT_S`. A daily 429 raises `LLMDailyQuotaExhausted` at once, billing and permission errors raise `LLMAuthError`, and 5xx errors get a short bounded retry; all inherit from `LLMError`. Every call logs one JSON line (trace id, model, mode, tokens, cost, latency, attempts, outcome), costed from `llm/prices.toml`, which records each price's source and date. The client keeps per-process running totals. It exists to keep the provider swap cheap and to centralize cost metering, both budget requirements from §9. One provider sits behind a narrow interface: the transport is the only code that touches the SDK.
 - `evals/results/` being version-controlled and dated matters: the evaluation report's results section (ADR-044) should cite real dated runs, not numbers retyped from memory.
 - `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.
 - Each service owns its Dockerfile and tests. Resist the urge to centralize — it undermines the "these are independently deployable peers" claim.

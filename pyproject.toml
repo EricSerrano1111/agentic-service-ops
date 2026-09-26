@@ -45,6 +45,7 @@ members = [
     "packages/db_models",
     "packages/common",
     "packages/schemas",
+    "packages/llm",
     "services/mcp_incidents",
     "services/agent_reporting",
     "services/orchestrator",
@@ -69,6 +70,7 @@ addopts = "-ra"
 markers = [
     "integration: needs a live, migrated Postgres; skips when none is reachable",
     "e2e: needs the docker-compose stack up and loaded; skipped unless RUN_E2E=1",
+    "live: calls a real model API; skipped unless RUN_LIVE_LLM=1; never in CI",
 ]
 
 [tool.mypy]

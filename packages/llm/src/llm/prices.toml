@@ -1,0 +1,27 @@
+# List prices for metering, USD per million tokens, paid tier, standard (not batch).
+#
+# Every call is metered at these prices, free-tier calls included (their log line says
+# mode=free: not billed). Thinking tokens bill as output. An entry that can't be checked
+# against Google's pricing page gets source = "UNCONFIRMED" (Sprint 1 retro rule).
+# Prices change: re-check `source` and bump `as_of` before relying on a cost figure.
+
+[models."gemini-3.5-flash-lite"]
+input_per_m = 0.30
+output_per_m = 2.50
+source = "https://ai.google.dev/gemini-api/docs/pricing"
+as_of = "2026-09-26"
+note = "Default runtime model for every agent (architecture.md §9, ADR-029). Free of charge on the free tier."
+
+[models."gemini-3.7-flash"]
+input_per_m = 0.75
+output_per_m = 3.75
+source = "https://ai.google.dev/gemini-api/docs/pricing"
+as_of = "2026-09-26"
+note = "Rises to 1.50 input / 7.50 output from 2027-01-01, per the same page. Free tier: 20 RPD (ADR-029)."
+
+[models."gemini-3.1-pro-preview"]
+input_per_m = 2.00
+output_per_m = 12.00
+source = "https://ai.google.dev/gemini-api/docs/pricing"
+as_of = "2026-09-26"
+note = "Prompts up to 200k tokens. No free tier. Sprint 5 Pro-for-QA candidate (ADR-029, ADR-041)."
