@@ -133,7 +133,8 @@ from the course materials that no charter is due.
 *Reworded at planning (2026-09-25) because the QA agent is Sprint 4.*
 
 **Planned:**
-- [ ] Walking skeleton by 2026-10-02: pin MCP and A2A SDKs and confirm spec targets (R-12); one MCP tool (`get_incidents_by_date_range`) as `app_reporting`; reporting agent calls it over streamable HTTP and serves an Agent Card; orchestrator fetches the card and sends one blocking `message/send` with a hardcoded route; all in docker-compose; no LLM
+- [x] Walking skeleton by 2026-10-02: pin MCP and A2A SDKs and confirm spec targets (R-12); one MCP tool (`get_incidents_by_date_range`) as `app_reporting`; reporting agent calls it over streamable HTTP and serves an Agent Card; orchestrator fetches the card and sends one blocking `message/send` with a hardcoded route; all in docker-compose; no LLM
+  *Done 2026-09-25, on `feat/walking-skeleton`: `mcp==2.2.0` and `a2a-sdk==1.1.5` (ADR-047); all hops real in docker-compose; e2e figures match `app_qa` SQL; one trace id spans all three services.*
 - [ ] `packages/llm` (budget 1.5 days): 429 handling lifted from `build_corpus.py`, separating per-minute (back off, retry after the stated delay) from daily quota (stop cleanly, typed error); free key default; paid only with an explicit flag, its own key and a required request cap; token metering on every call, logged as list-price equivalent; one provider; done = offline tests pass against a fake transport
 - [ ] Orchestrator classification (reporting, out-of-scope, other domain not yet available, multi-domain per ADR-032), with 20–30 seeded labelled intents as test fixtures
 - [ ] Reporting agent question parsing per ADR-046; two or three reporting tools covering the FR-06 examples; template-rendered answers; e2e test against independent SQL

@@ -1,12 +1,21 @@
-# Local development stack. Postgres only for now — agent and MCP services join this
-# file as they are built in Sprints 2–3.
+# Local development stack: Postgres plus the walking skeleton (Sprint 2):
+#   orchestrator --A2A--> agent_reporting --MCP--> mcp_incidents --SQL--> postgres
 #
 # Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint 5
 # (ADR-007), because an always-on managed instance would consume roughly a third of
 # the project budget for no benefit during local development.
 #
 #   docker compose up -d postgres
-#   alembic upgrade head
+#   alembic upgrade head            # then load.py, see README
+#   docker compose up -d --build
+#
+# Credentials: every value comes from .env by interpolation; nothing secret is written
+# here. No service uses env_file, so each container sees only the variables listed
+# under it: only mcp_incidents gets database credentials, and only app_reporting's
+# (ADR-023). tests/unit/test_compose_isolation.py asserts this.
+#
+# Ports: only the orchestrator publishes a host port among the application services.
+# Postgres keeps its host port so migrations and the loader can run from the host.
 
 services:
   postgres:
@@ -32,3 +41,71 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  mcp_incidents:
+    build:
+      context: .
+      dockerfile: services/mcp_incidents/Dockerfile
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432" # the container port, not the host mapping above
+      POSTGRES_DB: ${POSTGRES_DB:-service_ops}
+      DB_ROLE_REPORTING_USER: ${DB_ROLE_REPORTING_USER:?set DB_ROLE_REPORTING_USER in .env}
+      DB_ROLE_REPORTING_PASSWORD: ${DB_ROLE_REPORTING_PASSWORD:?set DB_ROLE_REPORTING_PASSWORD in .env}
+      MCP_INCIDENTS_PORT: "8101"
+      MCP_DB_STATEMENT_TIMEOUT_MS: ${MCP_DB_STATEMENT_TIMEOUT_MS:-10000}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    expose:
+      - "8101"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8101/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  agent_reporting:
+    build:
+      context: .
+      dockerfile: services/agent_reporting/Dockerfile
+    environment:
+      MCP_INCIDENTS_URL: http://mcp_incidents:8101/mcp
+      MCP_TIMEOUT_S: ${MCP_TIMEOUT_S:-15}
+      AGENT_REPORTING_PUBLIC_URL: http://agent_reporting:8001/
+      AGENT_REPORTING_PORT: "8001"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    expose:
+      - "8001"
+    depends_on:
+      mcp_incidents:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: services/orchestrator/Dockerfile
+    environment:
+      AGENT_REPORTING_URL: http://agent_reporting:8001
+      A2A_TIMEOUT_S: ${A2A_TIMEOUT_S:-30}
+      ORCHESTRATOR_PORT: "8000"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "${ORCHESTRATOR_PORT:-8000}:8000"
+    depends_on:
+      agent_reporting:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s

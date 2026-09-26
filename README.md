@@ -15,8 +15,8 @@ decision is in [decisions-log.md](docs/decisions-log.md).
 Sprint 1 goal met (2026-09-25). The database layer, the frozen feedback corpus, and the
 synthetic data generator are built; the dataset is loaded and validated (`validate.py`,
 66/66 checks), and CI runs lint, unit and integration jobs. Sprint 2 (2026-09-28 to
-10-11) builds the first vertical slice: incidents MCP server, reporting agent, and a
-minimal orchestrator.
+10-11) builds the first vertical slice. Its walking skeleton runs: orchestrator → A2A →
+reporting agent → MCP → incidents server → Postgres, with no LLM yet (ADR-047).
 
 ## Local setup
 
@@ -24,7 +24,7 @@ Requires Python 3.12+ and (for the database) Docker Desktop.
 
 ```
 py -m venv .venv
-.venv\Scripts\pip install -e ".[generator]" -e "packages/db_models[dev]"
+.venv\Scripts\pip install -e ".[generator]" -e "packages/db_models[dev]" -e packages/common -e packages/schemas -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
 
 copy .env.example .env      # then fill in POSTGRES_*, DB_ROLE_*_USER and DB_ROLE_*_PASSWORD
 ```
@@ -54,10 +54,37 @@ To load the synthetic dataset from the committed corpus and validate it:
 Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint 5
 (ADR-007), so the same migrations run against both.
 
+## Run the skeleton locally
+
+The walking skeleton is the thinnest end-to-end path, with every hop real. The
+orchestrator fetches the reporting agent's Agent Card and sends one A2A `SendMessage`.
+The agent calls `get_incidents_by_date_range` on the incidents MCP server over
+streamable HTTP, and the server queries Postgres as `app_reporting`. There is no LLM
+yet: the agent answers every question for a fixed date range until question parsing
+lands (ADR-046).
+
+```
+docker compose up -d postgres
+.venv\Scripts\python -m alembic upgrade head
+.venv\Scripts\python data/generator/load.py --corpus data/generator/corpus/feedback_text.jsonl
+docker compose up -d --build
+.venv\Scripts\python -m orchestrator ask "How many incidents were reported last quarter?"
+```
+
+Only the orchestrator publishes a host port (8000). The agent and orchestrator
+containers hold no database credentials, and `mcp_incidents` holds only
+`app_reporting`'s. Every service logs JSON lines carrying the same `trace_id`. To follow
+one request across all three, run `docker compose logs mcp_incidents agent_reporting
+orchestrator`. The e2e test checks all of this against the running stack:
+
+```
+$env:RUN_E2E=1; .venv\Scripts\python -m pytest tests/e2e -q -rs
+```
+
 ## Verifying the database layer
 
 ```
-.venv\Scripts\python -m pytest tests/unit -q   # no database needed
+.venv\Scripts\python -m pytest tests/unit services -q   # no database needed
 .venv\Scripts\python -m pytest tests/integration -q   # live grants; skips if no database (REQUIRE_INTEGRATION_DB=1 makes skips fail)
 .venv\Scripts\python -m alembic check          # "No new upgrade operations detected."
 ```
@@ -104,10 +131,16 @@ See [architecture.md §11](docs/architecture.md). Implemented so far:
 
 ```
 packages/db_models/     SQLAlchemy models, 22 controlled vocabularies, §7 access matrix
+packages/common/        JSON-line logging and trace-id propagation
+packages/schemas/       Pydantic contracts shared across services (IncidentSummary)
+services/mcp_incidents/ incidents MCP server: one aggregate-only tool, as app_reporting
+services/agent_reporting/  reporting agent: A2A server, MCP client, template answers
+services/orchestrator/  POST /ask and a CLI; hardcoded route to the reporting agent
 data/migrations/        Alembic — identical local and Cloud SQL
 data/generator/         parameters, frozen feedback corpus, generator, loader, validation
 tests/unit/             offline contract, generator and corpus tests
-tests/integration/      live grants suite
+tests/integration/      live grants suite; MCP figures vs independent SQL as app_qa
+tests/e2e/              the skeleton through docker-compose (RUN_E2E=1)
 .github/workflows/      CI: lint, unit, integration
-docker-compose.yml      local Postgres 16
+docker-compose.yml      local Postgres 16 plus the three skeleton services
 ```

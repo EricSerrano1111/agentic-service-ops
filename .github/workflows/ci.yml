@@ -13,8 +13,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Installs exactly as local development does (CLAUDE.md): the root generator extra plus
-# packages/db_models[dev], editable. No .env, no API keys: nothing here calls a model.
+# Installs exactly as local development does (CLAUDE.md): the root generator extra,
+# packages/db_models[dev], the shared packages and the services, all editable. No .env,
+# no API keys: nothing here calls a model.
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -26,15 +27,16 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            packages/db_models/pyproject.toml
+            packages/*/pyproject.toml
+            services/*/pyproject.toml
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[generator]" -e "packages/db_models[dev]"
+          pip install -e ".[generator]" -e "packages/db_models[dev]"             -e packages/common -e packages/schemas             -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
       - name: ruff check
-        run: ruff check packages data tests
+        run: ruff check packages data tests services
       - name: ruff format --check
-        run: ruff format --check packages data tests
+        run: ruff format --check packages data tests services
 
   unit:
     runs-on: ubuntu-latest
@@ -46,13 +48,16 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            packages/db_models/pyproject.toml
+            packages/*/pyproject.toml
+            services/*/pyproject.toml
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[generator]" -e "packages/db_models[dev]"
+          pip install -e ".[generator]" -e "packages/db_models[dev]"             -e packages/common -e packages/schemas             -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
+      # Includes each service's own tests/ and the compose isolation test, which calls
+      # `docker compose config` (Docker is preinstalled on ubuntu-latest).
       - name: Unit tests (offline)
-        run: python -m pytest tests/unit -q
+        run: python -m pytest tests/unit services -q
 
   integration:
     runs-on: ubuntu-latest
@@ -100,14 +105,22 @@ jobs:
           cache: pip
           cache-dependency-path: |
             pyproject.toml
-            packages/db_models/pyproject.toml
+            packages/*/pyproject.toml
+            services/*/pyproject.toml
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[generator]" -e "packages/db_models[dev]"
+          pip install -e ".[generator]" -e "packages/db_models[dev]"             -e packages/common -e packages/schemas             -e services/mcp_incidents -e services/agent_reporting -e services/orchestrator
       - name: alembic upgrade head
         run: python -m alembic upgrade head
       - name: alembic check
         run: python -m alembic check
+      # generate.py + load.py as app_generator: ~15 s locally. Timed here so the budget
+      # (under 60 s, or the MCP figures test goes back to local-only) stays visible.
+      - name: Load dataset (generate + load)
+        run: |
+          start=$(date +%s)
+          python data/generator/load.py --corpus data/generator/corpus/feedback_text.jsonl
+          echo "generate + load took $(( $(date +%s) - start ))s"
       - name: Integration tests (live database, skips fail)
         run: python -m pytest tests/integration -q -rs

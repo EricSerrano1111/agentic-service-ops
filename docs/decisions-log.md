@@ -58,6 +58,7 @@
 | 044 | No final paper: limitations and results go in the evaluation report | Accepted |
 | 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part |
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
+| 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
 
 ---
 
@@ -1136,3 +1137,72 @@ left extraction to the orchestrator.
 - Because the parsed request is returned, the Sprint 4 QA agent can check it against the
   question.
 - The same pattern applies to the sentiment and forecast agents.
+
+### ADR-047 — Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset
+*Date: 2026-09-25. Supersedes nothing. Fires R-12.*
+
+**Decision:** Pin the official SDKs exactly (`==`) in each service's `pyproject.toml`:
+`mcp==2.2.0` (which pins `mcp-types==2.2.0` itself) and `a2a-sdk==1.1.5`, the current
+releases on PyPI on 2026-09-25. Use A2A as a minimal subset: Agent Card discovery at
+`/.well-known/agent-card.json`, plus blocking `SendMessage` over the JSON-RPC binding,
+returning a Task that is already `completed` or `failed`. The card declares
+`streaming: false` and `push_notifications: false`. No `input-required`, no cancel, no
+task polling. MCP runs over streamable HTTP in stateless mode with JSON responses, and
+the client pins protocol `2026-07-28` rather than probing for it.
+
+**Evidence the SDKs meet the spec targets (architecture §3, A-10):**
+- *MCP 2026-07-28.* In the installed package, `mcp_types.version` lists
+  `MODERN_PROTOCOL_VERSIONS = ("2026-07-28",)` and
+  `LATEST_PROTOCOL_VERSION = "2026-07-28"`. The SDK's v2.0.0 release notes say it
+  implements the 2026-07-28 revision (stateless requests with no handshake, `MCPServer`
+  replacing `FastMCP`), and the v2.1.0 and v2.2.0 notes restate support for it. Observed
+  locally: a client against the stateless server negotiated `protocol_version ==
+  "2026-07-28"`.
+- *A2A v1.0.* In the installed package, `a2a.utils.constants` sets
+  `PROTOCOL_VERSION_CURRENT = "1.0"`, and the client sends `A2A-Version: 1.0` on every
+  request. The changelog for 1.0.0 (2026-04-20) says "Upgraded to A2A 1.0 spec with
+  proto-based types", and 1.0.3 aligns error mappings and JSON-RPC details with the 1.0
+  spec. The Agent Card advertises `protocolVersion: "1.0"`.
+- *Naming.* In A2A v1.0 the JSON-RPC method is `SendMessage`. `message/send` is the v0.3
+  name, which this SDK serves only with `enable_v0_3_compat`, left off here. Planning
+  documents that say `message/send` mean this operation.
+
+**Context:** R-12 asked for exact pins and confirmed spec targets before any service
+code. R-06 made the Sprint 2 walking skeleton the test of whether A2A costs too much
+solo time, with hand-rolling the used protocol surface as the fallback. The SDKs worked
+on the first attempt for both hops, so the fallback was not needed.
+
+**Why only a subset:** ADR-031 makes every exchange single-shot, so nothing ever asks a
+clarifying question (`input-required`) or continues a conversation. ADR-034 caps a
+request at 120 seconds, and the skeleton answers in well under a second locally, so no
+task runs long enough to need streamed progress or push notifications. Those features
+would never be exercised. Declaring them in the card would advertise capabilities that
+nothing tests.
+
+**A2A's justification stays as `architecture.md` §3 states it:** portfolio value and a
+swappable orchestration contract, not necessity. At this scale in-process calls would
+work. The subset makes this plainer: what is left is one card fetch and one RPC call.
+That is exactly the surface the R-06 fallback would have hand-rolled.
+
+**Alternatives considered:**
+- *Hand-roll the Agent Card endpoint and `SendMessage` on FastAPI/httpx* (the R-06
+  fallback). Rejected: the SDKs worked, and hand-rolling would mean owning conformance.
+- *`a2a-sdk` 0.3.x.* Rejected: it implements the v0.3 protocol, not v1.0.
+- *`mcp` 1.x.* Rejected: it predates the 2026-07-28 revision and speaks only the
+  handshake-era protocols.
+- *Enable the SDK's v0.3 compatibility layer.* Rejected: there are no v0.3 peers.
+
+**Consequences:**
+- Upgrading either SDK is a deliberate act that needs a new ADR. It never happens as a
+  side effect of a dependency refresh (R-12).
+- A2A data parts are protobuf `Value`s, which carry every number as a double. A receiver
+  validates a data part against its `packages/schemas` contract, which restores the
+  integers and rejects a mismatched shape. The orchestrator does this.
+- Tutorials for `mcp` 1.x (`FastMCP`, `ClientSession` plus transport) do not apply to 2.x.
+- The MCP server keeps DNS-rebinding protection on, with explicit allowed hosts.
+- The task store is in memory. A task finishes inside the call that created it, so no
+  task outlives its request or needs sharing across replicas.
+- Only the protocol SDKs are pinned exactly. Other runtime dependencies have lower
+  bounds only, so a rebuilt image can pick up newer FastAPI or SQLAlchemy releases.
+  Reproducible images need a lock file. That is deferred to container hardening in
+  Sprints 5 and 6 and recorded here so it is not forgotten.

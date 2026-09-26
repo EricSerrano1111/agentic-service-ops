@@ -212,8 +212,8 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 |---|---|---|
 | Database | PostgreSQL (Cloud SQL) | Per-role permissions required; SQLite can't support the security model |
 | Language | Python | Matches existing portfolio and coursework |
-| MCP | Official Python SDK, 2026-07-28 spec | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
-| A2A | A2A v1.0 SDK | Agent Cards + task lifecycle |
+| MCP | Official Python SDK, 2026-07-28 spec — **`mcp==2.2.0`** (pinned 2026-09-25, ADR-047) | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
+| A2A | A2A v1.0 SDK — **`a2a-sdk==1.1.5`** (pinned 2026-09-25, ADR-047) | Agent Card discovery + blocking `SendMessage` only; no streaming, push or `input-required` (ADR-047) |
 | Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
 | Runtime LLM | **Gemini API free tier** (primary); Flash-Lite default | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
@@ -240,10 +240,10 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 
 "Production-grade" is the phrase most likely to be hand-waved at submission. It is pinned here to a concrete artifact checklist. Deliver these, or explicitly scope one out with a documented reason — a defensible "deferred because X" reads better than a vague claim.
 
-- [ ] Containerized services, reproducible builds
+- [ ] Containerized services, reproducible builds *(in progress: the three skeleton services have Dockerfiles and run in docker-compose; dependencies other than the protocol SDKs are not yet locked, ADR-047)*
 - [ ] Config and secrets management — no hardcoded credentials
-- [ ] Structured logging with trace IDs correlated across agent hops
-- [ ] Health checks and readiness probes on every service
+- [ ] Structured logging with trace IDs correlated across agent hops *(in progress: JSON lines with one trace id across orchestrator → A2A → agent → MCP, `packages/common`; asserted by the e2e test)*
+- [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on the skeleton services, used by compose; no readiness probe yet)*
 - [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-034)
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*

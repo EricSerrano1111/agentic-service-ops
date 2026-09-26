@@ -1,0 +1,22 @@
+[project]
+name = "orchestrator"
+version = "0.1.0"
+description = "Orchestrator: routes questions to specialist agents over A2A"
+requires-python = ">=3.12"
+# The A2A SDK is pinned exactly (R-12, ADR-047). No database driver and no MCP SDK:
+# the orchestrator talks only to agents.
+dependencies = [
+    "a2a-sdk==1.1.5",
+    "service-ops-common",
+    "service-ops-schemas",
+    "fastapi>=0.115.2",
+    "httpx>=0.28.1",
+    "uvicorn>=0.31",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/orchestrator"]
