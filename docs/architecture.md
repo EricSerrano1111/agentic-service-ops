@@ -217,7 +217,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | MCP | Official Python SDK, 2026-07-28 spec — **`mcp==2.2.0`** (pinned 2026-09-25, ADR-047) | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
 | A2A | A2A v1.0 SDK — **`a2a-sdk==1.1.5`** (pinned 2026-09-25, ADR-047) | Agent Card discovery + blocking `SendMessage` only; no streaming, push or `input-required` (ADR-047) |
 | Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
-| Runtime LLM | **Gemini API free tier** (primary); Flash-Lite default | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
+| Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator `gemini-3.7-flash`; specialists `gemini-3.5-flash-lite`; QA `gemini-3.5-flash-lite` | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
 | Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
 | ORM + migrations | SQLAlchemy 2.0 + Alembic, psycopg 3 | Models in `packages/db_models/` (ADR-026); migrations are frozen snapshots (ADR-027) |
@@ -296,7 +296,7 @@ This distinction is easy to miss and would blow the budget if discovered in week
 
 ### Runtime model strategy
 
-Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) during development and moves to a Flash-class model only where Flash-Lite measurably underperforms. Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across two candidates: Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
+Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Specialists and QA default to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) and move to a Flash-class model only where Flash-Lite measurably underperforms. The orchestrator runs on `gemini-3.7-flash`, because a misroute costs more than the price difference; the Sprint 3 routing eval checks that against Flash-Lite (ADR-049). Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across two candidates: Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
 
 **Paid project (ADR-041).** A separate paid project, `A2A-agentic-service-ops-gcp`, with its own API key, holds all paid inference: it finished the feedback corpus generation (~$1.40 estimated) and will run the Sprint 5 Pro-for-QA test and paid eval runs. It is capped by a $5 prepaid balance with auto-reload off, a $10 project budget alert, and a per-session request cap enforced in code; the existing project stays on the free tier, since a project upgraded to paid is billed for all of its usage (ADR-029).
 
@@ -315,7 +315,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 ### Runaway-cost guardrails
 
 - Hard per-run token/cost cap, enforced in code — QA loops fan out usage fast
-- **Model tiering, only where measured:** every agent starts on Flash-Lite and moves up (Flash; Pro for QA as a Sprint 5 test) only when an eval shows Flash-Lite underperforming (ADR-029)
+- **Model tiering, only where measured:** specialists and QA start on Flash-Lite and move up (Flash; Pro for QA as a Sprint 5 test) only when an eval shows Flash-Lite underperforming (ADR-029). The orchestrator starts on Flash, to be checked against Flash-Lite in the Sprint 3 routing eval (ADR-049)
 - Aggressive caching of static context (schemas, tool definitions, system prompts) separate from dynamic context
 - Cost logging per request, surfaced in the eval harness
 - Development-mode circuit breaker on cumulative spend
@@ -451,8 +451,10 @@ agentic-service-ops/
 │
 ├── services/
 │   ├── orchestrator/ # intent classification + A2A routing
+│   │   └── prompts/ # versioned routing prompt (route_v1.md); version + hash logged per decision
 │   │
 │   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046)
+│   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dates resolve as of REPORTING_AS_OF_DATE (ADR-050)
 │   │
 │   ├── agent_sentiment/
 │   │   ├── training/
@@ -476,8 +478,9 @@ agentic-service-ops/
 │
 ├── evals/
 │   ├── routing/
-│   │   ├── intents.yaml            # labeled test intents incl. ambiguous + OOS
-│   │   └── run.py
+│   │   ├── seed_v1.jsonl           # 28 hand-labelled questions (clear, ambiguous, out_of_scope, multi_domain); seeds the Sprint 3 set
+│   │   ├── run_seed.py             # live: runs the seed set through the orchestrator's Router; --model for comparisons (ADR-049)
+│   │   └── README.md               # composition and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   ├── qa/                         # fault injection + catch rate
@@ -486,7 +489,9 @@ agentic-service-ops/
 └── tests/
     ├── unit/                       # offline contract, generator and corpus tests
     ├── integration/                # live grants suite (needs a migrated Postgres)
-    └── e2e/
+    ├── e2e/                        # compose stack: container isolation; checkpoint e2e (live, calls Gemini)
+    ├── live/                       # one real free-tier Gemini call (RUN_LIVE_LLM=1)
+    └── fixtures/gemini_errors/     # real, redacted Gemini error bodies (ADR-048)
 ```
 
 **Notes on the layout:**
@@ -495,6 +500,7 @@ agentic-service-ops/
 - `data/generator/corpus/` is committed, unlike trained-model artifacts: it is the frozen `feedback_text` corpus and its provenance record, written once by `build_corpus.py`. `generate.py` reads it and never calls an API, so a normal generation run is reproducible from the seed alone (ADR-030).
 - **Every A2A data part is validated against a `packages/schemas` model on receipt.** The A2A v1.0 SDK carries data parts as protobuf `Value`s, which turn integers into floats (344 arrives as 344.0); validating against the shared model restores the types and rejects a mismatched shape before any figure is passed on (ADR-047). For the same reason, `Decimal` money values travel as strings, never floats.
 - `packages/llm/` is the one client every agent uses for model calls (ADR-048): `LLMClient.generate(prompt, *, model=None, response_model=None, trace_id)` returns an `LLMResult` with the text, the Pydantic-parsed object when `response_model` is given, tokens, list-price cost, latency and attempts. It uses the free key by default. Paid calls need `LLM_MODE=paid`, their own key, a request cap and a spend cap, checked at startup. A per-minute 429 waits the delay the error states, within `LLM_MAX_RETRY_WAIT_S`. A daily 429 raises `LLMDailyQuotaExhausted` at once, billing and permission errors raise `LLMAuthError`, and 5xx errors get a short bounded retry; all inherit from `LLMError`. Every call logs one JSON line (trace id, model, mode, tokens, cost, latency, attempts, outcome), costed from `llm/prices.toml`, which records each price's source and date. The client keeps per-process running totals. It exists to keep the provider swap cheap and to centralize cost metering, both budget requirements from §9. One provider sits behind a narrow interface: the transport is the only code that touches the SDK.
+- Prompts are files, not strings in code: `services/<service>/prompts/<name>_v<N>.md`, shipped inside the installed package and loaded by `llm.prompts.load_prompt`. The file name is the version, and a 12-character content hash catches an edit made without a version bump. Both are logged with every decision or parse, so a result is traceable to its exact prompt.
 - `evals/results/` being version-controlled and dated matters: the evaluation report's results section (ADR-044) should cite real dated runs, not numbers retyped from memory.
 - `docs/decisions-log.md` is where the "why" lives. Given that a large share of this project's interview value is architectural reasoning rather than code, this is arguably the highest-value file in the repo.
 - Each service owns its Dockerfile and tests. Resist the urge to centralize — it undermines the "these are independently deployable peers" claim.
@@ -526,7 +532,7 @@ Remaining:
 - [ ] Check each deliverable's rubric content when drafting starts (R-09)
 - [x] Final repo/project name — `agentic-service-ops` (closed 2026-09-25)
 - [x] Sentiment approach — fine-tuned transformer classifier (BERT) trained on `sentiment_labels` (ADR-024)
-- [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029)
+- [x] Specific model/provider selection per agent tier — Flash-Lite for all agents during development (ADR-029); orchestrator moved to `gemini-3.7-flash` (ADR-049)
 - [x] Historical data window and granularity for the forecast — 36 months, weekly, univariate (ADR-018)
 - [x] Whether the UI supports conversational follow-up or single-shot intents — single-shot committed; multi-turn only as a scope expansion decided at the Sprint 4 boundary (ADR-031)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)

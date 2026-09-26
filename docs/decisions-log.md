@@ -40,7 +40,7 @@
 | 026 | SQLAlchemy models separate from Pydantic schemas | Accepted |
 | 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
 | 028 | Role names required, never defaulted: a blank `DB_ROLE_*_USER` fails like a blank password | Accepted |
-| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part; superseded in part by ADR-041 |
+| 029 | Runtime inference on the Gemini API free tier; Flash-Lite default for all agents | Accepted — supersedes ADR-006 in part; superseded in part by ADR-041, ADR-049 |
 | 030 | `feedback_text` LLM-generated once and frozen as a committed corpus | Accepted — superseded in part by ADR-036; corpus sizing replaced by ADR-038 |
 | 031 | Single-shot interaction committed; multi-turn is conditional stretch | Accepted |
 | 032 | Compound routing out of scope; multi-domain questions detected and split by the user | Accepted |
@@ -60,6 +60,8 @@
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
 | 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
+| 049 | Per-role runtime models: orchestrator `gemini-3.7-flash`, specialists and QA `gemini-3.5-flash-lite` | Accepted — supersedes ADR-029 in part |
+| 050 | Reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer | Accepted |
 
 ---
 
@@ -1309,3 +1311,90 @@ now build on them.
   quota used up after normal traffic, and a billing error remain assembled. Capture
   each when it first occurs (`scripts/capture_gemini_429.py` for the first).
 - `generate` is async, since every caller runs inside an async A2A server.
+
+### ADR-049 — Per-role runtime models: orchestrator on `gemini-3.7-flash`
+*Date: 2026-09-26. Supersedes ADR-029 in part: its rule that every agent defaults to
+Flash-Lite and moves to Flash only where Flash-Lite measurably underperforms. ADR-029's
+free-tier funding, ADR-041's paid project and ADR-048's client policy are unchanged.*
+
+**Decision:** Runtime models are set per caller role, through the existing variables:
+
+| Role | Variable | Model |
+|---|---|---|
+| Orchestrator (routing) | `GEMINI_MODEL_ORCHESTRATOR` | `gemini-3.7-flash` |
+| Specialists (question parsing, ADR-046) | `GEMINI_MODEL_SPECIALIST` | `gemini-3.5-flash-lite` |
+| QA | `GEMINI_MODEL_QA` | `gemini-3.5-flash-lite` (unchanged; the value in `.env.example`) |
+
+**Context:** Routing is the entry point for every request. A misroute sends a question
+to the wrong specialist, or declines a question the system could answer. That costs more
+than the price difference between Flash and Flash-Lite, which is $0.45/M input and
+$1.25/M output at list price (`llm/prices.toml`). This is the owner's choice, made
+before any routing measurement exists.
+
+**Alternatives considered:**
+- *Flash-Lite everywhere until an eval shows it underperforming* (ADR-029's rule;
+  rejected for the orchestrator). It is still the rule for specialists and QA.
+- *Flash for every role* (rejected). Parsing a date range and the deterministic QA
+  checks don't need it, and Flash's free-tier limits are far tighter.
+
+**Consequences:**
+- **Validated, not assumed.** The Sprint 3 routing eval runs the routing prompt on both
+  `gemini-3.7-flash` and `gemini-3.5-flash-lite`. If Flash-Lite routes as accurately,
+  this decision is revisited in a new ADR. `evals/routing/run_seed.py --model` gives an
+  early read on the seed set.
+- **Free-tier capacity is the real cost.** ADR-029 recorded the free-tier limits for all
+  Flash models as 5 RPM and 20 requests per day, against Flash-Lite's 15 RPM and 500 RPD.
+  With the orchestrator as the first hop of every request, the whole system answers
+  about 20 questions a day on the free key. That covers development and the e2e test,
+  but not a seed-set run plus manual testing on the same day, nor any eval run. ADR-029
+  already noted that moving an agent to Flash on the free tier implies the paid tier.
+  Eval runs on Flash go through the paid, spend-capped key (`LLM_MODE=paid`, ADR-041 and
+  ADR-048), or are split across days. Limits change without notice; AI Studio is
+  authoritative.
+- **Capacity risk.** The free-tier `gemini-3.7-flash` has already returned a "high
+  demand" 503 (2026-09-26 capture run). R-15 records this risk.
+- **Pricing.** 3.7 Flash's list price rises on 2027-01-01, after the project ends
+  (`llm/prices.toml`).
+
+### ADR-050 — Reporting answers resolve relative dates against a fixed as-of date
+*Date: 2026-09-26. Supersedes nothing. Implements the date handling ADR-046 left open.*
+
+**Decision:** The reporting agent resolves every relative date ("last month", "this
+quarter", "the past 30 days") against an as-of date, `REPORTING_AS_OF_DATE`. It never
+uses the wall clock. The as-of date defaults to the dataset window end, 2026-08-30, the
+same value the incidents MCP server validates against. Every answer states the as-of
+date. A question with no date at all is answered for the last full calendar month
+before the as-of date (July 2026 by default), and the answer says that range was
+assumed. There is no clarification turn (ADR-031). The parsing model returns no dates
+for such a question, and code applies the default deterministically; the model never
+guesses one.
+
+**Context:** The synthetic dataset ends 2026-08-30 (ADR-018, ADR-043). Resolved against
+the wall clock, "last month" would drift past the data and return an empty or rejected
+range, and a result would change with the day it was asked. A fixed as-of date makes
+answers reproducible, which the Sprint 4 QA re-check and the Sprint 5 evals need.
+
+**Definitions** (given to the parsing prompt, `services/agent_reporting/prompts/`):
+- "Last month" is the calendar month before the as-of date's month. With the default,
+  that is July 2026: August is not complete on 2026-08-30.
+- "This month" runs from the first of the as-of month to the as-of date. "Last quarter"
+  is the previous full calendar quarter. "The past N days" ends on the as-of date.
+- An explicit date or month is taken as stated.
+- A range outside the dataset window fails with a clear message from the MCP tool's
+  validation. It is not clipped, since clipping would answer a question that wasn't
+  asked.
+
+**Alternatives considered:**
+- *Wall-clock "today"* (rejected). Answers would drift out of the data and never be
+  reproducible.
+- *Let the model pick a default range when the question has none* (rejected). A guessed
+  range presented as an answer is what ADR-046's typed request exists to prevent.
+- *Ask a clarifying question* (rejected). Interaction is single-shot (ADR-031).
+
+**Consequences:**
+- The as-of date is user-visible: it appears in every reporting answer and in the
+  artifact's data part, next to the parsed request and the figures.
+- Moving to a live data feed means changing `REPORTING_AS_OF_DATE` to "today". That
+  change would be a new ADR.
+- The walking-skeleton checkpoint question, "How many incidents were reported last
+  month?", resolves to July 2026, not August.
