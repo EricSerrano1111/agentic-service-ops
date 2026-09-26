@@ -210,6 +210,19 @@ class HardCaseType(StrEnum):
     IMPLICIT = "implicit"
 
 
+class Region(StrEnum):
+    """`locations.region` — the customer site's region, where the work happened (ADR-051).
+
+    The names only. Which states belong to which region is defined once, in
+    `data/generator/parameters.py` (`Regions.states`); a unit test holds the two in step.
+    """
+
+    NORTHEAST = "northeast"
+    SOUTHEAST = "southeast"
+    CENTRAL = "central"
+    WEST = "west"
+
+
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
@@ -254,4 +267,5 @@ ALL_VOCABULARIES: tuple[type[StrEnum], ...] = (
     Proficiency,
     ParamGroup,
     HardCaseType,
+    Region,
 )

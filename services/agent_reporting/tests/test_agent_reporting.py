@@ -37,12 +37,27 @@ from llm import (
     LLMResult,
     LLMUnavailable,
 )
-from schemas import IncidentSummary, ReportingAnswer, ReportingRequest, SeverityCounts
+from schemas import (
+    FirstTimeFixResult,
+    GroupRate,
+    IncidentRateResult,
+    IncidentSummary,
+    ReportingAnswer,
+    ReportingRequest,
+    SeverityCounts,
+    SlaComplianceResult,
+    rate_string,
+)
 
 BASE = "http://agent.test"
 AS_OF = dt.date(2026, 8, 30)
 SETTINGS = Settings(public_url=f"{BASE}/")
 JULY = (dt.date(2026, 7, 1), dt.date(2026, 7, 31))
+
+
+def req(metric: str = "incident_count", **fields) -> ReportingRequest:
+    """A parsed request; the existing tests are all incident-count questions."""
+    return ReportingRequest(metric=metric, **fields)
 
 
 def summary(start: dt.date, end: dt.date) -> IncidentSummary:
@@ -83,16 +98,42 @@ def anyio_backend():
     return "asyncio"
 
 
+def fake_result(tool: str, result_model, start, end, group_by):
+    if result_model is IncidentSummary:
+        return summary(start, end)
+    groups = None
+    if group_by is not None:
+        groups = [
+            GroupRate(group=f"g{i}", numerator=i, denominator=10, rate=rate_string(i, 10))
+            for i in range(9, 2, -1)  # 7 groups, highest rate first
+        ]
+    return result_model(
+        start=start,
+        end=end,
+        group_by=group_by,
+        numerator=45,
+        denominator=50,
+        rate=rate_string(45, 50),
+        groups=groups,
+        group_count=None if groups is None else 7,
+    )
+
+
 @pytest.fixture
 def mcp_calls(monkeypatch):
     """Replace the MCP call; record its arguments; answer with fixed figures."""
     calls: list[dict] = []
 
-    async def fake(url, start, end, *, trace_id, timeout_s):
-        calls.append({"start": start, "end": end, "trace_id": trace_id})
-        return summary(start, end)
+    async def fake(url, tool, arguments, result_model, *, trace_id, timeout_s):
+        start = dt.date.fromisoformat(arguments["start"])
+        end = dt.date.fromisoformat(arguments["end"])
+        group_by = arguments.get("group_by")
+        calls.append(
+            {"tool": tool, "start": start, "end": end, "group_by": group_by, "trace_id": trace_id}
+        )
+        return fake_result(tool, result_model, start, end, group_by)
 
-    monkeypatch.setattr(executor_mod, "get_incidents_by_date_range", fake)
+    monkeypatch.setattr(executor_mod, "call_tool", fake)
     return calls
 
 
@@ -146,23 +187,23 @@ def test_default_range_is_the_previous_calendar_month(as_of, expected):
 
 
 def test_resolve_keeps_a_parsed_range_and_defaults_an_empty_one():
-    stated = resolve(ReportingRequest(start=dt.date(2025, 1, 1), end=dt.date(2025, 3, 31)), AS_OF)
+    stated = resolve(req(start=dt.date(2025, 1, 1), end=dt.date(2025, 3, 31)), AS_OF)
     assert (stated.start, stated.end, stated.assumed) == (
         dt.date(2025, 1, 1),
         dt.date(2025, 3, 31),
         False,
     )
-    empty = resolve(ReportingRequest(), AS_OF)
+    empty = resolve(req(), AS_OF)
     assert ((empty.start, empty.end), empty.assumed) == (JULY, True)
 
 
 def test_parsed_request_needs_both_dates_or_neither():
     with pytest.raises(ValueError):
-        ReportingRequest(start=dt.date(2025, 1, 1))
+        req(start=dt.date(2025, 1, 1))
 
 
 def _answer(assumed: bool) -> ReportingAnswer:
-    request = ReportingRequest() if assumed else ReportingRequest(start=JULY[0], end=JULY[1])
+    request = req() if assumed else req(start=JULY[0], end=JULY[1])
     return ReportingAnswer(
         request=request,
         start=JULY[0],
@@ -223,15 +264,23 @@ def _failure(task) -> tuple[str, str]:
 
 @pytest.mark.anyio
 async def test_parsed_range_becomes_the_tool_arguments(mcp_calls):
-    llm = FakeLLM(ReportingRequest(start=JULY[0], end=JULY[1]))
+    llm = FakeLLM(req(start=JULY[0], end=JULY[1]))
     task = await _send(create_app(SETTINGS, llm), trace_id="trace-abc")
 
     assert task.status.state == TaskState.TASK_STATE_COMPLETED
-    assert mcp_calls == [{"start": JULY[0], "end": JULY[1], "trace_id": "trace-abc"}]
+    assert mcp_calls == [
+        {
+            "tool": "get_incidents_by_date_range",
+            "start": JULY[0],
+            "end": JULY[1],
+            "group_by": None,
+            "trace_id": "trace-abc",
+        }
+    ]
     [artifact] = task.artifacts
     text, data = artifact.parts
     answer = ReportingAnswer.model_validate(MessageToDict(data.data))
-    assert answer.request == ReportingRequest(start=JULY[0], end=JULY[1])
+    assert answer.request == req(start=JULY[0], end=JULY[1])
     assert (answer.start, answer.end, answer.range_assumed, answer.as_of) == (
         *JULY,
         False,
@@ -243,7 +292,7 @@ async def test_parsed_range_becomes_the_tool_arguments(mcp_calls):
 
 @pytest.mark.anyio
 async def test_question_and_as_of_date_reach_the_parsing_prompt(mcp_calls):
-    llm = FakeLLM(ReportingRequest(start=JULY[0], end=JULY[1]))
+    llm = FakeLLM(req(start=JULY[0], end=JULY[1]))
     settings = Settings(public_url=f"{BASE}/", as_of=dt.date(2025, 3, 15))
     await _send(create_app(settings, llm), text="incidents in the past 30 days")
     [prompt] = llm.prompts
@@ -253,7 +302,7 @@ async def test_question_and_as_of_date_reach_the_parsing_prompt(mcp_calls):
 
 @pytest.mark.anyio
 async def test_no_date_defaults_to_last_full_month_and_says_so(mcp_calls):
-    task = await _send(create_app(SETTINGS, FakeLLM(ReportingRequest())), text="Any incidents?")
+    task = await _send(create_app(SETTINGS, FakeLLM(req())), text="Any incidents?")
     assert task.status.state == TaskState.TASK_STATE_COMPLETED
     assert (mcp_calls[0]["start"], mcp_calls[0]["end"]) == JULY
     text, data = task.artifacts[0].parts
@@ -270,8 +319,8 @@ async def test_out_of_window_range_fails_with_a_clear_message(monkeypatch):
             "2023-09-04 to 2026-08-30 (inclusive)"
         )
 
-    monkeypatch.setattr(executor_mod, "get_incidents_by_date_range", rejects)
-    llm = FakeLLM(ReportingRequest(start=dt.date(2027, 1, 1), end=dt.date(2027, 1, 31)))
+    monkeypatch.setattr(executor_mod, "call_tool", rejects)
+    llm = FakeLLM(req(start=dt.date(2027, 1, 1), end=dt.date(2027, 1, 31)))
     task = await _send(create_app(SETTINGS, llm))
     assert task.status.state == TaskState.TASK_STATE_FAILED
     code, text = _failure(task)
@@ -321,8 +370,8 @@ async def test_mcp_failures_end_in_coded_failed_task(monkeypatch, error, code):
     async def fails(*args, **kwargs):
         raise error
 
-    monkeypatch.setattr(executor_mod, "get_incidents_by_date_range", fails)
-    task = await _send(create_app(SETTINGS, FakeLLM(ReportingRequest(start=JULY[0], end=JULY[1]))))
+    monkeypatch.setattr(executor_mod, "call_tool", fails)
+    task = await _send(create_app(SETTINGS, FakeLLM(req(start=JULY[0], end=JULY[1]))))
     assert task.status.state == TaskState.TASK_STATE_FAILED
     assert _failure(task)[0] == code
     assert not task.artifacts
@@ -338,10 +387,154 @@ async def test_prompt_version_is_logged_with_the_parse(mcp_calls):
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     try:
-        await _send(create_app(SETTINGS, FakeLLM(ReportingRequest())), trace_id="t-log")
+        await _send(create_app(SETTINGS, FakeLLM(req())), trace_id="t-log")
     finally:
         logger.removeHandler(handler)
         logger.disabled = was_disabled
     [line] = [json.loads(x) for x in stream.getvalue().splitlines() if "question parsed" in x]
-    assert line["prompt_version"] == "parse_v1" and len(line["prompt_sha"]) == 12
+    assert line["prompt_version"] == "parse_v2" and len(line["prompt_sha"]) == 12
     assert line["trace_id"] == "t-log" and line["range_assumed"] is True
+
+
+# --------------------------------------------------------------------------- metrics (FR-06)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("metric", "tool"),
+    [
+        ("incident_count", "get_incidents_by_date_range"),
+        ("incident_rate", "get_incident_rate"),
+        ("sla_compliance", "get_sla_compliance"),
+        ("first_time_fix_rate", "get_first_time_fix_rate"),
+    ],
+)
+async def test_each_metric_calls_its_own_tool(mcp_calls, metric, tool):
+    """The agent picks the tool from the parsed metric; the model never names one."""
+    task = await _send(create_app(SETTINGS, FakeLLM(req(metric, start=JULY[0], end=JULY[1]))))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert [c["tool"] for c in mcp_calls] == [tool]
+    answer = ReportingAnswer.model_validate(MessageToDict(task.artifacts[0].parts[1].data))
+    assert answer.figures.metric == metric == answer.request.metric
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("group_by", ["account", "region", "service_type", "technician"])
+async def test_each_breakdown_reaches_the_tool(mcp_calls, group_by):
+    llm = FakeLLM(req("sla_compliance", group_by=group_by, start=JULY[0], end=JULY[1]))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[0]["group_by"] == group_by
+    answer = ReportingAnswer.model_validate(MessageToDict(task.artifacts[0].parts[1].data))
+    assert answer.figures.group_by == group_by and len(answer.figures.groups) == 7
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("request_", "phrase"),
+    [
+        (req("unsupported", start=JULY[0], end=JULY[1]), "metric isn't supported yet"),
+        (
+            req("incident_rate", group_by="unsupported", start=JULY[0], end=JULY[1]),
+            "breakdown isn't supported yet",
+        ),
+        (
+            req("incident_count", group_by="region", start=JULY[0], end=JULY[1]),
+            "Incident counts can't be broken down yet",
+        ),
+    ],
+)
+async def test_unsupported_requests_fail_clearly_and_never_query(mcp_calls, request_, phrase):
+    """e.g. "which incident types drive repeat visits?" (Sprint 3): no guessed metric."""
+    task = await _send(create_app(SETTINGS, FakeLLM(request_)))
+    assert task.status.state == TaskState.TASK_STATE_FAILED
+    code, text = _failure(task)
+    assert code == "not_supported" and phrase in text
+    assert "SLA compliance" in text  # says what is supported
+    assert mcp_calls == []
+
+
+def _metric_answer(figures, request_=None) -> ReportingAnswer:
+    request_ = request_ or req(
+        figures.metric, group_by=figures.group_by, start=figures.start, end=figures.end
+    )
+    return ReportingAnswer(
+        request=request_,
+        start=figures.start,
+        end=figures.end,
+        range_assumed=False,
+        as_of=AS_OF,
+        figures=figures,
+    )
+
+
+def test_sla_template_states_as_of_range_percent_and_counts():
+    figures = fake_result("", SlaComplianceResult, *JULY, None)
+    text = render_answer(_metric_answer(figures))
+    assert text == (
+        "As of 2026-08-30: SLA compliance was 90.00% from 2026-07-01 to 2026-07-31 "
+        "(inclusive, UTC): 45 of 50 dispatched requests were completed within their SLA "
+        "window."
+    )
+
+
+def test_incident_rate_template_shows_per_100_and_counts():
+    figures = fake_result("", IncidentRateResult, *JULY, None)
+    text = render_answer(_metric_answer(figures))
+    assert "0.9000 incidents per 100 completed requests" in text
+    assert "45 incidents over 50 completed requests" in text
+
+
+def test_first_time_fix_template():
+    figures = fake_result("", FirstTimeFixResult, *JULY, None)
+    assert "First-time fix rate was 90.00%" in render_answer(_metric_answer(figures))
+
+
+def test_grouped_template_lists_the_top_five_and_points_to_the_data():
+    figures = fake_result("", SlaComplianceResult, *JULY, "region")
+    text = render_answer(_metric_answer(figures))
+    assert "By region, highest first: g9 90.00% (9 of 10); g8 80.00% (8 of 10)" in text
+    assert "g5 50.00% (5 of 10)." in text and "g4" not in text  # top 5 only
+    assert "7 regions in total; all are in the data." in text
+
+
+def test_truncated_group_list_says_so():
+    groups = [
+        GroupRate(group=f"t{i}", group_id=i, numerator=1, denominator=10, rate="0.1000")
+        for i in range(25)
+    ]
+    figures = FirstTimeFixResult(
+        start=JULY[0],
+        end=JULY[1],
+        group_by="technician",
+        numerator=25,
+        denominator=250,
+        rate="0.1000",
+        groups=groups,
+        group_count=32,
+        truncated=True,
+    )
+    text = render_answer(_metric_answer(figures))
+    assert "32 technicians in total; the top 25 are in the data." in text
+
+
+def test_technician_incident_rate_says_attributable_only():
+    figures = fake_result("", IncidentRateResult, *JULY, "technician")
+    text = render_answer(_metric_answer(figures))
+    assert "attributable incidents only (ADR-033)" in text
+    assert "completed jobs" in text  # every technician rate shows its job count
+
+
+def test_null_rate_is_stated_not_shown_as_zero():
+    figures = IncidentRateResult(start=JULY[0], end=JULY[1], numerator=2, denominator=0)
+    text = render_answer(_metric_answer(figures))
+    assert "No requests were completed" in text and "no incident rate" in text
+    assert "2 incidents reported" in text
+
+
+def test_answer_rejects_figures_for_another_metric_or_breakdown():
+    figures = fake_result("", SlaComplianceResult, *JULY, "region")
+    with pytest.raises(ValueError, match="metric"):
+        _metric_answer(figures, req("incident_rate", group_by="region", start=JULY[0], end=JULY[1]))
+    with pytest.raises(ValueError, match="breakdown"):
+        _metric_answer(figures, req("sla_compliance", start=JULY[0], end=JULY[1]))

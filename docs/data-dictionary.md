@@ -2,7 +2,7 @@
 
 **Domain:** Network/hardware technician field service dispatch (installs, repairs, maintenance visits)
 
-**Status:** Implemented — schema and vocabularies locked (ADR-020) and implemented in `packages/db_models/` through Alembic head `9135d8de9f27` (§10). Where this document and the models disagree, the models are right.
+**Status:** Implemented — schema and vocabularies locked (ADR-020) and implemented in `packages/db_models/` through Alembic head `ab53ceceeffe` (§10). Where this document and the models disagree, the models are right.
 
 **Companion to:** `architecture.md`
 
@@ -88,6 +88,7 @@ Client sites where a technician is dispatched. One account can have many sites.
 | `city` | VARCHAR(100) | No | |
 | `state` | VARCHAR(2) | No | |
 | `zip_code` | VARCHAR(10) | No | |
+| `region` | ENUM (`northeast`, `southeast`, `central`, `west`) | Yes | **Added by ADR-051.** The customer site's region, where the work happened: the region whose state list in `data/generator/parameters.py` (`Regions.states`) contains `state`. That mapping is the only copy. The generator writes it on every row and `validate.py` checks it (A23); the column is nullable only because it was added to an already-loaded table and no migration may fill it (ADR-027). Not the technician's `home_region` |
 
 *Replaces the pickup/dropoff address pattern — field service has one service site per visit, not a pickup and a dropoff. If a single engagement ever needs to span multiple sites, model that as a `request_sites` join table rather than duplicating address columns onto every request row.*
 
@@ -291,8 +292,9 @@ Defining these once here, referenced by every table above, keeps them from drift
 | `proficiency` | `certified`, `experienced`, `trainee` | `technician_skills` |
 | `param_group` | `volume`, `incidents`, `sentiment`, `billing`, `anomalies`, `world`, `feedback` (the last two added by ADR-038) | `generation_parameters` |
 | `hard_case_type` | `none`, `sarcastic`, `implicit` | `sentiment_labels` |
+| `region` | `northeast`, `southeast`, `central`, `west` (added by ADR-051) | `locations` |
 
-All 22 vocabularies are implemented once, as `StrEnum` classes in `packages/db_models/src/db_models/enums.py`, and reused by the models, the generator, and the eval harness. That module is the authority; this table is the documentation of it.
+All 23 vocabularies are implemented once, as `StrEnum` classes in `packages/db_models/src/db_models/enums.py`, and reused by the models, the generator, and the eval harness. That module is the authority; this table is the documentation of it.
 
 ---
 
@@ -319,8 +321,13 @@ All 22 vocabularies are implemented once, as `StrEnum` classes in `packages/db_m
 - **`sla_met`** = `completed_at <= dispatched_at + (sla_window_minutes × interval '1 minute')`. Null when either timestamp is null.
 - **`total_invoice`** = `(labor_charge + parts_charge) × (1 + surcharge_rate)`, rounded half-up to 2 decimals. Rounding rule matters — the agent and the QA verifier must round identically or every check fails on pennies.
 - **`net_revenue`** = `total_invoice − credit_issued_amount` (summed across the request's incidents).
-- **First-time fix rate** = requests completed with no child request where `parent_request_id` points back to them, over all completed requests.
+- **First-time fix rate** = requests completed with no child request where `parent_request_id` points back to them, over all completed requests. A cancelled child request does not count against its parent; a child in any other status (including en route) does.
 - **Incident rate** = incidents per 100 completed requests, by period.
+
+**Date filters** (added 2026-09-26 with the FR-06 metric tools; each range applies to the event the definition is about, inclusive UTC days):
+- Incident rate: incidents whose `reported_at` is in the range, over requests whose `archived_requests.completed_at` is in the range.
+- SLA compliance: requests whose `dispatched_at` is in the range. Requests never dispatched, or with a null `sla_met`, are excluded from the denominator.
+- First-time fix rate: requests whose `completed_at` is in the range; a child request counts whatever its own date.
 
 Define these once, here. If the reporting agent and the QA agent each compute them independently from prose, they will disagree, and you'll spend a sprint debugging a discrepancy that's actually a specification gap.
 
@@ -480,9 +487,9 @@ All seven open questions resolved. Recorded here so the reasoning survives into 
 | 7 | **Enums locked; `upgrade` added to `service_type`; VARCHAR+CHECK implementation** | Hardware refresh is a real category with its own seasonality; CHECK constraints avoid painful enum migrations |
 | 8 | **Severity influences sentiment, with noise** | No leakage path given a univariate forecast; the correlation is what makes the synthetic world coherent |
 
-### DDL status — **implemented** (2026-09-20; current through Alembic head `9135d8de9f27`, 2026-09-23)
+### DDL status — **implemented** (2026-09-20; current through Alembic head `ab53ceceeffe`, 2026-09-26)
 
-The schema in this document is now implemented in code. Migration chain: `0f3c81a47b21` → `7d54e0c9a318` → `1ee8342c81a7` → `fae4b8c9814c` → `4c6589542b27` → `9135d8de9f27` (head).
+The schema in this document is now implemented in code. Migration chain: `0f3c81a47b21` → `7d54e0c9a318` → `1ee8342c81a7` → `fae4b8c9814c` → `4c6589542b27` → `9135d8de9f27` → `ab53ceceeffe` (head).
 
 | Artifact | Location |
 |---|---|
@@ -495,6 +502,7 @@ The schema in this document is now implemented in code. Migration chain: `0f3c81
 | Forecast column-level `service_requests` grant (ADR-035, `fae4b8c9814c`) | `data/migrations/versions/*_forecast_service_requests_column_grant.py` |
 | `sentiment_labels`: `hard_case_type` replaces `is_sarcastic`, `corpus_id` added (ADR-037, `4c6589542b27`) | `data/migrations/versions/*_sentiment_labels_hard_case_type_and_.py` |
 | `generation_parameters.param_group` gains `world` and `feedback` (ADR-038, `9135d8de9f27`) | `data/migrations/versions/*_param_group_world_and_feedback.py` |
+| `locations.region`, the customer site's region (ADR-051, `ab53ceceeffe`) | `data/migrations/versions/*_locations_region.py` |
 | Contract tests | `tests/unit/` |
 | Live grant tests (reads and writes, per role; run in CI) | `tests/integration/` |
 | Generator, loader and validation (ADR-042, ADR-043); dataset loaded 2026-09-25 | `data/generator/` |

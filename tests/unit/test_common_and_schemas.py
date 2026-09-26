@@ -103,3 +103,51 @@ def test_summary_round_trips_as_json():
 def test_summary_rejects_inconsistent_data(bad):
     with pytest.raises(ValidationError):
         IncidentSummary.model_validate(bad)
+
+
+# --------------------------------------------------------------------------- metric results
+
+
+def test_rate_rounds_half_up_at_the_boundary():
+    from schemas import rate_string
+
+    # 1/32 = 0.03125: the fifth place is exactly 5. Half-up gives 0.0313; banker's
+    # rounding (Python's round, Decimal's default) would give 0.0312.
+    assert rate_string(1, 32) == "0.0313"
+    assert round(1 / 32, 4) == 0.0312  # the trap this avoids
+    assert rate_string(3, 32) == "0.0938"  # 0.09375 -> up
+    assert rate_string(2067, 18063, scale=100) == "11.4433"  # per-100 incident rate
+
+
+def test_zero_denominator_gives_a_null_rate():
+    from schemas import IncidentRateResult, rate_string
+
+    assert rate_string(5, 0) is None
+    result = IncidentRateResult(
+        start=dt.date(2024, 1, 1), end=dt.date(2024, 1, 1), numerator=5, denominator=0
+    )
+    assert result.rate is None
+
+
+def test_rate_is_a_4_place_string_not_a_float():
+    from schemas import SlaComplianceResult
+
+    base = dict(start="2024-01-01", end="2024-01-31", numerator=1, denominator=2)
+    assert SlaComplianceResult(**base, rate="0.5000").rate == "0.5000"
+    for bad in (0.5, "0.5", "0.50000"):
+        with pytest.raises(ValidationError):
+            SlaComplianceResult(**base, rate=bad)
+
+
+def test_truncated_flag_must_match_the_group_count():
+    from schemas import MAX_GROUPS, FirstTimeFixResult, GroupRate
+
+    groups = [GroupRate(group=f"g{i}", numerator=1, denominator=2, rate="0.5000") for i in range(3)]
+    base = dict(start="2024-01-01", end="2024-01-31", group_by="region", numerator=3, denominator=6)
+    assert FirstTimeFixResult(**base, groups=groups, group_count=3).truncated is False
+    FirstTimeFixResult(**base, groups=groups, group_count=40, truncated=True)
+    with pytest.raises(ValidationError, match="truncated"):
+        FirstTimeFixResult(**base, groups=groups, group_count=40, truncated=False)
+    with pytest.raises(ValidationError, match="groups"):
+        FirstTimeFixResult(**{**base, "group_by": None}, groups=groups, group_count=3)
+    assert MAX_GROUPS == 25

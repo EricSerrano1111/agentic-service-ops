@@ -211,6 +211,10 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                     route=base["route"],
                 )
             except TaskFailed as exc:
+                if exc.error_code == "not_supported":
+                    # A metric or breakdown the agent doesn't offer yet: a normal answer,
+                    # like an unbuilt domain, not an error. The agent's text says so.
+                    return respond(exc.reason, "not_available", task_id=exc.task_id)
                 log.warning(
                     "agent task failed",
                     extra={"task_id": exc.task_id, "reason": exc.reason, "code": exc.error_code},

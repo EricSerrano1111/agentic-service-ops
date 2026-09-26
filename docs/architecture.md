@@ -443,7 +443,7 @@ agentic-service-ops/
 │   └── migrations/                 # Alembic — identical local ↔ Cloud SQL
 │
 ├── packages/                       # shared libraries
-│   ├── db_models/                  # SQLAlchemy models, 22 vocabularies, §7 access matrix (ADR-026)
+│   ├── db_models/                  # SQLAlchemy models, 23 vocabularies, §7 access matrix (ADR-026)
 │   ├── common/                     # config, structured logging, trace IDs, errors
 │   ├── a2a_core/                   # Agent Card helpers, task lifecycle client/server
 │   ├── llm/                        # the one LLM client: Gemini, free by default, typed errors, metering (ADR-048)
@@ -468,7 +468,9 @@ agentic-service-ops/
 │   │
 │   ├── agent_qa/ # deterministic — no model
 │   │
-│   ├── mcp_incidents/ # scoped tools + own DB role
+│   ├── mcp_incidents/ # scoped tools + own DB role (app_reporting). Tools: get_incidents_by_date_range,
+│   │                  # get_incident_rate, get_sla_compliance, get_first_time_fix_rate (§6 metrics;
+│   │                  # group_by account | region | service_type | technician; rates as Decimal strings)
 │   ├── mcp_feedback/
 │   ├── mcp_volume/
 │   └── api_gateway/ # FastAPI BFF for the UI

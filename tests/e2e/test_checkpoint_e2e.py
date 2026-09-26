@@ -44,6 +44,23 @@ ORCHESTRATOR_URL = os.environ.get("ORCHESTRATOR_URL", "http://localhost:8000")
 SERVICES = ("orchestrator", "agent_reporting", "mcp_incidents")
 LAST_MONTH = "How many incidents were reported last month?"
 
+SLA_BY_REGION = "What was SLA compliance by region last month?"
+
+# Independent of the tool's SQLAlchemy query: raw SQL, interval multiplication (§6).
+SLA_SQL = """
+    SELECT loc.region,
+           sum(CASE WHEN a.completed_at
+                    <= r.dispatched_at + r.sla_window_minutes * interval '1 minute'
+               THEN 1 ELSE 0 END),
+           count(*)
+    FROM service_requests r
+    JOIN archived_requests a ON a.request_id = r.request_id
+    JOIN locations loc ON loc.location_id = r.location_id
+    WHERE r.dispatched_at >= (%(start)s::date)::timestamp AT TIME ZONE 'UTC'
+      AND r.dispatched_at <  ((%(end)s::date + 1))::timestamp AT TIME ZONE 'UTC'
+    GROUP BY loc.region
+"""
+
 EXPECTED_SQL = """
     SELECT severity, count(*)
     FROM incidents
@@ -66,6 +83,17 @@ def previous_month(as_of: dt.date) -> tuple[dt.date, dt.date]:
     return end.replace(day=1), end
 
 
+def qa_connect():
+    return psycopg.connect(
+        host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+        port=os.environ.get("POSTGRES_PORT", "5432"),
+        dbname=os.environ["POSTGRES_DB"],
+        user=os.environ["DB_ROLE_QA_USER"],
+        password=os.environ["DB_ROLE_QA_PASSWORD"],
+        connect_timeout=5,
+    )
+
+
 def independent_figures(start: str, end: str) -> dict:
     with psycopg.connect(
         host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
@@ -81,6 +109,7 @@ def independent_figures(start: str, end: str) -> dict:
         ).fetchall()
     by_severity = {"low": 0, "medium": 0, "high": 0} | dict(rows)
     return {
+        "metric": "incident_count",  # the figures' discriminator (FR-06 metric tools)
         "start": start,
         "end": end,
         "incident_count": sum(by_severity.values()),
@@ -158,3 +187,43 @@ def test_sentiment_question_is_answered_as_not_available_yet():
     body = response.json()
     assert (body["route"]["route"], body["outcome"]) == ("sentiment", "not_available")
     assert body["task_id"] is None
+
+
+def rate(num: int, den: int) -> str | None:
+    from decimal import ROUND_HALF_UP, Decimal
+
+    if den == 0:
+        return None
+    return str((Decimal(num) / Decimal(den)).quantize(Decimal("0.0001"), ROUND_HALF_UP))
+
+
+def test_sla_compliance_by_region_matches_independent_sql():
+    response = ask(SLA_BY_REGION)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    print(f"\nSLA by region answer: {body['answer']}")
+    assert body["route"]["route"] == "reporting" and body["outcome"] == "answered"
+    reporting = body["reporting"]
+    request = reporting["request"]
+    assert (request["metric"], request["group_by"]) == ("sla_compliance", "region")
+    as_of = dt.date.fromisoformat(reporting["as_of"])
+    start, end = previous_month(as_of)
+    assert (reporting["start"], reporting["end"]) == (start.isoformat(), end.isoformat())
+
+    with qa_connect() as conn:
+        rows = conn.execute(
+            SLA_SQL,
+            {
+                "start": dt.date.fromisoformat(reporting["start"]),
+                "end": dt.date.fromisoformat(reporting["end"]),
+            },
+        ).fetchall()
+    expected = {region: (int(met), int(total)) for region, met, total in rows}
+    figures = reporting["figures"]
+    met = sum(m for m, _ in expected.values())
+    total = sum(t for _, t in expected.values())
+    assert (figures["numerator"], figures["denominator"]) == (met, total)
+    assert figures["rate"] == rate(met, total)
+    got = {g["group"]: (g["numerator"], g["denominator"], g["rate"]) for g in figures["groups"]}
+    assert got == {r: (m, t, rate(m, t)) for r, (m, t) in expected.items()}
+    assert f"As of {reporting['as_of']}" in body["answer"] and "By region" in body["answer"]

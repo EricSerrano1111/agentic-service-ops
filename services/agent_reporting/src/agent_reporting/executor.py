@@ -24,16 +24,51 @@ from llm import (
     LLMRateLimited,
     LLMRequestError,
 )
-from schemas import ReportingAnswer
+from schemas import (
+    FirstTimeFixResult,
+    IncidentRateResult,
+    IncidentSummary,
+    ReportingAnswer,
+    ReportingRequest,
+    SlaComplianceResult,
+)
 
 from .config import Settings
-from .mcp_client import McpToolError, get_incidents_by_date_range
+from .mcp_client import McpToolError, call_tool
 from .parsing import Parser, ParsingLLM
 from .render import render_answer
 
 log = logging.getLogger("agent_reporting")
 
-ARTIFACT_NAME = "incident_summary"
+ARTIFACT_NAME = "reporting_answer"
+
+#: The agent, not the model, picks the tool: one fixed tool per metric (ADR-046).
+TOOLS: dict[str, tuple[str, type]] = {
+    "incident_count": ("get_incidents_by_date_range", IncidentSummary),
+    "incident_rate": ("get_incident_rate", IncidentRateResult),
+    "sla_compliance": ("get_sla_compliance", SlaComplianceResult),
+    "first_time_fix_rate": ("get_first_time_fix_rate", FirstTimeFixResult),
+}
+SUPPORTED = (
+    "incident counts, incident rate, SLA compliance and first-time fix rate, over a date "
+    "range; the rates can be broken down by account, region, service type or technician"
+)
+
+
+def unsupported_reason(request: ReportingRequest) -> str | None:
+    """Why this request can't be answered yet, or None. Never guesses a nearby metric."""
+    if request.metric == "unsupported":
+        return f"That metric isn't supported yet. I can report {SUPPORTED}."
+    if request.group_by == "unsupported":
+        return f"That breakdown isn't supported yet. I can report {SUPPORTED}."
+    if request.metric == "incident_count" and request.group_by is not None:
+        return (
+            "Incident counts can't be broken down yet; the incident rate can. "
+            f"I can report {SUPPORTED}."
+        )
+    return None
+
+
 DATA_SCHEMA = "ReportingAnswer"
 # The MCP server's own message when its query (not the caller's input) failed.
 _TOOL_QUERY_FAILED = "incident query failed"
@@ -103,11 +138,22 @@ class ReportingExecutor(AgentExecutor):
                 await self._fail(updater, task.id, code, text)
                 return
 
+            request = resolved.request
+            reason = unsupported_reason(request)
+            if reason is not None:
+                await self._fail(updater, task.id, "not_supported", reason)
+                return
+
+            tool, result_model = TOOLS[request.metric]
+            arguments = {"start": resolved.start.isoformat(), "end": resolved.end.isoformat()}
+            if request.group_by is not None:
+                arguments["group_by"] = request.group_by
             try:
-                summary = await get_incidents_by_date_range(
+                figures = await call_tool(
                     self.settings.mcp_incidents_url,
-                    resolved.start,
-                    resolved.end,
+                    tool,
+                    arguments,
+                    result_model,
                     trace_id=trace_id,
                     timeout_s=self.settings.mcp_timeout_s,
                 )
@@ -144,7 +190,7 @@ class ReportingExecutor(AgentExecutor):
                 end=resolved.end,
                 range_assumed=resolved.assumed,
                 as_of=self.settings.as_of,
-                figures=summary,
+                figures=figures,
             )
             await updater.add_artifact(
                 [
@@ -157,7 +203,7 @@ class ReportingExecutor(AgentExecutor):
             await updater.complete()
             log.info(
                 "task completed",
-                extra={"task_id": task.id, "incident_count": summary.incident_count},
+                extra={"task_id": task.id, "metric": request.metric, "tool": tool},
             )
 
     async def _fail(self, updater: TaskUpdater, task_id: str, code: str, reason: str) -> None:
