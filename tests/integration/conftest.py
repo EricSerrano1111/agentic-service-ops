@@ -106,3 +106,15 @@ def connect_as(live_database: None) -> Iterator[Callable[[str], psycopg.Connecti
 
     for conn in connections.values():
         conn.close()
+
+
+@pytest.fixture(scope="session")
+def loaded_database(live_database: None) -> None:
+    """Skip (fail under CI) unless the dataset is loaded, not just migrated.
+
+    Checked as the admin role so the answer does not depend on any agent grant.
+    """
+    with _connect(os.environ["POSTGRES_ADMIN_USER"], os.environ["POSTGRES_ADMIN_PASSWORD"]) as conn:
+        (count,) = conn.execute("SELECT count(*) FROM incidents").fetchone()
+    if count == 0:
+        _unavailable("database migrated but not loaded — run data/generator/load.py")

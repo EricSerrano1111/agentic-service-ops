@@ -63,7 +63,7 @@ IDENTITY_TABLES = frozenset(
 )
 
 
-def connection_kwargs() -> dict[str, str]:
+def connection_kwargs() -> dict[str, object]:
     """psycopg connect() arguments for app_generator, from the environment and .env.
 
     Real environment variables win over .env (override=False), as in data/migrations/env.py.
@@ -74,13 +74,31 @@ def connection_kwargs() -> dict[str, str]:
     missing = [v for v in CONNECTION_VARS if not os.environ.get(v)]
     if missing:
         raise SystemExit(f"Missing environment variables: {', '.join(missing)} (see .env.example)")
+    from common import connect_timeout_s
+
     return {
         "host": os.environ["POSTGRES_HOST"],
         "port": os.environ["POSTGRES_PORT"],
         "dbname": os.environ["POSTGRES_DB"],
         "user": os.environ["DB_ROLE_GENERATOR_USER"],
         "password": os.environ["DB_ROLE_GENERATOR_PASSWORD"],
+        # Fail, don't hang, when the database is unreachable (POSTGRES_CONNECT_TIMEOUT_S).
+        "connect_timeout": connect_timeout_s(),
     }
+
+
+def connect(conninfo: Mapping[str, object]):
+    """Open the app_generator connection, turning a failure into a clear exit message."""
+    import psycopg
+
+    try:
+        return psycopg.connect(**conninfo)
+    except psycopg.OperationalError as exc:
+        first_line = str(exc).strip().splitlines()[0] if str(exc).strip() else type(exc).__name__
+        raise SystemExit(
+            f"Cannot connect to Postgres at {conninfo['host']}:{conninfo['port']} "
+            f"(connect_timeout={conninfo.get('connect_timeout')}s): {first_line}"
+        ) from None
 
 
 def insert_statement(table: str, columns: list[str]):
@@ -103,12 +121,11 @@ def _adapt(table: str, column: str, value):
     return value
 
 
-def load(dataset: Mapping[str, list[dict]], conninfo: Mapping[str, str]) -> None:
-    import psycopg
+def load(dataset: Mapping[str, list[dict]], conninfo: Mapping[str, object]) -> None:
     from psycopg import sql
 
     # The connection block commits on success and rolls back on any error.
-    with psycopg.connect(**conninfo) as conn, conn.cursor() as cur:
+    with connect(conninfo) as conn, conn.cursor() as cur:
         cur.execute(
             sql.SQL("TRUNCATE {tables}").format(
                 tables=sql.SQL(", ").join(sql.Identifier(t) for t in reversed(gen.TABLES))

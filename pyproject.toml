@@ -3,7 +3,9 @@ name = "agentic-service-ops"
 version = "0.1.0"
 description = "Agentic Service Operations Intelligence Platform — Northwestern capstone"
 requires-python = ">=3.12"
-dependencies = []
+# The host-side scripts (Alembic env.py, data/generator/load.py and validate.py) take
+# their database connect timeout from service-ops-common.
+dependencies = ["service-ops-common"]
 
 [project.optional-dependencies]
 # Offline data tooling under data/generator/ — never installed into a runtime service.
@@ -31,10 +33,22 @@ build-backend = "hatchling.build"
 # Root is a workspace container, not a distributable package.
 bypass-selection = true
 
-# Picked up by uv if/when the toolchain moves off plain pip. Ignored by pip today,
-# so adding it now costs nothing and avoids restructuring later.
+# uv workspace: `uv.lock` pins every dependency of every member, and CI and the
+# service images install from it (ADR-047). Members are listed explicitly because the
+# placeholder directories under packages/ and services/ have no pyproject.toml yet;
+# add each new service here when it gets one.
+[tool.uv.sources]
+service-ops-common = { workspace = true }
+
 [tool.uv.workspace]
-members = ["packages/*", "services/*"]
+members = [
+    "packages/db_models",
+    "packages/common",
+    "packages/schemas",
+    "services/mcp_incidents",
+    "services/agent_reporting",
+    "services/orchestrator",
+]
 
 [tool.ruff]
 line-length = 100
@@ -49,11 +63,12 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 "data/migrations/versions/*.py" = ["E501", "F401"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "packages"]
+testpaths = ["tests", "packages", "services"]
 pythonpath = ["packages/db_models/src"]
 addopts = "-ra"
 markers = [
     "integration: needs a live, migrated Postgres; skips when none is reachable",
+    "e2e: needs the docker-compose stack up and loaded; skipped unless RUN_E2E=1",
 ]
 
 [tool.mypy]

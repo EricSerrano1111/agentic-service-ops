@@ -1,0 +1,29 @@
+[project]
+name = "mcp-incidents"
+version = "0.1.0"
+description = "Incidents MCP server: narrow, aggregate-only tools over app_reporting (ADR-008, ADR-023)"
+requires-python = ">=3.12"
+# The MCP SDK is pinned exactly (R-12, ADR-047); everything else is locked in uv.lock.
+dependencies = [
+    "mcp==2.2.0",
+    "db-models",
+    "service-ops-common",
+    "service-ops-schemas",
+    "SQLAlchemy>=2.0.30",
+    "psycopg[binary]>=3.2",
+    "anyio>=4.9",
+    "uvicorn>=0.31",
+]
+
+# Siblings resolve to the workspace members, never PyPI.
+[tool.uv.sources]
+db-models = { workspace = true }
+service-ops-common = { workspace = true }
+service-ops-schemas = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_incidents"]

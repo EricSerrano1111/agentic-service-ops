@@ -1,0 +1,13 @@
+# Allowlist: service images build from the repo root but need only the workspace
+# definition (pyproject.toml, uv.lock), the shared packages and the services.
+# Everything else (pgdata/, .env, .venv/, data/, docs/) stays out of the build context,
+# so no secret or database file can be copied into an image.
+*
+!pyproject.toml
+!uv.lock
+!packages/
+!services/
+**/__pycache__
+**/*.egg-info
+**/tests/
+**/.gitkeep

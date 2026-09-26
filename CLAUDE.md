@@ -61,13 +61,17 @@ for the current sprint, update it directly rather than waiting to be asked.
 Windows paths shown; on POSIX substitute `.venv/bin/`.
 
 ```
-py -m venv .venv                                  # first time only
-.venv\Scripts\pip install -e ".[generator]" -e "packages/db_models[dev]"   # same as CI
+uv sync --locked --all-packages --all-extras --python 3.12   # same as CI: builds .venv from uv.lock
+uv lock                                           # after changing any dependency in a pyproject.toml; commit uv.lock with it
 
-.venv\Scripts\python -m pytest tests/unit -q      # offline: schema, access matrix, generator, corpus
-.venv\Scripts\python -m pytest tests/integration -q -rs   # live grants suite; needs migrated Postgres
-.venv\Scripts\python -m ruff check packages data tests
-.venv\Scripts\python -m ruff format packages data tests   # ruff pinned (0.16.8) so local = CI
+.venv\Scripts\python -m pytest tests/unit services -q   # offline: schema, access matrix, generator, corpus, services
+.venv\Scripts\python -m pytest tests/integration -q -rs   # grants + MCP figures; needs migrated, loaded Postgres
+.venv\Scripts\python -m ruff check packages data tests services
+.venv\Scripts\python -m ruff format packages data tests services   # ruff pinned (0.16.8) so local = CI
+
+docker compose up -d --build                      # walking skeleton: postgres, mcp_incidents, agent_reporting, orchestrator
+.venv\Scripts\python -m orchestrator ask "How many incidents last quarter?"
+$env:RUN_E2E=1; .venv\Scripts\python -m pytest tests/e2e -q -rs   # e2e; needs the stack up and loaded
 
 docker compose up -d postgres                     # needs Docker Desktop running
 .venv\Scripts\python -m alembic upgrade head      # schema, then roles + grants
@@ -79,8 +83,9 @@ The integration suite skips when no database is configured or reachable. Set
 `REQUIRE_INTEGRATION_DB=1` to turn every skip into a failure; CI always sets it.
 
 **CI** (`.github/workflows/ci.yml`, GitHub Actions, every push and PRs to main): lint
-(ruff check + format --check), unit (offline suite), and integration (Postgres 16 service
-container, `alembic upgrade head`, `alembic check`, then the grants suite). CI uses its own
+(ruff check + format --check), unit (offline suite plus each service's tests), and
+integration (Postgres 16 service container, `alembic upgrade head`, `alembic check`,
+generate + load, then the grants and MCP-figures suites). E2E is local only. CI uses its own
 ephemeral role credentials and never `.env`; nothing in CI calls a model.
 
 **Generator pipeline** (`data/generator/`, order matters):
