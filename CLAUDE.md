@@ -69,13 +69,15 @@ uv lock                                           # after changing any dependenc
 
 .venv\Scripts\python -m pytest tests/unit services -q   # offline: schema, access matrix, generator, corpus, services
 .venv\Scripts\python -m pytest tests/integration -q -rs   # grants + MCP figures; needs migrated, loaded Postgres
-.venv\Scripts\python -m ruff check packages data tests services scripts
-.venv\Scripts\python -m ruff format packages data tests services scripts   # ruff pinned (0.16.8) so local = CI
+.venv\Scripts\python -m ruff check packages data tests services scripts evals
+.venv\Scripts\python -m ruff format packages data tests services scripts evals   # ruff pinned (0.16.8) so local = CI
 
 docker compose up -d --build                      # walking skeleton: postgres, mcp_incidents, agent_reporting, orchestrator
 .venv\Scripts\python -m orchestrator ask "How many incidents last quarter?"
 $env:RUN_E2E=1; .venv\Scripts\python -m pytest tests/e2e -q -rs   # e2e; needs the stack up and loaded
 $env:RUN_LIVE_LLM=1; .venv\Scripts\python -m pytest tests/live -q -rs   # one real free-tier Gemini call; never in CI
+$env:RUN_E2E=1; $env:RUN_LIVE_LLM=1; .venv\Scripts\python -m pytest tests/e2e/test_checkpoint_e2e.py -v -rs   # routed + parsed question end to end (calls Gemini)
+.venv\Scripts\python evals/routing/run_seed.py [--model gemini-3.5-flash-lite]   # live seed-set routing run; writes evals/results/
 
 docker compose up -d postgres                     # needs Docker Desktop running
 .venv\Scripts\python -m alembic upgrade head      # schema, then roles + grants

@@ -52,11 +52,13 @@ from llm import (
     LLMOutputInvalid,
     LLMRateLimited,
     LLMRequestCapReached,
+    LLMRequestError,
     LLMSettings,
     LLMUnavailable,
     Secret,
     load_price_table,
 )
+from llm import client as llm_client
 from llm.classify import Kind, classify
 from pydantic import BaseModel
 
@@ -205,10 +207,23 @@ def log_lines():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
     try:
-        yield lambda: [json.loads(line) for line in stream.getvalue().splitlines()]
+
+        def lines(everything: bool = False) -> list[dict]:
+            parsed = [json.loads(line) for line in stream.getvalue().splitlines()]
+            return parsed if everything else [p for p in parsed if p["msg"] == "llm call"]
+
+        yield lines
     finally:
         logger.removeHandler(handler)
         logger.disabled = was_disabled
+
+
+@pytest.fixture(autouse=True)
+def fresh_429_capture():
+    """The first-429 capture fires once per process; give each test a fresh process."""
+    llm_client._reset_429_capture()
+    yield
+    llm_client._reset_429_capture()
 
 
 class Parsed(BaseModel):
@@ -579,3 +594,114 @@ def test_real_transport_repr_hides_the_key():
 
     transport = GeminiTransport(settings())
     assert KEY not in repr(transport) and KEY not in str(transport)
+
+
+# --------------------------------------------------------------------------- passive 429 capture
+
+
+async def test_first_429_body_is_logged_once_per_process(log_lines):
+    c, _, _ = client(per_minute_429("1s"), Response("a"), per_minute_429("1s"), Response("b"))
+    await c.generate("x", trace_id="t1")
+    await c.generate("x", trace_id="t2")
+    # A second client in the same process does not log it again.
+    c2, _, _ = client(daily_429())
+    with pytest.raises(LLMDailyQuotaExhausted):
+        await c2.generate("x", trace_id="t3")
+    captures = [line for line in log_lines(everything=True) if line.get("capture") == "first_429"]
+    assert len(captures) == 1
+    [capture] = captures
+    assert capture["level"] == "WARNING" and capture["trace_id"] == "t1"
+    violations = capture["error_body"]["error"]["details"][1]["violations"]
+    assert violations[0]["quotaId"].startswith("GenerateRequestsPerMinute")
+
+
+async def test_first_429_capture_redacts_key_and_project_identifiers(log_lines, monkeypatch):
+    monkeypatch.setenv("GCP_PROJECT_ID", "my-secret-project")
+    body = copy.deepcopy(REAL_NO_QUOTA_429)
+    body["error"]["message"] += f" key={KEY} project my-secret-project"
+    body["error"]["details"].append(
+        {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "metadata": {"consumer": "projects/123456789012", "service": "generativelanguage"},
+        }
+    )
+    c, _, _ = client(genai_errors.ClientError(429, body))
+    with pytest.raises(LLMDailyQuotaExhausted):
+        await c.generate("x", trace_id="t")
+    [capture] = [line for line in log_lines(everything=True) if line.get("capture")]
+    text = json.dumps(capture)
+    for secret in (KEY, "my-secret-project", "123456789012"):
+        assert secret not in text
+    assert "REDACTED" in text
+    assert "retryDelay" in text  # the useful structure survives
+
+
+async def test_non_429_errors_do_not_trigger_the_capture(log_lines):
+    c, _, _ = client(server_error(503), Response("a"))
+    await c.generate("x", trace_id="t")
+    assert not [line for line in log_lines(everything=True) if line.get("capture")]
+
+
+# --------------------------------------------------------------------------- prompt files
+
+
+def test_prompt_version_and_hash_come_from_the_file(tmp_path):
+    from llm.prompts import Prompt
+
+    path = tmp_path / "route_v7.md"
+    path.write_text("Question: {{question}}", encoding="utf-8")
+    prompt = Prompt.from_path(path)
+    assert prompt.version == "route_v7" and len(prompt.sha) == 12
+    assert prompt.render(question="hi") == "Question: hi"
+    path.write_text("Question: {{question}}!", encoding="utf-8")
+    assert Prompt.from_path(path).sha != prompt.sha  # an unversioned edit is visible
+
+
+def test_prompt_render_rejects_missing_or_unknown_placeholders(tmp_path):
+    from llm.prompts import Prompt
+
+    path = tmp_path / "p_v1.md"
+    path.write_text("{{a}} and {{b}}", encoding="utf-8")
+    prompt = Prompt.from_path(path)
+    with pytest.raises(KeyError, match="left unfilled"):
+        prompt.render(a="x")
+    with pytest.raises(KeyError, match="no placeholder"):
+        prompt.render(a="x", b="y", c="z")
+
+
+# --------------------------------------------------------------------------- request rejections
+
+
+async def test_request_rejection_logs_status_and_googles_message(log_lines):
+    """The 2026-09-26 failure: a 400 whose reason only Google's message explains."""
+    message = "Thinking level MINIMAL is not supported for this model. " + "x" * 800 + KEY
+    err = genai_errors.ClientError(400, _body(400, "INVALID_ARGUMENT", message))
+    c, transport, _ = client(err, Response("never"))
+    with pytest.raises(LLMRequestError, match="error 400"):
+        await c.generate("x", trace_id="t-rej")
+    assert transport.calls == 1  # not retried
+    [line] = [x for x in log_lines(everything=True) if x["msg"] == "llm request rejected"]
+    assert line["level"] == "WARNING" and line["trace_id"] == "t-rej"
+    assert line["http_status"] == 400
+    assert line["error_message"].startswith("Thinking level MINIMAL is not supported")
+    assert len(line["error_message"]) <= 500  # truncated
+    assert KEY not in json.dumps(line)
+
+
+def test_thinking_level_is_per_role(monkeypatch):
+    for name, value in {
+        "GOOGLE_AI_API_KEY": KEY,
+        "GEMINI_MODEL_ORCHESTRATOR": MODEL,
+        "GEMINI_MODEL_SPECIALIST": MODEL,
+        "GEMINI_MODEL_QA": MODEL,
+    }.items():
+        monkeypatch.setenv(name, value)
+    for name in ("LLM_MODE", "LLM_THINKING_LEVEL_ORCHESTRATOR", "LLM_THINKING_LEVEL_SPECIALIST"):
+        monkeypatch.delenv(name, raising=False)
+    # Every role is on Flash-Lite, which accepts "minimal" (ADR-049).
+    for role in ("orchestrator", "specialist", "qa"):
+        assert LLMSettings.from_env(role).thinking_level == "minimal"
+    # A role moved to a model that rejects "minimal" (gemini-3.7-flash does) is set alone.
+    monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", "low")
+    assert LLMSettings.from_env("orchestrator").thinking_level == "low"
+    assert LLMSettings.from_env("specialist").thinking_level == "minimal"  # unaffected

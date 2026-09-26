@@ -25,11 +25,12 @@ import datetime as dt
 import importlib.metadata
 import json
 import os
-import re
 import sys
 import time
 from pathlib import Path
 from typing import Any
+
+from llm.redact import redact  # the same redaction the client's passive capture uses
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "tests" / "fixtures" / "gemini_errors"
@@ -37,31 +38,6 @@ FREE_KEY_VAR = "GOOGLE_AI_API_KEY"
 PRO_MODEL = "gemini-3.1-pro-preview"
 MAX_REQUESTS = 25  # hard ceiling for the whole run: the burst gets at most 24
 PROMPT = "Reply with the single word OK."
-
-# Anything that could identify the key or the project. Applied to the serialised body.
-_REDACTIONS = [
-    (re.compile(r"AIza[0-9A-Za-z_\-]{20,}"), "REDACTED_API_KEY"),
-    (re.compile(r"projects/[^/\s\"']+"), "projects/REDACTED_PROJECT"),
-    (re.compile(r"([?&]project=)[^&\s\"']+"), r"\1REDACTED_PROJECT"),
-    (
-        re.compile(
-            r'("(?:consumer|project|projectId|project_id|projectNumber|project_number)"'
-            r'\s*:\s*")[^"]*(")'
-        ),
-        r"\1REDACTED_PROJECT\2",
-    ),
-    # Project numbers are 12 digits; nothing else in an error body is a 10-13 digit run.
-    (re.compile(r"(?<![\d.])\d{10,13}(?![\d.])"), "REDACTED_NUMBER"),
-]
-
-
-def redact(text: str, secrets: list[str]) -> str:
-    for secret in secrets:
-        if secret:
-            text = text.replace(secret, "REDACTED")
-    for pattern, replacement in _REDACTIONS:
-        text = pattern.sub(replacement, text)
-    return text
 
 
 def _secrets(key: str) -> list[str]:

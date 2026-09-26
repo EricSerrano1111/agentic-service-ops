@@ -1,9 +1,9 @@
 """Turning a finished A2A Task into the `/ask` response.
 
 A2A data parts are protobuf `Value`s, which carry every number as a double: 344 arrives
-as 344.0. Validating the data part against the shared contract (`schemas`) restores the
-integers and rejects anything that does not match, so the orchestrator never passes on
-figures it has not checked the shape of.
+as 344.0. Every data part is validated against its `packages/schemas` model on receipt
+(architecture §11), which restores the integers and rejects anything that does not
+match, so the orchestrator never passes on figures it has not checked the shape of.
 """
 
 from __future__ import annotations
@@ -11,26 +11,35 @@ from __future__ import annotations
 from a2a.types import Task, TaskState
 from google.protobuf.json_format import MessageToDict
 from pydantic import ValidationError
-from schemas import IncidentSummary
+from schemas import ReportingAnswer
 
 
 class TaskFailed(RuntimeError):
-    def __init__(self, task_id: str, state: str, reason: str) -> None:
+    """The agent's task did not complete. `error_code` is the agent's machine-readable
+    reason from the status message metadata, when it gave one."""
+
+    def __init__(self, task_id: str, state: str, reason: str, error_code: str | None) -> None:
         super().__init__(reason)
-        self.task_id, self.state, self.reason = task_id, state, reason
+        self.task_id, self.state, self.reason, self.error_code = task_id, state, reason, error_code
 
 
-def _status_text(task: Task) -> str:
+def _status(task: Task) -> tuple[str, str | None]:
     if not task.status.HasField("message"):
-        return ""
-    return " ".join(p.text for p in task.status.message.parts if p.HasField("text")).strip()
+        return "", None
+    message = task.status.message
+    text = " ".join(p.text for p in message.parts if p.HasField("text")).strip()
+    code = (
+        MessageToDict(message.metadata).get("error_code") if message.HasField("metadata") else None
+    )
+    return text, (str(code) if code else None)
 
 
-def extract_answer(task: Task) -> tuple[str, dict]:
-    """(answer text, figures) from a completed task; raises `TaskFailed` otherwise."""
+def extract_answer(task: Task) -> tuple[str, ReportingAnswer]:
+    """(answer text, validated answer) from a completed task; `TaskFailed` otherwise."""
     state = TaskState.Name(task.status.state)
     if task.status.state != TaskState.TASK_STATE_COMPLETED:
-        raise TaskFailed(task.id, state, _status_text(task) or f"task ended in {state}")
+        text, code = _status(task)
+        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
 
     texts: list[str] = []
     data: list[dict] = []
@@ -41,10 +50,12 @@ def extract_answer(task: Task) -> tuple[str, dict]:
             elif part.HasField("data"):
                 data.append(MessageToDict(part.data))
     if not texts or len(data) != 1:
-        raise TaskFailed(task.id, state, "completed task is missing its text or data part")
+        raise TaskFailed(task.id, state, "completed task is missing its text or data part", None)
     try:
-        # Route is hardcoded to the reporting agent, so its contract is known here.
-        figures = IncidentSummary.model_validate(data[0]).model_dump(mode="json")
+        # Only the reporting agent is routed to today, so its contract is known here.
+        answer = ReportingAnswer.model_validate(data[0])
     except ValidationError as exc:
-        raise TaskFailed(task.id, state, f"figures failed validation: {exc}") from None
-    return "\n".join(texts), figures
+        raise TaskFailed(
+            task.id, state, f"answer failed validation: {exc.error_count()} error(s)", None
+        ) from None
+    return "\n".join(texts), answer

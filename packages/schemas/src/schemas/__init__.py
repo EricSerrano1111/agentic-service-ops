@@ -8,5 +8,22 @@ agent container that must not touch the database never installs it.
 from __future__ import annotations
 
 from .incidents import IncidentSummary, SeverityCounts
+from .reporting import (
+    DATASET_WINDOW_END,
+    DATASET_WINDOW_START,
+    ReportingAnswer,
+    ReportingRequest,
+)
+from .routing import Domain, Route, RouteDecision
 
-__all__ = ["IncidentSummary", "SeverityCounts"]
+__all__ = [
+    "DATASET_WINDOW_END",
+    "DATASET_WINDOW_START",
+    "Domain",
+    "IncidentSummary",
+    "ReportingAnswer",
+    "ReportingRequest",
+    "Route",
+    "RouteDecision",
+    "SeverityCounts",
+]

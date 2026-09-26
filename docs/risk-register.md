@@ -28,6 +28,7 @@
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
 | R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Open |
+| R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Open |
 
 ---
 
@@ -84,6 +85,8 @@
 **Update 2026-09-25 (Sprint 1 boundary review):** Checkpoints: the skeleton hop (MCP tool → reporting agent → orchestrator over A2A, no LLM) working by 2026-10-02, or hold the scope conversation that day; an LLM-classified question answered end to end in docker-compose by 2026-10-07. Hours are logged per layer. Fallback: if the SDK is the friction, implement the small protocol surface actually used (the Agent Card endpoint plus `message/send`) directly on FastAPI/httpx. Collapsing to in-process calls would break ADR-001 and ADR-011; that is the documented scope conversation, not a silent workaround. Status stays Open.
 
 **Update 2026-09-25 (walking skeleton):** The skeleton checkpoint is met ahead of 2026-10-02: orchestrator → A2A → reporting agent → MCP → Postgres runs in docker-compose with no LLM, and the e2e test passes. SDK friction was low, and the fallback was not needed. The friction points were protobuf float coercion of A2A data parts; the `message/send` → `SendMessage` rename in A2A v1.0; and the MCP 2.x API changes (`FastMCP` → `MCPServer`, the SDK replacing the root log handler, and an allowed-hosts list needed on the Docker network). The second checkpoint, an LLM-classified question answered end to end in docker-compose by 2026-10-07, stands. Status stays Open.
+
+**Update 2026-09-26 (checkpoint 2):** Met on 2026-09-26, ahead of 2026-10-07. An LLM-routed, LLM-parsed question is answered end to end in docker-compose: all six checkpoint e2e assertions passed (routing to reporting, "last month" parsed to July 2026 per ADR-050, figures equal to independent SQL as `app_qa`, the trace id in all three services, the out-of-scope decline, and the sentiment "not available yet" answer). The sentiment assertion passed on a rerun after a provider 503 (R-15). The first run had failed on a configuration error, not on A2A: `gemini-3.7-flash` rejected thinking level `minimal` (ADR-049). Status stays Open until the Sprint 2 retro, which reviews this risk explicitly.
 
 ### R-07 — Synthetic generator produces a degenerate distribution
 **Description:** Random or careless generation could produce a sentiment mix that's not realistic, a forecast signal that isn't recoverable, or an incident rate that doesn't resemble a real business — quietly invalidating every downstream metric.
@@ -166,6 +169,16 @@
 **Likelihood / Impact:** Medium / Medium. **Status:** Open.
 **Mitigation:** The Sprint 4 reporting-slice deploy (ADR-045) runs `alembic upgrade head` and the grants integration suite against Cloud SQL, a sprint before the full migration.
 **Review trigger:** That deploy (2026-11-02 to 11-04).
+
+### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
+*Added 2026-09-26.*
+**Description:** The 2026-09-26 capture run got a free-tier "This model is currently experiencing high demand" 503 from `gemini-3.7-flash` on its second request. That model is now the orchestrator's (ADR-049), so it is the first hop of every request: when it is overloaded, nothing is answered, even questions a specialist could handle. Its free-tier limits (5 RPM, 20 RPD, ADR-029) compound this.
+**Likelihood / Impact:** Medium / High. **Status:** Mitigating.
+**Mitigation now:** `packages/llm` retries 5xx errors twice with short jittered backoff, then raises `LLMUnavailable`. The orchestrator turns that into a clear 503 rather than hanging (ADR-048).
+**Sprint 4 decision:** an orchestrator fallback to `gemini-3.5-flash-lite` on repeated 503s, and/or running eval jobs off-peak or on the paid key (ADR-041).
+**Review trigger:** The Sprint 4 slice deploy (ADR-045).
+
+**Update 2026-09-26 (orchestrator model):** The orchestrator moved off `gemini-3.7-flash` to `gemini-3.5-flash-lite` (ADR-049), after the seed set showed no accuracy advantage for 3.7 Flash (27/28 against Flash-Lite's 28/28) and 3.7 Flash returned three consecutive 503s during the checkpoint e2e. Flash-Lite had no 503s across 28 seed-set calls. Likelihood Medium → Low. The planned Sprint 4 fallback to Flash-Lite is likely unnecessary now, since the orchestrator already runs on it. Status: Mitigating → Open, because Flash-Lite can also return 503s and the bounded 5xx retry is the only mitigation in place.
 
 ---
 

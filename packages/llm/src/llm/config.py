@@ -37,6 +37,12 @@ DEFAULT_MAX_RETRY_WAIT_S = 30.0  # well inside ADR-034's 120 s
 DEFAULT_REQUEST_TIMEOUT_S = 30.0
 DEFAULT_TEMPERATURE = 0.0  # parsing and classification: least variance
 DEFAULT_THINKING_LEVEL = "minimal"  # as build_corpus.py; cheapest thinking setting
+#: Thinking level per role, because support differs by model: gemini-3.5-flash-lite
+#: accepts "minimal", but gemini-3.7-flash rejects it with a 400 INVALID_ARGUMENT
+#: ("Thinking level MINIMAL is not supported for this model", 2026-09-26). Every role
+#: runs on Flash-Lite today (ADR-049); a role moved to another model must check that
+#: model's supported levels. Override with LLM_THINKING_LEVEL_<ROLE>.
+ROLE_THINKING_LEVELS = {"orchestrator": "minimal", "specialist": "minimal", "qa": "minimal"}
 
 
 class Secret:
@@ -173,5 +179,7 @@ class LLMSettings:
             max_retry_wait_s=_float("LLM_MAX_RETRY_WAIT_S", DEFAULT_MAX_RETRY_WAIT_S),
             request_timeout_s=_float("LLM_REQUEST_TIMEOUT_S", DEFAULT_REQUEST_TIMEOUT_S),
             temperature=float(env("LLM_TEMPERATURE") or DEFAULT_TEMPERATURE),
-            thinking_level=(env("LLM_THINKING_LEVEL") or DEFAULT_THINKING_LEVEL).strip(),
+            thinking_level=(
+                env(f"LLM_THINKING_LEVEL_{role.upper()}") or ROLE_THINKING_LEVELS[role]
+            ).strip(),
         )
