@@ -33,9 +33,14 @@ def _ask(question: str, url: str) -> int:
         return 2
     body = response.json()
     if response.is_success:
+        route = body["route"]
         print(body["answer"])
-        print(json.dumps(body["figures"], indent=2))
-        print(f"task_id={body['task_id']} trace_id={body['trace_id']}")
+        print(f"route={route['route']} ({route['reason']}) prompt={body['prompt_version']}")
+        if body.get("reporting"):
+            print(json.dumps(body["reporting"], indent=2))
+        print(
+            f"outcome={body['outcome']} task_id={body.get('task_id')} trace_id={body['trace_id']}"
+        )
         return 0
     print(f"error {response.status_code}: {json.dumps(body, indent=2)}", file=sys.stderr)
     return 1

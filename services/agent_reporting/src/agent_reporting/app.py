@@ -10,16 +10,20 @@ from a2a.server.routes import (
 )
 from a2a.server.tasks import InMemoryTaskStore
 from fastapi import FastAPI
+from llm import LLMClient
 
 from .card import build_agent_card
 from .config import Settings
 from .executor import ReportingExecutor
+from .parsing import ParsingLLM
 
 
-def create_app(settings: Settings) -> FastAPI:
+def create_app(settings: Settings, llm: ParsingLLM | None = None) -> FastAPI:
     card = build_agent_card(settings.public_url)
     handler = DefaultRequestHandler(
-        agent_executor=ReportingExecutor(settings),
+        agent_executor=ReportingExecutor(
+            settings, llm if llm is not None else LLMClient.from_env("specialist")
+        ),
         # In-memory is enough: tasks are single-shot and finish inside one call
         # (ADR-031), so no task outlives its request or needs another replica.
         task_store=InMemoryTaskStore(),

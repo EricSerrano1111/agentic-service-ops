@@ -10,14 +10,14 @@ input_per_m = 0.30
 output_per_m = 2.50
 source = "https://ai.google.dev/gemini-api/docs/pricing"
 as_of = "2026-09-26"
-note = "Default runtime model for every agent (architecture.md §9, ADR-029). Free of charge on the free tier."
+note = "Runtime model for the specialists and QA (ADR-049). Free of charge on the free tier (15 RPM, 500 RPD)."
 
 [models."gemini-3.7-flash"]
 input_per_m = 0.75
 output_per_m = 3.75
 source = "https://ai.google.dev/gemini-api/docs/pricing"
 as_of = "2026-09-26"
-note = "Rises to 1.50 input / 7.50 output from 2027-01-01, per the same page. Free tier: 20 RPD (ADR-029)."
+note = "Orchestrator model (ADR-049). Rises to 1.50 input / 7.50 output from 2027-01-01, per the same page. Free tier: 5 RPM, 20 RPD (ADR-029)."
 
 [models."gemini-3.1-pro-preview"]
 input_per_m = 2.00

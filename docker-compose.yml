@@ -11,8 +11,10 @@
 #
 # Credentials: every value comes from .env by interpolation; nothing secret is written
 # here. No service uses env_file, so each container sees only the variables listed
-# under it: only mcp_incidents gets database credentials, and only app_reporting's
-# (ADR-023). tests/unit/test_compose_isolation.py asserts this.
+# under it. Only mcp_incidents gets database credentials, and only app_reporting's
+# (ADR-023). Only the orchestrator and agent_reporting get the Gemini key, the free one:
+# LLM_MODE is pinned to free and the paid key is never passed (ADR-048).
+# tests/unit/test_compose_isolation.py asserts all of this.
 #
 # Ports: only the orchestrator publishes a host port among the application services.
 # Postgres keeps its host port so migrations and the loader can run from the host.
@@ -73,6 +75,11 @@ services:
     environment:
       MCP_INCIDENTS_URL: http://mcp_incidents:8101/mcp
       MCP_TIMEOUT_S: ${MCP_TIMEOUT_S:-15}
+      PARSE_TIMEOUT_S: ${PARSE_TIMEOUT_S:-30}
+      REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:?set GOOGLE_AI_API_KEY in .env}
+      GEMINI_MODEL_SPECIALIST: ${GEMINI_MODEL_SPECIALIST:?set GEMINI_MODEL_SPECIALIST in .env}
+      LLM_MODE: free
       AGENT_REPORTING_PUBLIC_URL: http://agent_reporting:8001/
       AGENT_REPORTING_PORT: "8001"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -94,7 +101,11 @@ services:
       dockerfile: services/orchestrator/Dockerfile
     environment:
       AGENT_REPORTING_URL: http://agent_reporting:8001
-      A2A_TIMEOUT_S: ${A2A_TIMEOUT_S:-30}
+      ROUTE_TIMEOUT_S: ${ROUTE_TIMEOUT_S:-30}
+      A2A_TIMEOUT_S: ${A2A_TIMEOUT_S:-60}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:?set GOOGLE_AI_API_KEY in .env}
+      GEMINI_MODEL_ORCHESTRATOR: ${GEMINI_MODEL_ORCHESTRATOR:?set GEMINI_MODEL_ORCHESTRATOR in .env}
+      LLM_MODE: free
       ORCHESTRATOR_PORT: "8000"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:

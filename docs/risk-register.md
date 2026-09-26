@@ -28,6 +28,7 @@
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
 | R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Open |
+| R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Medium | High | Mitigating |
 
 ---
 
@@ -166,6 +167,14 @@
 **Likelihood / Impact:** Medium / Medium. **Status:** Open.
 **Mitigation:** The Sprint 4 reporting-slice deploy (ADR-045) runs `alembic upgrade head` and the grants integration suite against Cloud SQL, a sprint before the full migration.
 **Review trigger:** That deploy (2026-11-02 to 11-04).
+
+### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
+*Added 2026-09-26.*
+**Description:** The 2026-09-26 capture run got a free-tier "This model is currently experiencing high demand" 503 from `gemini-3.7-flash` on its second request. That model is now the orchestrator's (ADR-049), so it is the first hop of every request: when it is overloaded, nothing is answered, even questions a specialist could handle. Its free-tier limits (5 RPM, 20 RPD, ADR-029) compound this.
+**Likelihood / Impact:** Medium / High. **Status:** Mitigating.
+**Mitigation now:** `packages/llm` retries 5xx errors twice with short jittered backoff, then raises `LLMUnavailable`. The orchestrator turns that into a clear 503 rather than hanging (ADR-048).
+**Sprint 4 decision:** an orchestrator fallback to `gemini-3.5-flash-lite` on repeated 503s, and/or running eval jobs off-peak or on the paid key (ADR-041).
+**Review trigger:** The Sprint 4 slice deploy (ADR-045).
 
 ---
 

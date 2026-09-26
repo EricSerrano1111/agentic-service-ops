@@ -11,12 +11,13 @@ import datetime as dt
 import os
 from dataclasses import dataclass
 
-# The history window of the loaded dataset (data/generator/parameters.py, Window): 156
-# weeks from Monday 2023-09-04, ending Monday 2026-08-31 00:00 UTC. The last day inside
-# it is 2026-08-30. `app_reporting` cannot read `generation_parameters`, so the window
-# is configuration; a unit test holds these defaults to the generator's parameters.
-DEFAULT_WINDOW_START = dt.date(2023, 9, 4)
-DEFAULT_WINDOW_END = dt.date(2026, 8, 30)
+from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
+
+# The dataset window lives in the shared contract (schemas.reporting): the reporting
+# agent's as-of date defaults to its end (ADR-050). `app_reporting` cannot read
+# `generation_parameters`, so the window is configuration, not a query.
+DEFAULT_WINDOW_START = DATASET_WINDOW_START
+DEFAULT_WINDOW_END = DATASET_WINDOW_END
 
 
 def _required(name: str) -> str:

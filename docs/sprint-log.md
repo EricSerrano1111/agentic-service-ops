@@ -138,8 +138,11 @@ from the course materials that no charter is due.
 - [x] `packages/llm` (budget 1.5 days): 429 handling lifted from `build_corpus.py`, separating per-minute (back off, retry after the stated delay) from daily quota (stop cleanly, typed error); free key default; paid only with an explicit flag, its own key and a required request cap; token metering on every call, logged as list-price equivalent; one provider; done = offline tests pass against a fake transport
   Stop rule: budget 1.5 days. Done = the offline tests below pass. If the SDK's error shapes can't distinguish per-minute from daily quota, stop and report rather than guess.
   *Done 2026-09-26 on `feat/llm-package`, inside the budget; stop rule not hit: the SDK's structured `quotaId` separates daily from per-minute. 37 offline tests pass (ADR-048); live free-tier test awaits a local run.*
-- [ ] Orchestrator classification (reporting, out-of-scope, other domain not yet available, multi-domain per ADR-032), with 20–30 seeded labelled intents as test fixtures
+- [x] Orchestrator classification (reporting, out-of-scope, other domain not yet available, multi-domain per ADR-032), with 20–30 seeded labelled intents as test fixtures
+  Stop rule (with the parsing item below): budget 2 days. At most two revisions of each prompt against the seed set; accuracy tuning belongs to the Sprint 3 routing eval. If the checkpoint e2e test isn't passing by 2026-10-07, stop and report.
+  *Done 2026-09-26 on `feat/routing-and-parsing`: one routing call on `gemini-3.7-flash` (ADR-049) into `RouteDecision`, prompt `route_v1`, all five routes and error mappings unit-tested; 28-question seed set in `evals/routing/`, live run pending.*
 - [ ] Reporting agent question parsing per ADR-046; two or three reporting tools covering the FR-06 examples; template-rendered answers; e2e test against independent SQL
+  *Parsing done 2026-09-26 on `feat/routing-and-parsing` (ADR-046, ADR-050: as-of date, dateless default), template answers, checkpoint e2e written (live run pending). Left open: the second and third reporting tools for the FR-06 examples; the one tool is still incidents by date range.*
 - [ ] Portable Alembic ruff hook (Alembic `module` runner if the installed version supports it); verified locally and in CI
 - [ ] Draft `03-planning-management.md` 2026-10-08 to 10-11, after checking its rubric
 
@@ -245,6 +248,7 @@ locally. The paid key never goes into a cloud environment.
   - [ ] Agent Card cached with a TTL (currently fetched on every request).
   - [ ] Trace id in web-server access logs.
   - [ ] A readiness probe alongside `/healthz`.
+- [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 
 **Shipped:**
 *(fill in at sprint end)*

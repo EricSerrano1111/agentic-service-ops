@@ -35,9 +35,9 @@ jobs:
           uv sync --locked --all-packages --all-extras --python 3.12
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - name: ruff check
-        run: ruff check packages data tests services scripts
+        run: ruff check packages data tests services scripts evals
       - name: ruff format --check
-        run: ruff format --check packages data tests services scripts
+        run: ruff format --check packages data tests services scripts evals
 
   unit:
     runs-on: ubuntu-latest

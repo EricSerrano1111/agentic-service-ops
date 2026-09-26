@@ -14,7 +14,9 @@ Policy (ADR-048):
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
 import random
 import time
 from dataclasses import dataclass, field
@@ -37,6 +39,7 @@ from .errors import (
     LLMRequestError,
     LLMUnavailable,
 )
+from .redact import redact
 from .transport import GeminiTransport, Transport
 
 log = logging.getLogger("llm")
@@ -53,6 +56,34 @@ BACKOFF_BASE_S = 1.0
 BACKOFF_CAP_S = 4.0
 #: Output tokens assumed when estimating a call's cost before sending it (paid spend cap).
 EXPECTED_OUTPUT_TOKENS = 1_000
+
+# Passive 429 capture (ADR-048 follow-up): the first 429 a process receives is logged
+# once, body and all, redacted, so real per-minute and daily shapes get recorded
+# without a deliberate capture run. Once per process, not per client.
+_first_429_logged = False
+
+
+def _capture_first_429(
+    exc: BaseException, model: str, secrets: tuple[str, ...], trace_id: str | None
+) -> None:
+    global _first_429_logged
+    if _first_429_logged:
+        return
+    _first_429_logged = True
+    body = getattr(exc, "details", None)
+    extra = tuple(s for s in (os.environ.get("GCP_PROJECT_ID", "").strip(),) if s)
+    text = redact(json.dumps(body if body is not None else str(exc)), secrets + extra)
+    with bind_trace_id(trace_id):
+        log.warning(
+            "first 429 body (redacted)",
+            extra={"model": model, "error_body": json.loads(text), "capture": "first_429"},
+        )
+
+
+def _reset_429_capture() -> None:
+    """Tests only: allow the once-per-process capture to fire again."""
+    global _first_429_logged
+    _first_429_logged = False
 
 
 @dataclass(frozen=True)
@@ -177,6 +208,8 @@ class LLMClient:
                     )
                 except Exception as exc:
                     c = classify(exc)
+                    if c.code == 429:
+                        _capture_first_429(exc, model, self._secrets, trace_id)
                     detail = self._scrub(c.message)[:300]
                     if c.kind is Kind.RATE_LIMIT:
                         delay = c.retry_delay_s

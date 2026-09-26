@@ -53,6 +53,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "mcp" },
     { name = "service-ops-common" },
+    { name = "service-ops-llm" },
     { name = "service-ops-schemas" },
     { name = "uvicorn" },
 ]
@@ -63,6 +64,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.2" },
     { name = "mcp", specifier = "==2.2.0" },
     { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-llm", editable = "packages/llm" },
     { name = "service-ops-schemas", editable = "packages/schemas" },
     { name = "uvicorn", specifier = ">=0.31" },
 ]
@@ -1288,6 +1290,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "service-ops-common" },
+    { name = "service-ops-llm" },
     { name = "service-ops-schemas" },
     { name = "uvicorn" },
 ]
@@ -1298,6 +1301,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-llm", editable = "packages/llm" },
     { name = "service-ops-schemas", editable = "packages/schemas" },
     { name = "uvicorn", specifier = ">=0.31" },
 ]
