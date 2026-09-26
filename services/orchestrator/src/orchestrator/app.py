@@ -25,6 +25,7 @@ from llm import (
     LLMError,
     LLMOutputInvalid,
     LLMRateLimited,
+    LLMRequestError,
     LLMUnavailable,
 )
 from pydantic import BaseModel, Field
@@ -112,6 +113,14 @@ def _llm_error(exc: LLMError, trace_id: str) -> JSONResponse:
             "The language model is temporarily unavailable. Please try again shortly.",
             trace_id,
         )
+    if isinstance(exc, LLMRequestError):
+        # Google rejected our request as malformed: a bug on our side, not an outage.
+        return _error(
+            500,
+            "internal_error",
+            "Something went wrong on our side while reading the question.",
+            trace_id,
+        )
     # Auth, budget, request cap, config: an operator problem, not the caller's.
     return _error(503, "model_unavailable", "The service can't answer right now.", trace_id)
 
@@ -124,6 +133,7 @@ _AGENT_ERRORS: dict[str, tuple[int, str]] = {
     "rate_limited": (429, "rate_limited"),
     "daily_quota_exhausted": (503, "daily_quota_exhausted"),
     "model_unavailable": (503, "model_unavailable"),
+    "internal_error": (500, "internal_error"),
 }
 
 

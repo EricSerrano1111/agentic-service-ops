@@ -29,7 +29,14 @@ from agent_reporting.render import render_answer, render_incident_summary
 from common import JsonFormatter
 from fastapi.testclient import TestClient
 from google.protobuf.json_format import MessageToDict
-from llm import LLMDailyQuotaExhausted, LLMOutputInvalid, LLMRateLimited, LLMResult, LLMUnavailable
+from llm import (
+    LLMDailyQuotaExhausted,
+    LLMOutputInvalid,
+    LLMRateLimited,
+    LLMRequestError,
+    LLMResult,
+    LLMUnavailable,
+)
 from schemas import IncidentSummary, ReportingAnswer, ReportingRequest, SeverityCounts
 
 BASE = "http://agent.test"
@@ -290,6 +297,7 @@ async def test_invalid_parse_output_fails_and_never_guesses_a_range(mcp_calls):
         (LLMRateLimited("x"), "rate_limited"),
         (LLMDailyQuotaExhausted("gemini-3.5-flash-lite"), "daily_quota_exhausted"),
         (LLMUnavailable("x"), "model_unavailable"),
+        (LLMRequestError("gemini-3.5-flash-lite: error 400: bad argument"), "internal_error"),
     ],
 )
 async def test_llm_failures_end_in_coded_failed_task(mcp_calls, error, code):

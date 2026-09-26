@@ -52,6 +52,7 @@ from llm import (
     LLMOutputInvalid,
     LLMRateLimited,
     LLMRequestCapReached,
+    LLMRequestError,
     LLMSettings,
     LLMUnavailable,
     Secret,
@@ -666,3 +667,41 @@ def test_prompt_render_rejects_missing_or_unknown_placeholders(tmp_path):
         prompt.render(a="x")
     with pytest.raises(KeyError, match="no placeholder"):
         prompt.render(a="x", b="y", c="z")
+
+
+# --------------------------------------------------------------------------- request rejections
+
+
+async def test_request_rejection_logs_status_and_googles_message(log_lines):
+    """The 2026-09-26 failure: a 400 whose reason only Google's message explains."""
+    message = "Thinking level MINIMAL is not supported for this model. " + "x" * 800 + KEY
+    err = genai_errors.ClientError(400, _body(400, "INVALID_ARGUMENT", message))
+    c, transport, _ = client(err, Response("never"))
+    with pytest.raises(LLMRequestError, match="error 400"):
+        await c.generate("x", trace_id="t-rej")
+    assert transport.calls == 1  # not retried
+    [line] = [x for x in log_lines(everything=True) if x["msg"] == "llm request rejected"]
+    assert line["level"] == "WARNING" and line["trace_id"] == "t-rej"
+    assert line["http_status"] == 400
+    assert line["error_message"].startswith("Thinking level MINIMAL is not supported")
+    assert len(line["error_message"]) <= 500  # truncated
+    assert KEY not in json.dumps(line)
+
+
+def test_thinking_level_is_per_role(monkeypatch):
+    for name, value in {
+        "GOOGLE_AI_API_KEY": KEY,
+        "GEMINI_MODEL_ORCHESTRATOR": "gemini-3.7-flash",
+        "GEMINI_MODEL_SPECIALIST": MODEL,
+        "GEMINI_MODEL_QA": MODEL,
+    }.items():
+        monkeypatch.setenv(name, value)
+    for name in ("LLM_MODE", "LLM_THINKING_LEVEL_ORCHESTRATOR", "LLM_THINKING_LEVEL_SPECIALIST"):
+        monkeypatch.delenv(name, raising=False)
+    # gemini-3.7-flash rejects "minimal"; the orchestrator's default must not be it.
+    assert LLMSettings.from_env("orchestrator").thinking_level == "low"
+    assert LLMSettings.from_env("specialist").thinking_level == "minimal"
+    assert LLMSettings.from_env("qa").thinking_level == "minimal"
+    monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", "medium")
+    assert LLMSettings.from_env("orchestrator").thinking_level == "medium"
+    assert LLMSettings.from_env("specialist").thinking_level == "minimal"  # unaffected

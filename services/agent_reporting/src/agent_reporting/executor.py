@@ -17,7 +17,13 @@ from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
 from common import TRACE_ID_KEY, bind_trace_id
 from google.protobuf.json_format import MessageToDict
-from llm import LLMDailyQuotaExhausted, LLMError, LLMOutputInvalid, LLMRateLimited
+from llm import (
+    LLMDailyQuotaExhausted,
+    LLMError,
+    LLMOutputInvalid,
+    LLMRateLimited,
+    LLMRequestError,
+)
 from schemas import ReportingAnswer
 
 from .config import Settings
@@ -58,6 +64,9 @@ def _llm_failure(exc: LLMError) -> tuple[str, str]:
             "daily_quota_exhausted",
             "The language model's daily quota is used up. It resets at midnight Pacific time.",
         )
+    if isinstance(exc, LLMRequestError):
+        # Google rejected the request as malformed: our bug, not an outage.
+        return "internal_error", "Something went wrong on our side while reading the question."
     return "model_unavailable", "The language model is temporarily unavailable. Please try again."
 
 

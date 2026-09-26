@@ -23,6 +23,7 @@ from llm import (
     LLMDailyQuotaExhausted,
     LLMOutputInvalid,
     LLMRateLimited,
+    LLMRequestError,
     LLMResult,
     LLMUnavailable,
 )
@@ -200,6 +201,11 @@ def test_route_prompt_renders_the_question():
         (LLMDailyQuotaExhausted("gemini-3.7-flash"), 503, "daily_quota_exhausted"),
         (LLMUnavailable("x"), 503, "model_unavailable"),
         (
+            LLMRequestError("gemini-3.7-flash: error 400: Thinking level MINIMAL is not supported"),
+            500,
+            "internal_error",
+        ),
+        (
             LLMAuthError("gemini-3.7-flash (free key, GOOGLE_AI_API_KEY): auth error"),
             503,
             "model_unavailable",
@@ -245,6 +251,7 @@ def test_routing_timeout_returns_504_without_hanging(monkeypatch):
         ("rate_limited", 429, "rate_limited"),
         ("daily_quota_exhausted", 503, "daily_quota_exhausted"),
         ("model_unavailable", 503, "model_unavailable"),
+        ("internal_error", 500, "internal_error"),
         ("tool_error", 502, "agent_task_failed"),
         (None, 502, "agent_task_failed"),
     ],
@@ -377,3 +384,13 @@ def test_cli_prints_answer_route_and_figures(monkeypatch, capsys):
 
 def test_cli_waits_longer_than_the_ceiling():
     assert cli.CLI_TIMEOUT_S > 120  # ADR-034
+
+
+def test_request_rejection_is_an_internal_error_not_an_outage(monkeypatch):
+    """A 400 from Google means our request is wrong: 500, never 503 (2026-09-26)."""
+    error = LLMRequestError("gemini-3.7-flash: error 400: Thinking level MINIMAL ...")
+    response = _ask(monkeypatch, FakeLLM(error=error))
+    assert response.status_code == 500
+    body = response.json()
+    assert body["error"] == "internal_error"
+    assert "Thinking" not in body["detail"] and "400" not in body["detail"]

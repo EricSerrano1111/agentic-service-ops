@@ -242,6 +242,18 @@ class LLMClient:
                             f"{model} ({self.settings.mode} key, {self.settings.key_var}): "
                             f"{c.kind.value} error {c.code}: {detail}"
                         ) from None
+                    # Google rejected the request itself (bad argument, unknown model, an
+                    # unsupported setting). Log why: the metering line alone only says
+                    # "LLMRequestError" (the 2026-09-26 thinking-level failure).
+                    with bind_trace_id(trace_id):
+                        log.warning(
+                            "llm request rejected",
+                            extra={
+                                "model": model,
+                                "http_status": c.code,
+                                "error_message": redact(c.message, self._secrets)[:500],
+                            },
+                        )
                     raise LLMRequestError(f"{model}: error {c.code}: {detail}") from None
 
                 inp, out = _usage(response)
