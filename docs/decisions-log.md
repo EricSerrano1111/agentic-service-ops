@@ -59,6 +59,7 @@
 | 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part |
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
+| 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
 
 ---
 
@@ -1209,3 +1210,80 @@ That is exactly the surface the R-06 fallback would have hand-rolled.
   (`uv sync --locked --package <service>`) install from it, so CI, local and images get
   identical versions. `--locked` fails the build if the lock is stale against any
   `pyproject.toml`, so a dependency change must come with `uv lock` in the same commit.
+
+### ADR-048 — LLM client policy: free by default, per-minute vs daily 429s, list-price metering
+*Date: 2026-09-26. Supersedes nothing.*
+
+**Decision:** Every agent calls models through one client, `packages/llm`
+(`LLMClient.generate(prompt, *, model=None, response_model=None, trace_id)`), with
+these policies:
+
+1. **Free by default; paid only by explicit opt-in with caps.** The free key
+   (`GOOGLE_AI_API_KEY`, the name `build_corpus.py` uses) is the default. Paid mode
+   needs `LLM_MODE=paid`, the separate `GOOGLE_AI_API_KEY_PAID`, a request cap
+   (`LLM_MAX_REQUESTS`) and a spend cap (`LLM_MAX_SPEND_USD`). The client refuses to
+   start if any is missing, and it never falls back to the other key. The spend cap is a
+   per-process list-price total. A call whose estimated cost would cross it raises
+   `LLMBudgetExceeded` before it is sent. A per-process request cap, counting retries,
+   applies in both modes; the free-mode default is 1,000.
+2. **Per-minute and daily quota 429s are told apart.** The decision reads the
+   `quotaId` in the error's `google.rpc.QuotaFailure` detail (`...PerDay...` means
+   daily), from the SDK's structured `APIError.details`. A per-minute 429 waits the
+   `RetryInfo.retryDelay` the error states, or 30 s if it states none (as
+   `build_corpus.py` did). It then retries, within `LLM_MAX_RETRY_WAIT_S` of total
+   waiting (default 30 s, well inside ADR-034's 120 s), and raises `LLMRateLimited`
+   past that. A daily 429 raises `LLMDailyQuotaExhausted`, naming the model, with no
+   retry. Billing and permission errors raise `LLMAuthError` with no retry. Transient
+   5xx errors and timeouts get two short jittered retries, then raise `LLMUnavailable`.
+   Every error inherits from `LLMError`.
+3. **Metering at list-price equivalent.** Every call logs one JSON line through
+   `packages/common`: trace id, model, mode, tokens in and out (thinking tokens count
+   as output), cost, latency, attempts and outcome. Costs come from `llm/prices.toml`,
+   where each entry records its source URL and an `as_of` date, or
+   `source = "UNCONFIRMED"`. Free-tier calls are costed too, and `mode` says they were
+   not billed. The client keeps running per-process totals for the Sprint 4 eval
+   pricing.
+4. **Structured output is validated, with no repair loop.** With a `response_model`,
+   the request asks for JSON matching the model's schema, and the reply is validated
+   with Pydantic. On failure the client raises `LLMOutputInvalid` carrying the raw
+   text. It does not retry or ask the model to repair its output.
+5. **A single provider behind a narrow interface.** Gemini, through `google-genai`
+   (pinned `==2.25.0`, the version `build_corpus.py` and the corpus provenance use).
+   The transport is the only code that touches the SDK. There is no provider
+   abstraction beyond it and no second adapter.
+
+**Context:** Sprint 2 needs LLM calls for classification and question parsing
+(ADR-046), and every later agent will make them too. `build_corpus.py` had already met
+the free tier's failure modes and handled them: per-minute 429s, the daily cap, 5xx
+bursts on Gemma, and billing stops on the paid project. Its policy is lifted here
+rather than reinvented. It detected the daily quota by matching the quota identifier
+in the error's string. That string is rendered from the structured error body, so this
+client reads the same identifier from the structured field. Text matching remains only
+as a fallback for a body without that detail. No real 429 body was ever logged in this
+repo: the corpus build's local caps always stopped it first. So the test fixtures take
+the quota identifiers, billing messages and 5xx codes from `build_corpus.py`'s handling
+and logs. The `QuotaFailure` and `RetryInfo` shapes are Google's standard error details
+and were not observed here.
+
+**Alternatives considered:**
+- *Retry every 429 with backoff, as the SDK's own retry option would* (rejected). A
+  daily 429 would be retried for up to the 120 s ceiling and then fail anyway, burning
+  the request budget. A daily quota clears at Pacific midnight, not in seconds.
+- *A provider abstraction with a second adapter (e.g. Anthropic)* (rejected for now).
+  `architecture.md` §9 asks for model-agnosticism. A narrow transport seam gives that
+  without a second adapter nothing exercises.
+- *A repair loop that asks the model to fix invalid JSON* (rejected). It hides parsing
+  failures that the Sprint 5 evals should count, and it adds calls that the budget and
+  the 120 s ceiling must absorb.
+- *Enforce the spend cap in free mode too* (rejected). Free calls cost nothing, and
+  the request cap already bounds a runaway loop.
+
+**Consequences:**
+- A new dependency, `service-ops-llm`, in any service that calls a model. The key is
+  held in a `Secret` and scrubbed from error messages, and a unit test proves it never
+  reaches a log line, an exception, a traceback or a `repr`.
+- The retry policy lives in one place. The SDK's own retries are off (`attempts=1`),
+  so every wait counts once against `LLM_MAX_RETRY_WAIT_S`.
+- The first real 429 should be captured and its body checked against the fixtures.
+  The `RetryInfo` and `QuotaFailure` shapes are the one part not observed here.
+- `generate` is async, since every caller runs inside an async A2A server.

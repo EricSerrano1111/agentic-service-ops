@@ -38,6 +38,9 @@ before proceeding — name the ADR. If a decision genuinely needs to change,
 append a new entry to `docs/decisions-log.md` marked "Supersedes ADR-XXX."
 Never edit a past entry in place.
 
+Dated entries in the risk register, sprint log and decisions log are append-only. Later
+sweeps and renames leave them unchanged; record changes as a new dated entry.
+
 If you complete or materially change something covered in `docs/sprint-log.md`
 for the current sprint, update it directly rather than waiting to be asked.
 
@@ -72,6 +75,7 @@ uv lock                                           # after changing any dependenc
 docker compose up -d --build                      # walking skeleton: postgres, mcp_incidents, agent_reporting, orchestrator
 .venv\Scripts\python -m orchestrator ask "How many incidents last quarter?"
 $env:RUN_E2E=1; .venv\Scripts\python -m pytest tests/e2e -q -rs   # e2e; needs the stack up and loaded
+$env:RUN_LIVE_LLM=1; .venv\Scripts\python -m pytest tests/live -q -rs   # one real free-tier Gemini call; never in CI
 
 docker compose up -d postgres                     # needs Docker Desktop running
 .venv\Scripts\python -m alembic upgrade head      # schema, then roles + grants
