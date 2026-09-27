@@ -9,6 +9,7 @@ validates that data part against.
 from __future__ import annotations
 
 import datetime as dt
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -33,6 +34,7 @@ class IncidentSummary(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    metric: Literal["incident_count"] = "incident_count"
     start: dt.date = Field(description="First day of the range, inclusive (UTC).")
     end: dt.date = Field(description="Last day of the range, inclusive (UTC).")
     incident_count: int = Field(ge=0, description="Incidents with reported_at in the range.")

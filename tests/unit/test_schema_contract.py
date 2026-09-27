@@ -26,6 +26,7 @@ HARD_CASE_REVISION = "4c6589542b27"
 HARD_CASE_PARENT = "fae4b8c9814c"
 #: ADR-038: param_group gains world and feedback (CHECK dropped and recreated).
 PARAM_GROUP_REVISION = "9135d8de9f27"
+REGION_REVISION = "ab53ceceeffe"  # ADR-051: locations.region
 
 EXPECTED_TABLES = {
     # §2 reference
@@ -198,6 +199,7 @@ def offline_sql(monkeypatch: pytest.MonkeyPatch) -> str:
     command.upgrade(config, INITIAL_REVISION, sql=True)
     command.upgrade(config, f"{HARD_CASE_PARENT}:{HARD_CASE_REVISION}", sql=True)
     command.upgrade(config, f"{HARD_CASE_REVISION}:{PARAM_GROUP_REVISION}", sql=True)
+    command.upgrade(config, f"{PARAM_GROUP_REVISION}:{REGION_REVISION}", sql=True)
     return buffer.getvalue()
 
 
@@ -233,9 +235,30 @@ def test_hard_case_type_values() -> None:
 
 
 def test_vocabulary_count() -> None:
-    """§5 lists 22 controlled vocabularies (ADR-037 added `HardCaseType`)."""
-    assert len(m.ALL_VOCABULARIES) == 22
-    assert len(set(m.ALL_VOCABULARIES)) == 22
+    """§5 lists 23 controlled vocabularies (ADR-037 added `HardCaseType`, ADR-051 `Region`)."""
+    assert len(m.ALL_VOCABULARIES) == 23
+    assert len(set(m.ALL_VOCABULARIES)) == 23
+
+
+def test_locations_region_column_and_check() -> None:
+    """ADR-051: the site's region, restricted to the four names; nullable only because
+    it was added to a loaded table (the generator fills every row)."""
+    column = m.metadata.tables["locations"].columns["region"]
+    assert column.nullable
+    checks = {c.name for c in m.metadata.tables["locations"].constraints}
+    assert "ck_locations_region" in checks
+    assert m.values(m.Region) == ("northeast", "southeast", "central", "west")
+
+
+def test_region_names_match_the_generator_mapping() -> None:
+    """The mapping lives once, in parameters.py; the vocabulary names only its keys."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "data" / "generator"))
+    import parameters as prm
+
+    assert set(prm.PARAMS.regions.states.value) == set(m.values(m.Region))
 
 
 def test_sentiment_labels_hard_case_type() -> None:

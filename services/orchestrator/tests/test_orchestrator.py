@@ -37,12 +37,18 @@ from orchestrator.routing import load_route_prompt
 from schemas import RouteDecision
 
 ANSWER = {
-    "request": {"start": "2026-07-01", "end": "2026-07-31"},
+    "request": {
+        "metric": "incident_count",
+        "group_by": None,
+        "start": "2026-07-01",
+        "end": "2026-07-31",
+    },
     "start": "2026-07-01",
     "end": "2026-07-31",
     "range_assumed": False,
     "as_of": "2026-08-30",
     "figures": {
+        "metric": "incident_count",
         "start": "2026-07-01",
         "end": "2026-07-31",
         "incident_count": 172,
@@ -394,3 +400,72 @@ def test_request_rejection_is_an_internal_error_not_an_outage(monkeypatch):
     body = response.json()
     assert body["error"] == "internal_error"
     assert "Thinking" not in body["detail"] and "400" not in body["detail"]
+
+
+# --------------------------------------------------------------------------- metrics (FR-06)
+
+SLA_BY_REGION = {
+    "request": {
+        "metric": "sla_compliance",
+        "group_by": "region",
+        "start": "2026-07-01",
+        "end": "2026-07-31",
+    },
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "range_assumed": False,
+    "as_of": "2026-08-30",
+    "figures": {
+        "metric": "sla_compliance",
+        "start": "2026-07-01",
+        "end": "2026-07-31",
+        "group_by": "region",
+        "numerator": 461,
+        "denominator": 508,
+        "rate": "0.9075",
+        "groups": [
+            {
+                "group": "west",
+                "group_id": None,
+                "numerator": 82,
+                "denominator": 86,
+                "rate": "0.9535",
+            },
+            {
+                "group": "northeast",
+                "group_id": None,
+                "numerator": 141,
+                "denominator": 160,
+                "rate": "0.8813",
+            },
+        ],
+        "group_count": 2,
+        "truncated": False,
+    },
+}
+
+
+def test_grouped_metric_answer_validates_with_ints_and_string_rates():
+    task = _task(parts=[new_text_part("As of 2026-08-30: SLA ..."), new_data_part(SLA_BY_REGION)])
+    _, answer = extract_answer(task)
+    dumped = answer.model_dump(mode="json")
+    assert dumped["figures"]["groups"][0] == SLA_BY_REGION["figures"]["groups"][0]
+    assert isinstance(dumped["figures"]["numerator"], int)  # 461.0 on the wire, 461 here
+    assert dumped["figures"]["rate"] == "0.9075"  # a Decimal string, never a float
+
+
+def test_metric_answer_with_a_float_rate_is_rejected():
+    bad = json.loads(json.dumps(SLA_BY_REGION))
+    bad["figures"]["rate"] = 0.9075
+    with pytest.raises(TaskFailed, match="validation"):
+        extract_answer(_task(parts=[new_text_part("x"), new_data_part(bad)]))
+
+
+def test_not_supported_metric_is_a_normal_not_available_answer(monkeypatch):
+    text = "That metric isn't supported yet. I can report incident counts, ..."
+    failed = Sent(lambda: _task(TaskState.TASK_STATE_FAILED, reason=text, code="not_supported"))
+    response = _ask(monkeypatch, FakeLLM(decision("reporting")), failed)
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["outcome"], body["answer"], body["task_id"]) == ("not_available", text, "task-1")
+    assert body["reporting"] is None

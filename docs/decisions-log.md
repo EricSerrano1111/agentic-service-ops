@@ -62,6 +62,7 @@
 | 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
 | 049 | Per-role runtime models and thinking levels; the orchestrator stays on `gemini-3.5-flash-lite` (seed set: 28/28 vs 3.7 Flash 27/28) | Accepted |
 | 050 | Reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer | Accepted |
+| 051 | `locations.region`: the customer site's region, stored, written by the generator from the one state-to-region mapping | Accepted |
 
 ---
 
@@ -1420,3 +1421,56 @@ answers reproducible, which the Sprint 4 QA re-check and the Sprint 5 evals need
   change would be a new ADR.
 - The walking-skeleton checkpoint question, "How many incidents were reported last
   month?", resolves to July 2026, not August.
+
+### ADR-051 — `locations.region`: the customer site's region, stored
+*Date: 2026-09-26. Supersedes nothing. Schema change.*
+
+**Decision:** `locations` gains `region`, the customer site's region, where the work
+happened. It has a CHECK constraint on the four values `northeast`, `southeast`,
+`central` and `west` (a new vocabulary, `Region`, the 23rd in §5). The value is the
+region whose state list in `data/generator/parameters.py` (`Regions.states`) contains
+the site's `state`. That mapping is the only copy of it anywhere.
+
+**How it is filled: the generator emits it.** The generator already draws each site's
+region before its state, so it writes that region onto the row. It adds no random draw,
+so nothing else in the dataset changes. The migration (`ab53ceceeffe`) only adds the
+column and the CHECK. It cannot fill existing rows. A literal state list in the
+migration would be a second copy of the mapping. Reading `generation_parameters` would
+make the migration's result depend on live data, which ADR-027 forbids for frozen
+migrations. So the column is nullable at the database level: it was added to an
+already-loaded table and nothing in the migration can fill it. Completeness is enforced
+twice instead. The generator's invariants refuse to load a location with a missing or
+wrong region, and `validate.py` check A23 verifies every loaded location against the
+recorded mapping. A database loaded before this migration needs `load.py` rerun.
+
+**Context:** FR-06 lists region as a reporting dimension, and the first SLA-by-region
+question found no region stored for a site. `locations` held only `state`, and the one
+stored region, `technicians.home_region`, is where a technician is based, not where the
+work happened. The site mapping existed only in the generator's parameters, which
+`app_reporting` cannot read. Any region grouping would have rested on an unrecorded
+mapping, the agent-against-QA disagreement data dictionary §6 exists to prevent. Raised
+under the FR-06 stop rule, decided by the owner.
+
+**Evidence nothing else changed:** the generated dataset's canonical SHA-256 went from
+`4a96210afe63692671ac4ea8814b677efa0a8e674a19a63d64d3804973e99221` to
+`429c49ee9ad268172da1b0c7838f835c9be32519c29b5f68a92faebac30be0a3`. Only `locations`
+changed, and `locations` with `region` removed hashes identically before and after
+(`4b089ff1…aca62f2`). `validate.py`: 67/67, the previous 66 plus A23; the
+regional-drop check is unchanged (z 3.53).
+
+**Alternatives considered:**
+- *`technicians.home_region`* (rejected). Where the technician is based, not where the
+  work happened.
+- *Group by `state`* (rejected). No mapping needed, but not the dimension FR-06 names.
+- *A migration backfill* (rejected). It would need either a second copy of the mapping
+  or a live-data read (ADR-027).
+- *A `regions` reference table* (rejected for now). More schema for four fixed names.
+
+**Consequences:**
+- `app_reporting` and `app_qa` read `region` through their existing table-level SELECT
+  on `locations`; §7 is unchanged. `app_forecast` and `app_sentiment` have no grant on
+  `locations`.
+- The MCP metric tools offer `region` as a breakdown. Technician `home_region` stays
+  out of `group_by` for now.
+- Future regeneration keeps the column filled automatically. A change to the mapping is
+  a parameter change, reloaded like any other.

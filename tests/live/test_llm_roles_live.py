@@ -75,3 +75,21 @@ async def test_specialist_parsing_call():
 @pytest.mark.skip(reason="no QA call exists until the Sprint 4 QA agent; add its smoke test then")
 async def test_qa_call():
     """Placeholder so the gap is visible: the QA role has a model but no call yet."""
+
+
+async def test_specialist_parses_a_metric_and_breakdown():
+    """prompt parse_v2: metric and group_by, as production parses them (FR-06)."""
+    from agent_reporting.config import Settings
+    from agent_reporting.parsing import Parser
+    from llm import LLMClient
+
+    client = LLMClient.from_env("specialist")
+    as_of = Settings().as_of
+    resolved = await Parser(client, as_of).parse(
+        "What was SLA compliance by region last month?", trace_id="live-specialist-metric"
+    )
+    end = as_of.replace(day=1) - dt.timedelta(days=1)
+    assert resolved.request.metric == "sla_compliance"
+    assert resolved.request.group_by == "region"
+    assert (resolved.start, resolved.end) == (end.replace(day=1), end)
+    print(f"\nspecialist metric: {resolved.request.model_dump(mode='json')}")

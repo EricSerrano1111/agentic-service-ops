@@ -471,6 +471,8 @@ class _Generator:
                     "city": city,
                     "state": state,
                     "zip_code": f"{zip3}{int(rng.integers(100)):02d}",
+                    # ADR-051: the region the state was drawn from, per Regions.states.
+                    "region": g,
                 }
             )
             self.locations[lid] = {
@@ -1204,6 +1206,18 @@ def validate_dataset(dataset: Mapping[str, list[dict]]) -> list[str]:
     bad(
         "cancellation_reason on a non-cancelled request",
         (r for r in sr if r["cancellation_reason"] and r["request_status"] != "cancelled"),
+    )
+    # ADR-051: every site's region is the one its state belongs to, and none is missing.
+    region_of_state = {
+        st: g for g, states in prm.PARAMS.regions.states.value.items() for st in states
+    }
+    bad(
+        "location region does not match its state",
+        (
+            loc
+            for loc in dataset["locations"]
+            if loc.get("region") is None or loc["region"] != region_of_state.get(loc["state"])
+        ),
     )
     bad("equipment_unit_count <= 0", (r for r in sr if r["equipment_unit_count"] <= 0))
     bad("sla_window_minutes <= 0", (r for r in sr if r["sla_window_minutes"] <= 0))

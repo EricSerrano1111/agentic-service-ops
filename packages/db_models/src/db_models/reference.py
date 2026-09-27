@@ -18,6 +18,7 @@ from .enums import (
     ContactRole,
     ContractTier,
     Proficiency,
+    Region,
     Skill,
     TechnicianStatus,
     UserRole,
@@ -79,6 +80,7 @@ class Location(Base):
     """Client sites where a technician is dispatched."""
 
     __tablename__ = "locations"
+    __table_args__ = (check_in("locations", "region", Region),)
 
     location_id: Mapped[int] = surrogate_pk()
     account_id: Mapped[int] = mapped_column(
@@ -89,6 +91,10 @@ class Location(Base):
     city: Mapped[str] = mapped_column(String(100), nullable=False)
     state: Mapped[str] = mapped_column(String(2), nullable=False)
     zip_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    #: The site's region, from its state (ADR-051). Nullable in the database only
+    #: because it was added to an already-loaded table and no migration may fill it:
+    #: the generator writes it on every row, and validate.py checks it.
+    region: Mapped[str | None] = mapped_column(String(VOCAB_LEN), nullable=True)
 
     account: Mapped[Account] = relationship(back_populates="locations")
 

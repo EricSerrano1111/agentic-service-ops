@@ -22,6 +22,9 @@ class Settings:
     parse_timeout_s: float = 30.0
     #: Relative dates resolve against this, never the wall clock (ADR-050).
     as_of: dt.date = DATASET_WINDOW_END
+    #: Answer text ranks only groups with at least this many cases (presentation only;
+    #: the data part keeps every group).
+    min_group_denominator: int = 20
     #: The URL advertised in the Agent Card: where peers send A2A requests.
     public_url: str = "http://agent_reporting:8001/"
     host: str = "0.0.0.0"
@@ -36,6 +39,9 @@ class Settings:
             mcp_timeout_s=float(env("MCP_TIMEOUT_S", str(d.mcp_timeout_s))),
             parse_timeout_s=float(env("PARSE_TIMEOUT_S", str(d.parse_timeout_s))),
             as_of=dt.date.fromisoformat(env("REPORTING_AS_OF_DATE") or d.as_of.isoformat()),
+            min_group_denominator=int(
+                env("REPORTING_MIN_GROUP_DENOMINATOR") or d.min_group_denominator
+            ),
             public_url=env("AGENT_REPORTING_PUBLIC_URL", d.public_url),
             port=int(env("AGENT_REPORTING_PORT", str(d.port))),
         )

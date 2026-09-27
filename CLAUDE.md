@@ -17,6 +17,7 @@ architecture, or past reasoning from the code alone if a doc covers it.
 - Why something was chosen, what was rejected → `docs/decisions-log.md`
 - Sprint status, retros → `docs/sprint-log.md`
 - Known risks, mitigations → `docs/risk-register.md`
+- Accepted limitations → `docs/evaluation-report.md` (Limitations log; the report itself is Sprint 6)
 - Course deliverables and due dates → `docs/academic/` (numbered files; calendar in
   `docs/architecture.md` §10)
 
@@ -40,6 +41,9 @@ Never edit a past entry in place.
 
 Dated entries in the risk register, sprint log and decisions log are append-only. Later
 sweeps and renames leave them unchanged; record changes as a new dated entry.
+
+New limitations found during the build are appended to the Limitations log in
+`docs/evaluation-report.md`: one dated entry each, append-only.
 
 If you complete or materially change something covered in `docs/sprint-log.md`
 for the current sprint, update it directly rather than waiting to be asked.

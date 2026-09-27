@@ -324,6 +324,14 @@ def check_invariants(t: Mapping[str, list[dict]], truth: Truth) -> list[Check]:
     )
     prospects = {a["account_id"] for a in t["accounts"] if a["account_status"] == "prospect"}
     counts["request on a prospect account"] = sum(1 for r in sr if r["account_id"] in prospects)
+    # ADR-051: each site's region is the one its state belongs to, per the recorded
+    # regions.states parameter (the single mapping, as generation_parameters holds it).
+    region_of_state = {st: g for g, states in truth["regions.states"].items() for st in states}
+    counts["location region missing or not its state's region"] = sum(
+        1
+        for loc in t["locations"]
+        if loc.get("region") is None or loc["region"] != region_of_state.get(loc["state"])
+    )
 
     return [
         Check(f"A{n:02d}", "A invariants", name, v, "= 0", v == 0)
@@ -1072,6 +1080,7 @@ def _conn(user_var: str, password_var: str):
 
 QA_TABLES = (
     "accounts",
+    "locations",  # ADR-051 region check
     "service_requests",
     "archived_requests",
     "incidents",

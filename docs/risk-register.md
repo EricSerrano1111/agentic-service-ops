@@ -28,7 +28,7 @@
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
 | R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Open |
-| R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Open |
+| R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Mitigating |
 
 ---
 
@@ -179,6 +179,8 @@
 **Review trigger:** The Sprint 4 slice deploy (ADR-045).
 
 **Update 2026-09-26 (orchestrator model):** The orchestrator moved off `gemini-3.7-flash` to `gemini-3.5-flash-lite` (ADR-049), after the seed set showed no accuracy advantage for 3.7 Flash (27/28 against Flash-Lite's 28/28) and 3.7 Flash returned three consecutive 503s during the checkpoint e2e. Flash-Lite had no 503s across 28 seed-set calls. Likelihood Medium → Low. The planned Sprint 4 fallback to Flash-Lite is likely unnecessary now, since the orchestrator already runs on it. Status: Mitigating → Open, because Flash-Lite can also return 503s and the bounded 5xx retry is the only mitigation in place.
+
+**Update 2026-09-26 (mitigation in place):** Status: Open → Mitigating. The mitigation is in place: `packages/llm` retries 5xx errors twice with jittered backoff, then raises `LLMUnavailable`, which the services return as a clear 503 rather than hanging (ADR-048).
 
 ---
 

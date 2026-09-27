@@ -40,10 +40,10 @@ docker compose up -d postgres
 .venv\Scripts\python -m alembic upgrade head
 ```
 
-That applies six migrations: the schema, the five least-privilege agent roles with the
+That applies seven migrations: the schema, the five least-privilege agent roles with the
 grants from [data-dictionary.md §7](docs/data-dictionary.md), the column-level narrowing
-of the sentiment and forecast grants (ADR-027, ADR-035), and two schema changes to the
-ground-truth tables (ADR-037, ADR-038).
+of the sentiment and forecast grants (ADR-027, ADR-035), two schema changes to the
+ground-truth tables (ADR-037, ADR-038), and the site region on `locations` (ADR-051).
 
 To load the synthetic dataset from the committed corpus and validate it:
 
@@ -131,7 +131,7 @@ of `service_feedback` and `service_requests`, with the expected outcome computed
 See [architecture.md §11](docs/architecture.md). Implemented so far:
 
 ```
-packages/db_models/     SQLAlchemy models, 22 controlled vocabularies, §7 access matrix
+packages/db_models/     SQLAlchemy models, 23 controlled vocabularies, §7 access matrix
 packages/common/        JSON-line logging and trace-id propagation
 packages/schemas/       Pydantic contracts shared across services (IncidentSummary)
 services/mcp_incidents/ incidents MCP server: one aggregate-only tool, as app_reporting
