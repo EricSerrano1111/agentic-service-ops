@@ -322,7 +322,7 @@ All 23 vocabularies are implemented once, as `StrEnum` classes in `packages/db_m
 - **`total_invoice`** = `(labor_charge + parts_charge) × (1 + surcharge_rate)`, rounded half-up to 2 decimals. Rounding rule matters — the agent and the QA verifier must round identically or every check fails on pennies.
 - **`net_revenue`** = `total_invoice − credit_issued_amount` (summed across the request's incidents).
 - **First-time fix rate** = requests completed with no child request where `parent_request_id` points back to them, over all completed requests. A cancelled child request does not count against its parent; a child in any other status (including en route) does.
-- **Incident rate** = incidents per 100 completed requests, by period.
+- **Incident rate** = incidents per 100 completed requests, by period. Being per 100, it can exceed 1 (11.4433 over the full window); the `DECIMAL(5,4)` rate convention above covers stored rates such as `surcharge_rate`, not derived per-100 figures.
 
 **Date filters** (added 2026-09-26 with the FR-06 metric tools; each range applies to the event the definition is about, inclusive UTC days):
 - Incident rate: incidents whose `reported_at` is in the range, over requests whose `archived_requests.completed_at` is in the range.

@@ -21,6 +21,7 @@ import datetime as dt
 import json
 import os
 import subprocess
+from decimal import Decimal
 from pathlib import Path
 
 import httpx
@@ -226,4 +227,8 @@ def test_sla_compliance_by_region_matches_independent_sql():
     assert figures["rate"] == rate(met, total)
     got = {g["group"]: (g["numerator"], g["denominator"], g["rate"]) for g in figures["groups"]}
     assert got == {r: (m, t, rate(m, t)) for r, (m, t) in expected.items()}
-    assert f"As of {reporting['as_of']}" in body["answer"] and "By region" in body["answer"]
+    assert f"As of {reporting['as_of']}" in body["answer"]
+    assert "By region, worst first:" in body["answer"]
+    # Worst first for SLA compliance: lowest rate first, in the data part too.
+    rates = [Decimal(g["rate"]) for g in figures["groups"]]
+    assert rates == sorted(rates)

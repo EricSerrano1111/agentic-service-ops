@@ -203,10 +203,12 @@ async def test_tool_figures_match_independent_sql(
         }
         for (key, label), (n, d) in groups.items()
     ]
-    expected.sort(key=lambda g: (g["rate"] is None, -Decimal(g["rate"] or 0), g["group"]))
+    # Worst first: a higher incident rate is worse; a lower SLA or first-time fix rate is.
+    sign = -1 if tool == INCIDENT_RATE else 1
+    expected.sort(key=lambda g: (g["rate"] is None, sign * Decimal(g["rate"] or 0), g["group"]))
     assert got["group_count"] == len(expected)
     assert got["truncated"] == (len(expected) > 25)
-    assert got["groups"] == expected[:25]
+    assert got["groups"] == expected[:25]  # truncation keeps the worst
 
 
 async def test_regional_outage_is_visible_by_region(loaded_database, reporting_settings):

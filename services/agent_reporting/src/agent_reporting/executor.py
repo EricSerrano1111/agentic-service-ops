@@ -194,7 +194,10 @@ class ReportingExecutor(AgentExecutor):
             )
             await updater.add_artifact(
                 [
-                    new_text_part(render_answer(answer), media_type="text/plain"),
+                    new_text_part(
+                        render_answer(answer, self.settings.min_group_denominator),
+                        media_type="text/plain",
+                    ),
                     new_data_part(answer.model_dump(mode="json"), media_type="application/json"),
                 ],
                 name=ARTIFACT_NAME,

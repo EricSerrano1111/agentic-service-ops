@@ -257,3 +257,56 @@ def test_healthz():
         response = client.get("/healthz", headers={"host": "localhost:8101"})
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+# --------------------------------------------------------------------------- worst-first ranking
+
+
+def _counts(pairs: dict[str, tuple[int, int]]):
+    from mcp_incidents.metrics import _Counts
+
+    numerators = {k: _Counts(k, k, n) for k, (n, _) in pairs.items()}
+    denominators = {k: _Counts(k, k, d) for k, (_, d) in pairs.items()}
+    return numerators, denominators
+
+
+def test_higher_is_worse_ranks_highest_rate_first():
+    """Incident rate: the worst group has the most incidents per 100."""
+    from mcp_incidents.metrics import _rank
+
+    nums, dens = _counts({"a": (1, 10), "b": (5, 10), "c": (3, 10)})
+    groups, total = _rank(nums, dens, "region", 100, higher_is_worse=True)
+    assert [g.group for g in groups] == ["b", "c", "a"] and total == 3
+
+
+def test_lower_is_worse_ranks_lowest_rate_first():
+    """SLA compliance and first-time fix: the worst group has the lowest share."""
+    from mcp_incidents.metrics import _rank
+
+    nums, dens = _counts({"a": (9, 10), "b": (5, 10), "c": (7, 10)})
+    groups, _ = _rank(nums, dens, "region", 1, higher_is_worse=False)
+    assert [g.group for g in groups] == ["b", "c", "a"]
+
+
+def test_null_rates_go_last_and_ties_break_by_name():
+    from mcp_incidents.metrics import _rank
+
+    nums, dens = _counts({"z": (1, 2), "a": (1, 2), "empty": (0, 0)})
+    groups, _ = _rank(nums, dens, "region", 1, higher_is_worse=False)
+    assert [g.group for g in groups] == ["a", "z", "empty"]
+    assert groups[-1].rate is None
+
+
+@pytest.mark.parametrize("higher_is_worse", [True, False])
+def test_truncation_keeps_the_worst_groups(higher_is_worse):
+    from mcp_incidents.metrics import _Counts, _rank
+    from schemas import MAX_GROUPS
+
+    # 40 technicians (integer ids) with rates 1/100 .. 40/100.
+    nums = {i: _Counts(i, f"tech {i}", i) for i in range(1, 41)}
+    dens = {i: _Counts(i, f"tech {i}", 100) for i in range(1, 41)}
+    groups, total = _rank(nums, dens, "technician", 1, higher_is_worse=higher_is_worse)
+    assert total == 40 and len(groups) == MAX_GROUPS
+    worst = range(40, 15, -1) if higher_is_worse else range(1, 26)
+    assert {g.group_id for g in groups} == set(worst)
+    assert groups[0].group_id == (40 if higher_is_worse else 1)

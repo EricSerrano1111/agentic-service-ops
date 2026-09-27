@@ -1,7 +1,7 @@
 """Template-rendered answers, one template per metric. No model writes prose around the
 figures (ADR-046). Every answer states the as-of date and the range (ADR-050); every
-rate is shown with the counts behind it (ADR-033); grouped answers list the top
-`TEXT_GROUPS` groups, with the full list in the data part.
+rate is shown with the counts behind it (ADR-033); grouped answers rank the worst
+`TEXT_GROUPS` groups that have enough cases, with the full list in the data part.
 """
 
 from __future__ import annotations
@@ -17,6 +17,9 @@ from schemas import (
 )
 
 TEXT_GROUPS = 5
+#: Groups with fewer cases than this are left out of the ranked text (not the data).
+#: Configurable per deployment: REPORTING_MIN_GROUP_DENOMINATOR.
+DEFAULT_MIN_GROUP_DENOMINATOR = 20
 
 _DIMENSION = {
     "account": "account",
@@ -106,19 +109,33 @@ def _overall(figures) -> str:
     )
 
 
-def _groups(figures) -> str:
+def _groups(figures, min_denominator: int) -> str:
+    """Rank the worst groups with enough cases; say how many were left out.
+
+    A presentation rule, not a metric definition: a group with fewer than
+    `min_denominator` cases (completed jobs, dispatched requests) can top the ranking
+    on one incident. It is left out of the text only; the data part keeps every group
+    the tool returned, with its counts.
+    """
     dimension = _DIMENSION[figures.group_by]
-    shown = figures.groups[:TEXT_GROUPS]
+    eligible = [g for g in figures.groups if g.denominator >= min_denominator]
+    left_out = len(figures.groups) - len(eligible)
     fmt = _incident_rate_group if isinstance(figures, IncidentRateResult) else _share_group
-    listed = "; ".join(fmt(g) for g in shown)
-    text = f" By {dimension}, highest first: {listed}."
-    if figures.group_count > len(shown):
-        returned = len(figures.groups)
-        text += f" {figures.group_count} {dimension}s in total"
+    if eligible:
+        listed = "; ".join(fmt(g) for g in eligible[:TEXT_GROUPS])
+        text = f" By {dimension}, worst first: {listed}."
+    else:
+        text = f" By {dimension}: no {dimension} has at least {min_denominator} cases to rank."
+    if left_out:
+        noun = dimension if left_out == 1 else f"{dimension}s"
         text += (
-            f"; the top {returned} are in the data."
-            if figures.truncated
-            else ("; all are in the data.")
+            f" {left_out} {noun} left out of the ranking for fewer than {min_denominator} "
+            "cases; all are in the data."
+        )
+    if figures.truncated:
+        text += (
+            f" {figures.group_count} {dimension}s in total; the worst "
+            f"{len(figures.groups)} are in the data."
         )
     if isinstance(figures, IncidentRateResult) and figures.group_by == "technician":
         text += (
@@ -128,7 +145,9 @@ def _groups(figures) -> str:
     return text
 
 
-def render_answer(answer: ReportingAnswer) -> str:
+def render_answer(
+    answer: ReportingAnswer, min_denominator: int = DEFAULT_MIN_GROUP_DENOMINATOR
+) -> str:
     """The as-of date is always stated; an assumed range says so (ADR-050)."""
     lead = f"As of {answer.as_of.isoformat()}: "
     if answer.range_assumed:
@@ -141,5 +160,5 @@ def render_answer(answer: ReportingAnswer) -> str:
         return lead + render_incident_summary(figures)
     body = _overall(figures)
     if figures.group_by is not None:
-        body += _groups(figures)
+        body += _groups(figures, min_denominator)
     return lead + body

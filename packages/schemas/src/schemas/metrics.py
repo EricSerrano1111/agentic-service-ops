@@ -3,8 +3,9 @@
 One model per tool (ADR-023: no generic query tool). Counts are integers; each rate is a
 string, computed with `Decimal` and rounded half-up to 4 decimal places, because
 decimals travel as strings (architecture §11). A zero denominator gives a null rate,
-never an error. Grouped results list at most `MAX_GROUPS`, highest rate first, with
-`truncated` set when more groups existed.
+never an error. Grouped results list at most `MAX_GROUPS`, worst first (highest rate
+first for incident rate, lowest first for SLA compliance and first-time fix), with
+`truncated` set when more groups existed; truncation keeps the worst groups.
 """
 
 from __future__ import annotations

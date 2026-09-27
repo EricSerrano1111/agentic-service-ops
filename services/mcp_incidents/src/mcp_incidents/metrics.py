@@ -95,8 +95,14 @@ def _rank(
     denominators: dict[object, _Counts],
     group_by: GroupBy,
     scale: int,
+    higher_is_worse: bool,
 ) -> tuple[list[GroupRate], int]:
-    """Merge, compute rates, sort highest rate first (null rates last), cap at 25."""
+    """Merge, compute rates, sort worst first, cap at 25.
+
+    Worst first: highest rate first when a higher rate is worse (incident rate), lowest
+    first otherwise (SLA compliance, first-time fix). Null rates go last, ties by group
+    name. The cap applies after sorting, so truncation keeps the worst groups.
+    """
     keys = set(numerators) | set(denominators)
     groups = []
     for key in keys:
@@ -112,7 +118,12 @@ def _rank(
                 rate=rate_string(num, den, scale),
             )
         )
-    groups.sort(key=lambda g: (g.rate is None, -Decimal(g.rate or 0), g.group))
+
+    def worst_first(g: GroupRate):
+        value = Decimal(g.rate or 0)
+        return (g.rate is None, -value if higher_is_worse else value, g.group)
+
+    groups.sort(key=worst_first)
     return groups[:MAX_GROUPS], len(groups)
 
 
@@ -157,7 +168,7 @@ def incident_rate(
             engine, incidents, group_by, inc.c.attributed_technician_id, func.count()
         )
         denominators = _grouped(engine, completed, group_by, ar.c.technician_id, func.count())
-        return _rank(numerators, denominators, group_by, 100)
+        return _rank(numerators, denominators, group_by, 100, higher_is_worse=True)
 
     return _result(IncidentRateResult, start, end, group_by, num, den, 100, groups)
 
@@ -189,7 +200,7 @@ def sla_compliance(
             engine, dispatched, group_by, ar.c.technician_id, func.count().filter(sla_met)
         )
         total = _grouped(engine, dispatched, group_by, ar.c.technician_id, func.count())
-        return _rank(met, total, group_by, 1)
+        return _rank(met, total, group_by, 1, higher_is_worse=False)
 
     return _result(SlaComplianceResult, start, end, group_by, int(num), int(den), 1, groups)
 
@@ -220,6 +231,6 @@ def first_time_fix_rate(
             engine, completed, group_by, ar.c.technician_id, func.count().filter(fixed)
         )
         total = _grouped(engine, completed, group_by, ar.c.technician_id, func.count())
-        return _rank(fixes, total, group_by, 1)
+        return _rank(fixes, total, group_by, 1, higher_is_worse=False)
 
     return _result(FirstTimeFixResult, start, end, group_by, int(num), int(den), 1, groups)

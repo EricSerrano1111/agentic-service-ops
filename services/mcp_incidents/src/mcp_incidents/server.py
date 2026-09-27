@@ -53,7 +53,7 @@ GroupByArg = Annotated[
     GroupBy | None,
     Field(
         description="Optional breakdown: account, region (the site's), service_type, or "
-        "technician (who did the work). Top 25 groups, highest rate first."
+        "technician (who did the work). Top 25 groups, worst first."
     ),
 ]
 
@@ -133,6 +133,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         completed_at is in the range. By technician, only incidents attributed to that
         technician count (ADR-033), over the jobs they completed. Rates are strings,
         rounded half-up to 4 places; a zero denominator gives a null rate.
+
+        Groups are sorted worst first: highest rate first. The top 25 are kept.
         """
         return await run(INCIDENT_RATE, ctx, start, end, backend.incident_rate, group_by)
 
@@ -145,6 +147,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         Date rule: requests whose dispatched_at is in the range. The SLA clock starts at
         dispatched_at; requests never dispatched, or not completed (null sla_met), are
         excluded from the denominator.
+
+        Groups are sorted worst first: lowest rate first. The top 25 are kept.
         """
         return await run(SLA_COMPLIANCE, ctx, start, end, backend.sla_compliance, group_by)
 
@@ -157,6 +161,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         Date rule: requests whose completed_at is in the range. A child request
         (parent_request_id pointing back) counts against its parent whatever its date,
         unless it was cancelled: a cancelled follow-up means no return visit happened.
+
+        Groups are sorted worst first: lowest rate first. The top 25 are kept.
         """
         return await run(FIRST_TIME_FIX, ctx, start, end, backend.first_time_fix_rate, group_by)
 

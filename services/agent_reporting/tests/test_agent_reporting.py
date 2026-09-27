@@ -103,9 +103,11 @@ def fake_result(tool: str, result_model, start, end, group_by):
         return summary(start, end)
     groups = None
     if group_by is not None:
+        # 7 groups of 40 cases, in the tool's worst-first order for a lower-is-worse
+        # share: g1 has the lowest rate. (The template never re-sorts.)
         groups = [
-            GroupRate(group=f"g{i}", numerator=i, denominator=10, rate=rate_string(i, 10))
-            for i in range(9, 2, -1)  # 7 groups, highest rate first
+            GroupRate(group=f"g{i}", numerator=i, denominator=40, rate=rate_string(i, 40))
+            for i in range(1, 8)
         ]
     return result_model(
         start=start,
@@ -490,17 +492,68 @@ def test_first_time_fix_template():
     assert "First-time fix rate was 90.00%" in render_answer(_metric_answer(figures))
 
 
-def test_grouped_template_lists_the_top_five_and_points_to_the_data():
+def test_grouped_template_ranks_the_worst_five_and_points_to_the_data():
     figures = fake_result("", SlaComplianceResult, *JULY, "region")
     text = render_answer(_metric_answer(figures))
-    assert "By region, highest first: g9 90.00% (9 of 10); g8 80.00% (8 of 10)" in text
-    assert "g5 50.00% (5 of 10)." in text and "g4" not in text  # top 5 only
-    assert "7 regions in total; all are in the data." in text
+    assert "By region, worst first: g1 2.50% (1 of 40); g2 5.00% (2 of 40)" in text
+    assert "g5 12.50% (5 of 40)." in text and "g6" not in text  # five only
+    assert "left out" not in text and "in total" not in text  # nothing excluded or cut
 
 
-def test_truncated_group_list_says_so():
+def _groups_figures(denominators: list[int], **extra) -> SlaComplianceResult:
     groups = [
-        GroupRate(group=f"t{i}", group_id=i, numerator=1, denominator=10, rate="0.1000")
+        GroupRate(group=f"r{i}", numerator=1, denominator=d, rate=rate_string(1, d))
+        for i, d in enumerate(denominators)
+    ]
+    return SlaComplianceResult(
+        start=JULY[0],
+        end=JULY[1],
+        group_by="region",
+        numerator=len(groups),
+        denominator=sum(denominators),
+        rate=rate_string(len(groups), sum(denominators)),
+        groups=groups,
+        group_count=extra.pop("group_count", len(groups)),
+        **extra,
+    )
+
+
+def test_groups_below_the_minimum_are_left_out_of_the_text_only():
+    """r0 (3 cases) would rank first on one miss; it is left out of the ranking."""
+    figures = _groups_figures([3, 40, 50, 19])
+    answer = _metric_answer(figures)
+    text = render_answer(answer)
+    assert "By region, worst first: r1 2.50% (1 of 40); r2 2.00% (1 of 50)." in text
+    assert "r0" not in text and "r3" not in text
+    assert "2 regions left out of the ranking for fewer than 20 cases; all are in the data." in text
+    # The data part still carries every group, with its counts.
+    assert [g.group for g in answer.figures.groups] == ["r0", "r1", "r2", "r3"]
+    assert answer.figures.groups[0].denominator == 3
+
+
+def test_the_minimum_is_configurable():
+    figures = _groups_figures([3, 40])
+    assert "r0" not in render_answer(_metric_answer(figures))
+    loose = render_answer(_metric_answer(figures), min_denominator=3)
+    assert "By region, worst first: r0 33.33% (1 of 3); r1 2.50% (1 of 40)." in loose
+    assert "left out" not in loose
+
+
+def test_minimum_defaults_to_20_from_config(monkeypatch):
+    assert Settings().min_group_denominator == 20
+    monkeypatch.setenv("REPORTING_MIN_GROUP_DENOMINATOR", "5")
+    assert Settings.from_env().min_group_denominator == 5
+
+
+def test_when_no_group_has_enough_cases_nothing_is_ranked():
+    text = render_answer(_metric_answer(_groups_figures([3, 5])))
+    assert "By region: no region has at least 20 cases to rank." in text
+    assert "2 regions left out of the ranking for fewer than 20 cases" in text
+
+
+def test_truncated_group_list_says_the_worst_are_kept():
+    groups = [
+        GroupRate(group=f"t{i}", group_id=i, numerator=1, denominator=30, rate="0.0333")
         for i in range(25)
     ]
     figures = FirstTimeFixResult(
@@ -508,14 +561,14 @@ def test_truncated_group_list_says_so():
         end=JULY[1],
         group_by="technician",
         numerator=25,
-        denominator=250,
-        rate="0.1000",
+        denominator=750,
+        rate="0.0333",
         groups=groups,
         group_count=32,
         truncated=True,
     )
     text = render_answer(_metric_answer(figures))
-    assert "32 technicians in total; the top 25 are in the data." in text
+    assert "32 technicians in total; the worst 25 are in the data." in text
 
 
 def test_technician_incident_rate_says_attributable_only():
