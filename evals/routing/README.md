@@ -24,3 +24,22 @@ Judgement calls in the ambiguous set:
 
 `run_seed.py` runs the set through the orchestrator's classifier (the same prompt and
 code as the service) and writes results to `evals/results/`.
+
+## routing_v1
+
+`routing_v1.csv` holds 18 questions written by Eric in dispatch phrasing, blind to model
+output. The CSV is the human-edited source; `routing_v1.jsonl` is the same rows in the
+seed-set format (plus the `note` column) for `run_seed.py`. Each row's `note` records why
+it carries its label.
+
+Labelling rule: "A question routes to the agent whose domain it falls in, even when that
+agent can't answer it yet; out_of_scope means no agent's domain covers it."
+
+| Tag | Meaning | Count | Expected routes |
+|---|---|---|---|
+| ambiguous | two reasonable routes | 8 | reporting 3, sentiment 3, forecast 2 |
+| near_miss | sounds operational, but no agent's domain covers it | 5 | out_of_scope 5 |
+| technician | asks about individual technicians | 5 | reporting 5 |
+
+Run it with `--file routing_v1`; results are written as
+`evals/results/routing_routing_v1_<model>_<prompt>_<UTC time>.json`.

@@ -481,8 +481,10 @@ agentic-service-ops/
 ├── evals/
 │   ├── routing/
 │   │   ├── seed_v1.jsonl           # 28 hand-labelled questions (clear, ambiguous, out_of_scope, multi_domain); seeds the Sprint 3 set
-│   │   ├── run_seed.py             # live: runs the seed set through the orchestrator's Router; --model for comparisons (ADR-049)
-│   │   └── README.md               # composition and the judgement calls behind ambiguous labels
+│   │   ├── routing_v1.csv          # 18 owner-written questions (ambiguous, near_miss, technician); the human-edited source
+│   │   ├── routing_v1.jsonl        # routing_v1.csv converted for run_seed.py
+│   │   ├── run_seed.py             # live: runs a set (--file, default seed_v1) through the orchestrator's Router; --model for comparisons (ADR-049)
+│   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   ├── qa/                         # fault injection + catch rate
