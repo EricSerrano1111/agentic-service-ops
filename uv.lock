@@ -13,6 +13,7 @@ members = [
     "agent-reporting",
     "agentic-service-ops",
     "db-models",
+    "mcp-feedback",
     "mcp-incidents",
     "orchestrator",
     "service-ops-common",
@@ -1286,6 +1287,44 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/76/31/ac54fb0fdd5b37de704486e288bba4fbbb463f24cfcfedbede407b854513/mcp-2.2.0.tar.gz", hash = "sha256:2dc37ecb1974becdcebdbf7561e7c15a07dbbf20ba21ba16c3593b3038b3afbd", size = 4084129, upload-time = "2026-09-07T16:06:23.439Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1b/ff/8e7eade68b8a28f7da0ed1085544341b51f9c935dbf6b95c76b7edfea6a0/mcp-2.2.0-py3-none-any.whl", hash = "sha256:bde982589473a060ae145e3406e9a5333fe538c97229ba841f5a7f92be004f81", size = 365656, upload-time = "2026-09-07T16:06:19.711Z" },
+]
+
+[[package]]
+name = "mcp-feedback"
+version = "0.1.0"
+source = { editable = "services/mcp_feedback" }
+dependencies = [
+    { name = "anyio" },
+    { name = "db-models" },
+    { name = "mcp" },
+    { name = "numpy" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "safetensors" },
+    { name = "service-ops-common" },
+    { name = "service-ops-schemas" },
+    { name = "sqlalchemy" },
+    { name = "tokenizers" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "transformers" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anyio", specifier = ">=4.9" },
+    { name = "db-models", editable = "packages/db_models" },
+    { name = "mcp", specifier = "==2.2.0" },
+    { name = "numpy", specifier = "==2.5.3" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "safetensors", specifier = "==0.8.0" },
+    { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-schemas", editable = "packages/schemas" },
+    { name = "sqlalchemy", specifier = ">=2.0.30" },
+    { name = "tokenizers", specifier = "==0.23.2" },
+    { name = "torch", specifier = "==2.14.1", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "transformers", specifier = "==5.18.0" },
+    { name = "uvicorn", specifier = ">=0.31" },
 ]
 
 [[package]]

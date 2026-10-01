@@ -12,6 +12,8 @@ Asserted from `docker compose config`, the resolved configuration Docker actuall
   calls), and only the free one, with `LLM_MODE` pinned to free. `mcp_incidents` gets
   no model key or setting: it holds database credentials, so it must not also hold a
   key (ADR-048).
+- `mcp_feedback` gets `app_sentiment`'s credentials and nothing else, no model key,
+  and the models folder read-only (ADR-067).
 - Only the orchestrator publishes a host port among the application services.
 """
 
@@ -28,7 +30,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DB_PREFIXES = ("POSTGRES_", "DB_ROLE_")
 NO_DB_SERVICES = ("agent_reporting", "orchestrator")
-APP_SERVICES = ("mcp_incidents", "agent_reporting", "orchestrator")
+APP_SERVICES = ("mcp_incidents", "mcp_feedback", "agent_reporting", "orchestrator")
 LLM_SERVICES = ("agent_reporting", "orchestrator")
 LLM_PREFIXES = ("GOOGLE_", "GEMINI_", "LLM_", "ANTHROPIC_")
 
@@ -107,3 +109,29 @@ def test_llm_callers_get_only_the_free_key(compose, name):
 
 def test_no_service_gets_the_paid_key(compose):
     assert not [n for n, svc in compose.items() if "GOOGLE_AI_API_KEY_PAID" in _env(svc)]
+
+
+def test_mcp_feedback_holds_only_app_sentiment_credentials(compose):
+    service = compose["mcp_feedback"]
+    assert "env_file" not in service
+    db_vars = {key for key in _env(service) if key.startswith(DB_PREFIXES)}
+    assert db_vars == {
+        "POSTGRES_HOST",
+        "POSTGRES_PORT",
+        "POSTGRES_DB",
+        "DB_ROLE_SENTIMENT_USER",
+        "DB_ROLE_SENTIMENT_PASSWORD",
+    }
+
+
+def test_mcp_feedback_holds_no_model_key_or_setting(compose):
+    leaked = [k for k in _env(compose["mcp_feedback"]) if k.startswith(LLM_PREFIXES)]
+    assert leaked == []
+
+
+def test_mcp_feedback_mounts_models_read_only_at_the_proxy_limits(compose):
+    service = compose["mcp_feedback"]
+    (mount,) = service["volumes"]
+    assert (mount["target"], mount.get("read_only")) == ("/models", True)
+    assert float(service["cpus"]) == 1.0
+    assert str(service["mem_limit"]) in ("2g", "2147483648")

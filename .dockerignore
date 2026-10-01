@@ -11,3 +11,5 @@
 **/*.egg-info
 **/tests/
 **/.gitkeep
+# The committed artifact manifest only (ADR-067): its hash is mcp_feedback's model_version.
+!ml/sentiment/artifacts/bert_v1.manifest.json
