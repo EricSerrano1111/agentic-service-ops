@@ -443,7 +443,9 @@ agentic-service-ops/
 │
 ├── ml/                             # offline training, never deployed (ADR-062)
 │   ├── sentiment/                  # fine-tunes BERT on sentiment_labels; TF-IDF baseline (ADR-059)
-│   │   └── splits/                 # split_v1 + hashed manifest, committed before training (ADR-064)
+│   │   ├── splits/                 # split_v1 + hashed manifest, committed before training (ADR-064)
+│   │   ├── config.py               # pinned bert-base-uncased revision, max_length 64, fixed recipe (ADR-065)
+│   │   └── train_bert.py           # plain PyTorch loop; atomic per-epoch checkpoints to models/; --resume (ADR-065)
 │   └── forecast/                   # fits the regression on weekly volume; folds + per-slice backtest (ADR-057, ADR-058)
 │
 ├── models/                         # gitignored: local copies of versioned artifacts, mounted by compose (ADR-062)
@@ -487,7 +489,8 @@ agentic-service-ops/
 │   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment/                  # scored against sentiment_labels holdout
-│   │   └── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064)
+│   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064)
+│   │   └── latency/                # throwaway CPU-limited container + harness for the latency proxy (ADR-065)
 │   ├── qa/                         # fault injection + catch rate
 │   └── results/                    # dated eval runs — evidence for the evaluation report (ADR-044)
 │       └── sentiment/test_ledger.jsonl  # append-only: one line per test scoring, once per model (ADR-064)

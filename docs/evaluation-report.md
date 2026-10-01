@@ -287,3 +287,29 @@ build are appended here as they are found (CLAUDE.md).
   neutral kind, so it can be read in that light. Changing the length rules would mean
   regenerating the corpus (ADR-030).
 - **Recorded in:** ADR-064; `evals/results/sentiment/2026-10-01_baselines/diagnostic_length_logreg.test.metrics.json`.
+
+### L-28 — BERT latency is a local CPU-limited proxy, not a Cloud Run measurement (2026-10-01)
+- **What:** ADR-065's latency figures come from a local Docker container limited with
+  `--cpus` and `--memory` on a 2015-era laptop CPU (Intel i7-6700HQ), running the pinned
+  `bert-base-uncased` with an untrained head. Cloud Run's vCPU may be faster or slower
+  per core, its cold start includes image pull and instance scheduling that a local
+  `docker run` does not, and CPU throttling between requests differs. The numbers are
+  labelled proxy for that reason.
+- **Why accepted:** Measuring before training was the point (ADR-065): it catches a
+  latency failure before hours of CPU training are spent. The latency item stays unticked
+  until it is measured on the deployed container.
+- **Recorded in:** ADR-065; `evals/results/sentiment/2026-10-01_latency_proxy/`.
+
+### L-29 — Company-wide sentiment questions over a quarter or longer exceed the inference budget (2026-10-01)
+- **What:** In the proxy, classifying the largest calendar quarter (736 comments) takes
+  65 s at 1 CPU and 40 s at 2 CPUs; the last 12 months (2,666) 239 s and 148 s; the full
+  window (7,521) 669 s and 410 s. All exceed ADR-065's 30 s warm budget, and the last two
+  exceed the 120 s end-to-end ceiling (ADR-034) on their own. ADR-065 gates only on the
+  largest single-account or single-region quarter, which passes, so a question like
+  "sentiment last quarter" across all accounts is not covered by the gate. The 12-month
+  and full-window figures are single runs (`--large-repeats 1`), not medians of three.
+- **Why accepted:** For now, recorded rather than decided. ADR-065 already says
+  whole-window questions need a different design (sampling or stored predictions). Whether
+  company-wide quarters join the gate, or take that design too, is a decision for the
+  `mcp_feedback` work.
+- **Recorded in:** ADR-065; `evals/results/sentiment/2026-10-01_latency_proxy/summary.md`.
