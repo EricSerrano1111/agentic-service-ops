@@ -1,0 +1,19 @@
+{
+  "model": "diagnostic_length_logreg",
+  "diagnostic": true,
+  "config": {
+    "features": [
+      "word_count",
+      "char_count"
+    ],
+    "scaling": "standardised",
+    "logreg": {
+      "C": 1.0,
+      "class_weight": "balanced",
+      "max_iter": 5000
+    },
+    "trained_on": "train"
+  },
+  "split": "v1",
+  "seed": 20261001
+}

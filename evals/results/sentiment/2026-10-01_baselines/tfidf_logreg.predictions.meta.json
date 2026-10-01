@@ -1,0 +1,23 @@
+{
+  "model": "tfidf_logreg",
+  "diagnostic": false,
+  "config": {
+    "features": "word_1_2",
+    "C": 10.0,
+    "tfidf": {
+      "analyzer": "word",
+      "ngram_range": [
+        1,
+        2
+      ]
+    },
+    "logreg": {
+      "class_weight": "balanced",
+      "max_iter": 5000,
+      "solver": "lbfgs"
+    },
+    "trained_on": "train"
+  },
+  "split": "v1",
+  "seed": 20261001
+}

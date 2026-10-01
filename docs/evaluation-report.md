@@ -259,3 +259,23 @@ build are appended here as they are found (CLAUDE.md).
   sentiment split but does not yet require it to be committed before training, so the
   Sprint 3 training work has to do that.
 - **Recorded in:** ADR-063; `docs/data-dictionary.md` §7.
+
+### L-26 — The TF-IDF baseline's selected config sits at the edge of its fixed grid (2026-10-01)
+- **What:** Of ADR-064's six configs, validation macro-F1 rose with C for both feature
+  sets and peaked at the largest value, C=10 (word 1-2-grams 0.9333; `char_wb` 2-5-grams
+  0.9280). A larger C might score higher, so the baseline BERT is compared against may be
+  slightly understated.
+- **Why accepted:** The grid was fixed before any result and is never extended (ADR-064);
+  extending it after seeing validation scores is the search drift the protocol exists to
+  prevent. The validation gain from C=1 to C=10 was 0.018 for word features.
+- **Recorded in:** ADR-064; `evals/results/sentiment/2026-10-01_baselines/tfidf_validation_grid.json`.
+
+### L-27 — Length alone identifies minimal neutral comments (2026-10-01)
+- **What:** The length-only diagnostic classifies every minimal neutral correctly on test
+  (18 of 18) while scoring macro-F1 0.3331 overall. Minimal neutrals are written at 1-8
+  words (the corpus cell's length bounds, ADR-036), so accuracy on that subgroup says little
+  about reading the text. ADR-064's length rule (macro-F1 0.60 overall) did not fire.
+- **Why accepted:** The subgroup is small (18 test rows) and is reported separately by
+  neutral kind, so it can be read in that light. Changing the length rules would mean
+  regenerating the corpus (ADR-030).
+- **Recorded in:** ADR-064; `evals/results/sentiment/2026-10-01_baselines/diagnostic_length_logreg.test.metrics.json`.

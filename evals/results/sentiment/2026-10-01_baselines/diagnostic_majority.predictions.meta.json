@@ -1,0 +1,9 @@
+{
+  "model": "diagnostic_majority",
+  "diagnostic": true,
+  "config": {
+    "rule": "most frequent training class",
+    "trained_on": "train"
+  },
+  "split": "v1"
+}

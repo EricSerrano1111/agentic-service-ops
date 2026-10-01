@@ -75,6 +75,7 @@
 | 061 | Portability without Terraform; Terraform a buffer-only stretch goal | Accepted — supersedes ADR-005 in part |
 | 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted |
 | 063 | Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` | Accepted |
+| 064 | Sentiment split and evaluation protocol: near-duplicate groups, committed hashed split, test scored once, interpretation rule fixed in advance | Accepted |
 
 ---
 
@@ -1912,3 +1913,32 @@ training grants.
 - Both credentials stay on the developer machine. Training on a hosted notebook reads an exported file, never the database.
 - `alembic upgrade head` now needs the four variables wherever it runs, including the Sprint 4 Cloud SQL deploy (ADR-045), even though no deployed service uses them. Their passwords go in Secret Manager like the others.
 - The `02` reference copy (FR-11, ground-truth tables "used by the QA agent") was already queued for correction by ADR-055.
+
+### ADR-064 — Sentiment split and evaluation protocol
+*Date: 2026-10-01. Extends ADR-059 (split, baseline) and ADR-040 (what the sentiment eval reports). Supersedes nothing.*
+
+**Decision:**
+- Near-duplicates are grouped before splitting: character 5-gram Jaccard > 0.6 on lowercased, whitespace-normalised text, across all rows (ADR-036 applied the same rule only within a corpus cell). Connected components are groups; a group never spans two splits.
+- Whole groups are split about 70/15/15, stratified by `true_sentiment` × `hard_case_type`, with seed 20261001. The split file (`feedback_id`, `corpus_id`, `split`; no labels, no text) and a manifest carrying its SHA-256 are committed before any training code exists. Loaders verify the hash.
+- Settings are chosen on validation only. Each model is scored on test once; every test scoring is recorded in an append-only ledger.
+- Headline metric: macro-F1. Also reported: per-class P/R/F1, the confusion matrix, hard-case accuracy by type with n and the judge's disagreement rate on the same subset, neutral accuracy by kind with n, and mixed-class recall.
+- Baselines: TF-IDF plus logistic regression over a fixed six-config grid (required, ADR-059), plus two diagnostics: majority class, and length-only logistic regression.
+- Interpretation rule, fixed before any test result: if TF-IDF test macro-F1 is at least 0.95, BERT is judged only on hard-case accuracy and mixed-class F1. If the length-only diagnostic reaches macro-F1 0.60, length is reported as carrying class signal.
+
+**Context:**
+- ADR-059 required near-duplicates on one side but didn't define them. The corpus was deduplicated only within cells, and minimal neutrals in different service-type cells can be near-identical.
+- Labels are attached to corpus comments drawn at random, so time order carries no drift; a random split doesn't lose the realism a time-based split would add.
+- Grants can't enforce row-level separation (L-25). A committed, hashed split and a test ledger make split integrity checkable after the fact.
+- Fixing the interpretation rule before the results stops the bar for BERT moving to fit them.
+- Measured: 7,500 groups; largest group 2 rows; 0.56% of rows (42) in groups larger than 1; 1 mixed-label group (2 rows); test split 1,128 rows, 42 sarcastic, 126 implicit.
+
+**Alternatives considered:**
+- *Row-level stratified split* (rejected). Near-identical texts on both sides inflate test scores.
+- *Time-based split* (rejected). The corpus has no temporal signal to protect.
+- *Cross-validation instead of a fixed test split* (rejected). BERT on CPU makes repeated fine-tuning costly, and one fixed test split keeps every model comparable.
+- *Choosing the bar for BERT after seeing TF-IDF* (rejected). It invites moving the goalposts.
+
+**Consequences:**
+- BERT, its calibration, and any fallback model use split_v1 and the same scorer.
+- A change to the split is a new version (split_v2) and a new ADR, never an edit.
+- Per-type hard-case scores are noisy at these counts (L-22); n is always shown.

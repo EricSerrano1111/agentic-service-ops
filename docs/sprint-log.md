@@ -284,8 +284,16 @@ above.
   - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
 - [ ] Sentiment agent + confidence scoring
   - [ ] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
-  - [ ] TF-IDF plus logistic regression baseline, required (ADR-059).
+  - [x] TF-IDF plus logistic regression baseline, required (ADR-059).
+    *2026-10-01: pulled forward. Split v1 committed first (ADR-064). Selected on validation:
+    word 1-2-grams, C=10 (validation macro-F1 0.9333; at the grid edge, L-26). Test
+    macro-F1 0.9431, scored once and in the ledger. Interpretation rule: neither condition
+    fired (TF-IDF below 0.95; length-only diagnostic 0.3331, below 0.60), so BERT is judged
+    on overall macro-F1 as well as hard cases and mixed.*
 - [ ] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
+  *2026-10-01: `evals/sentiment/score.py` (reads as `app_eval`) reports neutral accuracy by
+  kind and hard-case accuracy by type with n and the judge disagreement rate on the same
+  rows; run on the baselines. BERT still to run.*
 - [ ] Orchestrator routes across all three
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
@@ -303,6 +311,8 @@ above.
   *2026-10-01: training-role decision made: `app_train` reads `sentiment_labels` plus exactly
   the columns the runtime models read, no `rating` and no `generation_parameters` (ADR-063).
   The folder structure is still to do.*
+  *2026-10-01: `ml/sentiment/` created (split, data access, baselines; ADR-064).
+  `ml/forecast/` still to do.*
 - [x] Evaluation/training read role (with ADR-062's training-role decision); then revoke `sentiment_labels` and `generation_parameters` from `app_qa`. **Required before the QA agent is built in Sprint 4**, so the runtime QA role never ships holding gold labels (ADR-055).
   *2026-10-01: pulled forward from Sprint 3; `app_eval` and `app_train` created, `app_qa`
   revoked (ADR-063). `validate.py` now reads as `app_eval`.*
@@ -333,6 +343,7 @@ above.
 
 **Decisions made this sprint:**
 - ADR-063 — Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` (2026-10-01, pulled forward)
+- ADR-064 — Sentiment split and evaluation protocol (2026-10-01, pulled forward)
 
 ---
 

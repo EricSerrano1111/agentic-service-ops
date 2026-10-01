@@ -120,7 +120,7 @@ Most multi-agent demos stop at "delegate → respond → done." A verification s
 | Volume forecast | Standard ML — no one can verify a future value | Verify the input history with QA's own SQL and the arithmetic (intervals contain the point forecast; horizon ≤ 26 weeks); look up the stored backtest error for the requested slice and horizon, and fail the answer if it is above threshold, showing the error. The threshold is a release gate over the ADR-057 folds: a model that fails it is not deployed |
 | Sentiment analysis | **Weak — no natural ground truth** | Cross-check labels against star ratings (clear contradictions only: positive on 1–2, negative on 4–5; coverage reported; reject only when clearly above the normal rate); verify the comment set, counts and that cited comments exist; re-apply the calibrated confidence threshold and check the human-review flags match (ADR-059) |
 
-The sentiment path is the trap. Do **not** have the QA agent re-run the same sentiment model and call the result verified. Gold labels (`sentiment_labels`) are used only in evaluation (holdout scoring and QA catch rate), never at answer time: new comments in a real deployment have none.
+The sentiment path is the trap. Do **not** have the QA agent re-run the same sentiment model and call the result verified. Gold labels (`sentiment_labels`) are used only offline: to train the sentiment model (`app_train`) and in evaluation (holdout scoring and QA catch rate, `app_eval`), never at answer time: new comments in a real deployment have none.
 
 ### QA loop semantics (locked)
 
@@ -143,7 +143,7 @@ The sentiment path is the trap. Do **not** have the QA agent re-run the same sen
 
 Plus reference tables: `accounts`, `contacts`, `locations`, `technicians`, `technician_skills`, `internal_users`.
 
-**Why incidents and feedback are separate tables.** An earlier draft combined them. That would have meant customer feedback existed only where an incident existed — so effectively all feedback would be negative. This breaks the sentiment agent twice over: the classification task becomes degenerate (always predict negative, score ~90%, learn nothing), and evaluation against the label holdout becomes meaningless with no class balance to measure. Gold labels are used only in evaluation (holdout scoring and QA catch rate), read as `app_eval`; runtime QA cross-checks against star ratings instead (ADR-055, ADR-063). Real field service surveys every completed job, most of which go fine. The split also makes the security boundary structural: the sentiment MCP server holds no grant on `incidents`, so internal staff-written notes can never leak into the sentiment pipeline.
+**Why incidents and feedback are separate tables.** An earlier draft combined them. That would have meant customer feedback existed only where an incident existed — so effectively all feedback would be negative. This breaks the sentiment agent twice over: the classification task becomes degenerate (always predict negative, score ~90%, learn nothing), and evaluation against the label holdout becomes meaningless with no class balance to measure. Gold labels are used only offline: to train the sentiment model (`app_train`) and in evaluation (holdout scoring and QA catch rate, `app_eval`); runtime QA cross-checks against star ratings instead (ADR-055, ADR-063). Real field service surveys every completed job, most of which go fine. The split also makes the security boundary structural: the sentiment MCP server holds no grant on `incidents`, so internal staff-written notes can never leak into the sentiment pipeline.
 
 **Full column-level detail lives in `data-dictionary.md`** — schema, enums, constraints, metric definitions, dataset scale, and the table-to-role access matrix.
 
@@ -443,6 +443,7 @@ agentic-service-ops/
 │
 ├── ml/                             # offline training, never deployed (ADR-062)
 │   ├── sentiment/                  # fine-tunes BERT on sentiment_labels; TF-IDF baseline (ADR-059)
+│   │   └── splits/                 # split_v1 + hashed manifest, committed before training (ADR-064)
 │   └── forecast/                   # fits the regression on weekly volume; folds + per-slice backtest (ADR-057, ADR-058)
 │
 ├── models/                         # gitignored: local copies of versioned artifacts, mounted by compose (ADR-062)
@@ -486,8 +487,10 @@ agentic-service-ops/
 │   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment/                  # scored against sentiment_labels holdout
+│   │   └── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064)
 │   ├── qa/                         # fault injection + catch rate
 │   └── results/                    # dated eval runs — evidence for the evaluation report (ADR-044)
+│       └── sentiment/test_ledger.jsonl  # append-only: one line per test scoring, once per model (ADR-064)
 │
 └── tests/
     ├── unit/                       # offline contract, generator and corpus tests
