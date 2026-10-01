@@ -26,8 +26,13 @@
   "calibration": {
     "method": "temperature_scaling",
     "fitted_on": "validation",
-    "temperature": null,
-    "threshold": null,
-    "threshold_rule": null
+    "temperature": 1.032156,
+    "threshold": 0.840840745682907,
+    "threshold_rule": "target_99",
+    "ece_validation_before": 0.007273,
+    "ece_validation_after": 0.006349,
+    "flag_rate_validation": 0.018601,
+    "accuracy_unflagged_validation": 0.990072,
+    "decided_by": "ADR-066"
   }
 }
