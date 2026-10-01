@@ -313,3 +313,12 @@ build are appended here as they are found (CLAUDE.md).
   company-wide quarters join the gate, or take that design too, is a decision for the
   `mcp_feedback` work.
 - **Recorded in:** ADR-065; `evals/results/sentiment/2026-10-01_latency_proxy/summary.md`.
+
+### L-30 — Both BERT runs peaked at the epoch cap (2026-10-01)
+- **What:** Both BERT runs reached their best validation macro-F1 at epoch 4, the maximum
+  ADR-065 allowed (lr2e-5: 0.9401/0.9642/0.9679/0.9767). The model may be under-trained.
+  The cap was fixed in advance and was not extended. This parallels L-26 for TF-IDF.
+- **Why accepted:** Extending the cap after seeing the curve would be tuning outside the
+  pre-registered budget (ADR-065, ADR-066). Like L-26, the gap is reported beside the
+  comparison rather than closed.
+- **Recorded in:** ADR-065, ADR-066; `models/sentiment/lr2e-5_v1/run.json`, `models/sentiment/lr3e-5_v1/run.json` (local, gitignored).
