@@ -1,0 +1,110 @@
+{
+  "version": "v1",
+  "created": "2026-10-01",
+  "adr": "ADR-064",
+  "seed": 20261001,
+  "fractions": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "near_duplicates": {
+    "normalisation": "lowercase; every whitespace run collapsed to one space",
+    "representation": "set of character 5-grams (whole text if shorter)",
+    "similarity": "Jaccard, all pairs, scipy sparse matrix product",
+    "threshold": "> 0.6",
+    "grouping": "connected components of linked pairs",
+    "mixed_label_groups": "assigned by majority stratum"
+  },
+  "strata": "true_sentiment x hard_case_type",
+  "source": {
+    "rows": 7521,
+    "read_as": "app_train",
+    "corpus_sha256": "03da307c7b21ad7cd0297b16bb8d2c8b802f25744a1df669ab75229958acf906"
+  },
+  "group_statistics": {
+    "rows": 7521,
+    "groups": 7500,
+    "size_distribution": {
+      "1": 7479,
+      "2": 21
+    },
+    "largest_group_size": 2,
+    "largest_group_labels": {
+      "positive": 2
+    },
+    "rows_in_groups_gt1": 42,
+    "share_rows_in_groups_gt1": 0.005584,
+    "mixed_label_groups": 1,
+    "mixed_label_rows": 2,
+    "share_rows_mixed_label": 0.000266,
+    "linked_pairs": 21
+  },
+  "counts_by_stratum": {
+    "mixed|none": {
+      "train": 409,
+      "validation": 88,
+      "test": 88
+    },
+    "negative|implicit": {
+      "train": 150,
+      "validation": 32,
+      "test": 32
+    },
+    "negative|none": {
+      "train": 686,
+      "validation": 147,
+      "test": 147
+    },
+    "negative|sarcastic": {
+      "train": 196,
+      "validation": 42,
+      "test": 42
+    },
+    "neutral|none": {
+      "train": 1179,
+      "validation": 253,
+      "test": 252
+    },
+    "positive|implicit": {
+      "train": 440,
+      "validation": 95,
+      "test": 94
+    },
+    "positive|none": {
+      "train": 2204,
+      "validation": 472,
+      "test": 473
+    }
+  },
+  "neutral_kind_counts": {
+    "administrative": {
+      "train": 854,
+      "validation": 185,
+      "test": 196
+    },
+    "minimal": {
+      "train": 100,
+      "validation": 18,
+      "test": 18
+    },
+    "status": {
+      "train": 225,
+      "validation": 50,
+      "test": 38
+    }
+  },
+  "split_totals": {
+    "validation": 1129,
+    "train": 5264,
+    "test": 1128
+  },
+  "acceptance": {
+    "tolerance_pp": 2.0,
+    "min_stratum_for_tolerance": 100,
+    "min_test_rows": 10,
+    "passed": true
+  },
+  "csv": "split_v1.csv",
+  "csv_sha256": "c5df5ddb3518808c6aaa8a67b7cee92b5a37ac36664b63c4d3b1393c2a0d255c"
+}

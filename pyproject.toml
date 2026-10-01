@@ -24,6 +24,16 @@ generator = [
     "scipy==1.18.1",  # datasketch dependency, pinned so the dedup path is reproducible
     "tzdata==2026.4",
 ]
+# Offline model training and evaluation under ml/ and evals/ (ADR-062, ADR-064) — never
+# installed into a runtime service: service images run `uv sync --package <service>`,
+# which installs no root extras. numpy and scipy share the generator's pins.
+ml = [
+    "numpy==2.5.3",
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
+    "scikit-learn==1.9.1",
+    "scipy==1.18.1",
+]
 
 [build-system]
 requires = ["hatchling"]
