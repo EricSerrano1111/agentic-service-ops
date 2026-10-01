@@ -10,7 +10,7 @@ unless both flags are set, with the stack up and the dataset loaded:
 
 Checks: "last month" routes to reporting and parses to the calendar month before the
 as-of date (July 2026 with the default as-of date 2026-08-30, ADR-050); the figures equal
-an independent SQL computation run as `app_qa` for the range the agent reports; the
+an independent SQL computation run as `app_eval` (ADR-063) for the range the agent reports; the
 trace id appears in all three services' logs; an out-of-scope question is declined and
 a sentiment question answered as not available yet, neither reaching the agent.
 """
@@ -84,13 +84,13 @@ def previous_month(as_of: dt.date) -> tuple[dt.date, dt.date]:
     return end.replace(day=1), end
 
 
-def qa_connect():
+def eval_connect():
     return psycopg.connect(
         host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
         port=os.environ.get("POSTGRES_PORT", "5432"),
         dbname=os.environ["POSTGRES_DB"],
-        user=os.environ["DB_ROLE_QA_USER"],
-        password=os.environ["DB_ROLE_QA_PASSWORD"],
+        user=os.environ["DB_ROLE_EVAL_USER"],
+        password=os.environ["DB_ROLE_EVAL_PASSWORD"],
         connect_timeout=5,
     )
 
@@ -100,8 +100,8 @@ def independent_figures(start: str, end: str) -> dict:
         host=os.environ.get("POSTGRES_HOST", "127.0.0.1"),
         port=os.environ.get("POSTGRES_PORT", "5432"),
         dbname=os.environ["POSTGRES_DB"],
-        user=os.environ["DB_ROLE_QA_USER"],
-        password=os.environ["DB_ROLE_QA_PASSWORD"],
+        user=os.environ["DB_ROLE_EVAL_USER"],
+        password=os.environ["DB_ROLE_EVAL_PASSWORD"],
         connect_timeout=5,
     ) as conn:
         rows = conn.execute(
@@ -211,7 +211,7 @@ def test_sla_compliance_by_region_matches_independent_sql():
     start, end = previous_month(as_of)
     assert (reporting["start"], reporting["end"]) == (start.isoformat(), end.isoformat())
 
-    with qa_connect() as conn:
+    with eval_connect() as conn:
         rows = conn.execute(
             SLA_SQL,
             {

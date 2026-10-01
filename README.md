@@ -140,7 +140,7 @@ services/orchestrator/  POST /ask and a CLI; hardcoded route to the reporting ag
 data/migrations/        Alembic — identical local and Cloud SQL
 data/generator/         parameters, frozen feedback corpus, generator, loader, validation
 tests/unit/             offline contract, generator and corpus tests
-tests/integration/      live grants suite; MCP figures vs independent SQL as app_qa
+tests/integration/      live grants suite; MCP figures vs independent SQL as app_eval
 tests/e2e/              the skeleton through docker-compose (RUN_E2E=1)
 .github/workflows/      CI: lint, unit, integration
 docker-compose.yml      local Postgres 16 plus the three skeleton services

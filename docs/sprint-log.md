@@ -300,7 +300,12 @@ above.
 - [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
 - [ ] Repeat-visit drivers (deferred from Sprint 2).
 - [ ] `ml/` structure (`ml/sentiment/`, `ml/forecast/`) and the training-role decision (ADR-062).
-- [ ] Evaluation/training read role (with ADR-062's training-role decision); then revoke `sentiment_labels` and `generation_parameters` from `app_qa`. **Required before the QA agent is built in Sprint 4**, so the runtime QA role never ships holding gold labels (ADR-055).
+  *2026-10-01: training-role decision made: `app_train` reads `sentiment_labels` plus exactly
+  the columns the runtime models read, no `rating` and no `generation_parameters` (ADR-063).
+  The folder structure is still to do.*
+- [x] Evaluation/training read role (with ADR-062's training-role decision); then revoke `sentiment_labels` and `generation_parameters` from `app_qa`. **Required before the QA agent is built in Sprint 4**, so the runtime QA role never ships holding gold labels (ADR-055).
+  *2026-10-01: pulled forward from Sprint 3; `app_eval` and `app_train` created, `app_qa`
+  revoked (ADR-063). `validate.py` now reads as `app_eval`.*
 - [ ] Incident counts by breakdown (deferred from Sprint 2; L-06).
 - [ ] Fill `docs/security-model.md` while drafting `04`
   *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
@@ -327,6 +332,7 @@ above.
 - Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
+- ADR-063 — Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` (2026-10-01, pulled forward)
 
 ---
 

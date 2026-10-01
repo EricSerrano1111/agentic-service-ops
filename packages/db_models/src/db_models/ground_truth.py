@@ -1,9 +1,10 @@
 """Ground-truth tables — `docs/data-dictionary.md` §4.
 
-Generator and eval only; not part of the operational schema. Only `app_qa` (read) and
-`app_generator` (write) hold grants here. In particular the sentiment agent must have
-no code path — and, more importantly, no privilege — that reaches
-`sentiment_labels`, or its verification becomes circular.
+Generator and eval only; not part of the operational schema. Only the offline roles hold
+grants here: `app_generator` (write), `app_eval` (read both) and `app_train` (read
+`sentiment_labels`). No runtime role does — not the sentiment agent, whose verification
+would become circular, and not QA, since answers in a real deployment have no gold labels
+(ADR-055, ADR-063).
 """
 
 from __future__ import annotations

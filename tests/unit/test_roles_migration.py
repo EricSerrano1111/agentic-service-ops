@@ -14,7 +14,6 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
-from db_models.access_matrix import ALL_ROLES, ROLE_ENV_VARS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -34,6 +33,11 @@ def _load_migration() -> ModuleType:
 
 
 migration = _load_migration()
+
+# The migration's own frozen role set, not the live matrix: the matrix has since gained
+# the offline read roles (ADR-063), which a later migration creates.
+ALL_ROLES = migration.ALL_ROLES
+ROLE_ENV_VARS = migration.ROLE_ENV_VARS
 
 
 @pytest.fixture

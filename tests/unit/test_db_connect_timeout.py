@@ -44,7 +44,7 @@ def unreachable_env(monkeypatch, black_hole) -> None:
     monkeypatch.setenv("POSTGRES_HOST", "127.0.0.1")
     monkeypatch.setenv("POSTGRES_PORT", str(black_hole))
     monkeypatch.setenv("POSTGRES_DB", "service_ops")
-    for role in ("GENERATOR", "QA"):
+    for role in ("GENERATOR", "EVAL"):
         monkeypatch.setenv(f"DB_ROLE_{role}_USER", f"app_{role.lower()}")
         monkeypatch.setenv(f"DB_ROLE_{role}_PASSWORD", "unused")
     monkeypatch.setenv(CONNECT_TIMEOUT_VAR, str(TIMEOUT_S))
@@ -90,7 +90,7 @@ def test_load_fails_within_the_timeout_on_an_unreachable_database(unreachable_en
 
 def test_validate_fails_within_the_timeout_on_an_unreachable_database(unreachable_env):
     began = time.monotonic()
-    with pytest.raises(SystemExit, match="as app_qa"):
-        validate._conn("DB_ROLE_QA_USER", "DB_ROLE_QA_PASSWORD")
+    with pytest.raises(SystemExit, match="as app_eval"):
+        validate._conn("DB_ROLE_EVAL_USER", "DB_ROLE_EVAL_PASSWORD")
     elapsed = time.monotonic() - began
     assert TIMEOUT_S * 0.75 <= elapsed < TIMEOUT_S + 3, elapsed

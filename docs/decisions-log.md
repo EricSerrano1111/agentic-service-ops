@@ -74,6 +74,7 @@
 | 060 | No agent framework; LangGraph removed from the stack | Accepted |
 | 061 | Portability without Terraform; Terraform a buffer-only stretch goal | Accepted — supersedes ADR-005 in part |
 | 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted |
+| 063 | Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` | Accepted |
 
 ---
 
@@ -1884,3 +1885,30 @@ training grants.
 - The forecast artifact carries the per-slice backtest error that QA looks up (ADR-055).
 - The training-role decision is made together with the evaluation read role that takes
   `sentiment_labels` and `generation_parameters` from `app_qa` (ADR-055).
+
+### ADR-063 — Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa`
+*Date: 2026-10-01. Decides the training role ADR-062 left open and carries out ADR-055's revocation. Supersedes nothing.*
+
+**Decision:**
+- Two read-only login roles, used only by offline scripts on the developer machine and never held by a deployed service:
+  - `app_eval`: SELECT on the ten tables `app_qa` held before this change. Used by the validation scripts, the eval harnesses and the Sprint 5 rating-sensitivity check.
+  - `app_train`: SELECT on `sentiment_labels`, plus exactly the columns the runtime models read: `app_sentiment`'s four `service_feedback` columns and `app_forecast`'s three `service_requests` columns.
+- `app_qa` loses SELECT on `sentiment_labels` and `generation_parameters`.
+- Names and passwords come from required `DB_ROLE_EVAL_*` and `DB_ROLE_TRAIN_*` variables (ADR-028). A unit test fails if any service, compose file or Dockerfile references them.
+
+**Context:**
+- ADR-055: the runtime QA role must not ship holding gold labels. ADR-062: training needs `sentiment_labels`, and never through a runtime role.
+- Giving training exactly what inference reads, plus the labels, enforces two existing rules by grant instead of convention: a sentiment model trained with `rating` would undermine QA's independent rating cross-check (R-04, ADR-027), and reading `generation_parameters` during forecast training is the answer-key leakage ADR-058 rules out.
+- The check that every feedback row has a label is a generator check, not an answer-time check, so it moves to the validation suite.
+
+**Alternatives considered:**
+- *One combined evaluation and training role* (rejected). One fewer role, but nothing would stop a training script from reading `rating` or `generation_parameters`. Both leakage rules would be convention only, against ADR-023's grant-over-convention stance.
+- *Training or validation as `app_qa`, or as any runtime role* (rejected). ADR-055 and ADR-062.
+- *Scripts as the admin role* (rejected). Breaks least privilege, as ADR-042 found for the loader.
+
+**Consequences:**
+- Seven roles: four runtime roles (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) and three offline roles (`app_generator`, `app_eval`, `app_train`). `data-dictionary.md` §4, §7, §8 and §10 updated.
+- Grants control tables and columns, not rows: training could still read the test split's labels. Split integrity rests on a split fixed and committed before training, and on review (L-25).
+- Both credentials stay on the developer machine. Training on a hosted notebook reads an exported file, never the database.
+- `alembic upgrade head` now needs the four variables wherever it runs, including the Sprint 4 Cloud SQL deploy (ADR-045), even though no deployed service uses them. Their passwords go in Secret Manager like the others.
+- The `02` reference copy (FR-11, ground-truth tables "used by the QA agent") was already queued for correction by ADR-055.

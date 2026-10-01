@@ -13,7 +13,7 @@ connects as its own least-privilege Postgres role. The grants are executable, no
 grants exactly that, reads and writes, in CI. The Postgres `PUBLIC` defaults are revoked
 (ADR-025).
 
-Four guarantees follow from the matrix and hold at the database level, whatever a prompt
+Six guarantees follow from the matrix and hold at the database level, whatever a prompt
 or a model does:
 
 1. **No agent reads `contacts`, so customer PII never enters a prompt.** No agent role
@@ -30,8 +30,16 @@ or a model does:
    technician identifier are withheld (ADR-035).
 4. **`app_qa` is the broadest reader, limited by its read-only role.** Verification needs
    sources the specialists can't see, so `app_qa` can SELECT every operational table except
-   `contacts` and `internal_users`, plus `sentiment_labels` and `generation_parameters`. It
-   holds no INSERT, UPDATE or DELETE grant anywhere.
+   `contacts` and `internal_users`. It holds no INSERT, UPDATE or DELETE grant anywhere.
+5. **The runtime QA role can't read gold labels or generator parameters.** `app_qa` has no
+   grant on `sentiment_labels` or `generation_parameters` (ADR-055, ADR-063). Those are read
+   only by the offline `app_eval` role, which no deployed service holds: a unit test fails
+   if any compose service, Dockerfile or file under `services/` references its credentials.
+6. **Training can't read `rating` or `generation_parameters`.** The offline `app_train`
+   role reads `sentiment_labels` and exactly the columns the runtime models read, so a model
+   trained on the stars, or a forecast fitted to the generator's answer key, is ruled out by
+   grant (ADR-027, ADR-058, ADR-063). Like `app_eval`, it is never held by a deployed
+   service.
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).
@@ -45,7 +53,8 @@ narrow, purpose-built tools (`architecture.md` §5). Each agent connects only to
 server, which holds only its own role's credentials. The role's grants bound what any
 manipulated call can return. A compromised sentiment agent, for example, has no connection to
 the forecasting tools and no grant that reaches billing. The highest-value target is the
-QA agent. It reads the most (guarantee 4), including the sentiment ground truth, and it
+QA agent. It reads the most (guarantee 4), though no longer the sentiment ground truth:
+it cross-checks sentiment against star ratings instead (guarantee 5, ADR-063). It also
 consumes specialists' outputs, which may carry injected text from feedback comments. Its
 read-only role means a successful attack can disclose data but not alter it, and it still
 can't reach customer PII. The two broadest credentials sit outside the agents entirely.
@@ -67,6 +76,8 @@ uses ephemeral generator credentials that never leave the workflow.
 - Logging: what is logged with each tool call and trace id, and what is redacted.
 - The QA prompt as a prompt-injection surface: its one LLM call (ADR-056) ingests
   specialist output, which may carry text from customer comments.
-- The evaluation/training read role (ADR-055, ADR-062): `sentiment_labels` and
+- ~~The evaluation/training read role (ADR-055, ADR-062): `sentiment_labels` and
   `generation_parameters` move off `app_qa` before the QA agent is built in Sprint 4, so
-  the runtime QA role never holds gold labels. Guarantee 4 changes when that lands.
+  the runtime QA role never holds gold labels. Guarantee 4 changes when that lands.~~
+  *Done 2026-10-01 (ADR-063): the offline `app_eval` and `app_train` roles hold them now;
+  guarantee 4 changed and guarantees 5 and 6 were added.*

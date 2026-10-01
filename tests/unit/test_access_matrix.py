@@ -1,6 +1,6 @@
 """The access matrix says what `docs/data-dictionary.md` §7 says.
 
-§7 names five properties that a database grant enforces and a code convention would
+§7 names seven properties that a database grant enforces and a code convention would
 not. Each has a test here, so a future edit to the matrix that quietly reopens one of
 them fails CI rather than shipping.
 
@@ -44,13 +44,21 @@ def test_sentiment_agent_reads_only_service_feedback() -> None:
 
 @pytest.mark.parametrize(
     "role",
-    [am.ROLE_REPORTING, am.ROLE_SENTIMENT, am.ROLE_FORECAST, am.ROLE_QA],
+    [
+        am.ROLE_REPORTING,
+        am.ROLE_SENTIMENT,
+        am.ROLE_FORECAST,
+        am.ROLE_QA,
+        am.ROLE_EVAL,
+        am.ROLE_TRAIN,
+    ],
 )
 def test_no_agent_role_reaches_pii(role: str) -> None:
     """§7 point 3: customer PII never enters an LLM context window.
 
     `contacts` and `internal_users` are reachable only by the generator, which is an
-    offline script rather than an agent.
+    offline script rather than an agent. The offline read roles are held to the same
+    rule: evaluation and training never need PII (ADR-063).
     """
     assert not (am.tables_readable_by(role) & am.PII_RESTRICTED_TABLES)
 
@@ -130,12 +138,91 @@ def test_qa_can_cross_check_every_specialist() -> None:
     for table in (
         "incidents",
         "service_feedback",
-        "sentiment_labels",
-        "generation_parameters",
         "service_requests",
         "archived_requests",
     ):
         assert table in readable
+
+
+def test_qa_reads_exactly_the_operational_tables_minus_pii() -> None:
+    """§7 / ADR-063: every operational table except PII, all in full, nothing else."""
+    assert am.tables_readable_by(am.ROLE_QA) == {
+        "accounts",
+        "locations",
+        "technicians",
+        "technician_skills",
+        "service_requests",
+        "archived_requests",
+        "incidents",
+        "service_feedback",
+    }
+    assert am.ROLE_QA not in am.COLUMN_SELECT_GRANTS
+
+
+@pytest.mark.parametrize("table", ["sentiment_labels", "generation_parameters"])
+def test_runtime_qa_cannot_read_gold_labels_or_generator_parameters(table: str) -> None:
+    """§7 point 6 / ADR-055 / ADR-063: answers in a real deployment have no gold labels,
+    so the runtime QA role never ships holding them."""
+    assert table not in am.tables_readable_by(am.ROLE_QA)
+
+
+@pytest.mark.parametrize(
+    "role", [am.ROLE_REPORTING, am.ROLE_SENTIMENT, am.ROLE_FORECAST, am.ROLE_QA]
+)
+@pytest.mark.parametrize("table", ["sentiment_labels", "generation_parameters"])
+def test_no_runtime_role_reads_ground_truth(role: str, table: str) -> None:
+    """ADR-062 / ADR-063: ground truth is read only by offline roles."""
+    assert table not in am.tables_readable_by(role)
+
+
+def test_eval_reads_what_qa_held_before_adr_063() -> None:
+    """ADR-063: the ten tables app_qa held before the revoke, all in full."""
+    assert (
+        am.tables_readable_by(am.ROLE_EVAL)
+        == am.SELECT_GRANTS[am.ROLE_EVAL]
+        == {
+            "accounts",
+            "locations",
+            "technicians",
+            "technician_skills",
+            "service_requests",
+            "archived_requests",
+            "incidents",
+            "service_feedback",
+            "sentiment_labels",
+            "generation_parameters",
+        }
+    )
+    assert am.ROLE_EVAL not in am.COLUMN_SELECT_GRANTS
+
+
+def test_train_reads_labels_and_exactly_what_inference_reads() -> None:
+    """§7 point 7 / ADR-063: labels in full; feedback and requests by the runtime columns."""
+    assert am.SELECT_GRANTS[am.ROLE_TRAIN] == {"sentiment_labels"}
+    assert am.COLUMN_SELECT_GRANTS[am.ROLE_TRAIN] == {
+        "service_feedback": am.COLUMN_SELECT_GRANTS[am.ROLE_SENTIMENT]["service_feedback"],
+        "service_requests": am.COLUMN_SELECT_GRANTS[am.ROLE_FORECAST]["service_requests"],
+    }
+    assert am.tables_readable_by(am.ROLE_TRAIN) == {
+        "sentiment_labels",
+        "service_feedback",
+        "service_requests",
+    }
+
+
+def test_train_cannot_read_rating_or_generator_parameters() -> None:
+    """§7 point 7: a model trained on the stars would undermine QA's rating cross-check
+    (R-04, ADR-027); the parameters are the forecast's answer key (ADR-058)."""
+    feedback = set(am.COLUMN_SELECT_GRANTS[am.ROLE_TRAIN]["service_feedback"])
+    assert feedback == {"feedback_id", "request_id", "submitted_at", "feedback_text"}
+    assert "rating" not in feedback
+    readable = am.tables_readable_by(am.ROLE_TRAIN)
+    assert not (readable & {"generation_parameters", "incidents", "contacts"})
+
+
+def test_offline_read_roles_are_eval_and_train() -> None:
+    assert set(am.OFFLINE_READ_ROLES) == {am.ROLE_EVAL, am.ROLE_TRAIN}
+    assert set(am.OFFLINE_READ_ROLES) <= set(am.ALL_ROLES)
 
 
 def test_every_role_has_an_env_var_pair() -> None:

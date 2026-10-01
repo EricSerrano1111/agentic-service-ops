@@ -1,7 +1,7 @@
 """The three metric tools' figures equal independent SQL (data dictionary §6, FR-06).
 
 Each tool runs in-process through a real MCP client, querying the live database as
-`app_reporting`. The expected figures come from hand-written SQL run as `app_qa`,
+`app_reporting`. The expected figures come from hand-written SQL run as `app_eval`,
 written separately from the tools' SQLAlchemy queries: raw SQL, `interval`
 multiplication where the tool uses `make_interval`, and this file's own Decimal
 rounding. Numerator, denominator and rate are compared, overall and for every group,
@@ -20,7 +20,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 import psycopg
 import pytest
-from db_models.access_matrix import ROLE_QA
+from db_models.access_matrix import ROLE_EVAL
 from mcp import Client
 from mcp_incidents.config import DEFAULT_WINDOW_END, DEFAULT_WINDOW_START, Settings
 from mcp_incidents.server import FIRST_TIME_FIX, INCIDENT_RATE, SLA_COMPLIANCE, create_server
@@ -181,8 +181,8 @@ async def test_tool_figures_match_independent_sql(
 ):
     got = await call(reporting_settings, tool, start, end, group_by)
     params = {"start": start, "end": end}
-    qa = connect_as(ROLE_QA)
-    totals, scale = TOOLS[tool](qa, None, params)
+    oracle = connect_as(ROLE_EVAL)
+    totals, scale = TOOLS[tool](oracle, None, params)
     [(num, den)] = totals.values() if totals else [(0, 0)]
 
     assert (got["numerator"], got["denominator"]) == (num, den)
@@ -192,7 +192,7 @@ async def test_tool_figures_match_independent_sql(
     if group_by is None:
         assert got["groups"] is None
         return
-    groups, _ = TOOLS[tool](qa, group_by, params)
+    groups, _ = TOOLS[tool](oracle, group_by, params)
     expected = [
         {
             "group": str(label),
@@ -229,7 +229,7 @@ async def test_technician_incident_rate_counts_attributable_incidents_only(
     tool must report the attributed figure."""
     got = await call(reporting_settings, INCIDENT_RATE, *RANGES[0], "technician")
     rows = (
-        connect_as(ROLE_QA)
+        connect_as(ROLE_EVAL)
         .execute(
             """SELECT a.technician_id,
                   count(*) FILTER (WHERE i.attributed_technician_id = a.technician_id),
