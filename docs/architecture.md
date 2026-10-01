@@ -73,10 +73,13 @@ Three layers, following current industry practice as of late 2026:
 ### Agent topology
 
 ```
-                     ┌─────────────┐
-   User intent ──►   │ ORCHESTRATOR│  (intent classification + routing)
-                     └──────┬──────┘
-                            │ A2A
+                     ┌─────────────┐   A2A: draft    ┌──────────┐
+   User intent ──►   │ ORCHESTRATOR│ ──────────────► │ QA AGENT │──► own SQL
+   ◄── answer ───    │  (routing + │ ◄────────────── │ (app_qa) │    (read-only)
+                     │  QA loop)   │  pass / reject  └──────────┘
+                     └──────┬──────┘  + guidance
+                            │ A2A (question; on reject, re-delegate
+                            │      with QA's guidance, at most twice)
             ┌───────────────┼───────────────┐
             ▼               ▼               ▼
       ┌──────────┐   ┌──────────┐   ┌──────────┐
@@ -92,20 +95,16 @@ Three layers, following current industry practice as of late 2026:
      └───────────┘  └───────────┘  └───────────┘
       (own DB role) (own DB role)  (own DB role)
 
-            All draft outputs ──► ┌──────────┐
-                                  │ QA AGENT │ ──► pass / reject+revise
-                                  └──────────┘
-                                        │
-                                  back to orchestrator ──► user
+   Specialists return drafts to the orchestrator; they never call QA (ADR-055).
 ```
 
 **Agents:**
 
-- **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, and returns the specialist's verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
+- **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, sends the draft to the QA agent and owns the revision loop (ADR-055), and returns the verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
 - **Reporting/Metrics Agent** — Incident and quality metrics reporting. Figures are computed deterministically; one LLM call parses the question into a typed request (ADR-046).
 - **Sentiment Agent** — Sentiment classification on freeform customer feedback text.
 - **Forecast Agent** — Regression-based forward volume forecasting.
-- **QA Agent** — Reviews specialist output before it returns to the user. Can accept, or reject with revision guidance.
+- **QA Agent** — Reviews each draft the orchestrator sends it, with its own SQL as `app_qa`, never the specialists' MCP tools (ADR-055). Figures are checked without a model; one LLM call checks interpretation (ADR-056). Can accept, or reject with revision guidance.
 
 **Explicitly out of scope:** A research/web-scraping agent. Considered and cut — no clear job to do, and scope creep at the expense of QA rigor. May be revisited only if the core system is complete and stable with time remaining.
 
@@ -115,17 +114,17 @@ Most multi-agent demos stop at "delegate → respond → done." A verification s
 
 **Critical design constraint — verification must not be circular.** The three tasks have very different verifiability profiles, and the QA agent must be built differently for each:
 
-| Task | Verifiability | QA strategy |
+| Task | Verifiability | QA strategy at answer time (ADR-055) |
 |---|---|---|
-| Incident metrics report | Deterministic | Re-run the query independently; assert figures match |
-| Volume forecast | Standard ML | Backtest against holdout; assert error metric (RMSE/MAPE) within threshold |
-| Sentiment analysis | **Weak — no natural ground truth** | Score against a labeled holdout set; flag low-confidence classifications for human review rather than asserting correctness |
+| Incident metrics report | Deterministic | Recompute the figures with QA's own SQL; assert they match. One LLM call checks the parsed request matches the question (ADR-056) |
+| Volume forecast | Standard ML — no one can verify a future value | Verify the input history with QA's own SQL and the arithmetic (intervals contain the point forecast; horizon ≤ 26 weeks); look up the stored backtest error for the requested slice and horizon, and fail the answer if it is above threshold, showing the error. The threshold is a release gate over the ADR-057 folds: a model that fails it is not deployed |
+| Sentiment analysis | **Weak — no natural ground truth** | Cross-check labels against star ratings (clear contradictions only: positive on 1–2, negative on 4–5; coverage reported; reject only when clearly above the normal rate); verify the comment set, counts and that cited comments exist; re-apply the calibrated confidence threshold and check the human-review flags match (ADR-059) |
 
-The sentiment path is the trap. Do **not** have the QA agent re-run the same sentiment model and call the result verified.
+The sentiment path is the trap. Do **not** have the QA agent re-run the same sentiment model and call the result verified. Gold labels (`sentiment_labels`) are used only in evaluation (holdout scoring and QA catch rate), never at answer time: new comments in a real deployment have none.
 
 ### QA loop semantics (locked)
 
-- **Bounded retries:** Maximum 2 revision cycles per request.
+- **Bounded retries:** Maximum 2 revision cycles per request, counted and timed by the orchestrator, which owns the loop (ADR-055).
 - **End-to-end ceiling:** No request runs longer than 120 seconds. At the ceiling, the system returns the same degraded result and escalation flag as a final QA failure (ADR-034).
 - **On final failure:** Return a degraded result with an explicit warning plus a human-escalation flag. Never silently return unverified output; never loop unbounded.
 - **Granularity:** QA annotates specific failed checks rather than rejecting wholesale, so revision guidance is actionable.
@@ -216,7 +215,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | Language | Python | Matches existing portfolio and coursework |
 | MCP | Official Python SDK, 2026-07-28 spec — **`mcp==2.2.0`** (pinned 2026-09-25, ADR-047) | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
 | A2A | A2A v1.0 SDK — **`a2a-sdk==1.1.5`** (pinned 2026-09-25, ADR-047) | Agent Card discovery + blocking `SendMessage` only; no streaming, push or `input-required` (ADR-047) |
-| Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
+| Agent runtime | Plain Python services; no agent framework (ADR-060) | The QA loop is bounded and plain, tested code; A2A keeps each agent's internals swappable |
 | Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator, specialists and QA all `gemini-3.5-flash-lite`. Thinking level follows the model called: its lowest supported level, `minimal` on Flash-Lite (ADR-052) | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
 | Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
@@ -226,13 +225,13 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | API layer | FastAPI | |
 | UI | Thin React/Next.js front end | See note below |
 | Containers | Docker + docker-compose (local), Cloud Run (deployed) | |
-| Cloud | GCP — Cloud Run, Cloud SQL, Secret Manager, Artifact Registry, Cloud Build | |
+| Cloud | GCP — Cloud Run, Cloud SQL, Secret Manager, Artifact Registry, Cloud Build, Cloud Storage | Cloud Storage holds versioned model artifacts (ADR-062) |
 
 **Topology (locked):** Monorepo, separate service processes per agent, orchestrated locally by docker-compose and deployed as distinct Cloud Run services. A2A implies separate processes with their own endpoints and Agent Cards — honor that. Switching topology mid-project is painful; decide once.
 
 **UI note:** Streamlit is faster to build but reads as a prototype. A thin React/Next.js front end over the FastAPI layer better supports the production-grade claim and the Solutions Architect narrative. Keep it deliberately minimal — intent input, response display, QA status indicator, escalation flag. The UI is a window into the architecture, not the project.
 
-**GCP vs Azure — decided: GCP.** Azure has a larger enterprise footprint and its agent tooling is well-aligned to Microsoft-stack shops, so the question was fair. But: the existing account and credits are worth real money against a $100 budget, prior Cloud Run experience is worth real weeks against a 12-week timeline, and the Microsoft-aligned agent framework is .NET-oriented, which conflicts with the locked Python choice anyway. The concern about "industry standard" is better neutralized architecturally than by cloud selection — containerize everything and define infrastructure in Terraform, then the honest claim is *"deployed on GCP, portable by design,"* which is a stronger Solutions Architect answer than having picked whichever cloud the interviewer happens to use. Revisit only if targeting a specifically Microsoft-stack employer.
+**GCP vs Azure — decided: GCP.** Azure has a larger enterprise footprint and its agent tooling is well-aligned to Microsoft-stack shops, so the question was fair. But: the existing account and credits are worth real money against a $100 budget, prior Cloud Run experience is worth real weeks against a 12-week timeline, and the Microsoft-aligned agent framework is .NET-oriented, which conflicts with the locked Python choice anyway. The concern about "industry standard" is better neutralized architecturally than by cloud selection — containers, standard protocols (A2A, MCP) and Postgres, with the deploy scripted in Cloud Build and versioned in the repo (ADR-061; Terraform is a buffer-only Sprint 6 stretch goal), then the honest claim is *"deployed on GCP, portable by design,"* which is a stronger Solutions Architect answer than having picked whichever cloud the interviewer happens to use. Revisit only if targeting a specifically Microsoft-stack employer.
 
 **Deployment note:** A prior Cloud Run project hit a decoupled build/deploy pipeline — successful Cloud Builds not producing active revisions. Wire continuous deployment explicitly this time (Cloud Build trigger → deploy step, not just image push) and verify revision promotion early rather than at submission.
 
@@ -274,8 +273,8 @@ Report routing accuracy across N test intents with a documented failure-case ana
 
 ### Other evals
 
-- **Forecast:** RMSE/MAPE against holdout, compared to a naive baseline (seasonal naive). A model that doesn't beat the baseline is a finding worth reporting honestly.
-- **Sentiment:** Precision/recall/F1 against the `sentiment_labels` holdout, scored against specification-defined labels (ADR-040); neutral reported per kind (minimal, administrative, status) and hard cases per type (sarcastic, implicit) with the judge disagreement rates alongside; calibration of the confidence threshold used for human-review flagging.
+- **Forecast:** RMSE/MAPE on the 26-week headline holdout and on rolling-origin folds over the Q4 2024 and Q4 2025 peaks, each reported separately (ADR-057), compared to a seasonal-naive baseline. A model that doesn't beat the baseline is a finding worth reporting honestly.
+- **Sentiment:** Precision/recall/F1 against the `sentiment_labels` holdout, alongside a required TF-IDF plus logistic regression baseline (ADR-059), scored against specification-defined labels (ADR-040); neutral reported per kind (minimal, administrative, status) and hard cases per type (sarcastic, implicit) with the judge disagreement rates alongside; calibration of the confidence threshold used for human-review flagging.
 - **QA agent:** Catch rate on deliberately injected faulty outputs. Inject known-bad results and measure detection.
 - **End-to-end:** Latency and token cost per request type.
 
@@ -296,7 +295,7 @@ This distinction is easy to miss and would blow the budget if discovered in week
 
 ### Runtime model strategy
 
-Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) and moves to a Flash-class model only where Flash-Lite measurably underperforms. On the routing seed set Flash-Lite matched 3.7 Flash (28/28 vs 27/28), so the orchestrator stays on it; the Sprint 3 routing set re-tests both (ADR-049). Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, compare QA catch rate across two candidates: Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) — that comparison is itself a good results-section finding.
+Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtime model for all five agents — student credits are confirmed not available (ADR-029). Every agent defaults to Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) and moves to a Flash-class model only where Flash-Lite measurably underperforms. On the routing seed set Flash-Lite matched 3.7 Flash (28/28 vs 27/28), so the orchestrator stays on it; the Sprint 3 routing set re-tests both (ADR-049). Keep every agent **model-agnostic behind a provider interface** — the A2A/MCP layering already makes this natural, and it converts a budget constraint into an architectural selling point ("swap providers without touching orchestration"). In Sprint 5, comparing QA catch rate across Flash-Lite (the baseline) and `gemini-3.1-pro-preview` (paid, preview, run in a separate spend-capped project) is optional, buffer only, and labelled portfolio value (ADR-056).
 
 **Paid project (ADR-041).** A separate paid project, `A2A-agentic-service-ops-gcp`, with its own API key, holds all paid inference: it finished the feedback corpus generation (~$1.40 estimated) and will run the Sprint 5 Pro-for-QA test and paid eval runs. It is capped by a $5 prepaid balance with auto-reload off, a $10 project budget alert, and a per-session request cap enforced in code; the existing project stays on the free tier, since a project upgraded to paid is billed for all of its usage (ADR-029).
 
@@ -305,7 +304,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 | Item | Approach | Est. |
 |---|---|---|
 | Postgres | **Local Docker through Sprint 3.** Cloud SQL from Sprint 4 for the reporting slice, smallest instance, stopped when idle; all services from Sprint 5 (ADR-045) | ~$10–15 total |
-| Cloud Run (7 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic | ~$0–5 |
+| Cloud Run (7 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic. Service count and UI hosting decided at Sprint 4 planning | ~$0–5 |
 | Artifact Registry / Cloud Build / Secret Manager | Free tier | ~$0–3 |
 | Runtime LLM | Gemini API free tier; separate spend-capped paid project (ADR-041) for corpus generation (done, ~$1.40), the Sprint 5 Pro-for-QA test and paid eval runs | ~$1.40 spent; Pro test ~$20–30 incl. thinking tokens, drawn from buffer |
 | Buffer | Overruns, a stronger QA model, demo-day headroom | ~$40 |
@@ -383,7 +382,7 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 
 ### Sprint 6 (weeks 11–12, 2026-11-23 to 12-05) — Hardening & delivery
 **Increment:** Production-grade checklist closed out; demo rehearsed.
-- Observability, CI/CD completion, graceful degradation, load/latency testing
+- Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
 - Production-grade checklist (§7) audited item by item
 - Evaluation report (`docs/evaluation-report.md`) from the Sprint 5 eval runs, presentation, demo rehearsal (ADR-044)
 - **Academic:** final submission due 2026-12-05 (end of Module 10): presentation plus the completed project (ADR-044)
@@ -424,7 +423,7 @@ agentic-service-ops/
 │       └── 06-production-support.md
 │
 ├── infra/
-│   ├── terraform/                  # Cloud Run, Cloud SQL, IAM, Secret Manager
+│   ├── terraform/                  # stretch goal, buffer only (ADR-061): Cloud Run, Cloud SQL, IAM, Secret Manager
 │   └── cloudbuild/                 # build + deploy triggers (not just image push)
 │
 ├── data/
@@ -442,6 +441,12 @@ agentic-service-ops/
 │   │   └── validation/<date>/      # committed validate.py output: report.json, plots, spot_check.csv
 │   └── migrations/                 # Alembic — identical local ↔ Cloud SQL
 │
+├── ml/                             # offline training, never deployed (ADR-062)
+│   ├── sentiment/                  # fine-tunes BERT on sentiment_labels; TF-IDF baseline (ADR-059)
+│   └── forecast/                   # fits the regression on weekly volume; folds + per-slice backtest (ADR-057, ADR-058)
+│
+├── models/                         # gitignored: local copies of versioned artifacts, mounted by compose (ADR-062)
+│
 ├── packages/                       # shared libraries
 │   ├── db_models/                  # SQLAlchemy models, 23 vocabularies, §7 access matrix (ADR-026)
 │   ├── common/                     # config, structured logging, trace IDs, errors
@@ -457,22 +462,16 @@ agentic-service-ops/
 │   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dates resolve as of REPORTING_AS_OF_DATE (ADR-050)
 │   │
 │   ├── agent_sentiment/
-│   │   ├── training/
-│   │   │   └── train.py # fine-tunes BERT model on sentiment_labels
-│   │   └── models/ # trained artifact — gitignored, not committed
 │   │
 │   ├── agent_forecast/
-│   │   ├── training/
-│   │   │   └── train.py # fits the regression on weekly volume history
-│   │   └── models/ # trained artifact — gitignored, not committed
 │   │
-│   ├── agent_qa/ # deterministic — no model
+│   ├── agent_qa/ # figures verified without a model; one model call checks interpretation (ADR-056)
 │   │
 │   ├── mcp_incidents/ # scoped tools + own DB role (app_reporting). Tools: get_incidents_by_date_range,
 │   │                  # get_incident_rate, get_sla_compliance, get_first_time_fix_rate (§6 metrics;
 │   │                  # group_by account | region | service_type | technician; rates as Decimal strings)
-│   ├── mcp_feedback/
-│   ├── mcp_volume/
+│   ├── mcp_feedback/ # runs sentiment inference (ADR-062)
+│   ├── mcp_volume/ # runs forecast inference (ADR-062)
 │   └── api_gateway/ # FastAPI BFF for the UI
 │       └── (each service: Dockerfile, pyproject.toml, src/, tests/)
 │
@@ -500,7 +499,7 @@ agentic-service-ops/
 
 **Notes on the layout:**
 
-- `agent_sentiment/models/` and `agent_forecast/models/` hold trained artifacts, not source — gitignored (`**/models/*.bin`, `**/models/*.pt`, `**/models/*.joblib` or equivalent). A transformer checkpoint can exceed 100MB; it has no business in git history. `training/train.py` in each is what produces the artifact — run deliberately, not something any agent triggers.
+- Trained artifacts are not source. They are versioned in Cloud Storage; Cloud Build pulls a pinned version into the MCP server image, and locally compose mounts the gitignored `models/` folder (ADR-062). A transformer checkpoint can exceed 100MB; it has no business in git history. `ml/sentiment/` and `ml/forecast/` produce the artifacts — run deliberately, never deployed, not something any agent triggers.
 - `data/generator/corpus/` is committed, unlike trained-model artifacts: it is the frozen `feedback_text` corpus and its provenance record, written once by `build_corpus.py`. `generate.py` reads it and never calls an API, so a normal generation run is reproducible from the seed alone (ADR-030).
 - **Every A2A data part is validated against a `packages/schemas` model on receipt.** The A2A v1.0 SDK carries data parts as protobuf `Value`s, which turn integers into floats (344 arrives as 344.0); validating against the shared model restores the types and rejects a mismatched shape before any figure is passed on (ADR-047). For the same reason, `Decimal` money values travel as strings, never floats.
 - `packages/llm/` is the one client every agent uses for model calls (ADR-048): `LLMClient.generate(prompt, *, model=None, response_model=None, trace_id)` returns an `LLMResult` with the text, the Pydantic-parsed object when `response_model` is given, tokens, list-price cost, latency and attempts. It uses the free key by default. Paid calls need `LLM_MODE=paid`, their own key, a request cap and a spend cap, checked at startup. A per-minute 429 waits the delay the error states, within `LLM_MAX_RETRY_WAIT_S`. A daily 429 raises `LLMDailyQuotaExhausted` at once, billing and permission errors raise `LLMAuthError`, and 5xx errors get a short bounded retry; all inherit from `LLMError`. Every call logs one JSON line (trace id, model, mode, tokens, cost, latency, attempts, outcome), costed from `llm/prices.toml`, which records each price's source and date. The client keeps per-process running totals. It exists to keep the provider swap cheap and to centralize cost metering, both budget requirements from §9. One provider sits behind a narrow interface: the transport is the only code that touches the SDK.
@@ -540,7 +539,7 @@ Remaining:
 - [x] Historical data window and granularity for the forecast — 36 months, weekly, univariate (ADR-018)
 - [x] Whether the UI supports conversational follow-up or single-shot intents — single-shot committed; multi-turn only as a scope expansion decided at the Sprint 4 boundary (ADR-031)
 - [x] Confirm what the Google AI student credits actually cover and their expiry — confirmed not available; runtime moved to the free tier (ADR-029)
-- [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — scheduled as a Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` on the paid, spend-capped project (ADR-029, ADR-041); decided by that measurement
+- [ ] Whether to route the QA agent to a stronger model late in the project as a measured comparison — a Sprint 5 QA comparison of Flash-Lite (baseline) and `gemini-3.1-pro-preview` on the paid, spend-capped project (ADR-029, ADR-041); optional, buffer only (ADR-056)
 - [ ] Sprint ceremony cadence and whether the instructor expects to see sprint artifacts at specific checkpoints *(partly known: a weekly status report is due every week through 2026-11-22)*
 
 ---

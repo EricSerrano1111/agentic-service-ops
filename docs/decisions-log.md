@@ -14,9 +14,9 @@
 |---|---|---|
 | 001 | A2A + MCP two-protocol architecture | Accepted |
 | 002 | Cut the research/scraping agent | Accepted |
-| 003 | QA agent as a verification stage, not a formality | Accepted |
+| 003 | QA agent as a verification stage, not a formality | Accepted — superseded in part by ADR-055 |
 | 004 | Solo / Agile / Python project parameters | Accepted (course-selected) |
-| 005 | GCP over Azure | Accepted |
+| 005 | GCP over Azure | Accepted — superseded in part by ADR-061 |
 | 006 | Claude Pro for development; Gemini credits for runtime inference | Accepted — superseded in part by ADR-029 |
 | 007 | Cloud SQL deferred to Sprint 5; local Docker Postgres before | Accepted — superseded in part by ADR-045 |
 | 008 | Three MCP servers, one per specialist domain | Accepted |
@@ -33,7 +33,7 @@
 | 019 | Sentiment distribution: 50/22/20/8, 15% deliberately hard | Accepted — superseded in part by ADR-036; `is_sarcastic` replaced by ADR-037 |
 | 020 | Enums as VARCHAR + CHECK; `upgrade` added to `service_type` | Accepted |
 | 021 | Incident severity influences sentiment, with noise | Accepted — superseded in part by ADR-036 |
-| 022 | QA retries bounded at 2, then escalate | Accepted |
+| 022 | QA retries bounded at 2, then escalate | Accepted — superseded in part by ADR-055 |
 | 023 | Per-agent least-privilege DB roles + narrow MCP tools | Accepted |
 | 024 | Trained models behind sentiment and forecast tools; training is offline | Accepted |
 | 025 | Grant enforcement details: column-level feedback grant, PUBLIC revoked, cross-table invariant left to QA | Accepted — superseded in part by ADR-027 |
@@ -66,6 +66,14 @@
 | 052 | Thinking level follows the model called: each model's supported levels in `prices.toml`, default the lowest, a per-role override only if supported | Accepted — supersedes ADR-049 in part |
 | 053 | Routing prompt `route_v2`: forecast covers forward-looking questions about the operation, not only request volume | Accepted |
 | 054 | Routing prompt `route_v3`: the as-of date is given to the router as today's date; every routing eval reports k=3 runs | Accepted |
+| 055 | The orchestrator owns the QA loop; QA verifies with its own SQL, per-agent answer-time scope | Accepted — supersedes ADR-003 and ADR-022 in part |
+| 056 | QA checks numbers without a model and interpretation with one LLM call; Pro QA comparison optional | Accepted |
+| 057 | Forecast evaluation: 26-week headline holdout plus rolling-origin folds over the Q4 peaks | Accepted |
+| 058 | Forecast model form: log-linear trend plus K annual harmonics chosen from data, robust down-weighting, 26-week horizon | Accepted |
+| 059 | Sentiment training: pinned `bert-base-uncased`, stratified split, class weights, calibrated threshold, required TF-IDF baseline | Accepted |
+| 060 | No agent framework; LangGraph removed from the stack | Accepted |
+| 061 | Portability without Terraform; Terraform a buffer-only stretch goal | Accepted — supersedes ADR-005 in part |
+| 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted |
 
 ---
 
@@ -1630,3 +1638,249 @@ immediate repeats, so s05 alone can't separate the prompts. Both ranges overlap 
   a labelling question for the held-out set, not something a date fixes.
 - routing_v1 stays non-blind (L-16). The held-out set is still the source of final
   routing numbers.
+
+### ADR-055 — The orchestrator owns the QA loop; QA verifies with its own SQL
+*Date: 2026-09-30. Supersedes ADR-003 in part (QA reviewing output "before it reaches the
+orchestrator") and ADR-022 in part (which agent owns the loop). Keeps ADR-022's bound of
+two revisions and its escalation. ADR-027 and R-04 stay valid.*
+
+**Decision:**
+- Specialists return drafts to the orchestrator. The orchestrator sends each draft to the
+  QA agent over A2A and owns the revision loop. On rejection it re-delegates to the
+  specialist with QA's guidance, at most twice, inside the 120 s ceiling (ADR-034).
+  Specialists never call QA.
+- QA runs its own SQL as `app_qa`. It never calls the specialists' MCP tools.
+- QA's scope per agent:
+  - **Reporting:** recompute the figures and compare.
+  - **Sentiment:**
+    - At answer time, cross-check the labels in the answer against star ratings, which QA
+      reads and the sentiment agent can't (ADR-027, FR-11, R-04). Only clear
+      contradictions count: positive on 1-2 stars, negative on 4-5. Neutral, mixed,
+      3-star and unrated comments are excluded, and coverage is reported. Reject only
+      when the answer's contradiction rate is clearly above the normal rate measured on
+      labelled data. Thresholds are set in Sprint 4 under a stop rule.
+    - Gold labels (`sentiment_labels`) are used only in evaluation (holdout scoring and
+      QA catch rate), never as an answer-time check, because new comments in a real
+      deployment have no gold labels.
+    - Verify the comment set, the counts, and that cited comments exist.
+    - The sentiment model flags low-confidence results for human review against the
+      threshold calibrated in ADR-059. QA re-applies that threshold to the confidences in
+      the answer and checks that the flags match. QA doesn't set the threshold or decide
+      the flags; a mismatch means the answer misreports its own confidence, and fails.
+    - QA can't recompute a label, and the sentiment model is never re-run as its own
+      verification.
+  - **Forecast:** no one can verify a future value; QA verifies the method's track record
+    on held-out weeks for the slice requested.
+    - Release gate: the backtest threshold (RMSE/MAPE, set in Sprint 3 from the folds)
+      is applied at model evaluation and release over the ADR-057 folds. A model that
+      fails is not deployed. The backtest error per slice (`service_type`, and horizon
+      bands up to 26 weeks) is stored with the model artifact (ADR-062).
+    - At answer time, QA verifies the input history against its own SQL; verifies the
+      arithmetic (intervals contain the point forecast; horizon at most 26 weeks); and
+      looks up the stored backtest error for the requested slice and horizon, failing the
+      answer if that slice is above threshold, with the error shown to the user.
+
+**Context:**
+- The topology diagram and ADR-003 placed QA differently: the diagram had QA between the
+  specialists and the orchestrator, ADR-003 had it reviewing drafts "before [they reach]
+  the orchestrator", and ADR-022's text made the QA agent the owner of the retry count.
+- The retry counter and the time budget belong in one place, next to the 120 s ceiling.
+- A specialist's own tool can't independently check that tool's defects, so QA computes
+  from the database itself.
+- ADR-003's per-task strategies ("backtest error threshold for forecasting,
+  labeled-holdout scoring for sentiment") assumed checks that can't run on a real answer:
+  a forecast can't be scored before the future arrives, and new comments have no gold
+  labels. The scopes above say what QA can actually check at answer time.
+
+**Alternatives considered:**
+- *Specialists call QA* (rejected). Retry and timeout logic would be spread across three
+  agents.
+- *QA reuses the MCP tools* (rejected). Not independent: a defect in the tool would pass
+  its own check.
+- *A per-request backtest run for forecasts* (rejected). It re-measures the same model
+  on every request; the stored per-slice error answers the same question.
+
+**Consequences:**
+- The orchestrator becomes a loop controller as well as a router.
+- QA is the broadest-access role, as `docs/security-model.md` already states. Runtime QA
+  no longer needs `sentiment_labels` or `generation_parameters`, which today's `app_qa`
+  grants include because `validate.py` and the evals read as `app_qa`. An evaluation and
+  training read role is decided in Sprint 3 with ADR-062's training role, and both grants
+  are then revoked from `app_qa`, before the QA agent is built in Sprint 4, so the
+  runtime QA role never ships holding gold labels.
+- On this synthetic data, star ratings are drawn from the same label the text was written
+  to, so the normal clear-contradiction rate on labelled data is zero (L-24). The rating
+  cross-check will look stronger here than on real customers.
+- Update the `architecture.md` agent topology diagram and QA section; FR-10 and FR-11 in
+  the `02` reference copy; the Sprint 4 QA item.
+
+### ADR-056 — QA checks numbers without a model, and interpretation with one LLM call
+*Date: 2026-09-30. Supersedes nothing. Narrows the "QA: deterministic, no model"
+statements; ADR-024 (QA tools are deterministic code) still holds for the tools.*
+
+**Decision:**
+- Figures are verified by deterministic SQL, which alone decides pass or fail on numbers.
+- One LLM call (Flash-Lite, per ADR-049 and ADR-052) checks interpretation: does the
+  specialist's parsed request (metric, range, breakdown) match the question asked?
+- The Sprint 5 Flash-Lite vs Pro QA comparison becomes optional, buffer only, and is
+  labelled portfolio value.
+
+**Context:** ADR-046 put an LLM in question parsing, which makes interpretation the
+riskiest unverified step: a figure can be computed correctly for the wrong question, and no
+SQL query can detect that. The QA tools stay deterministic code; the interpretation check
+is a call the QA agent makes, not a tool.
+
+**Alternatives considered:**
+- *No interpretation check* (rejected). The parse is the one LLM step in a reporting
+  answer, and a misparse passes every figure check.
+- *A stronger model for the interpretation check by default* (rejected for now).
+  Flash-Lite is the measured default (ADR-049); the Pro comparison stays available as a
+  buffer-only measurement.
+
+**Consequences:**
+- FR-09 and the `architecture.md` repo layout ("deterministic — no model") change to
+  "figures verified without a model; one model call checks interpretation".
+- The QA prompt ingests specialist output, so it is a prompt-injection surface. Added to
+  `docs/security-model.md`'s still-to-write list.
+
+### ADR-057 — Forecast evaluation: 26-week holdout plus rolling-origin folds
+*Date: 2026-09-30. Extends ADR-018.*
+
+**Decision:**
+- The final 26 weeks (about March to August 2026) remain the headline holdout (ADR-018).
+- Rolling-origin folds are added, with test windows that include the Q4 2024 and Q4 2025
+  peaks.
+- Each fold is reported separately; the folds are not averaged.
+
+**Context:** The headline holdout excludes the Q4 budget-flush peak, the strongest
+seasonal feature in the data, so on its own it would never test the peak.
+
+**Alternatives considered:**
+- *Headline holdout only* (rejected). It never tests a Q4 peak.
+- *Averaging the folds* (rejected). An average hides whether the model handles the peak.
+
+**Consequences:**
+- The fold before Q4 2024 has about one year of history, so only one seasonal cycle.
+- `data-dictionary.md` §6's "two to learn from, one to hold out" is reconciled with this
+  entry and ADR-018.
+- The backtest threshold in ADR-055's release gate is set from these folds.
+
+### ADR-058 — Forecast model form
+*Date: 2026-09-30. Supersedes nothing.*
+
+**Decision:**
+- Linear regression on log weekly volume, with a linear trend plus annual sine/cosine
+  pairs.
+- The number of pairs, K, is chosen on training data by an information criterion. It is
+  never fixed at 3, the generator's own basis.
+- Disruptions are down-weighted by a residual-based robust method, using only information
+  an operator would have. Knowledge of the planted anomalies from `parameters.py` is not
+  used: that is answer-key leakage, like fixing K at 3.
+- The horizon is capped at 26 weeks, and prediction ranges are returned.
+- The baseline is seasonal naive: each week is predicted by the same week 52 weeks
+  earlier.
+
+**Context:** The generator builds seasonality from three harmonics and plants three
+anomalies (ADR-038). A model told either fact would recover the answer key, not show that
+the method works.
+
+**Alternatives considered:**
+- *Fix K at 3* (rejected). Answer-key leakage.
+- *Mask the planted anomaly weeks* (rejected). Uses knowledge no operator would have.
+
+**Consequences:**
+- K and the down-weighting are reported with the results, and limitations L-20 and L-21
+  record both choices.
+
+### ADR-059 — Sentiment model training
+*Date: 2026-09-30. Supersedes nothing. Implements ADR-024's BERT classifier.*
+
+**Decision:**
+- Model: `bert-base-uncased`, pinned to a specific Hugging Face revision hash, fine-tuned
+  for 4 classes. DistilBERT is a fallback only if the CPU latency test fails.
+- Split: stratified roughly 70/15/15 by class and hard-case type, with near-duplicates
+  kept on one side.
+- Class-weighted loss for the mixed class (about 8%).
+- A confidence threshold calibrated on the validation set; low-confidence results are
+  flagged for human review (and QA checks the flags, ADR-055).
+- A TF-IDF plus logistic regression baseline is required.
+
+**Context:** On LLM-written text, a bag-of-words model may score close to BERT. If it
+does, that is a finding about the corpus, reported as such, not a reason to drop the
+baseline.
+
+**Alternatives considered:**
+- *DistilBERT from the start* (rejected). Only worth its accuracy cost if BERT's CPU
+  latency fails against the 120 s ceiling.
+- *No classical baseline* (rejected). Without it, BERT's score can't be read.
+
+**Consequences:**
+- The test split is about 1,128 comments, with 168 hard cases (L-22). Per-type scores
+  are noisy, so counts are reported with them.
+
+### ADR-060 — No agent framework
+*Date: 2026-09-30. Supersedes nothing. Removes "LangGraph per agent" from the stack
+(`architecture.md` §6), which no ADR had recorded.*
+
+**Decision:** No agent framework. The agents are plain, tested Python services.
+
+**Context:**
+- The reporting agent is one parse call plus deterministic tools.
+- The ADR-055 loop is bounded (at most two revisions, with a deadline), so it is plain,
+  tested code.
+- LangGraph would be fashion, not need.
+
+**Alternatives considered:**
+- *LangGraph per agent* (rejected). Adds a dependency and an abstraction layer for
+  control flow a few lines of code express directly.
+
+**Consequences:**
+- A2A still makes an agent's internals swappable, so a framework can be adopted later
+  inside one agent without changing the others.
+
+### ADR-061 — Portability without Terraform
+*Date: 2026-09-30. Supersedes ADR-005 in part (Terraform).*
+
+**Decision:**
+- Portability rests on containers, standard protocols (A2A, MCP) and Postgres.
+- The deploy is scripted in Cloud Build and versioned in the repo.
+- Terraform becomes a buffer-only Sprint 6 stretch goal, labelled portfolio value.
+
+**Context:** ADR-005 named Terraform as how the project stays portable. The portability
+claim actually rests on what runs, not on how the infrastructure is declared, and the
+Sprint 4 deploy (ADR-045) is already scripted in Cloud Build.
+
+**Alternatives considered:**
+- *Terraform from Sprint 4* (rejected). Infrastructure-as-code work competes with the
+  timeboxed slice deploy for no change in what is deployed.
+
+**Consequences:**
+- `infra/terraform/` is marked as a stretch goal in the repo layout.
+
+### ADR-062 — Where models run and how artifacts ship
+*Date: 2026-09-30. Supersedes nothing. Keeps ADR-024's decision; moves its training
+scripts out of the agent folders.*
+
+**Decision:**
+- Inference runs inside the MCP servers (`mcp_feedback`, `mcp_volume`), which keeps
+  ADR-024 intact: the tools wrap the models.
+- Model artifacts are versioned in Cloud Storage. Cloud Build pulls a pinned version into
+  the image at build time. Locally, compose mounts `models/`.
+- Training code lives in `ml/sentiment/` and `ml/forecast/`, not in the agent folders.
+  Training is offline and never deployed.
+- Training needs `sentiment_labels`, which `app_sentiment` correctly can't read. The
+  read-only role training uses is decided in Sprint 3 (candidate: a dedicated training
+  role); never a runtime role.
+
+**Context:** ADR-024 put training scripts in each agent's folder, which would ship
+training code and its dependencies in deployed images and tempt a runtime role to hold
+training grants.
+
+**Alternatives considered:**
+- *Training scripts in the agent folders* (rejected, as above).
+- *Artifacts committed to git* (rejected). Checkpoints can exceed 100 MB (ADR-024).
+
+**Consequences:**
+- The forecast artifact carries the per-slice backtest error that QA looks up (ADR-055).
+- The training-role decision is made together with the evaluation read role that takes
+  `sentiment_labels` and `generation_parameters` from `app_qa` (ADR-055).
