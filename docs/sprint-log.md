@@ -282,6 +282,7 @@ above.
 - [ ] MCP servers #2 and #3 (feedback, volume)
 - [ ] Forecast agent + regression model + seasonal-naive baseline comparison
 - [ ] Sentiment agent + confidence scoring
+  - [ ] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
 - [ ] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
 - [ ] Orchestrator routes across all three
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
@@ -298,6 +299,7 @@ above.
 - [ ] Repeat-visit drivers (deferred from Sprint 2).
 - [ ] Incident counts by breakdown (deferred from Sprint 2; L-06).
 - [ ] Fill `docs/security-model.md` while drafting `04`
+  *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
 
 **Shipped:**
@@ -317,6 +319,7 @@ above.
 **Academic deliverable status:**
 - `03-planning-management.md` (due 2026-10-18) — *(status)*
 - `04-design-solution-architecture.md` (due 2026-10-18) — *(status)*
+  *2026-09-30: drafted with Appendix A (security and data-access summary); rubric checked; not submitted.*
 - Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
@@ -345,6 +348,7 @@ above.
   - [ ] Agent Card cached with a TTL (currently fetched on every request).
   - [ ] Trace id in web-server access logs.
   - [ ] A readiness probe alongside `/healthz`.
+  - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 
 **Shipped:**
@@ -380,6 +384,8 @@ above.
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
 - [ ] FastAPI gateway + thin React UI
+  - [ ] Pin Next.js to the current patched release at build time (security release scheduled 2026-09-30); verify the version then.
+    *Source: https://nextjs.org/blog/tag/security. As of 2026-09-30 the patched releases are 16.3.8 (Active LTS) and 15.5.27 (Maintenance LTS).*
 - [ ] Extend deployment to all services; complete Cloud SQL migration
 - [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)
 
