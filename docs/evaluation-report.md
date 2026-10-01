@@ -109,3 +109,57 @@ build are appended here as they are found (CLAUDE.md).
   paper says so."
 - **Why accepted:** Decided in ADR-043.
 - **Recorded in:** ADR-043; re-pointed to this report by ADR-044.
+
+### L-14 — routing_v1 on route_v1: no Flash advantage; ADR-049 stands (2026-09-30)
+- **What:** `evals/routing/routing_v1.csv` (18 questions written by Eric in dispatch
+  phrasing, blind to model output) run on prompt `route_v1`:
+
+  | | Flash-Lite (free key, thinking `minimal`) | 3.7 Flash (paid key, thinking `low`) |
+  |---|---|---|
+  | Overall | 17/18 (94%) | 16/18 (89%) |
+  | ambiguous | 8/8 | 7/8 |
+  | near_miss | 4/5 | 4/5 |
+  | technician | 5/5 | 5/5 |
+  | Errors | 0 | 0 |
+
+  Misses: r11 for both (out_of_scope, routed to sentiment; see L-15), and r04 for 3.7 Flash
+  (forecast, routed to out_of_scope, because `route_v1` defined forecast as request
+  volume only). 3.7 Flash ran at thinking `low` because it rejects `minimal`, as in the
+  2026-09-26 seed run, so the two models did not run at the same thinking level.
+- **Why accepted:** This is the harder set L-03 called for, and 3.7 Flash showed no
+  advantage on it either, so ADR-049 stands. With 18 questions, a one-question gap is
+  within noise (L-17).
+- **Recorded in:** `evals/results/routing_routing_v1_*_route_v1_*.json`; ADR-049.
+
+### L-15 — routing_v1 r11 is a contested label (2026-09-30)
+- **What:** r11, "Why did the Peterson account decide not to renew their service
+  contract?", is labelled out_of_scope. Both models routed it to sentiment, reading the
+  reason for non-renewal as something customers say in feedback.
+- **Why accepted:** That reading is defensible, but the reason for a commercial decision
+  isn't in the dispatch data, so the label is kept. r11 counts as a miss in every
+  routing_v1 result.
+- **Recorded in:** `evals/routing/routing_v1.csv` (r11 note).
+
+### L-16 — routing_v1 is no longer blind (2026-09-30)
+- **What:** `route_v2` (forecast covers forward-looking questions about the operation, not
+  only request volume) was written after the routing_v1 results had been seen. Its
+  rationale is to align the prompt with the routing_v1 labelling rule, which was written
+  before any run. Even so, routing_v1 scores on `route_v2` and later prompts are no
+  longer a held-out measurement.
+- **Why accepted:** The prompt change follows a labelling rule fixed in advance, not
+  individual misses. For an unbiased number, the Sprint 5 evaluation needs a fresh
+  held-out routing set, including multi-domain questions in Eric's phrasing, that is
+  never used to revise a prompt.
+- **Recorded in:** ADR-053; `docs/sprint-log.md` (Sprint 5 Planned).
+
+### L-17 — Routing is not deterministic at temperature 0 (2026-09-30)
+- **What:** In the seed_v1 run on `route_v2` (Flash-Lite), s05 ("Which incident type was
+  most common in July 2026 ...") was routed to forecast, with the reason that July 2026 is
+  a future period. Three immediate repeats on each of `route_v2` and `route_v1` all
+  returned reporting. The route prompt carries no current date, so the model's sense of
+  "now" varies from call to call.
+- **Why accepted:** Each recorded result is a single run, kept as run. A difference of one
+  question between two single runs is within run-to-run variance, which affects every
+  routing comparison so far (ADR-049, L-14). Giving the route prompt the dataset's as-of
+  date (ADR-050) and running repeats would address it; neither is done yet.
+- **Recorded in:** `evals/results/routing_seed_v1_gemini-3.5-flash-lite_route_v2_*.json`.

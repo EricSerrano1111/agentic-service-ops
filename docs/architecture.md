@@ -217,7 +217,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | MCP | Official Python SDK, 2026-07-28 spec — **`mcp==2.2.0`** (pinned 2026-09-25, ADR-047) | Stateless core, HTTP-native transport. **Three servers, one per specialist domain** |
 | A2A | A2A v1.0 SDK — **`a2a-sdk==1.1.5`** (pinned 2026-09-25, ADR-047) | Agent Card discovery + blocking `SendMessage` only; no streaming, push or `input-required` (ADR-047) |
 | Agent runtime | LangGraph per agent | Internal to each agent; A2A makes this swappable |
-| Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator, specialists and QA all `gemini-3.5-flash-lite`, thinking level `minimal` | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
+| Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator, specialists and QA all `gemini-3.5-flash-lite`. Thinking level follows the model called: its lowest supported level, `minimal` on Flash-Lite (ADR-052) | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
 | Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
 | Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
 | ORM + migrations | SQLAlchemy 2.0 + Alembic, psycopg 3 | Models in `packages/db_models/` (ADR-026); migrations are frozen snapshots (ADR-027) |
@@ -451,7 +451,7 @@ agentic-service-ops/
 │
 ├── services/
 │   ├── orchestrator/ # intent classification + A2A routing
-│   │   └── prompts/ # versioned routing prompt (route_v1.md); version + hash logged per decision
+│   │   └── prompts/ # versioned routing prompts (route_v1.md, route_v2.md the default); version + hash logged per decision
 │   │
 │   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046)
 │   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dates resolve as of REPORTING_AS_OF_DATE (ADR-050)

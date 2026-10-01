@@ -60,9 +60,11 @@
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
 | 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
-| 049 | Per-role runtime models and thinking levels; the orchestrator stays on `gemini-3.5-flash-lite` (seed set: 28/28 vs 3.7 Flash 27/28) | Accepted |
+| 049 | Per-role runtime models and thinking levels; the orchestrator stays on `gemini-3.5-flash-lite` (seed set: 28/28 vs 3.7 Flash 27/28) | Accepted — superseded in part by ADR-052 |
 | 050 | Reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer | Accepted |
 | 051 | `locations.region`: the customer site's region, stored, written by the generator from the one state-to-region mapping | Accepted |
+| 052 | Thinking level follows the model called: each model's supported levels in `prices.toml`, default the lowest, a per-role override only if supported | Accepted — supersedes ADR-049 in part |
+| 053 | Routing prompt `route_v2`: forecast covers forward-looking questions about the operation, not only request volume | Accepted |
 
 ---
 
@@ -1474,3 +1476,88 @@ regional-drop check is unchanged (z 3.53).
   out of `group_by` for now.
 - Future regeneration keeps the column filled automatically. A change to the mapping is
   a parameter change, reloaded like any other.
+
+### ADR-052 — Thinking level follows the model called, not only the role
+*Date: 2026-09-30. Supersedes ADR-049 in part: its per-role thinking-level defaults
+(`llm.config.ROLE_THINKING_LEVELS`). ADR-049's per-role models, and the orchestrator on
+Flash-Lite, stand.*
+
+**Decision:** Each model's supported thinking levels are recorded in
+`packages/llm/src/llm/prices.toml` (`thinking_levels`, from Google's thinking docs,
+checked 2026-09-30): `gemini-3.5-flash-lite` minimal, low, medium, high;
+`gemini-3.7-flash` and `gemini-3.1-pro-preview` low, medium, high. The client resolves
+the level for the model each call actually goes to, defaulting to that model's lowest
+supported level. `LLM_THINKING_LEVEL_<ROLE>` stays as an override, but a level the model
+doesn't support is refused with `LLMConfigError` before anything is sent: at startup
+for the role's own model, per call for a `model=` override. A model with no recorded
+levels is refused rather than guessed.
+
+**Context:** Under ADR-049 the level was a per-role setting that ignored which model the
+call went to. A `model=` override bypassed it entirely. On 2026-09-30 the routing_v1 run
+of `gemini-3.7-flash` (`run_seed.py --model`) sent the orchestrator default `minimal` and
+failed all 18 calls with a 400 "Thinking level MINIMAL is not supported for this model",
+the same failure as 2026-09-26. The comparison only ran after a manual
+`LLM_THINKING_LEVEL_ORCHESTRATOR=low`.
+
+**Alternatives considered:**
+- *Keep per-role levels and document the override* (rejected). It failed twice, and
+  nothing stops a third time.
+- *Silently replace an unsupported override with a supported level* (rejected). It hides
+  a configuration error, and it would mean the level that ran is not the one configured.
+- *Allow models with no recorded levels and send the override, or nothing* (rejected).
+  Every model the project calls is in the table already, and the table is where a new
+  model's price must be added anyway.
+
+**Consequences:**
+- `gemini-3.7-flash` can't be sent `minimal` (unit test
+  `test_flash_37_can_never_be_sent_minimal`).
+- Calling a model that isn't in `prices.toml` now fails in free mode too. Before, it was
+  metered with no cost.
+- `run_seed.py` records the thinking level in each result file.
+- `build_corpus.py` and the generator experiments keep their own constant (`minimal`, on
+  Flash-Lite and Gemma); they don't use `packages/llm`.
+
+### ADR-053 — Routing prompt `route_v2`: forecast covers forward-looking questions
+*Date: 2026-09-30. Supersedes nothing. `route_v1` stays in the repo; `route_v2` is the
+orchestrator default.*
+
+**Decision:** In `services/orchestrator/prompts/route_v2.md`, forecast covers
+forward-looking questions about the operation: expected volumes, SLA outlook, trends
+ahead. The forecast agent declines what it cannot project. The rule "Only future volume
+is forecast" becomes "Questions about what will happen are forecast". Nothing else
+changes from `route_v1`.
+
+**Context:** The routing_v1 labelling rule, written before any run: "A question routes
+to the agent whose domain it falls in, even when that agent can't answer it yet;
+out_of_scope means no agent's domain covers it." `route_v1` defined forecast as future
+request volume only, so a forward-looking SLA question (r04, "Are we going to hit our
+SLA targets next month?") fell outside every domain. 3.7 Flash, following that
+definition, routed it to out_of_scope. The forecast model itself is unchanged: weekly
+request volume, univariate (data dictionary §10, decision 5). Only what is routed to the
+forecast agent widens; it declines what that model can't project.
+
+**Results** (Flash-Lite, free key, thinking `minimal`, against `route_v1`):
+
+| Set | `route_v1` | `route_v2` |
+|---|---|---|
+| seed_v1 | 28/28 | 27/28 |
+| routing_v1 | 17/18 | 17/18 |
+
+The one seed_v1 change is s05 (clear, reporting), routed to forecast on the grounds that
+"July 2026" is a future period. Three immediate repeats on each prompt all returned
+reporting, so this is run-to-run variance, not a stable regression (L-17).
+
+**Alternatives considered:**
+- *Relabel r04 as out_of_scope* (rejected). It would change a label after seeing results,
+  and it contradicts the labelling rule.
+- *Keep `route_v1`* (rejected). The forecast agent's domain would be defined by what its
+  first model can do, not by the questions it owns.
+
+**Consequences:**
+- routing_v1 is no longer a blind set (L-16). The Sprint 5 evaluation needs a fresh
+  held-out routing set.
+- A forward-looking question the forecast model can't project gets the forecast agent's
+  decline, not the out-of-scope message. Until the forecast agent exists, it gets the
+  orchestrator's "not available yet" text, which still says "service request volume
+  forecasting" (`DOMAIN_LABELS` in `routing.py`).
+- The route prompt still carries no current date (L-17).
