@@ -1,0 +1,58 @@
+{
+  "bert": {
+    "model": "bert_v1",
+    "predictions": "evals/results/sentiment/2026-10-01_bert_v1/bert_v1.predictions.csv"
+  },
+  "tfidf": {
+    "model": "tfidf_logreg",
+    "predictions": "evals/results/sentiment/2026-10-01_baselines/tfidf_logreg.predictions.csv"
+  },
+  "split": "test",
+  "split_version": "v1",
+  "n": 1128,
+  "macro_f1": {
+    "bert": 0.9713,
+    "tfidf": 0.9431,
+    "bootstrap": {
+      "difference": 0.028188044828404202,
+      "ci95": [
+        0.011617456466636783,
+        0.04563467478303497
+      ],
+      "n_resamples": 10000,
+      "seed": 20261001,
+      "method": "paired bootstrap, percentile interval"
+    },
+    "verdict": "BERT better"
+  },
+  "mcnemar": {
+    "full": {
+      "n": 1128,
+      "b_only_a_right": 36,
+      "c_only_b_right": 10,
+      "p": 0.00015641720852954677,
+      "verdict": "BERT better"
+    },
+    "sarcastic": {
+      "n": 42,
+      "b_only_a_right": 1,
+      "c_only_b_right": 2,
+      "p": 1.0,
+      "verdict": "not distinguishable"
+    },
+    "implicit": {
+      "n": 126,
+      "b_only_a_right": 9,
+      "c_only_b_right": 4,
+      "p": 0.266845703125,
+      "verdict": "not distinguishable"
+    },
+    "mixed": {
+      "n": 88,
+      "b_only_a_right": 7,
+      "c_only_b_right": 2,
+      "p": 0.1796875,
+      "verdict": "not distinguishable"
+    }
+  }
+}

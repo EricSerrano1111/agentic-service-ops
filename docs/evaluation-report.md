@@ -322,3 +322,26 @@ build are appended here as they are found (CLAUDE.md).
   pre-registered budget (ADR-065, ADR-066). Like L-26, the gap is reported beside the
   comparison rather than closed.
 - **Recorded in:** ADR-065, ADR-066; `models/sentiment/lr2e-5_v1/run.json`, `models/sentiment/lr3e-5_v1/run.json` (local, gitignored).
+
+### L-31 — Calibration was fitted on the selection split, so validation calibration figures are optimistic (2026-10-01)
+- **What:** T and τ for `bert_v1` were fitted on the same validation split used to select
+  the run and epoch (ADR-066). Validation figures for calibration (ECE 0.0073 to 0.0063,
+  un-flagged accuracy 99.0%, flag rate 1.9%) are therefore optimistic, and only the test
+  figures are reported as results. Test bears this out: un-flagged accuracy is 98.65%,
+  below the 99% the threshold was set to reach on validation.
+- **Why accepted:** There is no third labelled split, and carving one out of train would
+  have changed the pre-registered split (ADR-064). ADR-066 stated this consequence before
+  calibration ran.
+- **Recorded in:** ADR-066; `evals/results/sentiment/2026-10-01_bert_v1/calibration.json`,
+  `bert_v1.test.metrics.json`.
+
+### L-32 — The review flag catches about a third of BERT's errors (2026-10-01)
+- **What:** On test, 16 of 1,128 comments (1.4%) fall below τ = 0.841 and are flagged.
+  They hold 8 of BERT's 23 errors (35%); the other 15 errors are predicted with
+  calibrated confidence of at least 0.841 and pass un-flagged. By subset: sarcastic 2 of 7
+  errors flagged, implicit 3 of 9, mixed 2 of 4. Temperature scaling barely moved the
+  probabilities (T = 1.032), so the model's confident errors stay confident.
+- **Why accepted:** ADR-066's rule was fixed in advance and is not re-tuned on test. The
+  finding is for the QA design (ADR-055): a flag means "look at this", but no flag does
+  not mean "correct", so QA should not treat un-flagged sentiment results as verified.
+- **Recorded in:** ADR-066; `evals/results/sentiment/2026-10-01_bert_v1/bert_v1.test.metrics.json`.

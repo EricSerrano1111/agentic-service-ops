@@ -283,6 +283,12 @@ above.
 - [ ] Forecast agent + regression model + seasonal-naive baseline comparison
   - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
 - [ ] Sentiment agent + confidence scoring
+  *2026-10-01: model and threshold done, agent still to build. Artifact `bert_v1`
+  (`lr2e-5_v1` epoch 4, ADR-066) exported with a hashed manifest; reload check matched the
+  checkpoint on 1,129/1,129 validation comments. Temperature T = 1.032 and review threshold
+  τ = 0.841 (the 99% target set it, not the 20% cap), both fitted on validation. On test:
+  ECE 0.0106 raw, 0.0094 calibrated; 1.4% flagged; un-flagged accuracy 98.65%, flagged 50%;
+  8 of 23 errors flagged (L-32). Results: `evals/results/sentiment/2026-10-01_bert_v1/`.*
   - [ ] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
     *2026-10-01: proxy measured with the untrained model (pinned `bert-base-uncased`,
     random head) in a CPU-limited local container (ADR-065, L-28). Gate slices pass at
@@ -298,10 +304,15 @@ above.
     macro-F1 0.9431, scored once and in the ledger. Interpretation rule: neither condition
     fired (TF-IDF below 0.95; length-only diagnostic 0.3331, below 0.60), so BERT is judged
     on overall macro-F1 as well as hard cases and mixed.*
-- [ ] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
+- [x] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
   *2026-10-01: `evals/sentiment/score.py` (reads as `app_eval`) reports neutral accuracy by
   kind and hard-case accuracy by type with n and the judge disagreement rate on the same
   rows; run on the baselines. BERT still to run.*
+  *2026-10-01: BERT run. Test macro-F1: BERT (`bert_v1`) 0.9713, TF-IDF 0.9431. Paired
+  bootstrap difference +0.028, 95% interval [0.012, 0.046]; McNemar full set 36 vs 10
+  (p = 0.0002): BERT better overall under ADR-065's rule. Sarcastic (1 vs 2), implicit
+  (9 vs 4) and mixed (7 vs 2) are not distinguishable. Ledger lines 4 and 5; caveats beside
+  the result: L-26 (TF-IDF at grid edge), L-30 (BERT at epoch cap), L-31.*
 - [ ] Orchestrator routes across all three
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
@@ -353,6 +364,7 @@ above.
 - ADR-063 — Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` (2026-10-01, pulled forward)
 - ADR-064 — Sentiment split and evaluation protocol (2026-10-01, pulled forward)
 - ADR-065 — BERT training, comparison and latency protocol, pre-registered (2026-10-01, pulled forward)
+- ADR-066 — Sentiment model selection, calibration and review threshold, pre-registered (2026-10-01, pulled forward)
 
 ---
 
