@@ -146,3 +146,39 @@ def test_a_second_test_scoring_is_refused_before_labels_are_read(
     monkeypatch.setattr(score.data, "load_gold_labels", labels_must_not_be_read)
     with pytest.raises(score.LedgerRefusal):
         score.main([str(preds), "--split", "test"])
+
+
+# --------------------------------------------------------------------------- git dirty check
+
+
+def _git_repo(tmp_path: Path) -> tuple[Path, Path]:
+    import subprocess
+
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
+
+    ledger = tmp_path / "evals" / "results" / "sentiment" / "test_ledger.jsonl"
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text('{"model": "m1"}\n', encoding="utf-8")
+    (tmp_path / "code.py").write_text("x = 1\n", encoding="utf-8")
+    git("init", "-q")
+    git("-c", "user.name=t", "-c", "user.email=t@t", "add", ".")
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "init")
+    return tmp_path, ledger
+
+
+def test_git_dirty_ignores_a_ledger_append_only(tmp_path: Path) -> None:
+    root, ledger = _git_repo(tmp_path)
+    with ledger.open("a", encoding="utf-8") as fh:
+        fh.write('{"model": "m2"}\n')
+    (root / "new_result.json").write_text("{}", encoding="utf-8")  # untracked: never dirty
+    head, dirty = score._git(root, ledger)
+    assert len(head) == 40 and dirty is False
+
+
+def test_git_dirty_counts_any_other_tracked_change(tmp_path: Path) -> None:
+    root, ledger = _git_repo(tmp_path)
+    with ledger.open("a", encoding="utf-8") as fh:
+        fh.write('{"model": "m2"}\n')
+    (root / "code.py").write_text("x = 2\n", encoding="utf-8")
+    assert score._git(root, ledger)[1] is True
