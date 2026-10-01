@@ -19,16 +19,17 @@
 | R-03 | Deployment | Cloud Run build/deploy decoupling (recurred before) | High | Medium | Open |
 | R-04 | ML / Verification | Sentiment task has weak natural verifiability | Medium | High | Mitigating |
 | R-05 | Cost / Technical | QA retry loop cost or latency runaway | Medium | Medium | Mitigating |
-| R-06 | Schedule / Scope | A2A overhead consumes disproportionate solo dev time | Medium | Medium | Open |
+| R-06 | Schedule / Scope | A2A overhead consumes disproportionate solo dev time | Medium | Medium | Closed |
 | R-07 | Data | Synthetic generator produces a degenerate distribution | Medium | High | Monitoring |
 | R-08 | Compliance | Schema/data drifts toward resembling employer's real system | Low | High | Mitigating |
 | R-09 | Academic | Course rubric diverges from the assumed deliverable plan | Medium | High | Monitoring |
-| R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | High | High | Open |
+| R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Open |
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
 | R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Open |
 | R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Mitigating |
+| R-16 | Evaluation | Evaluation validity: small, partly non-blind development sets and run-to-run variance make measured differences possibly noise | High | Medium | Open |
 
 ---
 
@@ -43,6 +44,8 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** CI is live; the eval harnesses are not built yet. The reviewer question is answered in the Sprint 1 retro (`sprint-log.md`): assumptions repeated until they read as requirements, and ADR headers that understated supersession. Status: Open → Mitigating.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** The reviewer question is answered in the Sprint 2 retro (`sprint-log.md`): tests built from the author's assumptions passed while the code was wrong, and assistant-written instructions asserted repo state without checking it. The routing eval harness now exists (`evals/routing/run_seed.py`, three runs per evaluation, ADR-054). Status stays Mitigating.
+
 ### R-02 — Runtime budget depends on unconfirmed credit coverage
 **Description:** The cost plan assumes Google AI student credits cover Gemini runtime inference for all five agents across 12 weeks. Coverage and expiry haven't been confirmed.
 **Mitigation:** Confirm in Sprint 1 — this is a named open item, not an assumption to defer. `packages/llm/` keeps every agent provider-agnostic, so a swap to another provider is a config change if credits fall short.
@@ -55,12 +58,16 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** No budget alert has fired; about $1.40 spent. Next trigger: the Sprint 4 item that prices a full routing eval run (two LLM calls per request, ADR-046). Status stays Mitigating.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** Paid spend this sprint, computed from the eval result files in `evals/results/`: $0.0370 at list prices, from the two `gemini-3.7-flash` routing runs on the paid key (seed_v1 on 2026-09-26, $0.0201; routing_v1 on 2026-09-30, $0.0169). Every other run used the free key. This is a list-price estimate, not billing data, and it covers only calls recorded in the eval result files. No cap was hit and no budget alert fired. Status stays Mitigating.
+
 ### R-03 — Cloud Run build/deploy decoupling
 **Description:** A prior academic project hit successful Cloud Builds that didn't produce active Cloud Run revisions — a decoupled build/deploy pipeline. Same deployment target, same failure mode plausible.
 **Mitigation:** Wire an explicit Cloud Build trigger → deploy step rather than an image push alone; verify revision promotion immediately on the first Sprint 5 deploy rather than waiting until later to check.
 **Review trigger:** First deploy attempt in Sprint 5 — don't wait for the retro if this recurs, it blocks the sprint goal directly.
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Mitigation adds the Sprint 4 reporting-slice deploy (ADR-045, 2026-11-02 to 11-04) with a post-deploy check that the serving revision is the one just built and holds 100% of traffic. Review trigger moves to that deploy; its stop rule records R-03 as realised if the revision is not verified serving by end of 11-04. Likelihood normalised Medium-High → High. Status stays Open.
+
+**Update 2026-09-30 (Sprint 2 boundary review):** Builds are now reproducible: CI and the service images install exactly what `uv.lock` pins (ADR-047). The trigger is still the Sprint 4 slice deploy (ADR-045). Status stays Open.
 
 ### R-04 — Sentiment task has weak natural verifiability
 **Description:** Unlike reporting (deterministic) or forecasting (standard backtest metrics), sentiment has no natural ground truth. A QA check that just re-runs the same model is circular and proves nothing.
@@ -69,6 +76,8 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Reviewed, no change. Impact normalised Medium-High → High.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change.
+
 ### R-05 — QA retry loop cost or latency runaway
 **Description:** Multi-agent systems with a verify-and-revise loop can fan out token usage and wall-clock time quickly if unbounded.
 **Mitigation:** Bounded at 2 retries with escalation on final failure (ADR-022); per-run cost caps and model tiering already specified in the budget plan.
@@ -76,6 +85,8 @@
 **Update 2026-09-22 (ADR-034):** Latency is also bounded by a 120-second end-to-end ceiling, after which the request returns a degraded result with an escalation flag. Check in Sprint 5's first deploy whether cold starts alone approach the ceiling.
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Reviewed, no change. Likelihood normalised Low-Medium → Medium.
+
+**Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change.
 
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
@@ -87,6 +98,8 @@
 **Update 2026-09-25 (walking skeleton):** The skeleton checkpoint is met ahead of 2026-10-02: orchestrator → A2A → reporting agent → MCP → Postgres runs in docker-compose with no LLM, and the e2e test passes. SDK friction was low, and the fallback was not needed. The friction points were protobuf float coercion of A2A data parts; the `message/send` → `SendMessage` rename in A2A v1.0; and the MCP 2.x API changes (`FastMCP` → `MCPServer`, the SDK replacing the root log handler, and an allowed-hosts list needed on the Docker network). The second checkpoint, an LLM-classified question answered end to end in docker-compose by 2026-10-07, stands. Status stays Open.
 
 **Update 2026-09-26 (checkpoint 2):** Met on 2026-09-26, ahead of 2026-10-07. An LLM-routed, LLM-parsed question is answered end to end in docker-compose: all six checkpoint e2e assertions passed (routing to reporting, "last month" parsed to July 2026 per ADR-050, figures equal to independent SQL as `app_qa`, the trace id in all three services, the out-of-scope decline, and the sentiment "not available yet" answer). The sentiment assertion passed on a rerun after a provider 503 (R-15). The first run had failed on a configuration error, not on A2A: `gemini-3.7-flash` rejected thinking level `minimal` (ADR-049). Status stays Open until the Sprint 2 retro, which reviews this risk explicitly.
+
+**Update 2026-09-30 (Sprint 2 boundary review):** Did not materialise. Status: Open → Closed. Evidence: both checkpoints were met early (the skeleton hop 2026-09-25 against 10-02; the LLM-classified question 2026-09-26 against 10-07), and SDK friction was low: protobuf float coercion of A2A data parts, the `message/send` → `SendMessage` rename, and the MCP 2.x API changes. The SDK fallback was not needed. Hours per layer were planned but not logged, so there is no time-per-layer figure behind "low"; the evidence is the checkpoint dates. Reopen trigger: wiring A2A into the sentiment or forecast agent takes more than one day of plumbing.
 
 ### R-07 — Synthetic generator produces a degenerate distribution
 **Description:** Random or careless generation could produce a sentiment mix that's not realistic, a forecast signal that isn't recoverable, or an incident rate that doesn't resemble a real business — quietly invalidating every downstream metric.
@@ -101,12 +114,16 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Reviewed, no change.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** Only `locations` changed, gaining the `region` column (ADR-051). The dataset hash changed, and `locations` with `region` removed hashes identically before and after, as recorded in ADR-051. `validate.py` passed 67/67 after the change (the previous 66 plus the region check). The feedback corpus is unaffected. Status stays Monitoring.
+
 ### R-08 — Schema or data drifts toward resembling employer's real system
 **Description:** The original draft schema showed signs of being modeled too closely on a real production system. The underlying pull toward "use what I already know" doesn't disappear just because the initial fields were corrected.
 **Mitigation:** ADR-012 and ADR-013 establish the discipline; any new field added later should be sourced from general field-service domain principles, checked against this standard before being added, not copied from familiarity.
 **Review trigger:** Any time a new table or field is proposed — a standing check, not a one-time fix.
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Sprint 1's new fields (`sentiment_labels.hard_case_type`, `sentiment_labels.corpus_id`, the `world` and `feedback` `param_group` values) are generator internals, not modelled on any real system. Check passes; status stays Mitigating.
+
+**Update 2026-09-30 (Sprint 2 boundary review):** Sprint 2's new field, `locations.region` (ADR-051), is a generic geography: the customer site's region, derived from its state by one committed mapping. Check passes; status stays Mitigating.
 
 ### R-09 — Course rubric diverges from the assumed deliverable plan
 **Description:** The academic deliverable sequencing in `architecture.md` §10 is a reasonable guess at typical capstone requirements, not a confirmed match to the actual rubric.
@@ -121,6 +138,8 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** The two remaining planning assumptions are resolved from the course materials: there is no charter deliverable, and there is no final paper (ADR-044). The schedule conflicts are resolved in Sprint 2 planning (ADR-045 and the Sprint 3 drafting dates). The remaining exposure is per-deliverable rubric content, checked when `03` drafting starts (2026-10-08). Impact normalised Medium-High → High. Status stays Monitoring.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** `03` and `04` are drafted (not submitted). Whether their rubrics were checked: Eric to confirm. Status stays Monitoring.
+
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
 **Mitigation:** Treat any missed sprint goal as an immediate scope conversation at that sprint's retro, not something to "catch up on later." Scope expansion is only considered if genuinely ahead, per the working agreement.
@@ -134,12 +153,16 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Likelihood Medium → High. Sprint 1's goal was met, but Sprint 3 gained the golden set, the labelled routing set, `security-model.md` and `05` drafting, and Sprint 4 gains the reporting-slice deploy (ADR-045). If Sprint 4 overflows, the fault-injection harness carries to Sprint 5 first. Status stays Open.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** Likelihood High → Medium. Sprint 2's engineering finished 2026-09-30, eleven days before the sprint's end, and two Sprint 3 items moved earlier: `04` is drafted and the labelled routing set is done. Sprint 3 still carries two agents (sentiment and forecast, with MCP servers #2 and #3), the golden set and `05`, plus the two items deferred from Sprint 2. Status stays Open.
+
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).
 **Mitigation:** Provider-agnostic LLM interface (ADR-006) keeps a provider swap mechanically cheap; GCP budget alerts at $50/$80 serve as an early warning regardless of root cause.
 **Review trigger:** Any GCP budget alert firing; otherwise passive monitoring.
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Reviewed, no change; no alert has fired. Likelihood normalised Low-Medium → Medium.
+
+**Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change; no alert has fired.
 
 ### R-12 — MCP/A2A ecosystem churn breaks a dependency
 **Description:** Both protocols are new and moving fast — MCP had its largest spec revision to date in July 2026. An SDK update mid-project could introduce breaking changes.
@@ -149,6 +172,8 @@
 **Update 2026-09-25 (Sprint 1 boundary review):** Fires in Sprint 2, when the MCP and A2A SDKs are first added: pin exact versions and record them, and confirm the spec targets. Status: Open → Mitigating once pinned.
 
 **Update 2026-09-25 (walking skeleton):** Pinned exactly: `mcp==2.2.0` and `a2a-sdk==1.1.5`. Both spec targets are confirmed from the installed packages and the release notes: the MCP SDK's `LATEST_PROTOCOL_VERSION` is `2026-07-28`, observed as the negotiated version, and the A2A SDK's `PROTOCOL_VERSION_CURRENT` is `1.0`. Evidence and the A2A subset used are in ADR-047. One naming change from the planning docs: v1.0's JSON-RPC method is `SendMessage`, where `message/send` is the v0.3 name. Every other dependency is pinned by `uv.lock`, which CI and the service images install from (ADR-047). Status: Open → Mitigating.
+
+**Update 2026-09-30 (Sprint 2 boundary review):** Both SDKs stay pinned at those versions, and the lock file covers everything else. Status stays Mitigating.
 
 ### R-13 — Generated comments don't match their requested sentiment
 **Description:** `feedback_text` is LLM-generated to a requested label (ADR-030), and `sentiment_labels.true_sentiment` records that request, not a verified reading of the text. Comments that drift from their label would make the sentiment model's accuracy look worse than it is — the model gets marked wrong for reading the text correctly. Hard cases can fail the other way: sarcasm an LLM writes on request is often obvious, so "hard" comments may be easier than labeled and inflate hard-case accuracy.
@@ -163,12 +188,16 @@
 
 **Update 2026-09-25 (Sprint 1 boundary review):** Reviewed, no change.
 
+**Update 2026-09-30 (Sprint 2 boundary review):** No change. The trigger is the sentiment agent in Sprint 3.
+
 ### R-14 — Environment parity: verified only against local Docker Postgres
 *Added 2026-09-25.*
 **Description:** Every migration, grant and load so far has run only against local Docker Postgres, connected as a true superuser. Cloud SQL provides `cloudsqlsuperuser`, not SUPERUSER, so the roles migration (role creation, grants, the `PUBLIC` revokes of ADR-025) is unverified on the deployment target and may fail or behave differently there.
 **Likelihood / Impact:** Medium / Medium. **Status:** Open.
 **Mitigation:** The Sprint 4 reporting-slice deploy (ADR-045) runs `alembic upgrade head` and the grants integration suite against Cloud SQL, a sprint before the full migration.
 **Review trigger:** That deploy (2026-11-02 to 11-04).
+
+**Update 2026-09-30 (Sprint 2 boundary review):** No change. The trigger is the Sprint 4 deploy.
 
 ### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
 *Added 2026-09-26.*
@@ -182,9 +211,18 @@
 
 **Update 2026-09-26 (mitigation in place):** Status: Open → Mitigating. The mitigation is in place: `packages/llm` retries 5xx errors twice with jittered backoff, then raises `LLMUnavailable`, which the services return as a clear 503 rather than hanging (ADR-048).
 
+**Update 2026-09-30 (Sprint 2 boundary review):** Confirmed Low / Mitigating. No 503s were observed from Flash-Lite this sprint: every eval result file shows one request per call (no retries), and the checkpoint e2e runs on Flash-Lite needed no rerun.
+
+### R-16 — Evaluation validity: measured differences may be noise
+*Added 2026-09-30.*
+**Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.
+**Likelihood / Impact:** High / Medium. **Status:** Open.
+**Mitigation:** A held-out routing set never used to revise a prompt (Sprint 5); three runs per evaluation with the range and the flipping questions reported (ADR-054); limitations logged in `docs/evaluation-report.md`.
+**Review trigger:** The Sprint 5 evaluation runs.
+
 ---
 
 ## Closed / Realized Risks
 *(move entries here as they resolve, with the outcome noted — this becomes useful evidence for the evaluation report's lessons-learned section)*
 
-*(none yet)*
+- **R-06 — A2A overhead consumes disproportionate solo dev time.** Closed 2026-09-30: did not materialise (both checkpoints met early, low SDK friction). The detail and reopen trigger stay under R-06 above.
