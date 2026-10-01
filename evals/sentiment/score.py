@@ -131,15 +131,22 @@ def _git() -> tuple[str, bool]:
     return head, dirty
 
 
-def append_ledger(entry: dict, ledger: Path = LEDGER) -> None:
-    """Append one test scoring; refuse a model that already has a line."""
+def check_not_scored(model: str, ledger: Path | None = None) -> None:
+    """Refuse a model that already has a test line. Called before any label is read."""
+    ledger = ledger or LEDGER
     if ledger.exists():
         for line in ledger.read_text(encoding="utf-8").splitlines():
-            if line.strip() and json.loads(line)["model"] == entry["model"]:
+            if line.strip() and json.loads(line)["model"] == model:
                 raise LedgerRefusal(
-                    f"{entry['model']} was already scored on test. Test is scored once per "
+                    f"{model} was already scored on test. Test is scored once per "
                     "model (ADR-064); choose settings on validation."
                 )
+
+
+def append_ledger(entry: dict, ledger: Path | None = None) -> None:
+    """Append one test scoring; refuse a model that already has a line."""
+    ledger = ledger or LEDGER
+    check_not_scored(entry["model"], ledger)
     ledger.parent.mkdir(parents=True, exist_ok=True)
     with ledger.open("a", encoding="utf-8", newline="\n") as fh:
         fh.write(json.dumps(entry, sort_keys=True) + "\n")
@@ -152,6 +159,8 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     rows, meta = predictions.read(args.predictions)
+    if args.split == "test":
+        check_not_scored(meta["model"])  # before any gold label is read
     split = data.load_split("v1")
     chosen = select_split(rows, args.split, split)
     metrics = compute(chosen, data.load_gold_labels(), data.load_corpus_meta())

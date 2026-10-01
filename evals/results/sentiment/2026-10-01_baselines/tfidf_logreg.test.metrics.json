@@ -1,0 +1,100 @@
+{
+  "model": "tfidf_logreg",
+  "diagnostic": false,
+  "split": "test",
+  "split_version": "v1",
+  "n": 1128,
+  "macro_f1": 0.9431,
+  "accuracy": 0.9566,
+  "per_class": {
+    "positive": {
+      "precision": 0.9628,
+      "recall": 0.9594,
+      "f1": 0.9611,
+      "support": 567
+    },
+    "neutral": {
+      "precision": 0.965,
+      "recall": 0.9841,
+      "f1": 0.9745,
+      "support": 252
+    },
+    "negative": {
+      "precision": 0.9674,
+      "recall": 0.9412,
+      "f1": 0.9541,
+      "support": 221
+    },
+    "mixed": {
+      "precision": 0.8681,
+      "recall": 0.8977,
+      "f1": 0.8827,
+      "support": 88
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "positive",
+      "neutral",
+      "negative",
+      "mixed"
+    ],
+    "rows_true_columns_predicted": [
+      [
+        544,
+        9,
+        4,
+        10
+      ],
+      [
+        4,
+        248,
+        0,
+        0
+      ],
+      [
+        11,
+        0,
+        208,
+        2
+      ],
+      [
+        6,
+        0,
+        3,
+        79
+      ]
+    ]
+  },
+  "hard_cases": {
+    "sarcastic": {
+      "n": 42,
+      "accuracy": 0.8571,
+      "judge_disagreement_rate": 0.0714
+    },
+    "implicit": {
+      "n": 126,
+      "accuracy": 0.8889,
+      "judge_disagreement_rate": 0.1984
+    }
+  },
+  "neutral_by_kind": {
+    "administrative": {
+      "n": 196,
+      "accuracy": 1.0
+    },
+    "minimal": {
+      "n": 18,
+      "accuracy": 1.0
+    },
+    "status": {
+      "n": 38,
+      "accuracy": 0.8947
+    }
+  },
+  "mixed": {
+    "recall": 0.8977,
+    "f1": 0.8827,
+    "n": 88
+  }
+}

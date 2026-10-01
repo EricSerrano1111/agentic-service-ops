@@ -1,3 +1,4 @@
 # Hashed artifacts: stored and checked out byte-for-byte, never line-ending converted,
-# so the SHA-256 in a split manifest matches on Windows (core.autocrlf) and in CI alike.
+# so the SHA-256 in a split manifest or the test ledger matches on Windows (core.autocrlf) and in CI alike.
 ml/sentiment/splits/*.csv -text
+evals/results/sentiment/**/*.predictions.csv -text

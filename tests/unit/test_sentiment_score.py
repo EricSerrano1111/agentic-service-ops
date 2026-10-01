@@ -127,3 +127,22 @@ def test_ledger_appends_once_per_model(tmp_path: Path) -> None:
 
     lines = [json.loads(x) for x in ledger.read_text(encoding="utf-8").splitlines()]
     assert [x["model"] for x in lines] == ["m1", "m2"]
+
+
+def test_a_second_test_scoring_is_refused_before_labels_are_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The refusal comes before load_gold_labels: a rescoring never sees test labels."""
+    ledger = tmp_path / "test_ledger.jsonl"
+    score.append_ledger({"model": "fixture_model"}, ledger)
+    preds = tmp_path / "fixture_model.predictions.csv"
+    preds.write_text(",".join(score.predictions.HEADER) + "\n", encoding="utf-8")
+    score.predictions.meta_path(preds).write_text('{"model": "fixture_model"}', encoding="utf-8")
+
+    def labels_must_not_be_read():
+        raise AssertionError("gold labels were read before the ledger check")
+
+    monkeypatch.setattr(score, "LEDGER", ledger)
+    monkeypatch.setattr(score.data, "load_gold_labels", labels_must_not_be_read)
+    with pytest.raises(score.LedgerRefusal):
+        score.main([str(preds), "--split", "test"])
