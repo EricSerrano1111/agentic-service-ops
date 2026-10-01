@@ -26,7 +26,7 @@ from common import bind_trace_id
 from pydantic import BaseModel, ValidationError
 
 from .classify import Kind, classify
-from .config import LLMSettings, Price, Role, load_price_table
+from .config import LLMSettings, Price, Role, load_price_table, resolve_thinking_level
 from .errors import (
     LLMAuthError,
     LLMBudgetExceeded,
@@ -93,7 +93,7 @@ class LLMResult[R: BaseModel]:
     model: str
     input_tokens: int
     output_tokens: int
-    cost_usd: float | None  # list-price equivalent; None only for an unpriced model
+    cost_usd: float | None  # list price; None only for an unpriced model (refused, ADR-052)
     latency_s: float
     attempts: int
 
@@ -140,6 +140,8 @@ class LLMClient:
                 f"paid mode needs a price for {settings.default_model} to enforce the spend "
                 "cap; add it to llm/prices.toml"
             )
+        # Fail at startup, not on the first request, on a level the model rejects.
+        self.thinking_level_for(settings.default_model)
 
     @classmethod
     def from_env(cls, role: Role, **kwargs: Any) -> LLMClient:
@@ -155,6 +157,10 @@ class LLMClient:
         for secret in self._secrets:
             text = text.replace(secret, "***")
         return text
+
+    def thinking_level_for(self, model: str) -> str:
+        """The level sent with every call to `model` (ADR-052)."""
+        return resolve_thinking_level(model, self.settings.thinking_level, self.prices)
 
     def _cost(self, model: str, input_tokens: int, output_tokens: int) -> float | None:
         price = self.prices.get(model)
@@ -188,6 +194,7 @@ class LLMClient:
         trace_id: str | None,
     ) -> LLMResult[T]:
         model = model or self.settings.default_model
+        thinking_level = self.thinking_level_for(model)  # raises before anything is sent
         began = time.perf_counter()
         attempts = 0
         waited = 0.0
@@ -204,7 +211,10 @@ class LLMClient:
                 self.totals.requests += 1
                 try:
                     response = await self._transport.generate(
-                        model=model, prompt=prompt, response_model=response_model
+                        model=model,
+                        prompt=prompt,
+                        response_model=response_model,
+                        thinking_level=thinking_level,
                     )
                 except Exception as exc:
                     c = classify(exc)

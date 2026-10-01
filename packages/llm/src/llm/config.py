@@ -36,13 +36,13 @@ FREE_DEFAULT_MAX_REQUESTS = 1000
 DEFAULT_MAX_RETRY_WAIT_S = 30.0  # well inside ADR-034's 120 s
 DEFAULT_REQUEST_TIMEOUT_S = 30.0
 DEFAULT_TEMPERATURE = 0.0  # parsing and classification: least variance
-DEFAULT_THINKING_LEVEL = "minimal"  # as build_corpus.py; cheapest thinking setting
-#: Thinking level per role, because support differs by model: gemini-3.5-flash-lite
-#: accepts "minimal", but gemini-3.7-flash rejects it with a 400 INVALID_ARGUMENT
-#: ("Thinking level MINIMAL is not supported for this model", 2026-09-26). Every role
-#: runs on Flash-Lite today (ADR-049); a role moved to another model must check that
-#: model's supported levels. Override with LLM_THINKING_LEVEL_<ROLE>.
-ROLE_THINKING_LEVELS = {"orchestrator": "minimal", "specialist": "minimal", "qa": "minimal"}
+#: Gemini thinking levels, lowest first. Support differs by model: gemini-3.7-flash
+#: rejects "minimal" with a 400 INVALID_ARGUMENT ("Thinking level MINIMAL is not
+#: supported for this model", 2026-09-26). So the level follows the model actually
+#: called: each model's supported levels are in prices.toml, the default is the lowest
+#: of them, and LLM_THINKING_LEVEL_<ROLE> overrides it only with a level the model
+#: supports (ADR-052).
+THINKING_LEVELS = ("minimal", "low", "medium", "high")
 
 
 class Secret:
@@ -68,6 +68,8 @@ class Price:
     output_per_m: float
     source: str
     as_of: dt.date
+    #: Supported thinking levels, lowest first (prices.toml `thinking_levels`).
+    thinking_levels: tuple[str, ...] = ()
     note: str = ""
 
     @property
@@ -84,14 +86,41 @@ def load_price_table(text: str | None = None) -> dict[str, Price]:
     raw = tomllib.loads(text if text is not None else (files("llm") / "prices.toml").read_text())
     table = {}
     for model, entry in raw.get("models", {}).items():
+        levels = entry.get("thinking_levels") or []
+        unknown = [level for level in levels if level not in THINKING_LEVELS]
+        if not levels or unknown:
+            raise LLMConfigError(
+                f"prices.toml: {model} needs thinking_levels drawn from {THINKING_LEVELS}, "
+                f"got {levels!r}"
+            )
         table[model] = Price(
             input_per_m=float(entry["input_per_m"]),
             output_per_m=float(entry["output_per_m"]),
             source=str(entry["source"]),
             as_of=dt.date.fromisoformat(str(entry["as_of"])),
+            thinking_levels=tuple(level for level in THINKING_LEVELS if level in levels),
             note=str(entry.get("note", "")),
         )
     return table
+
+
+def resolve_thinking_level(model: str, override: str | None, prices: dict[str, Price]) -> str:
+    """The thinking level to send to `model`: the override if the model supports it,
+    else the model's lowest supported level. Refuses a model with no recorded levels
+    rather than guess, so an unsupported level is never sent."""
+    price = prices.get(model)
+    if price is None:
+        raise LLMConfigError(
+            f"no thinking levels recorded for {model}; add it to llm/prices.toml (ADR-052)"
+        )
+    if override is None:
+        return price.thinking_levels[0]
+    if override not in price.thinking_levels:
+        raise LLMConfigError(
+            f"thinking level {override!r} is not supported by {model}; it supports "
+            f"{', '.join(price.thinking_levels)} (ADR-052)"
+        )
+    return override
 
 
 def _float(name: str, default: float | None) -> float | None:
@@ -126,7 +155,8 @@ class LLMSettings:
     max_retry_wait_s: float = DEFAULT_MAX_RETRY_WAIT_S
     request_timeout_s: float = DEFAULT_REQUEST_TIMEOUT_S
     temperature: float = DEFAULT_TEMPERATURE
-    thinking_level: str = DEFAULT_THINKING_LEVEL
+    #: LLM_THINKING_LEVEL_<ROLE>; None means each model's lowest supported level.
+    thinking_level: str | None = None
 
     @property
     def key_var(self) -> str:
@@ -179,7 +209,6 @@ class LLMSettings:
             max_retry_wait_s=_float("LLM_MAX_RETRY_WAIT_S", DEFAULT_MAX_RETRY_WAIT_S),
             request_timeout_s=_float("LLM_REQUEST_TIMEOUT_S", DEFAULT_REQUEST_TIMEOUT_S),
             temperature=float(env("LLM_TEMPERATURE") or DEFAULT_TEMPERATURE),
-            thinking_level=(
-                env(f"LLM_THINKING_LEVEL_{role.upper()}") or ROLE_THINKING_LEVELS[role]
-            ).strip(),
+            thinking_level=(env(f"LLM_THINKING_LEVEL_{role.upper()}") or "").strip().lower()
+            or None,
         )

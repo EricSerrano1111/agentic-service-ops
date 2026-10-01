@@ -160,9 +160,11 @@ class FakeTransport:
     def __init__(self, *script) -> None:
         self.script = list(script)
         self.calls = 0
+        self.sent: list[tuple[str, str]] = []  # (model, thinking level) per request
 
-    async def generate(self, *, model, prompt, response_model):
+    async def generate(self, *, model, prompt, response_model, thinking_level):
         self.calls += 1
+        self.sent.append((model, thinking_level))
         item = self.script.pop(0)
         if isinstance(item, BaseException):
             raise item
@@ -500,13 +502,6 @@ async def test_running_totals_accumulate_across_calls():
     assert t.by_outcome == {"ok": 2}
 
 
-async def test_unpriced_model_in_free_mode_meters_tokens_with_no_cost(log_lines):
-    c, _, _ = client(Response("a", 100, 10))
-    result = await c.generate("x", model="gemini-9-unpriced", trace_id="t")
-    assert result.cost_usd is None and result.input_tokens == 100
-    assert log_lines()[-1]["price_source"] is None
-
-
 # --------------------------------------------------------------------------- structured output
 
 
@@ -688,20 +683,79 @@ async def test_request_rejection_logs_status_and_googles_message(log_lines):
     assert KEY not in json.dumps(line)
 
 
-def test_thinking_level_is_per_role(monkeypatch):
-    for name, value in {
-        "GOOGLE_AI_API_KEY": KEY,
-        "GEMINI_MODEL_ORCHESTRATOR": MODEL,
-        "GEMINI_MODEL_SPECIALIST": MODEL,
-        "GEMINI_MODEL_QA": MODEL,
-    }.items():
-        monkeypatch.setenv(name, value)
-    for name in ("LLM_MODE", "LLM_THINKING_LEVEL_ORCHESTRATOR", "LLM_THINKING_LEVEL_SPECIALIST"):
-        monkeypatch.delenv(name, raising=False)
-    # Every role is on Flash-Lite, which accepts "minimal" (ADR-049).
-    for role in ("orchestrator", "specialist", "qa"):
-        assert LLMSettings.from_env(role).thinking_level == "minimal"
-    # A role moved to a model that rejects "minimal" (gemini-3.7-flash does) is set alone.
-    monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", "low")
+def _role_env(monkeypatch, model: str, override: str | None = None) -> None:
+    monkeypatch.setenv("GOOGLE_AI_API_KEY", KEY)
+    monkeypatch.setenv("GEMINI_MODEL_ORCHESTRATOR", model)
+    monkeypatch.delenv("LLM_MODE", raising=False)
+    if override is None:
+        monkeypatch.delenv("LLM_THINKING_LEVEL_ORCHESTRATOR", raising=False)
+    else:
+        monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", override)
+
+
+def test_every_priced_model_records_its_thinking_levels():
+    """Google's thinking docs, checked 2026-09-30 (ADR-052)."""
+    assert PRICES["gemini-3.5-flash-lite"].thinking_levels == ("minimal", "low", "medium", "high")
+    assert PRICES["gemini-3.7-flash"].thinking_levels == ("low", "medium", "high")
+    assert PRICES["gemini-3.1-pro-preview"].thinking_levels == ("low", "medium", "high")
+
+
+def test_price_table_rejects_a_model_without_thinking_levels():
+    entry = '[models."m"]\ninput_per_m = 1\noutput_per_m = 1\nsource = "x"\nas_of = "2026-09-30"\n'
+    with pytest.raises(LLMConfigError, match="thinking_levels"):
+        load_price_table(entry)
+    with pytest.raises(LLMConfigError, match="thinking_levels"):
+        load_price_table(entry + 'thinking_levels = ["none"]\n')
+
+
+async def test_thinking_level_defaults_to_the_models_lowest(monkeypatch):
+    _role_env(monkeypatch, MODEL)
+    c = LLMClient.from_env("orchestrator", transport=FakeTransport(Response("a"), Response("b")))
+    assert c.settings.thinking_level is None
+    await c.generate("x", trace_id="t1")
+    await c.generate("x", model="gemini-3.7-flash", trace_id="t2")
+    # The level follows the model called, not the role's configured model.
+    assert c._transport.sent == [(MODEL, "minimal"), ("gemini-3.7-flash", "low")]
+
+
+async def test_flash_37_can_never_be_sent_minimal(monkeypatch):
+    """The 2026-09-26 400: gemini-3.7-flash rejects "minimal" (ADR-049, ADR-052)."""
+    flash = "gemini-3.7-flash"
+    # Configured as the role's model with "minimal": refused at startup.
+    _role_env(monkeypatch, flash, "minimal")
+    with pytest.raises(LLMConfigError, match="'minimal' is not supported by gemini-3.7-flash"):
+        LLMClient.from_env("orchestrator", transport=FakeTransport())
+    # Called per request from a Flash-Lite client overridden to "minimal": refused before
+    # anything is sent, and not counted as a request.
+    _role_env(monkeypatch, MODEL, "MINIMAL")
+    transport = FakeTransport(Response("a"))
+    c = LLMClient.from_env("orchestrator", transport=transport)
+    with pytest.raises(LLMConfigError, match="not supported by gemini-3.7-flash"):
+        await c.generate("x", model=flash, trace_id="t")
+    assert transport.calls == 0 and c.totals.requests == 0
+    # Every override a role can set: whatever reaches the transport for 3.7 Flash is never
+    # "minimal".
+    for override in (None, "minimal", "low", "medium", "high"):
+        _role_env(monkeypatch, flash, override)
+        transport = FakeTransport(Response("a"))
+        try:
+            c = LLMClient.from_env("orchestrator", transport=transport)
+            await c.generate("x", trace_id="t")
+        except LLMConfigError:
+            pass
+        assert ("gemini-3.7-flash", "minimal") not in transport.sent
+
+
+def test_thinking_override_is_per_role(monkeypatch):
+    _role_env(monkeypatch, MODEL, "low")
+    monkeypatch.setenv("GEMINI_MODEL_SPECIALIST", MODEL)
+    monkeypatch.delenv("LLM_THINKING_LEVEL_SPECIALIST", raising=False)
     assert LLMSettings.from_env("orchestrator").thinking_level == "low"
-    assert LLMSettings.from_env("specialist").thinking_level == "minimal"  # unaffected
+    assert LLMSettings.from_env("specialist").thinking_level is None  # unaffected
+
+
+async def test_unknown_model_is_refused_rather_than_guessed():
+    c, transport, _ = client(Response("a"))
+    with pytest.raises(LLMConfigError, match="no thinking levels recorded"):
+        await c.generate("x", model="gemini-9-unknown", trace_id="t")
+    assert transport.calls == 0

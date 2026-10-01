@@ -4,8 +4,13 @@
 # mode=free: not billed). Thinking tokens bill as output. An entry that can't be checked
 # against Google's pricing page gets source = "UNCONFIRMED" (Sprint 1 retro rule).
 # Prices change: re-check `source` and bump `as_of` before relying on a cost figure.
+#
+# thinking_levels: the levels the model accepts, from Google's thinking docs
+# (https://ai.google.dev/gemini-api/docs/thinking, checked 2026-09-30). The client sends
+# the lowest unless LLM_THINKING_LEVEL_<ROLE> names another supported one (ADR-052).
 
 [models."gemini-3.5-flash-lite"]
+thinking_levels = ["minimal", "low", "medium", "high"]
 input_per_m = 0.30
 output_per_m = 2.50
 source = "https://ai.google.dev/gemini-api/docs/pricing"
@@ -13,6 +18,7 @@ as_of = "2026-09-26"
 note = "Runtime model for every role (ADR-049). Free of charge on the free tier (15 RPM, 500 RPD)."
 
 [models."gemini-3.7-flash"]
+thinking_levels = ["low", "medium", "high"]  # rejects minimal: 400, 2026-09-26
 input_per_m = 0.75
 output_per_m = 3.75
 source = "https://ai.google.dev/gemini-api/docs/pricing"
@@ -20,6 +26,7 @@ as_of = "2026-09-26"
 note = "Orchestrator candidate in the Sprint 3 routing comparison (ADR-049). Rises to 1.50 input / 7.50 output from 2027-01-01, per the same page. Free tier: 5 RPM, 20 RPD (ADR-029)."
 
 [models."gemini-3.1-pro-preview"]
+thinking_levels = ["low", "medium", "high"]
 input_per_m = 2.00
 output_per_m = 12.00
 source = "https://ai.google.dev/gemini-api/docs/pricing"
