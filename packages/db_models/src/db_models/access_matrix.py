@@ -13,7 +13,7 @@ documentation uses. The actual name each role is created under comes from
 `DB_ROLE_*_USER`, which is required rather than defaulted: see
 `_resolve_credentials()` in the roles migration.
 
-Five properties this matrix enforces structurally, which a code convention would not
+Seven properties this matrix enforces structurally, which a code convention would not
 (§7):
 
 1. `app_sentiment` cannot read `sentiment_labels` — self-verification is impossible.
@@ -25,6 +25,14 @@ Five properties this matrix enforces structurally, which a code convention would
    independent cross-check on sentiment for the QA agent (R-04, ADR-027).
 5. `app_forecast` cannot read billing or any customer or technician identifier — it
    sees three columns of `service_requests` and nothing else (ADR-035).
+6. `app_qa` cannot read `sentiment_labels` or `generation_parameters` — the runtime QA
+   role never holds gold labels or the generator's answer key (ADR-055, ADR-063).
+7. `app_train` cannot read `service_feedback.rating` or `generation_parameters` — a
+   model trained on the stars would undermine QA's rating cross-check, and the
+   parameters are the forecast's answer key (ADR-058, ADR-063).
+
+`app_eval` and `app_train` are offline read roles: they are used only by scripts on the
+developer machine and are never held by a deployed service (ADR-063).
 """
 
 from __future__ import annotations
@@ -40,6 +48,8 @@ ROLE_SENTIMENT: Final = "app_sentiment"
 ROLE_FORECAST: Final = "app_forecast"
 ROLE_QA: Final = "app_qa"
 ROLE_GENERATOR: Final = "app_generator"
+ROLE_EVAL: Final = "app_eval"
+ROLE_TRAIN: Final = "app_train"
 
 #: Role → the environment variable pair carrying its name and password.
 ROLE_ENV_VARS: Final[dict[str, tuple[str, str]]] = {
@@ -48,9 +58,16 @@ ROLE_ENV_VARS: Final[dict[str, tuple[str, str]]] = {
     ROLE_FORECAST: ("DB_ROLE_FORECAST_USER", "DB_ROLE_FORECAST_PASSWORD"),
     ROLE_QA: ("DB_ROLE_QA_USER", "DB_ROLE_QA_PASSWORD"),
     ROLE_GENERATOR: ("DB_ROLE_GENERATOR_USER", "DB_ROLE_GENERATOR_PASSWORD"),
+    ROLE_EVAL: ("DB_ROLE_EVAL_USER", "DB_ROLE_EVAL_PASSWORD"),
+    ROLE_TRAIN: ("DB_ROLE_TRAIN_USER", "DB_ROLE_TRAIN_PASSWORD"),
 }
 
 ALL_ROLES: Final[tuple[str, ...]] = tuple(ROLE_ENV_VARS)
+
+#: Read-only roles for offline scripts on the developer machine (validation, evaluation,
+#: training). No deployed service, compose file or Dockerfile may reference their
+#: credentials (ADR-063); `tests/unit/test_offline_roles_isolation.py` asserts that.
+OFFLINE_READ_ROLES: Final[tuple[str, ...]] = (ROLE_EVAL, ROLE_TRAIN)
 
 #: Every table in the schema. The generator holds ALL on each of these.
 ALL_TABLES: Final[tuple[str, ...]] = (
@@ -91,8 +108,25 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
     ROLE_FORECAST: frozenset(),  # service_requests is column-level only — see ADR-035.
     # Deliberately broad: verification requires cross-checking sources the
     # specialists cannot see. That also makes the QA agent the highest-value target
-    # in the system, which the threat model addresses explicitly.
+    # in the system, which the threat model addresses explicitly. Gold labels and
+    # generator parameters are not among them: QA checks answers, and answers in a
+    # real deployment have no gold labels (ADR-055, ADR-063).
     ROLE_QA: frozenset(
+        {
+            "accounts",
+            "locations",
+            "technicians",
+            "technician_skills",
+            "service_requests",
+            "archived_requests",
+            "incidents",
+            "service_feedback",
+        }
+    ),
+    ROLE_GENERATOR: frozenset(),  # covered by ALL_GRANTS below
+    # Validation and evaluation: the ten tables app_qa held before ADR-063, gold
+    # labels and generator parameters included. Never contacts or internal_users.
+    ROLE_EVAL: frozenset(
         {
             "accounts",
             "locations",
@@ -106,7 +140,8 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
             "generation_parameters",
         }
     ),
-    ROLE_GENERATOR: frozenset(),  # covered by ALL_GRANTS below
+    # Training: the labels in full; everything else by column — see COLUMN_SELECT_GRANTS.
+    ROLE_TRAIN: frozenset({"sentiment_labels"}),
 }
 
 #: Role → ALL PRIVILEGES tables.
@@ -166,6 +201,13 @@ COLUMN_SELECT_GRANTS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     ROLE_REPORTING: {"service_feedback": _FEEDBACK_NON_TEXT_COLUMNS},
     ROLE_SENTIMENT: {"service_feedback": _SENTIMENT_FEEDBACK_COLUMNS},
     ROLE_FORECAST: {"service_requests": _FORECAST_REQUEST_COLUMNS},
+    # Training reads exactly what the runtime models read, plus the labels (ADR-063):
+    # no `rating` (it would undermine QA's rating cross-check) and no
+    # `generation_parameters` (the forecast's answer key, ADR-058).
+    ROLE_TRAIN: {
+        "service_feedback": _SENTIMENT_FEEDBACK_COLUMNS,
+        "service_requests": _FORECAST_REQUEST_COLUMNS,
+    },
 }
 
 # --------------------------------------------------------------------------- #

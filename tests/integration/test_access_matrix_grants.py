@@ -31,7 +31,8 @@ pytestmark = pytest.mark.integration
 
 ConnectAs = Callable[[str], psycopg.Connection]
 
-# The generator is an offline script, not an agent; §7 point 3 is about agents.
+# The generator is an offline script, not an agent; §7 point 3 is about agents. The
+# offline read roles are held to it too: evaluation and training never need PII.
 AGENT_ROLES = tuple(role for role in am.ALL_ROLES if role != am.ROLE_GENERATOR)
 
 
@@ -236,3 +237,64 @@ def test_sentiment_cannot_read_rating(connect_as: ConnectAs) -> None:
 def test_no_agent_role_reads_pii(connect_as: ConnectAs, role: str, table: str) -> None:
     """§7 point 3: customer PII never enters an LLM context window."""
     _assert_denied(connect_as(role), _select(table, _ANY_COLUMN))
+
+
+# --------------------------------------------------------------------------- #
+# ADR-063: offline read roles; gold labels leave app_qa
+#
+# Literal expectations, not derived from the matrix: if the matrix itself regressed, the
+# sweeps above would agree with it, and these would not.
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize("table", ["sentiment_labels", "generation_parameters"])
+def test_runtime_qa_cannot_read_gold_tables(connect_as: ConnectAs, table: str) -> None:
+    """ADR-055 / ADR-063: the runtime QA role never ships holding gold labels."""
+    _assert_denied(connect_as(am.ROLE_QA), _select(table, _ANY_COLUMN))
+
+
+def test_train_cannot_read_rating(connect_as: ConnectAs) -> None:
+    """ADR-063: a model trained on the stars would undermine QA's rating cross-check."""
+    _assert_denied(connect_as(am.ROLE_TRAIN), _select("service_feedback", _column("rating")))
+
+
+@pytest.mark.parametrize("table", ["generation_parameters", "incidents", "contacts"])
+def test_train_cannot_read_table(connect_as: ConnectAs, table: str) -> None:
+    """ADR-063: no answer key (ADR-058), no staff notes, no PII."""
+    _assert_denied(connect_as(am.ROLE_TRAIN), _select(table, _ANY_COLUMN))
+
+
+def test_train_reads_labels_and_the_runtime_columns(connect_as: ConnectAs) -> None:
+    conn = connect_as(am.ROLE_TRAIN)
+    _assert_allowed(conn, _select("sentiment_labels", _EVERY_COLUMN))
+    _assert_allowed(
+        conn,
+        _select(
+            "service_feedback",
+            sql.SQL("feedback_id, request_id, submitted_at, feedback_text"),
+        ),
+    )
+    _assert_allowed(
+        conn, _select("service_requests", sql.SQL("request_id, scheduled_datetime, service_type"))
+    )
+
+
+@pytest.mark.parametrize("table", ["sentiment_labels", "generation_parameters"])
+def test_eval_reads_gold_tables(connect_as: ConnectAs, table: str) -> None:
+    _assert_allowed(connect_as(am.ROLE_EVAL), _select(table, _EVERY_COLUMN))
+
+
+_OFFLINE_WRITE_CASES = [
+    pytest.param(role, operation, table, id=f"{role}-{operation}-{table}")
+    for role in (am.ROLE_EVAL, am.ROLE_TRAIN)
+    for operation in _WRITE_PROBES
+    for table in am.ALL_TABLES
+]
+
+
+@pytest.mark.parametrize(("role", "operation", "table"), _OFFLINE_WRITE_CASES)
+def test_offline_read_roles_cannot_write(
+    connect_as: ConnectAs, role: str, operation: str, table: str
+) -> None:
+    """ADR-063: both offline roles are read-only — INSERT, UPDATE and DELETE all refused."""
+    _assert_denied(connect_as(role), _WRITE_PROBES[operation](table))

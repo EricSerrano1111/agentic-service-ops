@@ -7,10 +7,11 @@ The check functions are pure: they take in-memory tables ({table: [row dicts]}) 
 `Truth` built from `generation_parameters` rows, so they run against the database and,
 offline, against generate.py output in unit tests.
 
-Database access uses agent roles only, never a superuser (ADR-023):
+Database access uses least-privilege read roles only, never a superuser (ADR-023):
   - app_forecast reads the weekly volume series from exactly request_id,
     scheduled_datetime and service_type -- showing its ADR-035 grant is sufficient;
-  - app_qa reads everything else, including generation_parameters.
+  - app_eval, the offline evaluation role, reads everything else, including
+    sentiment_labels and generation_parameters, which the runtime app_qa cannot (ADR-063).
 Truth values come from generation_parameters, not from parameters.py: the database alone
 describes its own ground truth. (A unit test confirms the two agree.)
 
@@ -339,7 +340,7 @@ def check_invariants(t: Mapping[str, list[dict]], truth: Truth) -> list[Check]:
     ]
 
 
-#: The §8 invariants as SQL, run as app_qa against the database (cross-check of group A).
+#: The §8 invariants as SQL, run as app_eval against the database (cross-check of group A).
 SQL_INVARIANTS = {
     "completed request without an archive row": """
         SELECT count(*) FROM service_requests r LEFT JOIN archived_requests a USING (request_id)
@@ -1078,7 +1079,7 @@ def _conn(user_var: str, password_var: str):
         ) from None
 
 
-QA_TABLES = (
+EVAL_TABLES = (
     "accounts",
     "locations",  # ADR-051 region check
     "service_requests",
@@ -1091,7 +1092,7 @@ QA_TABLES = (
 
 
 def read_database() -> tuple[dict, list[dict], dict]:
-    """Tables as app_qa, the weekly series as app_forecast, and the §8 SQL cross-check."""
+    """Tables as app_eval, the weekly series as app_forecast, and the §8 SQL cross-check."""
     from psycopg.rows import dict_row
 
     with _conn("DB_ROLE_FORECAST_USER", "DB_ROLE_FORECAST_PASSWORD") as conn:
@@ -1100,9 +1101,9 @@ def read_database() -> tuple[dict, list[dict], dict]:
         weekly_rows = cur.fetchall()
     tables = {}
     sql_counts = {}
-    with _conn("DB_ROLE_QA_USER", "DB_ROLE_QA_PASSWORD") as conn:
+    with _conn("DB_ROLE_EVAL_USER", "DB_ROLE_EVAL_PASSWORD") as conn:
         cur = conn.cursor(row_factory=dict_row)
-        for tname in QA_TABLES:
+        for tname in EVAL_TABLES:
             cur.execute(f'SELECT * FROM "{tname}"')  # noqa: S608 - fixed table names
             tables[tname] = cur.fetchall()
         for name, q in SQL_INVARIANTS.items():
@@ -1113,7 +1114,7 @@ def read_database() -> tuple[dict, list[dict], dict]:
 
 def sql_checks(sql_counts: Mapping[str, int]) -> list[Check]:
     return [
-        Check(f"A-sql{n:02d}", "A invariants (SQL, app_qa)", name, v, "= 0", v == 0)
+        Check(f"A-sql{n:02d}", "A invariants (SQL, app_eval)", name, v, "= 0", v == 0)
         for n, (name, v) in enumerate(sql_counts.items(), 1)
     ]
 
@@ -1140,7 +1141,7 @@ def main(argv: list[str] | None = None) -> int:
         source = "offline: generate.py output (no database)"
     else:
         tables, weekly_rows, sql_counts = read_database()
-        source = "local Postgres: weekly series as app_forecast, all else as app_qa"
+        source = "local Postgres: weekly series as app_forecast, all else as app_eval"
     truth = Truth(tables["generation_parameters"])
     checks, data = run_checks(tables, weekly_rows, truth)
     n_inv = sum(c.group == "A invariants" for c in checks)

@@ -78,6 +78,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change.
 
+**Update 2026-10-01 (ADR-063):** Gold labels are now held only by offline roles: `app_eval` (validation and evaluation) and `app_train` (training). `app_qa` can no longer read `sentiment_labels` or `generation_parameters`, so the runtime QA check cannot lean on gold labels; at answer time it rests on the rating cross-check (ADR-055), whose optimism on this data is L-24. Training is also barred from `rating` by grant, so the cross-check stays independent of the trained model too. Status stays Mitigating.
+
 ### R-05 — QA retry loop cost or latency runaway
 **Description:** Multi-agent systems with a verify-and-revise loop can fan out token usage and wall-clock time quickly if unbounded.
 **Mitigation:** Bounded at 2 retries with escalation on final failure (ADR-022); per-run cost caps and model tiering already specified in the budget plan.

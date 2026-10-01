@@ -13,7 +13,7 @@ connects as its own least-privilege Postgres role. The grants are executable, no
 grants exactly that, reads and writes, in CI. The Postgres `PUBLIC` defaults are revoked
 (ADR-025).
 
-Four guarantees follow from the matrix and hold at the database level, whatever a prompt
+Six guarantees follow from the matrix and hold at the database level, whatever a prompt
 or a model does:
 
 1. **No agent reads `contacts`, so customer PII never enters a prompt.** No agent role
@@ -30,8 +30,16 @@ or a model does:
    technician identifier are withheld (ADR-035).
 4. **`app_qa` is the broadest reader, limited by its read-only role.** Verification needs
    sources the specialists can't see, so `app_qa` can SELECT every operational table except
-   `contacts` and `internal_users`, plus `sentiment_labels` and `generation_parameters`. It
-   holds no INSERT, UPDATE or DELETE grant anywhere.
+   `contacts` and `internal_users`. It holds no INSERT, UPDATE or DELETE grant anywhere.
+5. **The runtime QA role can't read gold labels or generator parameters.** `app_qa` has no
+   grant on `sentiment_labels` or `generation_parameters` (ADR-055, ADR-063). Those are read
+   only by the offline `app_eval` role, which no deployed service holds: a unit test fails
+   if any compose service, Dockerfile or file under `services/` references its credentials.
+6. **Training can't read `rating` or `generation_parameters`.** The offline `app_train`
+   role reads `sentiment_labels` and exactly the columns the runtime models read, so a model
+   trained on the stars, or a forecast fitted to the generator's answer key, is ruled out by
+   grant (ADR-027, ADR-058, ADR-063). Like `app_eval`, it is never held by a deployed
+   service.
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).

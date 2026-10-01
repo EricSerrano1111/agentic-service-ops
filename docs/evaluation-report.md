@@ -245,3 +245,17 @@ build are appended here as they are found (CLAUDE.md).
 - **Update 2026-09-30:** A Sprint 5 sensitivity check measures how much this optimism
   matters: flip a few percent of ratings to mimic real-world rating/text disagreement and
   report the QA catch rate with and without (`docs/sprint-log.md`, Sprint 5 Planned).
+
+### L-25 — Grants control which tables and columns training reads, not which rows (2026-10-01)
+- **What:** `app_train` reads `sentiment_labels` in full (ADR-063). Postgres grants scope
+  tables and columns, not rows, so nothing at the database level stops a training script
+  from reading the labels of the sentiment test split, or the forecast holdout weeks.
+  The grant rules out `rating` and `generation_parameters`; it does not rule out training
+  on the test set.
+- **Why accepted:** Row-level security keyed to a split would mean storing the split in
+  the database and a policy per table, for one developer on one machine. Split integrity
+  rests instead on the split being fixed and committed before training, and on code review
+  of the training scripts. ADR-057 fixes the forecast holdout by date; ADR-059 defines the
+  sentiment split but does not yet require it to be committed before training, so the
+  Sprint 3 training work has to do that.
+- **Recorded in:** ADR-063; `docs/data-dictionary.md` §7.

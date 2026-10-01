@@ -250,7 +250,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)
 - [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD first for the reporting slice in Sprint 4 (ADR-045), completed in Sprints 5–6)*
-- [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035)*
+- [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035. 2026-10-01: seven roles, five service roles plus two offline roles, `app_eval` and `app_train` — ADR-063)*
 - [ ] API cost guardrails and per-run caps
 - [ ] README with architecture diagram and local setup that actually works from clean
 

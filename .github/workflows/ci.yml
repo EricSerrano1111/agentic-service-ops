@@ -97,6 +97,10 @@ jobs:
       DB_ROLE_QA_PASSWORD: ci_qa_ephemeral
       DB_ROLE_GENERATOR_USER: app_generator
       DB_ROLE_GENERATOR_PASSWORD: ci_generator_ephemeral
+      DB_ROLE_EVAL_USER: app_eval
+      DB_ROLE_EVAL_PASSWORD: ci_eval_ephemeral
+      DB_ROLE_TRAIN_USER: app_train
+      DB_ROLE_TRAIN_PASSWORD: ci_train_ephemeral
       # Missing, unreachable or unmigrated database = failure here, never a skip.
       REQUIRE_INTEGRATION_DB: "1"
     steps:
