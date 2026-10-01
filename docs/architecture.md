@@ -143,7 +143,7 @@ The sentiment path is the trap. Do **not** have the QA agent re-run the same sen
 
 Plus reference tables: `accounts`, `contacts`, `locations`, `technicians`, `technician_skills`, `internal_users`.
 
-**Why incidents and feedback are separate tables.** An earlier draft combined them. That would have meant customer feedback existed only where an incident existed — so effectively all feedback would be negative. This breaks the sentiment agent twice over: the classification task becomes degenerate (always predict negative, score ~90%, learn nothing), and QA scoring against the label holdout becomes meaningless with no class balance to measure. Real field service surveys every completed job, most of which go fine. The split also makes the security boundary structural: the sentiment MCP server holds no grant on `incidents`, so internal staff-written notes can never leak into the sentiment pipeline.
+**Why incidents and feedback are separate tables.** An earlier draft combined them. That would have meant customer feedback existed only where an incident existed — so effectively all feedback would be negative. This breaks the sentiment agent twice over: the classification task becomes degenerate (always predict negative, score ~90%, learn nothing), and evaluation against the label holdout becomes meaningless with no class balance to measure. Gold labels are used only in evaluation (holdout scoring and QA catch rate), read as `app_eval`; runtime QA cross-checks against star ratings instead (ADR-055, ADR-063). Real field service surveys every completed job, most of which go fine. The split also makes the security boundary structural: the sentiment MCP server holds no grant on `incidents`, so internal staff-written notes can never leak into the sentiment pipeline.
 
 **Full column-level detail lives in `data-dictionary.md`** — schema, enums, constraints, metric definitions, dataset scale, and the table-to-role access matrix.
 
@@ -250,7 +250,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)
 - [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD first for the reporting slice in Sprint 4 (ADR-045), completed in Sprints 5–6)*
-- [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035. 2026-10-01: seven roles, five service roles plus two offline roles, `app_eval` and `app_train` — ADR-063)*
+- [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035. 2026-10-01: seven roles, four runtime roles (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) and three offline roles (`app_generator`, `app_eval`, `app_train`) — ADR-063)*
 - [ ] API cost guardrails and per-run caps
 - [ ] README with architecture diagram and local setup that actually works from clean
 

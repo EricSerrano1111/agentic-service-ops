@@ -117,7 +117,7 @@ ephemeral role credentials and never `.env`; nothing in CI calls a model.
    calls it and reloads every generated table in one transaction as `app_generator`
    (ADR-042).
 3. `validate.py` checks the loaded database against `generation_parameters`, reading as
-   `app_forecast` and `app_qa`. Rerun it after any regeneration (R-07).
+   `app_forecast` and `app_eval`. Rerun it after any regeneration (R-07).
 
 `alembic check` is the real guard on `packages/db_models/` — the initial migration was
 hand-written, so a model change that isn't migrated only shows up there. Run it after

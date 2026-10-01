@@ -53,7 +53,8 @@ narrow, purpose-built tools (`architecture.md` §5). Each agent connects only to
 server, which holds only its own role's credentials. The role's grants bound what any
 manipulated call can return. A compromised sentiment agent, for example, has no connection to
 the forecasting tools and no grant that reaches billing. The highest-value target is the
-QA agent. It reads the most (guarantee 4), including the sentiment ground truth, and it
+QA agent. It reads the most (guarantee 4), though no longer the sentiment ground truth:
+it cross-checks sentiment against star ratings instead (guarantee 5, ADR-063). It also
 consumes specialists' outputs, which may carry injected text from feedback comments. Its
 read-only role means a successful attack can disclose data but not alter it, and it still
 can't reach customer PII. The two broadest credentials sit outside the agents entirely.
@@ -75,6 +76,8 @@ uses ephemeral generator credentials that never leave the workflow.
 - Logging: what is logged with each tool call and trace id, and what is redacted.
 - The QA prompt as a prompt-injection surface: its one LLM call (ADR-056) ingests
   specialist output, which may carry text from customer comments.
-- The evaluation/training read role (ADR-055, ADR-062): `sentiment_labels` and
+- ~~The evaluation/training read role (ADR-055, ADR-062): `sentiment_labels` and
   `generation_parameters` move off `app_qa` before the QA agent is built in Sprint 4, so
-  the runtime QA role never holds gold labels. Guarantee 4 changes when that lands.
+  the runtime QA role never holds gold labels. Guarantee 4 changes when that lands.~~
+  *Done 2026-10-01 (ADR-063): the offline `app_eval` and `app_train` roles hold them now;
+  guarantee 4 changed and guarantees 5 and 6 were added.*

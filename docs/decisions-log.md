@@ -1907,7 +1907,7 @@ training grants.
 - *Scripts as the admin role* (rejected). Breaks least privilege, as ADR-042 found for the loader.
 
 **Consequences:**
-- Seven roles: five service roles and two offline roles. `data-dictionary.md` §4, §7, §8 and §10 updated.
+- Seven roles: four runtime roles (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) and three offline roles (`app_generator`, `app_eval`, `app_train`). `data-dictionary.md` §4, §7, §8 and §10 updated.
 - Grants control tables and columns, not rows: training could still read the test split's labels. Split integrity rests on a split fixed and committed before training, and on review (L-25).
 - Both credentials stay on the developer machine. Training on a hosted notebook reads an exported file, never the database.
 - `alembic upgrade head` now needs the four variables wherever it runs, including the Sprint 4 Cloud SQL deploy (ADR-045), even though no deployed service uses them. Their passwords go in Secret Manager like the others.
