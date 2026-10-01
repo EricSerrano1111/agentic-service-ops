@@ -65,6 +65,7 @@
 | 051 | `locations.region`: the customer site's region, stored, written by the generator from the one state-to-region mapping | Accepted |
 | 052 | Thinking level follows the model called: each model's supported levels in `prices.toml`, default the lowest, a per-role override only if supported | Accepted — supersedes ADR-049 in part |
 | 053 | Routing prompt `route_v2`: forecast covers forward-looking questions about the operation, not only request volume | Accepted |
+| 054 | Routing prompt `route_v3`: the as-of date is given to the router as today's date; every routing eval reports k=3 runs | Accepted |
 
 ---
 
@@ -1561,3 +1562,71 @@ reporting, so this is run-to-run variance, not a stable regression (L-17).
   orchestrator's "not available yet" text, which still says "service request volume
   forecasting" (`DOMAIN_LABELS` in `routing.py`).
 - The route prompt still carries no current date (L-17).
+
+### ADR-054 — Routing prompt `route_v3`: the router is given the as-of date; routing evals run k=3
+*Date: 2026-09-30. Supersedes nothing. `route_v1` and `route_v2` stay in the repo;
+`route_v3` is the orchestrator default.*
+
+**Decision:** `services/orchestrator/prompts/route_v3.md` is `route_v2` plus one paragraph:
+today's date is the as-of date (`REPORTING_AS_OF_DATE`, ADR-050), and every date in the
+question is read against it, past or current on or before it, future only after it. The
+orchestrator reads the same variable, with the same default (2026-08-30), as the
+reporting agent, so the router and the parser share one "today". `Router` fills the date
+only when the prompt has the placeholder, so `route_v1` and `route_v2` still render
+unchanged. Every routing eval is run three times and reports the per-run accuracy, the
+range, and every question whose route changes between runs.
+
+In the same change, the orchestrator's forecast label (`DOMAIN_LABELS` in `routing.py`)
+and the out-of-scope text say "operational forecasts (volumes, SLA outlook)", matching
+`route_v2`'s forecast definition, instead of "service request volume forecasting".
+
+**Context:** The parsing prompt has carried the as-of date since ADR-050; the routing
+prompt had none. In the seed_v1 run on `route_v2`, s05 ("Which incident type was most
+common in July 2026 ...") was routed to forecast because "July 2026" looked like the
+future to the model (L-17). Without a date, the model's sense of "now" is whatever it
+assumes on that call. Single-run comparisons also turned out to sit inside run-to-run
+variance, so one run per prompt can't show whether a change helped (L-17).
+
+**Results** (Flash-Lite, free key, thinking `minimal`, `route_v3`, as-of 2026-08-30,
+three runs each):
+
+| Set | Run 1 | Run 2 | Run 3 | Range | `route_v2` (single run) |
+|---|---|---|---|---|---|
+| seed_v1 | 27/28 | 28/28 | 28/28 | 27-28 | 27/28 |
+| routing_v1 | 17/18 | 17/18 | 16/18 | 16-17 | 17/18 |
+
+No errors and no retries in any run. s05 routed to reporting in all three runs. Questions
+whose route changed between runs:
+- s16 (ambiguous, reporting), "Are complaints going up?": forecast, reporting, reporting.
+  The forecast run's reason was "future trends in complaints". The question has no date,
+  so the as-of date can't settle it.
+- r02 (ambiguous, reporting), "Did the route reorganization actually help the North
+  zone?": reporting, reporting, out_of_scope.
+
+r11 (near-miss, out_of_scope) was routed to sentiment in all three runs, as on every
+earlier prompt (L-15).
+
+**What this does and does not show:** The fix is justified by consistency (the router
+and the parser should read dates against the same day), not by a measured gain. s05 was
+right in all three `route_v3` runs, but `route_v2` also returned reporting on three
+immediate repeats, so s05 alone can't separate the prompts. Both ranges overlap the
+`route_v2` single runs. At this set size, a one-question difference is noise.
+
+**Alternatives considered:**
+- *Keep `route_v2` and accept the variance* (rejected). The router would still read dates
+  against an unstated "now" while the parser uses the as-of date, so the two LLM calls in
+  one request could disagree about what is past.
+- *Use the wall-clock date* (rejected for the same reasons as in ADR-050: the data ends
+  2026-08-30, and results would change with the day).
+- *Report a single run, or the best of several* (rejected). A single run hides variance,
+  and best-of-k overstates accuracy.
+
+**Consequences:**
+- Moving to a live data feed changes the router's "today" along with the parser's, since
+  both read `REPORTING_AS_OF_DATE`.
+- Each routing eval costs three times the calls: 3 x 46 = 138 Flash-Lite requests for
+  both current sets, inside the free tier's 500 a day (ADR-029).
+- Undated trend questions (s16) remain ambiguous between reporting and forecast. That is
+  a labelling question for the held-out set, not something a date fixes.
+- routing_v1 stays non-blind (L-16). The held-out set is still the source of final
+  routing numbers.

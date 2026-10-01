@@ -146,7 +146,7 @@ def last_month() -> dict:
 def test_last_month_routes_to_reporting(last_month):
     assert last_month["route"]["route"] == "reporting"
     assert last_month["outcome"] == "answered"
-    assert last_month["prompt_version"] == "route_v2"
+    assert last_month["prompt_version"] == "route_v3"
 
 
 def test_last_month_parses_to_the_month_before_the_as_of_date(last_month):

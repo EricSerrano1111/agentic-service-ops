@@ -8,21 +8,22 @@ a route.
 
 from __future__ import annotations
 
+import datetime as dt
 import logging
 from typing import Protocol
 
 from llm import LLMResult
 from llm.prompts import Prompt, load_prompt
-from schemas import Domain, RouteDecision
+from schemas import DATASET_WINDOW_END, Domain, RouteDecision
 
 log = logging.getLogger("orchestrator")
 
-PROMPT_NAME = "route_v2"
+PROMPT_NAME = "route_v3"
 
 DOMAIN_LABELS: dict[Domain, str] = {
     "reporting": "incident and quality reporting",
     "sentiment": "customer feedback sentiment",
-    "forecast": "service request volume forecasting",
+    "forecast": "operational forecasts (volumes, SLA outlook)",
 }
 
 
@@ -36,15 +37,26 @@ def load_route_prompt() -> Prompt:
 
 class Router:
     def __init__(
-        self, llm: RoutingLLM, prompt: Prompt | None = None, model: str | None = None
+        self,
+        llm: RoutingLLM,
+        prompt: Prompt | None = None,
+        model: str | None = None,
+        as_of: dt.date = DATASET_WINDOW_END,
     ) -> None:
         self.llm = llm
         self.prompt = prompt or load_route_prompt()
         self.model = model  # None: the client's configured orchestrator model
+        self.as_of = as_of  # the reporting agent's as-of date (ADR-050, ADR-054)
+
+    def render(self, question: str) -> str:
+        values = {"question": question}
+        if "{{as_of}}" in self.prompt.text:  # route_v3 on; route_v1 and v2 carry no date
+            values["as_of"] = self.as_of.isoformat()
+        return self.prompt.render(**values)
 
     async def classify(self, question: str, *, trace_id: str) -> RouteDecision:
         result: LLMResult = await self.llm.generate(
-            self.prompt.render(question=question),
+            self.render(question),
             model=self.model,
             response_model=RouteDecision,
             trace_id=trace_id,
@@ -80,7 +92,7 @@ def out_of_scope_message() -> str:
     return (
         "Sorry, that's outside what I can help with. I answer questions about this "
         "field-service operation's records: incidents and quality metrics today, with "
-        "customer sentiment and request-volume forecasts to follow."
+        "customer sentiment and operational forecasts to follow."
     )
 
 

@@ -451,7 +451,7 @@ agentic-service-ops/
 │
 ├── services/
 │   ├── orchestrator/ # intent classification + A2A routing
-│   │   └── prompts/ # versioned routing prompts (route_v1.md, route_v2.md the default); version + hash logged per decision
+│   │   └── prompts/ # versioned routing prompts (route_v1.md, route_v2.md, route_v3.md the default, given the as-of date); version + hash logged per decision
 │   │
 │   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046)
 │   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dates resolve as of REPORTING_AS_OF_DATE (ADR-050)

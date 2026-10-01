@@ -163,3 +163,18 @@ build are appended here as they are found (CLAUDE.md).
   routing comparison so far (ADR-049, L-14). Giving the route prompt the dataset's as-of
   date (ADR-050) and running repeats would address it; neither is done yet.
 - **Recorded in:** `evals/results/routing_seed_v1_gemini-3.5-flash-lite_route_v2_*.json`.
+
+### L-18 — s05 and the as-of date; routing reported as a range of three runs (2026-09-30)
+- **What:** L-17's s05 misroute ("July 2026" read as the future) came from a routing prompt
+  with no current date. `route_v3` gives the router the as-of date the parser already uses
+  (ADR-054), and s05 routed to reporting in all three `route_v3` runs. Run three times on
+  Flash-Lite, routing still varies: seed_v1 27-28/28, routing_v1 16-17/18. s16 ("Are
+  complaints going up?") flipped to forecast once and r02 flipped to out_of_scope once.
+  The as-of date doesn't help s16, which has no date in it.
+- **Why accepted:** The date fixes an inconsistency between the two LLM calls in one
+  request. It does not remove run-to-run variance, which is model behaviour at temperature
+  0. Reporting the range and the flipping questions makes that variance visible instead of
+  hiding it in a single number. The improvement on s05 is not separable from noise
+  (`route_v2` also returned reporting on three repeats), so no accuracy gain is claimed.
+- **Recorded in:** ADR-054; `evals/results/routing_*_gemini-3.5-flash-lite_route_v3_*.json`;
+  `docs/sprint-log.md` (Sprint 5 Planned).
