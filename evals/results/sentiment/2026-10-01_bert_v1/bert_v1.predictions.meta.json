@@ -1,0 +1,16 @@
+{
+  "model": "bert_v1",
+  "diagnostic": false,
+  "config": {
+    "source_run": "lr2e-5_v1",
+    "source_epoch": 4,
+    "revision": "86b5e0934494bd15c9632b12f734a8a67f723594",
+    "max_length": 64,
+    "temperature": 1.032156,
+    "threshold": 0.840840745682907,
+    "threshold_rule": "target_99",
+    "manifest_sha256": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+    "trained_on": "train"
+  },
+  "split": "v1"
+}
