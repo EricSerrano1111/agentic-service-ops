@@ -340,7 +340,7 @@ above.
 - [ ] Fault-injection harness for QA catch-rate measurement
 - [ ] Price a full routing eval run (~300-700 requests, two LLM calls per request per
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
-  budget alongside the ~$20-30 Pro-for-QA test (ADR-029). ADR-041 already decided the runs
+  budget alongside the ~$20-30 Pro-for-QA test (ADR-029; optional, buffer only, ADR-056). ADR-041 already decided the runs
   use the paid, spend-capped project.
 - [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045): orchestrator,
   `agent_reporting` and `mcp_incidents` with the smallest Cloud SQL instance (stopped when
@@ -389,6 +389,7 @@ above.
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
+- [ ] Rating cross-check sensitivity: flip a few percent of ratings to mimic real-world rating/text disagreement; report the QA catch rate with and without (L-24).
 - [ ] QA model comparison (Flash-Lite vs `gemini-3.1-pro-preview`): optional, buffer only (ADR-056).
 - [ ] FastAPI gateway + thin React UI
   - [ ] Pin Next.js to the current patched release at build time (security release scheduled 2026-09-30); verify the version then.

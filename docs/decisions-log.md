@@ -35,7 +35,7 @@
 | 021 | Incident severity influences sentiment, with noise | Accepted — superseded in part by ADR-036 |
 | 022 | QA retries bounded at 2, then escalate | Accepted — superseded in part by ADR-055 |
 | 023 | Per-agent least-privilege DB roles + narrow MCP tools | Accepted |
-| 024 | Trained models behind sentiment and forecast tools; training is offline | Accepted |
+| 024 | Trained models behind sentiment and forecast tools; training is offline | Accepted — consequence amended by ADR-062 |
 | 025 | Grant enforcement details: column-level feedback grant, PUBLIC revoked, cross-table invariant left to QA | Accepted — superseded in part by ADR-027 |
 | 026 | SQLAlchemy models separate from Pydantic schemas | Accepted |
 | 027 | Sentiment reads `service_feedback` by column, `rating` withheld; migrations are frozen snapshots | Accepted — supersedes ADR-025 in part |
@@ -1858,8 +1858,8 @@ Sprint 4 deploy (ADR-045) is already scripted in Cloud Build.
 - `infra/terraform/` is marked as a stretch goal in the repo layout.
 
 ### ADR-062 — Where models run and how artifacts ship
-*Date: 2026-09-30. Supersedes nothing. Keeps ADR-024's decision; moves its training
-scripts out of the agent folders.*
+*Date: 2026-09-30. Amends a consequence of ADR-024 (training-script location); ADR-024's
+decision stands.*
 
 **Decision:**
 - Inference runs inside the MCP servers (`mcp_feedback`, `mcp_volume`), which keeps

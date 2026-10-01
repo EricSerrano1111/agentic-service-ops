@@ -242,3 +242,6 @@ build are appended here as they are found (CLAUDE.md).
   result.
 - **Recorded in:** ADR-055; `data/generator/parameters.py` (`rating_given_sentiment`);
   `data/generator/generate.py` (`build_sentiment`).
+- **Update 2026-09-30:** A Sprint 5 sensitivity check measures how much this optimism
+  matters: flip a few percent of ratings to mimic real-world rating/text disagreement and
+  report the QA catch rate with and without (`docs/sprint-log.md`, Sprint 5 Planned).
