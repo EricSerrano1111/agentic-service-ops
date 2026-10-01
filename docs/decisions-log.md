@@ -62,7 +62,7 @@
 | 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
 | 049 | Per-role runtime models and thinking levels; the orchestrator stays on `gemini-3.5-flash-lite` (seed set: 28/28 vs 3.7 Flash 27/28) | Accepted — superseded in part by ADR-052 |
 | 050 | Reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer | Accepted |
-| 051 | `locations.region`: the customer site's region, stored, written by the generator from the one state-to-region mapping | Accepted |
+| 051 | `locations.region`: the customer site's region, stored, written by the generator from the one state-to-region mapping | Accepted — superseded in part by ADR-067 |
 | 052 | Thinking level follows the model called: each model's supported levels in `prices.toml`, default the lowest, a per-role override only if supported | Accepted — supersedes ADR-049 in part |
 | 053 | Routing prompt `route_v2`: forecast covers forward-looking questions about the operation, not only request volume | Accepted |
 | 054 | Routing prompt `route_v3`: the as-of date is given to the router as today's date; every routing eval reports k=3 runs | Accepted |
@@ -76,8 +76,9 @@
 | 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted |
 | 063 | Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` | Accepted |
 | 064 | Sentiment split and evaluation protocol: near-duplicate groups, committed hashed split, test scored once, interpretation rule fixed in advance | Accepted |
-| 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted |
+| 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted — superseded in part by ADR-067 |
 | 066 | Sentiment model selection, calibration and review threshold (pre-registered): `lr2e-5_v1` epoch 4 as `bert_v1`, temperature scaling, 99% / 20% review threshold | Accepted |
+| 067 | Sentiment predictions stored and scored on arrival (300-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
 
 ---
 
@@ -1999,3 +2000,31 @@ training grants.
 **Consequences:**
 - T and τ are fitted on the same validation split used for selection, so validation calibration figures are optimistic. Only test figures are reported as results.
 - `mcp_feedback` loads `bert_v1` with its manifest's T and τ, and checks the file hashes at start-up.
+
+### ADR-067 — Sentiment predictions are stored and scored on arrival; the sentiment server gains region access
+*Date: 2026-10-01. Supersedes ADR-051 in part (app_sentiment's lack of a locations grant) and ADR-065 in part (the latency gate's slice definition). Extends ADR-062. Replaces the `get_feedback_batch` tool contract defined in `architecture.md`.*
+
+**Decision:**
+- New table `sentiment_predictions` (`feedback_id`, `model_version`, `predicted_label`, `confidence`, `flagged`, `scored_at`), keyed on (`feedback_id`, `model_version`). `model_version` is the SHA-256 of the committed artifact manifest.
+- `mcp_feedback` answers only from stored predictions. Before answering, it scores any comments in the requested range that have no prediction for the current version, at most 300 per request (oldest first), stores them, and reports coverage (`n_comments`, `n_scored`, `complete`). A one-off backfill scores the existing data; a new model version requires a fresh backfill.
+- The cap of 300 is the latency budget divided by measured throughput: 30 s of warm inference at about 10.7 comments per second on 1 CPU (ADR-065, L-29).
+- Two tools: `get_sentiment_summary` returns counts, shares, buckets and flag counts with no text; `get_feedback_examples` returns at most 5 comments with text, for citation. Neither tool writes or accepts free-form query input.
+- Grants: `app_sentiment` gets SELECT and INSERT on `sentiment_predictions` (no UPDATE or DELETE), plus column SELECT on `service_requests` (`request_id`, `location_id`) and `locations` (`location_id`, `region`). `app_qa` and `app_eval` get SELECT; `app_generator` gets ALL. `app_train` gets nothing, so the model can never train on its own output.
+- The model loads on first need; artifact hashes are verified at start-up.
+
+**Context:**
+- FR-07's own example, "is sentiment trending down in a region?", needs region, which `app_sentiment` could not resolve, and it spans months. At about 10.7 comments per second on 1 CPU, a multi-month regional question (400–800 comments) takes 40–80 s per pass, and an all-accounts quarter took 65 s (L-29). Per-request inference cannot meet the 120 s ceiling with revision cycles (ADR-055); stored predictions answer in about a second at any range.
+- Scoring on arrival is how production systems handle recurring sentiment reporting. QA can then recompute counts directly from stored predictions.
+- Region and `location_id` carry no personal information and no staff-written text; `rating` stays withheld (ADR-027).
+
+**Alternatives considered:**
+- *Per-request inference with a cap and an offer to narrow* (rejected). The cap would refuse FR-07's central question.
+- *Classifying a random sample above the cap* (rejected). Monthly trend buckets become too noisy to read.
+- *A separate offline scoring role and job* (rejected for now). It adds a role and a deployment; scoring inside the server reuses the deployed model and its hash checks. A scheduled scorer is future work.
+- *Granting `account_id` and account names too* (rejected). No requirement needs account-level sentiment; it can be added later with its own ADR.
+
+**Consequences:**
+- `mcp_feedback` gains write access to exactly one table, through internal code only; the security model records it.
+- Answers can be partial when more than 300 comments in range are unscored. The agent must state the coverage (4b).
+- The latency gate of ADR-065 now applies only to on-demand scoring of at most 300 comments.
+- Sprint 4 QA verifies sentiment answers by recomputing them from `sentiment_predictions` and cross-checking ratings. A sentiment answer fails only on errors the agent can fix (wrong comment set, miscounts, a summary that misstates the numbers), never on disagreement with a label.
