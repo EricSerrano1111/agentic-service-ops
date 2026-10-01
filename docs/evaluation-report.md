@@ -178,3 +178,70 @@ build are appended here as they are found (CLAUDE.md).
   (`route_v2` also returned reporting on three repeats), so no accuracy gain is claimed.
 - **Recorded in:** ADR-054; `evals/results/routing_*_gemini-3.5-flash-lite_route_v3_*.json`;
   `docs/sprint-log.md` (Sprint 5 Planned).
+
+### L-19 — The forecast headline holdout excludes the Q4 peak (2026-09-30)
+- **What:** The headline holdout is the final 26 weeks, about March to August 2026, so it
+  never contains the Q4 budget-flush peak. Rolling-origin folds with test windows over the
+  Q4 2024 and Q4 2025 peaks cover it, each reported separately (ADR-057). The earliest
+  fold, before Q4 2024, has about one year of history: one seasonal cycle to learn from.
+- **Why accepted:** The 36-month window leaves no way to hold out a full year and still
+  train on two; the folds test the peak with the history that exists.
+- **Recorded in:** ADR-057; ADR-018; `data-dictionary.md` §6.
+
+### L-20 — The generator's seasonality has three harmonics; K is chosen from data (2026-09-30)
+- **What:** The generator builds annual seasonality from three sine/cosine pairs. The
+  forecast model chooses its number of pairs, K, by an information criterion on training
+  data and never fixes it at 3, which would recover the answer key (ADR-058). The chosen K
+  may differ from 3 and is reported.
+- **Why accepted:** A model told the generator's basis would show recovery of a known
+  signal, not that the method works.
+- **Recorded in:** ADR-058.
+
+### L-21 — Disruption down-weighting never uses the generator's anomaly list (2026-09-30)
+- **What:** Disruptions in the volume history are down-weighted by a residual-based robust
+  method using only information an operator would have, never the planted anomalies in
+  `parameters.py` (ADR-058). The method may down-weight weeks that aren't planted anomalies
+  or miss part of one that is.
+- **Why accepted:** Using the anomaly list is answer-key leakage.
+- **Recorded in:** ADR-058; ADR-038 (the planted anomalies).
+
+### L-22 — Sentiment test split and hard-case counts (2026-09-30)
+- **What:** Computed from the loaded data (7,521 labelled feedback rows): a 15% split,
+  stratified by class and hard-case type (ADR-059), gives about 1,128 test comments, of
+  which 168 are hard cases: 42 sarcastic (all negative) and 126 implicit (32 negative, 94
+  positive). Exact numbers are fixed when the split is made, since keeping near-duplicates
+  on one side can move a few. Per-type scores on 42 or 126 comments are noisy, so counts
+  are reported with every per-type score.
+- **Why accepted:** The dataset size is fixed by ADR-038's corpus sizing; a larger test
+  split would starve training.
+- **Recorded in:** ADR-059; `sentiment_labels` counts as of the 2026-09-26 load.
+
+### L-23 — Sentiment accuracy measures agreement with the specification (2026-09-30)
+- **What:** Sentiment labels are defined by a written specification and applied to
+  synthetic, LLM-written text (ADR-036, ADR-040). Accuracy therefore measures agreement
+  with the specification on that text, not with how real customers write or what they
+  meant. This extends L-12 from the labels to the trained model's reported accuracy.
+- **Why accepted:** There is no real feedback corpus in this project (ADR-030).
+- **Recorded in:** ADR-040; ADR-059; L-12.
+
+### L-24 — Star ratings share the label's latent sentiment, so the QA cross-check is optimistic (2026-09-30)
+- **What:** `generate.py` draws each rating from the row's true sentiment alone
+  (`rating_given_sentiment` in `parameters.py`: positive 3-5, neutral and mixed 2-4,
+  negative 1-3; 10% unrated). The comment's style, sarcastic or implicit, plays no part.
+  Rating and text therefore share one latent variable, the label the text was written to.
+  In the loaded data, no row is a clear contradiction (positive on 1-2 stars, negative on
+  4-5): 0 of 7,521. So the "normal rate" ADR-055 measures on labelled data is zero here,
+  and every clear contradiction in an answer is a misclassification. Real customers do
+  give stars that disagree with their words, so the cross-check will agree more often here,
+  and its QA catch rate will look better, than it would on real feedback. Hard cases get
+  ratings that match their intended sentiment, so the check catches exactly the misreads
+  that are hardest for the model.
+- **Why accepted:** Changing how ratings are generated would mean regenerating the
+  dataset (R-07). The rating remains a genuinely independent input to QA, since the
+  sentiment agent can't read it (ADR-027). The optimism is stated with every QA catch-rate
+  result.
+- **Recorded in:** ADR-055; `data/generator/parameters.py` (`rating_given_sentiment`);
+  `data/generator/generate.py` (`build_sentiment`).
+- **Update 2026-09-30:** A Sprint 5 sensitivity check measures how much this optimism
+  matters: flip a few percent of ratings to mimic real-world rating/text disagreement and
+  report the QA catch rate with and without (`docs/sprint-log.md`, Sprint 5 Planned).

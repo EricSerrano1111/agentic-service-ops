@@ -281,8 +281,10 @@ above.
 **Planned:**
 - [ ] MCP servers #2 and #3 (feedback, volume)
 - [ ] Forecast agent + regression model + seasonal-naive baseline comparison
+  - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
 - [ ] Sentiment agent + confidence scoring
   - [ ] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
+  - [ ] TF-IDF plus logistic regression baseline, required (ADR-059).
 - [ ] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
 - [ ] Orchestrator routes across all three
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
@@ -297,6 +299,8 @@ above.
   - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
 - [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
 - [ ] Repeat-visit drivers (deferred from Sprint 2).
+- [ ] `ml/` structure (`ml/sentiment/`, `ml/forecast/`) and the training-role decision (ADR-062).
+- [ ] Evaluation/training read role (with ADR-062's training-role decision); then revoke `sentiment_labels` and `generation_parameters` from `app_qa`. **Required before the QA agent is built in Sprint 4**, so the runtime QA role never ships holding gold labels (ADR-055).
 - [ ] Incident counts by breakdown (deferred from Sprint 2; L-06).
 - [ ] Fill `docs/security-model.md` while drafting `04`
   *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
@@ -330,12 +334,13 @@ above.
 **Goal (increment):** QA agent operational with all three verification strategies; measurable catch rate.
 
 **Planned:**
-- [ ] QA agent — deterministic re-check (reporting), backtest threshold (forecast), labeled-holdout scoring (sentiment)
-- [ ] Bounded retry loop (max 2), escalation path on final failure
+- [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
+  - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
+- [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
 - [ ] Fault-injection harness for QA catch-rate measurement
 - [ ] Price a full routing eval run (~300-700 requests, two LLM calls per request per
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
-  budget alongside the ~$20-30 Pro-for-QA test (ADR-029). ADR-041 already decided the runs
+  budget alongside the ~$20-30 Pro-for-QA test (ADR-029; optional, buffer only, ADR-056). ADR-041 already decided the runs
   use the paid, spend-capped project.
 - [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045): orchestrator,
   `agent_reporting` and `mcp_incidents` with the smallest Cloud SQL instance (stopped when
@@ -350,6 +355,7 @@ above.
   - [ ] A readiness probe alongside `/healthz`.
   - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
+- [ ] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -383,6 +389,8 @@ above.
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
+- [ ] Rating cross-check sensitivity: flip a few percent of ratings to mimic real-world rating/text disagreement; report the QA catch rate with and without (L-24).
+- [ ] QA model comparison (Flash-Lite vs `gemini-3.1-pro-preview`): optional, buffer only (ADR-056).
 - [ ] FastAPI gateway + thin React UI
   - [ ] Pin Next.js to the current patched release at build time (security release scheduled 2026-09-30); verify the version then.
     *Source: https://nextjs.org/blog/tag/security. As of 2026-09-30 the patched releases are 16.3.8 (Active LTS) and 15.5.27 (Maintenance LTS).*
@@ -415,7 +423,8 @@ above.
 **Goal (increment):** Production-grade checklist closed out; demo rehearsed.
 
 **Planned:**
-- [ ] Observability, CI/CD completion, graceful degradation, load/latency testing
+- [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
+- [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
 - [ ] Production-grade checklist (`architecture.md` §7) audited item by item
 - [ ] Evaluation report (`docs/evaluation-report.md`), presentation, demo rehearsal (ADR-044)
 

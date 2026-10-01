@@ -65,3 +65,8 @@ uses ephemeral generator credentials that never leave the workflow.
 - Secrets management in deployment (Secret Manager) and how each service's credentials are
   scoped.
 - Logging: what is logged with each tool call and trace id, and what is redacted.
+- The QA prompt as a prompt-injection surface: its one LLM call (ADR-056) ingests
+  specialist output, which may carry text from customer comments.
+- The evaluation/training read role (ADR-055, ADR-062): `sentiment_labels` and
+  `generation_parameters` move off `app_qa` before the QA agent is built in Sprint 4, so
+  the runtime QA role never holds gold labels. Guarantee 4 changes when that lands.

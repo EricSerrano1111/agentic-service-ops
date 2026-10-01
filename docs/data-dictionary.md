@@ -334,7 +334,7 @@ Define these once, here. If the reporting agent and the QA agent each compute th
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
-- **Grain:** weekly. ~156 points across 36 months — roughly 130 to train, 26 held out for backtest. Daily is too noisy at these volumes; monthly gives too few points to model
+- **Grain:** weekly. ~156 points across 36 months — roughly 130 to train, the final 26 held out as the headline backtest (ADR-018), plus rolling-origin folds whose test windows cover the Q4 2024 and Q4 2025 peaks, reported separately (ADR-057). Daily is too noisy at these volumes; monthly gives too few points to model
 - **Filter:** all requests regardless of final status — you're forecasting *demand*, not completions. Forecasting only completions confounds customer demand with your own cancellation behavior
 - **Segmentation:** total, with optional breakout by `service_type`
 - **Model form:** **univariate** — date in, volume out. It never sees incidents or sentiment. This matters for the coupling decision in §4
@@ -356,7 +356,7 @@ The forecast can only recover what you deliberately put in. Pin these in `genera
 
 | Entity | Target volume | Rationale |
 |---|---|---|
-| History window | **36 months** | Three full seasonal cycles — two to learn from, one to hold out |
+| History window | **36 months** | Three full seasonal cycles. The final 26 weeks are the headline holdout, which misses the Q4 peak, so rolling-origin folds test Q4 2024 (about one cycle of history) and Q4 2025 (about two) (ADR-018, ADR-057) |
 | `accounts` | 40–60 | Enough for account-level aggregation to be meaningful |
 | `locations` | 150–250 | ~3–4 sites per account |
 | `contacts` | 150–300 | |
