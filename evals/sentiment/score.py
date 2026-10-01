@@ -11,6 +11,12 @@ Reports macro-F1 (headline), accuracy, per-class precision/recall/F1, the confus
 implicit with n and the judge's disagreement rate on the same rows, neutral accuracy by
 neutral kind with n, and mixed-class recall and F1, called out separately.
 
+For a calibrated predictions file (calibrated probabilities and a `flagged` column,
+ADR-066) it also reports ECE (15 equal-width bins) on the raw and the calibrated
+probabilities, the flag rate, accuracy on un-flagged and on flagged predictions, and the
+share of the model's errors that are flagged, overall and for sarcastic, implicit and
+mixed (true label) comments.
+
 **Test is scored once per model.** A test scoring appends one line to
 `evals/results/sentiment/test_ledger.jsonl` (date, model, config, git commit) and is
 refused if that model already has a line. The ledger is append-only.
@@ -33,9 +39,11 @@ import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_recall_fscore_support
 
 from ml.sentiment import data, predictions
+from ml.sentiment.calibrate import N_BINS, ece_from_proba
 
 LEDGER = data.ROOT / "evals" / "results" / "sentiment" / "test_ledger.jsonl"
 HARD_CASE_TYPES = ("sarcastic", "implicit")
+ERROR_SUBSETS = ("sarcastic", "implicit", "mixed")
 
 
 class LedgerRefusal(RuntimeError):
@@ -85,7 +93,7 @@ def compute(
             by_kind[str(corpus[g.corpus_id].neutral_kind)].append(("neutral", x["predicted"]))
     neutral = {k: {"n": len(v), "accuracy": _accuracy(v)} for k, v in sorted(by_kind.items())}
 
-    return {
+    result = {
         "n": len(rows),
         "macro_f1": round(float(np.mean(f)), 4),
         "accuracy": round(float(accuracy_score(y_true, y_pred)), 4),
@@ -100,6 +108,52 @@ def compute(
             "recall": per_class["mixed"]["recall"],
             "f1": per_class["mixed"]["f1"],
             "n": per_class["mixed"]["support"],
+        },
+    }
+    if rows and all("calibrated" in x for x in rows):
+        result["calibration"] = calibration_metrics(rows, gold)
+    return result
+
+
+def _in_subset(g: data.GoldLabel, subset: str) -> bool:
+    return g.true_sentiment == "mixed" if subset == "mixed" else g.hard_case_type == subset
+
+
+def calibration_metrics(rows: list[dict], gold: Mapping[int, data.GoldLabel]) -> dict:
+    """ADR-066's calibration and review-flag figures. Pure: no I/O."""
+    index = {label: i for i, label in enumerate(data.LABELS)}
+    y = np.array([index[gold[x["feedback_id"]].true_sentiment] for x in rows])
+    correct = np.array([gold[x["feedback_id"]].true_sentiment == x["predicted"] for x in rows])
+    flagged = np.array([x["flagged"] for x in rows])
+
+    def errors_flagged(mask: np.ndarray) -> dict:
+        wrong = mask & ~correct
+        n_err = int(wrong.sum())
+        n_flag = int((wrong & flagged).sum())
+        return {
+            "n": int(mask.sum()),
+            "errors": n_err,
+            "errors_flagged": n_flag,
+            "share_flagged": round(n_flag / n_err, 4) if n_err else None,
+        }
+
+    everyone = np.ones(len(rows), dtype=bool)
+    return {
+        "n_bins": N_BINS,
+        "ece_raw": round(ece_from_proba(np.array([x["proba"] for x in rows]), y), 4),
+        "ece_calibrated": round(ece_from_proba(np.array([x["calibrated"] for x in rows]), y), 4),
+        "n_flagged": int(flagged.sum()),
+        "flag_rate": round(float(flagged.mean()), 4),
+        "accuracy_unflagged": round(float(correct[~flagged].mean()), 4)
+        if (~flagged).any()
+        else None,
+        "accuracy_flagged": round(float(correct[flagged].mean()), 4) if flagged.any() else None,
+        "errors_flagged": {
+            "overall": errors_flagged(everyone),
+            **{
+                k: errors_flagged(np.array([_in_subset(gold[x["feedback_id"]], k) for x in rows]))
+                for k in ERROR_SUBSETS
+            },
         },
     }
 
@@ -203,7 +257,15 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(
             {
                 k: metrics[k]
-                for k in ("per_class", "hard_cases", "neutral_by_kind", "mixed", "confusion_matrix")
+                for k in (
+                    "per_class",
+                    "hard_cases",
+                    "neutral_by_kind",
+                    "mixed",
+                    "confusion_matrix",
+                    "calibration",
+                )
+                if k in metrics
             },
             indent=1,
         )

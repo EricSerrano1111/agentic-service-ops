@@ -1,0 +1,24 @@
+{
+  "evidence": "observed",
+  "artifact": "bert_v1",
+  "fitted_on": "validation",
+  "n_validation": 1129,
+  "temperature": 1.032156,
+  "nll_before": 0.062274,
+  "nll_after": 0.062163,
+  "ece_before": 0.007273,
+  "ece_after": 0.006349,
+  "n_bins": 15,
+  "threshold": {
+    "tau": 0.840840745682907,
+    "rule": "target_99",
+    "n": 1129,
+    "n_flagged": 21,
+    "flag_rate": 0.018600531443755536,
+    "accuracy_unflagged": 0.990072202166065
+  },
+  "accuracy_flagged": 0.5714285714285714,
+  "accuracy_overall": 0.9822852081488043,
+  "note": "T and \u03c4 were fitted on the split used to select the run and epoch, so these validation figures are optimistic (ADR-066); only test figures are results.",
+  "stop_rules_fired": []
+}

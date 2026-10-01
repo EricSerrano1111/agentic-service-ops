@@ -77,6 +77,7 @@
 | 063 | Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` | Accepted |
 | 064 | Sentiment split and evaluation protocol: near-duplicate groups, committed hashed split, test scored once, interpretation rule fixed in advance | Accepted |
 | 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted |
+| 066 | Sentiment model selection, calibration and review threshold (pre-registered): `lr2e-5_v1` epoch 4 as `bert_v1`, temperature scaling, 99% / 20% review threshold | Accepted |
 
 ---
 
@@ -1975,3 +1976,26 @@ training grants.
 **Consequences:**
 - The likely honest outcome is that BERT is indistinguishable from TF-IDF overall and differs, if at all, on hard cases. That is reported as the finding.
 - 3b fixes the calibration method before running it.
+
+### ADR-066 — Sentiment model selection, calibration and review threshold (pre-registered)
+*Date: 2026-10-01. Extends ADR-059 and ADR-065. Committed before calibration runs and before any BERT test result exists. Supersedes nothing.*
+
+**Decision:**
+- Selected model: `lr2e-5_v1` at epoch 4 (validation macro-F1 0.9767), by ADR-065's rule. It is exported as artifact `bert_v1` (weights, tokenizer, label map), with a committed manifest of file hashes and calibration values.
+- Calibration: temperature scaling. One scalar T is fitted on the validation logits by minimising negative log-likelihood, and calibrated probabilities are softmax(logits / T). Expected calibration error (15 equal-width bins) is reported before and after.
+- Review threshold: τ is the smallest calibrated top-class probability at which predictions at or above τ reach at least 99% accuracy on validation. If that would flag more than 20% of validation comments, τ is set where 20% are flagged, and the accuracy reached is reported. Comments below τ are flagged for human review; QA checks the flags (ADR-055).
+- Test reporting adds ECE, flag rate, accuracy on flagged and un-flagged predictions, and the share of errors flagged, overall and for the sarcastic, implicit and mixed subsets.
+
+**Context:**
+- Raw transformer confidence is usually overconfident. Temperature scaling corrects it with a single parameter and never changes which class wins, so it cannot affect the comparison with TF-IDF.
+- The 99% target and the 20% cap balance the reliability of answers that aren't flagged against the size of the human-review queue. 20% is the owner's estimate of what an operations team would review.
+- Both runs peaked at the epoch cap (L-30). The cap was fixed in advance, so it is not extended.
+
+**Alternatives considered:**
+- *Isotonic or Platt scaling per class* (rejected). These need more parameters than about 1,129 validation comments support for a 4-class model.
+- *A fixed threshold such as 0.5* (rejected). Without calibration the number has no meaning.
+- *Fitting T and τ on test* (rejected). That would turn the test set into training data.
+
+**Consequences:**
+- T and τ are fitted on the same validation split used for selection, so validation calibration figures are optimistic. Only test figures are reported as results.
+- `mcp_feedback` loads `bert_v1` with its manifest's T and τ, and checks the file hashes at start-up.

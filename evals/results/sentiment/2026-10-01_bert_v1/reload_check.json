@@ -1,0 +1,12 @@
+{
+  "evidence": "observed",
+  "artifact": "bert_v1",
+  "loaded_from": "models/sentiment/bert_v1 only (hashes verified, local_files_only)",
+  "reference": "models/sentiment/lr2e-5_v1/val_epoch_4.predictions.csv",
+  "n_validation": 1129,
+  "predicted_class_matches": 1129,
+  "max_abs_probability_difference": 6e-07,
+  "val_macro_f1": 0.9767,
+  "expected_val_macro_f1": 0.9767,
+  "passed": true
+}

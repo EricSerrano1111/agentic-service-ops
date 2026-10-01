@@ -115,6 +115,27 @@ def load_training_rows(splits: tuple[str, ...] | None = None) -> list[FeedbackRo
     return [FeedbackRow(*r) for r in rows]
 
 
+def load_texts(splits: tuple[str, ...]) -> list[tuple[int, str]]:
+    """(`feedback_id`, `feedback_text`) for rows in `splits` of split v1, as `app_train`.
+
+    Text only, ordered by `feedback_id`: no label column is selected, so predicting on
+    test never brings a test label into the process.
+    """
+    unknown = set(splits) - set(SPLITS)
+    if unknown:
+        raise ValueError(f"unknown split(s): {sorted(unknown)}")
+    wanted = [fid for fid, s in load_split("v1").items() if s in splits]
+    with connect("app_train") as conn:
+        rows = conn.execute(
+            "SELECT feedback_id, feedback_text FROM service_feedback"
+            " WHERE feedback_id = ANY(%s) ORDER BY feedback_id",
+            (wanted,),
+        ).fetchall()
+    if len(rows) != len(wanted):
+        raise SystemExit(f"database returned {len(rows)} rows for {len(wanted)} split ids")
+    return [(int(fid), text) for fid, text in rows]
+
+
 def load_gold_labels() -> dict[int, GoldLabel]:
     """`feedback_id` → gold label, read as `app_eval` (scoring only)."""
     with connect("app_eval") as conn:

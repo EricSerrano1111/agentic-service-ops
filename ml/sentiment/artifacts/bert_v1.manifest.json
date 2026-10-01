@@ -1,0 +1,38 @@
+{
+  "artifact": "bert_v1",
+  "source_run": "lr2e-5_v1",
+  "source_epoch": 4,
+  "source_git_commit": "67d7023f439536e5d53499e9260416354038c9c9",
+  "selected_by": "best validation macro-F1 over runs and epochs (ADR-065, ADR-066)",
+  "val_macro_f1": 0.9767,
+  "model_id": "google-bert/bert-base-uncased",
+  "revision": "86b5e0934494bd15c9632b12f734a8a67f723594",
+  "max_length": 64,
+  "labels": [
+    "positive",
+    "neutral",
+    "negative",
+    "mixed"
+  ],
+  "split": "v1",
+  "split_sha256": "c5df5ddb3518808c6aaa8a67b7cee92b5a37ac36664b63c4d3b1393c2a0d255c",
+  "files": {
+    "config.json": "19e477af88163007716cec3502931a17f001d97883bac2d5e4646feeb5cdb1d5",
+    "label_map.json": "2d84fe52970537c77e1c12bc5e6d8a72a29392e84b91e5a69f51ca4644371384",
+    "model.safetensors": "82ff81690536b51792d693455dd29517f3e07f2f19cbe3fc1c9cd1e08a9d0bd5",
+    "tokenizer.json": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+    "tokenizer_config.json": "b568faa40e8980cc2daf9019ca9e631972ad6cb9835068fb1106a3b8b4c83c1b"
+  },
+  "calibration": {
+    "method": "temperature_scaling",
+    "fitted_on": "validation",
+    "temperature": 1.032156,
+    "threshold": 0.840840745682907,
+    "threshold_rule": "target_99",
+    "ece_validation_before": 0.007273,
+    "ece_validation_after": 0.006349,
+    "flag_rate_validation": 0.018601,
+    "accuracy_unflagged_validation": 0.990072,
+    "decided_by": "ADR-066"
+  }
+}

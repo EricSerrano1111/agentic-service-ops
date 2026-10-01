@@ -1,0 +1,196 @@
+{
+  "bert": {
+    "model": "bert_v1",
+    "predictions": "evals/results/sentiment/2026-10-01_bert_v1/bert_v1.predictions.csv"
+  },
+  "tfidf": {
+    "model": "tfidf_logreg",
+    "predictions": "evals/results/sentiment/2026-10-01_baselines/tfidf_logreg.predictions.csv"
+  },
+  "split": "test",
+  "split_version": "v1",
+  "only_bert_right": [
+    {
+      "feedback_id": 319,
+      "corpus_id": "fb-001442",
+      "text": "Arriving three hours past the scheduled window caused major headaches for our staff, yet the handling of the invoice adjustment afterward made up for the delay.",
+      "true": "mixed",
+      "hard_case_type": "none",
+      "bert": "mixed",
+      "tfidf": "negative"
+    },
+    {
+      "feedback_id": 569,
+      "corpus_id": "fb-011938",
+      "text": "Yesterday morning we received a helpful arrival notice before the fix.",
+      "true": "positive",
+      "hard_case_type": "none",
+      "bert": "positive",
+      "tfidf": "neutral"
+    },
+    {
+      "feedback_id": 575,
+      "corpus_id": "fb-002187",
+      "text": "Yesterday the tech dented the rack.",
+      "true": "negative",
+      "hard_case_type": "none",
+      "bert": "negative",
+      "tfidf": "mixed"
+    },
+    {
+      "feedback_id": 581,
+      "corpus_id": "fb-001734",
+      "text": "Intermittent drops persist despite replacing the switch.",
+      "true": "negative",
+      "hard_case_type": "implicit",
+      "bert": "negative",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 708,
+      "corpus_id": "fb-018625",
+      "text": "Earlier today, the technician finished setting up our new server rack.",
+      "true": "neutral",
+      "hard_case_type": "none",
+      "bert": "neutral",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 1299,
+      "corpus_id": "fb-012834",
+      "text": "Scheduling the server upgrade took some coordination, but the technicians executed the cutover cleanly without disrupting our morning workflow.",
+      "true": "positive",
+      "hard_case_type": "none",
+      "bert": "positive",
+      "tfidf": "mixed"
+    },
+    {
+      "feedback_id": 1464,
+      "corpus_id": "fb-001288",
+      "text": "Upgrading the core switches caused some unexpected downtime this morning, yet everything is running much faster now that the configuration is finalized.",
+      "true": "mixed",
+      "hard_case_type": "none",
+      "bert": "mixed",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 1544,
+      "corpus_id": "fb-007176",
+      "text": "Earlier today the switch rack was serviced and testing concluded. The replacement module has been logged in our inventory system.",
+      "true": "neutral",
+      "hard_case_type": "none",
+      "bert": "neutral",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 1559,
+      "corpus_id": "fb-000468",
+      "text": "Arriving without the proper firmware documentation made the annual network inspection unnecessarily complicated for everyone involved. Once that was sorted out, the tech conducted themselves professionally and checked all the access points thoroughly.",
+      "true": "mixed",
+      "hard_case_type": "none",
+      "bert": "mixed",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 1596,
+      "corpus_id": "fb-002855",
+      "text": "Disorganized scheduling kept pushing back our maintenance date.",
+      "true": "negative",
+      "hard_case_type": "none",
+      "bert": "negative",
+      "tfidf": "positive"
+    }
+  ],
+  "only_tfidf_right": [
+    {
+      "feedback_id": 1412,
+      "corpus_id": "fb-008071",
+      "text": "Access badge clearances were not processed in advance by the front desk, yet the inspector navigated the security check-in smoothly and completed the facility audit without any escort delays.",
+      "true": "positive",
+      "hard_case_type": "implicit",
+      "bert": "mixed",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 1468,
+      "corpus_id": "fb-001383",
+      "text": "By the time the tech arrived, a patch panel had been accidentally cracked, but replacement parts were ordered immediately and the issue was resolved within twenty-four hours.",
+      "true": "mixed",
+      "hard_case_type": "none",
+      "bert": "positive",
+      "tfidf": "mixed"
+    },
+    {
+      "feedback_id": 3222,
+      "corpus_id": "fb-008095",
+      "text": "During this morning's routine cabling inspection, the specialist noticed that the primary fiber line had been crimped under a heavy rack and immediately re-routed it along the overhead tray.",
+      "true": "positive",
+      "hard_case_type": "implicit",
+      "bert": "neutral",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 3425,
+      "corpus_id": "fb-010481",
+      "text": "throughout the routine UPS battery maintenance, the specialist wore proper PPE and checked in at the front desk.",
+      "true": "positive",
+      "hard_case_type": "none",
+      "bert": "neutral",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 3473,
+      "corpus_id": "fb-003850",
+      "text": "firewall check done, only took three trips back out.",
+      "true": "negative",
+      "hard_case_type": "sarcastic",
+      "bert": "mixed",
+      "tfidf": "negative"
+    },
+    {
+      "feedback_id": 4206,
+      "corpus_id": "fb-008434",
+      "text": "Short notice needed, but communication was clear.",
+      "true": "positive",
+      "hard_case_type": "implicit",
+      "bert": "mixed",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 4731,
+      "corpus_id": "fb-012297",
+      "text": "Dead network jacks in the conference room were unusable for months, but after the patch panel repair everything connects instantly on the first try.",
+      "true": "positive",
+      "hard_case_type": "none",
+      "bert": "negative",
+      "tfidf": "positive"
+    },
+    {
+      "feedback_id": 4739,
+      "corpus_id": "fb-003710",
+      "text": "We were billed for four hours of labor when the tech left after forty-five minutes, though scheduling did answer my callback promptly.",
+      "true": "negative",
+      "hard_case_type": "sarcastic",
+      "bert": "mixed",
+      "tfidf": "negative"
+    },
+    {
+      "feedback_id": 4872,
+      "corpus_id": "fb-001328",
+      "text": "Billing mix-up was stressful, but support fixed it fast.",
+      "true": "mixed",
+      "hard_case_type": "none",
+      "bert": "positive",
+      "tfidf": "mixed"
+    },
+    {
+      "feedback_id": 5324,
+      "corpus_id": "fb-001878",
+      "text": "did anyone read the maintenance window notes sent previously?",
+      "true": "negative",
+      "hard_case_type": "implicit",
+      "bert": "neutral",
+      "tfidf": "negative"
+    }
+  ]
+}

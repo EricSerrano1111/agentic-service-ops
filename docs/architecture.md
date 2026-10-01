@@ -445,7 +445,11 @@ agentic-service-ops/
 │   ├── sentiment/                  # fine-tunes BERT on sentiment_labels; TF-IDF baseline (ADR-059)
 │   │   ├── splits/                 # split_v1 + hashed manifest, committed before training (ADR-064)
 │   │   ├── config.py               # pinned bert-base-uncased revision, max_length 64, fixed recipe (ADR-065)
-│   │   └── train_bert.py           # plain PyTorch loop; atomic per-epoch checkpoints to models/; --resume (ADR-065)
+│   │   ├── train_bert.py           # plain PyTorch loop; atomic per-epoch checkpoints to models/; --resume (ADR-065)
+│   │   ├── export.py               # selected checkpoint -> models/sentiment/bert_v1 + manifest; reload check (ADR-066)
+│   │   ├── calibrate.py            # temperature scaling, ECE, review threshold τ; validation only (ADR-066)
+│   │   ├── predict_bert.py         # bert_v1 predictions with calibrated probabilities and review flags (ADR-066)
+│   │   └── artifacts/              # committed manifests: file SHA-256s, T and τ (bert_v1.manifest.json)
 │   └── forecast/                   # fits the regression on weekly volume; folds + per-slice backtest (ADR-057, ADR-058)
 │
 ├── models/                         # gitignored: local copies of versioned artifacts, mounted by compose (ADR-062)
@@ -489,7 +493,8 @@ agentic-service-ops/
 │   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment/                  # scored against sentiment_labels holdout
-│   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064)
+│   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064); ECE and flags (ADR-066)
+│   │   ├── compare.py              # paired bootstrap + McNemar between two models on test; its own ledger line (ADR-065)
 │   │   └── latency/                # throwaway CPU-limited container + harness for the latency proxy (ADR-065)
 │   ├── qa/                         # fault injection + catch rate
 │   └── results/                    # dated eval runs — evidence for the evaluation report (ADR-044)
