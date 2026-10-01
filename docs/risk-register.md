@@ -140,6 +140,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** `03` and `04` are drafted (not submitted). Whether their rubrics were checked: Eric to confirm. Status stays Monitoring.
 
+**Update 2026-09-30 (rubric checks):** Eric confirms he checked the rubrics for `03` and `04` before drafting them, so both rubric checks are done. The remaining exposure is the rubrics for `05` and `06`, checked when their drafting starts. Status stays Monitoring.
+
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
 **Mitigation:** Treat any missed sprint goal as an immediate scope conversation at that sprint's retro, not something to "catch up on later." Scope expansion is only considered if genuinely ahead, per the working agreement.

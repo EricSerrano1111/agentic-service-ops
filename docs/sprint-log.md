@@ -149,8 +149,9 @@ from the course materials that no charter is due.
   *2026-09-26, before merge: grouped results sort worst first (incident rate highest first; SLA compliance and first-time fix lowest first), so the top-25 cap keeps the worst groups. The answer text ranks only groups with at least `REPORTING_MIN_GROUP_DENOMINATOR` cases (default 20) and says how many were left out; the data part keeps every group. §6 now says incident rate is per 100 and can exceed 1.*
 - [x] Portable Alembic ruff hook (Alembic `module` runner if the installed version supports it); verified locally and in CI
   *Done 2026-09-26: `ruff.type = module` (`<python> -m ruff format`), supported by the installed Alembic 1.20; no path, so it works on the Windows venv, Linux CI and cloud sessions. Verified by generating the ADR-051 migration and a throwaway revision (both reformatted; the throwaway deleted); CI runs `alembic check`.*
-- [ ] Draft `03-planning-management.md` 2026-10-08 to 10-11, after checking its rubric
+- [x] Draft `03-planning-management.md` 2026-10-08 to 10-11, after checking its rubric
   *2026-09-30: drafted early by Eric (with `04`), not submitted. Whether the rubric was checked: Eric to confirm.*
+  *2026-09-30: drafted, rubric checked; not submitted.*
 
 R-06 checkpoint: skeleton hop working by 2026-10-02, or hold the scope conversation that day;
 LLM-classified question answered end to end in docker-compose by 2026-10-07. Log hours per
@@ -176,9 +177,8 @@ the sprint's formal start on 2026-09-28.
 
 **Planned vs done:** every engineering item is done: the walking skeleton, `packages/llm`,
 orchestrator classification, reporting parsing and the FR-06 metric tools, and the portable
-Alembic hook. The FR-06 item is done except for the deferrals below. Not done: the `03` draft
-item as written (drafted early, rubric check unconfirmed), and hours per layer for R-06 were
-not logged. Done beyond the plan, from Sprint 3: the labelled routing set (routing_v1) and
+Alembic hook. The FR-06 item is done except for the deferrals below. The `03` draft is done early,
+rubric checked. Not done: hours per layer for R-06 were not logged. Done beyond the plan, from Sprint 3: the labelled routing set (routing_v1) and
 two routing prompt revisions.
 
 **Carried over:**
