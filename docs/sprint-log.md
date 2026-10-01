@@ -284,6 +284,14 @@ above.
   - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
 - [ ] Sentiment agent + confidence scoring
   - [ ] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
+    *2026-10-01: proxy measured with the untrained model (pinned `bert-base-uncased`,
+    random head) in a CPU-limited local container (ADR-065, L-28). Gate slices pass at
+    1 CPU / 2 GiB and 2 CPU / 4 GiB: largest account-quarter (107) 10.0 s / 6.1 s, largest
+    region-quarter (225) 20.7 s / 12.3 s (max of 3); cold start 13.4 s / 13.1 s (budget
+    20 s). Not gates and over 30 s: largest quarter (736) 65 s / 40 s, last 12 months
+    (2,666) 239 s / 148 s, full window (7,521) 669 s / 410 s; the last two ran 1 repeat
+    (L-29). Peak memory under 0.5 GiB. Stays unticked until measured on the real
+    container. Results: `evals/results/sentiment/2026-10-01_latency_proxy/`.*
   - [x] TF-IDF plus logistic regression baseline, required (ADR-059).
     *2026-10-01: pulled forward. Split v1 committed first (ADR-064). Selected on validation:
     word 1-2-grams, C=10 (validation macro-F1 0.9333; at the grid edge, L-26). Test
@@ -344,6 +352,7 @@ above.
 **Decisions made this sprint:**
 - ADR-063 — Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` (2026-10-01, pulled forward)
 - ADR-064 — Sentiment split and evaluation protocol (2026-10-01, pulled forward)
+- ADR-065 — BERT training, comparison and latency protocol, pre-registered (2026-10-01, pulled forward)
 
 ---
 

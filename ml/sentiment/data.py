@@ -91,17 +91,27 @@ def connect(role: str):
     )
 
 
-def load_training_rows() -> list[FeedbackRow]:
-    """Every feedback row with its label, read as `app_train`, ordered by `feedback_id`."""
+def load_training_rows(splits: tuple[str, ...] | None = None) -> list[FeedbackRow]:
+    """Feedback rows with their labels, read as `app_train`, ordered by `feedback_id`.
+
+    With `splits`, only rows in those splits of split v1 (hash-verified) are fetched; the
+    filter runs in SQL, so rows of any other split never leave the database.
+    """
+    query = """
+        SELECT f.feedback_id, f.feedback_text, s.true_sentiment, s.hard_case_type,
+               s.corpus_id
+        FROM service_feedback f JOIN sentiment_labels s USING (feedback_id)
+    """
+    params: tuple = ()
+    if splits is not None:
+        unknown = set(splits) - set(SPLITS)
+        if unknown:
+            raise ValueError(f"unknown split(s): {sorted(unknown)}")
+        wanted = [fid for fid, s in load_split("v1").items() if s in splits]
+        query += " WHERE f.feedback_id = ANY(%s)"
+        params = (wanted,)
     with connect("app_train") as conn:
-        rows = conn.execute(
-            """
-            SELECT f.feedback_id, f.feedback_text, s.true_sentiment, s.hard_case_type,
-                   s.corpus_id
-            FROM service_feedback f JOIN sentiment_labels s USING (feedback_id)
-            ORDER BY f.feedback_id
-            """
-        ).fetchall()
+        rows = conn.execute(query + " ORDER BY f.feedback_id", params).fetchall()
     return [FeedbackRow(*r) for r in rows]
 
 
