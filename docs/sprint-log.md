@@ -149,7 +149,9 @@ from the course materials that no charter is due.
   *2026-09-26, before merge: grouped results sort worst first (incident rate highest first; SLA compliance and first-time fix lowest first), so the top-25 cap keeps the worst groups. The answer text ranks only groups with at least `REPORTING_MIN_GROUP_DENOMINATOR` cases (default 20) and says how many were left out; the data part keeps every group. §6 now says incident rate is per 100 and can exceed 1.*
 - [x] Portable Alembic ruff hook (Alembic `module` runner if the installed version supports it); verified locally and in CI
   *Done 2026-09-26: `ruff.type = module` (`<python> -m ruff format`), supported by the installed Alembic 1.20; no path, so it works on the Windows venv, Linux CI and cloud sessions. Verified by generating the ADR-051 migration and a throwaway revision (both reformatted; the throwaway deleted); CI runs `alembic check`.*
-- [ ] Draft `03-planning-management.md` 2026-10-08 to 10-11, after checking its rubric
+- [x] Draft `03-planning-management.md` 2026-10-08 to 10-11, after checking its rubric
+  *2026-09-30: drafted early by Eric (with `04`), not submitted. Whether the rubric was checked: Eric to confirm.*
+  *2026-09-30: drafted, rubric checked; not submitted.*
 
 R-06 checkpoint: skeleton hop working by 2026-10-02, or hold the scope conversation that day;
 LLM-classified question answered end to end in docker-compose by 2026-10-07. Log hours per
@@ -158,22 +160,93 @@ and returns as a PR; anything needing a real API key, `gcloud`, or a judgment ca
 locally. The paid key never goes into a cloud environment.
 
 **Shipped:**
-*(fill in at sprint end)*
+
+**Goal:** met. Checkpoint 1 (the skeleton hop, no LLM) passed 2026-09-25 against a
+2026-10-02 deadline. Checkpoint 2 (an LLM-routed, LLM-parsed question answered end to end
+in docker-compose) passed 2026-09-26 against a 2026-10-07 deadline. Engineering finished
+2026-09-30 (PR #7 merged). The work ran 2026-09-25 to 09-30, so PRs #1 to #5 merged before
+the sprint's formal start on 2026-09-28.
+
+- PR #1 (2026-09-25), docs sweep for Sprint 2 planning: no final paper, the Sprint 4 slice deploy, specialists parse their own questions (ADR-044, ADR-045, ADR-046).
+- PR #2 (2026-09-25), walking skeleton: orchestrator → A2A → reporting agent → MCP → Postgres in docker-compose, no LLM; SDKs pinned (ADR-047).
+- PR #3 (2026-09-26), `packages/llm`: one Gemini client, free by default, per-minute vs daily 429, list-price metering; 429 fixtures rebuilt from real bodies (ADR-048).
+- PR #4 (2026-09-26), routing and parsing: `route_v1`, `parse_v1`, as-of date, checkpoint 2 e2e; orchestrator on Flash-Lite after the seed-set comparison (ADR-049, ADR-050).
+- PR #5 (2026-09-26), FR-06 metrics: incident rate, SLA compliance, first-time fix with group-by; `parse_v2`; site region stored (ADR-051); limitations log L-01 to L-13.
+- PR #6 (2026-09-30), routing_v1 and `route_v2`: 18 owner-written routing questions, both models run; thinking level per model; forecast covers forward-looking questions (ADR-052, ADR-053; L-14 to L-17).
+- PR #7 (2026-09-30), `route_v3`: the router is given the as-of date; routing evals run three times (ADR-054; L-18).
+
+**Planned vs done:** every engineering item is done: the walking skeleton, `packages/llm`,
+orchestrator classification, reporting parsing and the FR-06 metric tools, and the portable
+Alembic hook. The FR-06 item is done except for the deferrals below. The `03` draft is done early,
+rubric checked. Not done: hours per layer for R-06 were not logged. Done beyond the plan, from Sprint 3: the labelled routing set (routing_v1) and
+two routing prompt revisions.
 
 **Carried over:**
-*(fill in at sprint end)*
+Deferred to Sprint 3:
+- Repeat-visit drivers.
+- Incident counts by breakdown (L-06: incident counts can't be broken down yet).
+- The single-technician filter decision (routing_v1 r15, r17).
 
 **Blockers encountered:**
-*(fill in at sprint end)*
+None blocked the goal. Two provider-side problems each cost a rerun: `gemini-3.7-flash`
+rejected thinking level `minimal` (400) on the first checkpoint e2e run, and free-tier
+`gemini-3.7-flash` returned "high demand" 503s (R-15). Both are recorded in the Planned notes
+above.
 
 **Retro:**
+*Written 2026-09-30, before the sprint's formal end (2026-10-11). Anything merged later gets a dated addendum.*
+
 - What went well:
+  - Walking skeleton first. The A2A hop was proven with no LLM in the loop, before anything
+    depended on it. Both R-06 checkpoints were met ahead of schedule, and the protocol risk
+    was settled before the LLM work began.
+  - The stop rules worked. They fired twice (what "region" means; whether cancelled
+    follow-ups count against first-time fix), and both times produced a recorded definition
+    instead of a silent choice. Budgeted items stayed inside their budgets. This was Sprint
+    1's change #2, applied.
+  - Sourcing discipline held. Price-table entries carry a source and date. Error fixtures are
+    labelled observed or assembled. The limitations log captured issues as they were found.
+    This was Sprint 1's change #1, applied.
+  - Decisions were made on evidence. The orchestrator moved off 3.7 Flash after a
+    side-by-side comparison. Total paid spend for the sprint was a few cents.
+
 - What didn't:
+  - Tests built from the author's assumptions passed while the code was wrong.
+    - The hand-assembled 429 fixtures hid the bug that misread real quota errors as billing
+      errors; only a captured real error body exposed it.
+    - The first live test used a different model and configuration from production, so it
+      missed that 3.7 Flash rejects the thinking level in use.
+    - Thinking level had to be fixed twice: from global to per role, then to per model.
+  - Instructions asserted repo state without checking it. Assistant-written prompts:
+    - edited a dated register entry (charter removal);
+    - set the wrong status on R-15;
+    - assumed 04 and 05 had content in the repo (they're placeholders);
+    - targeted a branch that had already been merged.
+
+    Each cost a correction round.
+  - Environment drift. Two reports came from a machine without Docker, `uv` or `gh`. Each
+    verified only part of the work: the e2e didn't run, and a PYTHONPATH workaround stood in
+    for the CI install.
+  - Evaluation evidence is thin. routing_v1 was used to revise the routing prompt, so it's no
+    longer a blind test. Model output varies between runs even at temperature 0. Every
+    one-question gap so far is within noise.
+
 - What changes next sprint:
+  1. Every verification artifact says where it came from: observed from the real system, or
+     assembled. Live tests run the production configuration. Anything still assembled is
+     listed in the limitations log.
+  2. Every Claude Code prompt starts with a state check (branch, environment, and the files
+     and content it assumes), and stops if reality differs.
+  3. Kept from Sprint 1: every design loop starts with a written stop rule and budget.
+     Routing evaluations report three runs.
 
 **Academic deliverable status:**
 - `02-requirements-analysis.md` (due 2026-10-04): complete early, in Sprint 1.
-- Weekly status report due (maintained by Eric)
+- `03-planning-management.md` and `04-design-solution-architecture.md` (due 2026-10-18):
+  drafted, not submitted.
+- Weekly status report: drafted, not submitted (maintained by Eric).
+- Final copies are committed to `docs/academic/` after submission; the repo copies are
+  placeholders until then.
 
 **For Sprint 2 planning** *(resolved 2026-09-25)*:
 - `06-production-support.md` (due 11-08) is supported by the Sprint 4 slice deploy (ADR-045).
@@ -189,6 +262,14 @@ locally. The paid key never goes into a cloud environment.
 - ADR-044 — there is no final paper; limitations and results go in `docs/evaluation-report.md` (Sprint 6) and the final presentation.
 - ADR-045 — minimal Cloud Run deploy of the reporting slice with Cloud SQL in Sprint 4, 2026-11-02 to 11-04, with a stop rule (supersedes ADR-007 in part).
 - ADR-046 — specialists parse their own questions with one LLM call into a typed request; figures stay deterministic and answers are template-rendered.
+- ADR-047 — MCP and A2A SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset; everything else pinned by `uv.lock`.
+- ADR-048 — LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429s, list-price metering, validated structured output, one provider.
+- ADR-049 — per-role runtime models; the orchestrator stays on Flash-Lite on measured evidence (seed set 28/28 against 3.7 Flash 27/28).
+- ADR-050 — reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer.
+- ADR-051 — `locations.region`: the customer site's region, stored (FR-06 stop rule, decided by Eric).
+- ADR-052 — thinking level follows the model called, not only the role (supersedes ADR-049 in part).
+- ADR-053 — routing prompt `route_v2`: forecast covers forward-looking questions, not only request volume.
+- ADR-054 — routing prompt `route_v3`: the router is given the as-of date; routing evals report three runs.
 
 *Note: this is the highest-risk sprint in the plan — it proves the entire MCP → A2A → orchestrator path. If it slips, that's schedule signal worth taking seriously, not just noting.*
 
@@ -214,6 +295,8 @@ locally. The paid key never goes into a cloud environment.
   - Includes harder ambiguous items and near-miss out-of-scope items, written by Eric in dispatch phrasing; the seed set was too easy to separate the models (ADR-049).
   - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
 - [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
+- [ ] Repeat-visit drivers (deferred from Sprint 2).
+- [ ] Incident counts by breakdown (deferred from Sprint 2; L-06).
 - [ ] Fill `docs/security-model.md` while drafting `04`
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
 
@@ -359,7 +442,7 @@ locally. The paid key never goes into a cloud environment.
 | Sprint | Goal met? | Key learning | Scope change? |
 |---|---|---|---|
 | 1 | Yes, 2026-09-25, two days inside the sprint | Iteration with pass bars but no stop rule consumed most of the sprint; it ended by redefining the criterion (ADR-040), an option available from the start | Yes: corpus design reshaped (ADR-036 to 041); paid, spend-capped project added (~$1.40); human review cut from 200 to 30; deliverable plan rebuilt from the course calendar |
-| 2 | | | |
+| 2 | Yes; checkpoint 2 met 2026-09-26 (deadline 10-07); engineering complete 2026-09-30 | Tests built from the author's assumptions passed while the code was wrong; real error captures and production-config runs found both bugs | Yes: all agents on Flash-Lite after comparison (ADR-049); site region stored (ADR-051); routing prompt revised twice (ADR-053, ADR-054); repeat-visit drivers and incident-count breakdowns deferred to Sprint 3 |
 | 3 | | | |
 | 4 | | | |
 | 5 | | | |
