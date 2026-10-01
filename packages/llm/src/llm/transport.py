@@ -13,7 +13,12 @@ class Transport(Protocol):
     """Sends one request, with no retries of its own. Raises the SDK's errors as-is."""
 
     async def generate(
-        self, *, model: str, prompt: str, response_model: type[BaseModel] | None
+        self,
+        *,
+        model: str,
+        prompt: str,
+        response_model: type[BaseModel] | None,
+        thinking_level: str,
     ) -> Any:
         """Return an object with `.text` and `.usage_metadata`, like the SDK's response."""
         ...
@@ -44,12 +49,17 @@ class GeminiTransport:
         return f"GeminiTransport(mode={self._settings.mode!r})"
 
     async def generate(
-        self, *, model: str, prompt: str, response_model: type[BaseModel] | None
+        self,
+        *,
+        model: str,
+        prompt: str,
+        response_model: type[BaseModel] | None,
+        thinking_level: str,
     ) -> Any:
         types = self._types
         config = types.GenerateContentConfig(
             temperature=self._settings.temperature,
-            thinking_config=types.ThinkingConfig(thinking_level=self._settings.thinking_level),
+            thinking_config=types.ThinkingConfig(thinking_level=thinking_level),
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
         if response_model is not None:

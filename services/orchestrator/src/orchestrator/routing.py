@@ -17,7 +17,7 @@ from schemas import Domain, RouteDecision
 
 log = logging.getLogger("orchestrator")
 
-PROMPT_NAME = "route_v1"
+PROMPT_NAME = "route_v2"
 
 DOMAIN_LABELS: dict[Domain, str] = {
     "reporting": "incident and quality reporting",

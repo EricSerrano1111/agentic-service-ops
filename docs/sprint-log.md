@@ -204,9 +204,14 @@ locally. The paid key never goes into a cloud environment.
 - [ ] Sentiment eval reports neutral accuracy by neutral kind (via `corpus_id`; neutral is 73% administrative) and hard-case accuracy with the judge disagreement rates alongside (ADR-040)
 - [ ] Orchestrator routes across all three
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
-- [ ] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
+- [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
+  *2026-09-30: seed_v1 (clear, ambiguous, out-of-scope, multi-domain) and routing_v1
+  (ambiguous, near-miss out-of-scope, technician) together cover all categories. On
+  `route_v1`, Flash-Lite 17/18 and 3.7 Flash 16/18 on routing_v1, so ADR-049 stands
+  (L-14). `route_v2` is the default (ADR-053), which makes routing_v1 no longer blind (L-16).*
   - Includes harder ambiguous items and near-miss out-of-scope items, written by Eric in dispatch phrasing; the seed set was too easy to separate the models (ADR-049).
   - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
+- [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
 - [ ] Fill `docs/security-model.md` while drafting `04`
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
 
@@ -287,6 +292,7 @@ locally. The paid key never goes into a cloud environment.
 
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
+- [ ] Held-out routing set (never used to revise a prompt), written by Eric
 - [ ] FastAPI gateway + thin React UI
 - [ ] Extend deployment to all services; complete Cloud SQL migration
 - [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)

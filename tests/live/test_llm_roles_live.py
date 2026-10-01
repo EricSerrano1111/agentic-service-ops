@@ -47,9 +47,10 @@ async def test_orchestrator_routing_call():
     decision = await Router(client).classify(QUESTION, trace_id="live-orchestrator")
     assert decision.route == "reporting"
     assert client.totals.input_tokens > 0 and client.totals.output_tokens > 0
+    model = client.settings.default_model
     print(
-        f"\norchestrator: {client.settings.default_model}, thinking "
-        f"{client.settings.thinking_level!r} -> {decision.route} ({decision.reason})"
+        f"\norchestrator: {model}, thinking {client.thinking_level_for(model)!r} -> "
+        f"{decision.route} ({decision.reason})"
     )
 
 
@@ -66,9 +67,10 @@ async def test_specialist_parsing_call():
     assert (resolved.start, resolved.end) == (end.replace(day=1), end)
     assert resolved.assumed is False
     assert client.totals.input_tokens > 0 and client.totals.output_tokens > 0
+    model = client.settings.default_model
     print(
-        f"\nspecialist: {client.settings.default_model}, thinking "
-        f"{client.settings.thinking_level!r} -> {resolved.start} to {resolved.end}"
+        f"\nspecialist: {model}, thinking {client.thinking_level_for(model)!r} -> "
+        f"{resolved.start} to {resolved.end}"
     )
 
 
