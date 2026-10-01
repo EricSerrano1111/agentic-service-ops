@@ -209,6 +209,8 @@ locally. The paid key never goes into a cloud environment.
   (ambiguous, near-miss out-of-scope, technician) together cover all categories. On
   `route_v1`, Flash-Lite 17/18 and 3.7 Flash 16/18 on routing_v1, so ADR-049 stands
   (L-14). `route_v2` is the default (ADR-053), which makes routing_v1 no longer blind (L-16).*
+  *2026-09-30: `route_v3` (the as-of date as today) is the default (ADR-054). Three runs
+  each on Flash-Lite: seed_v1 27-28/28, routing_v1 16-17/18; flips s16, r02 (L-18).*
   - Includes harder ambiguous items and near-miss out-of-scope items, written by Eric in dispatch phrasing; the seed set was too easy to separate the models (ADR-049).
   - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
 - [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
@@ -293,6 +295,7 @@ locally. The paid key never goes into a cloud environment.
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
 - [ ] FastAPI gateway + thin React UI
 - [ ] Extend deployment to all services; complete Cloud SQL migration
 - [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)

@@ -44,6 +44,7 @@ async def run(args: argparse.Namespace) -> int:
     load_dotenv(ROOT / ".env", override=False)
     from llm import LLMClient, LLMDailyQuotaExhausted, LLMError
     from llm.redact import redact
+    from orchestrator.config import Settings
     from orchestrator.routing import Router
 
     source = SETS / f"{args.file}.jsonl"
@@ -54,13 +55,15 @@ async def run(args: argparse.Namespace) -> int:
 
     client = LLMClient.from_env("orchestrator")
     model = args.model or client.settings.default_model
-    router = Router(client, model=model)
+    as_of = Settings.from_env().as_of  # REPORTING_AS_OF_DATE, as the service reads it
+    router = Router(client, model=model, as_of=as_of)
     thinking = client.thinking_level_for(model)
     rpm = args.rpm or default_rpm(model)
     gap = 60.0 / rpm
     print(
         f"{source.name}: {len(items)} questions, model {model} ({client.settings.mode} key), "
         f"thinking {thinking}, prompt {router.prompt.version} ({router.prompt.sha}), "
+        f"as-of {as_of}, "
         f"pacing {rpm:g}/min"
     )
 
@@ -93,13 +96,12 @@ async def run(args: argparse.Namespace) -> int:
             f"got {row['predicted'] or row['error']}"
         )
 
-    report(
-        rows, client.totals, model, thinking, router.prompt, stopped, client.settings.mode, source
-    )
+    report(rows, client.totals, model, thinking, router, stopped, client.settings.mode, source)
     return 0
 
 
-def report(rows, totals, model, thinking, prompt, stopped, mode, source: Path) -> None:
+def report(rows, totals, model, thinking, router, stopped, mode, source: Path) -> None:
+    prompt = router.prompt
     correct = [r for r in rows if r["predicted"] == r["expected"]]
     by_tag: dict[str, list[bool]] = defaultdict(list)
     for r in rows:
@@ -151,6 +153,7 @@ def report(rows, totals, model, thinking, prompt, stopped, mode, source: Path) -
                 "thinking_level": thinking,
                 "prompt_version": prompt.version,
                 "prompt_sha": prompt.sha,
+                "as_of": router.as_of.isoformat() if "{{as_of}}" in prompt.text else None,
                 "run_at": stamp,
                 "answered": len(rows),
                 "correct": len(correct),

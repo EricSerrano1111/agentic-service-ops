@@ -138,7 +138,9 @@ _AGENT_ERRORS: dict[str, tuple[int, str]] = {
 
 
 def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
-    router = Router(llm if llm is not None else LLMClient.from_env("orchestrator"))
+    router = Router(
+        llm if llm is not None else LLMClient.from_env("orchestrator"), as_of=settings.as_of
+    )
     app = FastAPI(title="orchestrator", version="0.1.0")
 
     @app.get("/healthz")
