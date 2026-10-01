@@ -192,13 +192,15 @@ def test_column_level_select_matches_matrix(
 def test_writes_match_matrix(connect_as: ConnectAs, role: str, operation: str, table: str) -> None:
     """INSERT, UPDATE and DELETE on every table, for every role.
 
-    Only ALL_GRANTS confers a write, so the expectation is: the generator can write
-    everywhere, and no agent role can write anywhere.
+    ALL_GRANTS confers every write; INSERT_GRANTS confers INSERT and nothing else. So the
+    generator can write everywhere, `app_sentiment` can only insert its own predictions
+    (ADR-067), and no other role can write anywhere.
     """
     conn = connect_as(role)
     statement = _WRITE_PROBES[operation](table)
+    inserts = am.INSERT_GRANTS.get(role, frozenset()) if operation == "insert" else frozenset()
 
-    if table in am.ALL_GRANTS.get(role, frozenset()):
+    if table in am.ALL_GRANTS.get(role, frozenset()) | inserts:
         _assert_allowed(conn, statement)
     else:
         _assert_denied(conn, statement)
@@ -298,3 +300,55 @@ def test_offline_read_roles_cannot_write(
 ) -> None:
     """ADR-063: both offline roles are read-only — INSERT, UPDATE and DELETE all refused."""
     _assert_denied(connect_as(role), _WRITE_PROBES[operation](table))
+
+
+# --------------------------------------------------------------------------- #
+# ADR-067: stored predictions and region access for app_sentiment
+#
+# Literal expectations, not derived from the matrix, for the same reason as above.
+# --------------------------------------------------------------------------- #
+
+
+def test_sentiment_reads_a_comments_region(connect_as: ConnectAs) -> None:
+    conn = connect_as(am.ROLE_SENTIMENT)
+    _assert_allowed(conn, _select("service_requests", sql.SQL("request_id, location_id")))
+    _assert_allowed(conn, _select("locations", sql.SQL("location_id, region")))
+    _assert_allowed(conn, _select("sentiment_predictions", _EVERY_COLUMN))
+    _assert_allowed(conn, _insert_probe("sentiment_predictions"))
+
+
+@pytest.mark.parametrize(
+    ("table", "column"),
+    [
+        ("service_feedback", "rating"),
+        ("locations", "account_id"),
+        ("locations", "state"),
+        ("service_requests", "account_id"),
+    ],
+)
+def test_sentiment_still_cannot_read_column(connect_as: ConnectAs, table: str, column: str) -> None:
+    _assert_denied(connect_as(am.ROLE_SENTIMENT), _select(table, _column(column)))
+
+
+@pytest.mark.parametrize("table", ["incidents", "sentiment_labels", "accounts"])
+def test_sentiment_still_cannot_read_table(connect_as: ConnectAs, table: str) -> None:
+    """No column of these at all: `count(*)` needs SELECT on at least one."""
+    _assert_denied(connect_as(am.ROLE_SENTIMENT), _select(table, _ANY_COLUMN))
+
+
+@pytest.mark.parametrize("operation", ["update", "delete"])
+def test_sentiment_cannot_change_or_remove_a_prediction(
+    connect_as: ConnectAs, operation: str
+) -> None:
+    """INSERT only: a stored prediction can't be rewritten or erased by the server."""
+    _assert_denied(connect_as(am.ROLE_SENTIMENT), _WRITE_PROBES[operation]("sentiment_predictions"))
+
+
+def test_train_cannot_read_predictions(connect_as: ConnectAs) -> None:
+    """The model never trains on its own output."""
+    _assert_denied(connect_as(am.ROLE_TRAIN), _select("sentiment_predictions", _ANY_COLUMN))
+
+
+@pytest.mark.parametrize("role", [am.ROLE_QA, am.ROLE_EVAL])
+def test_qa_and_eval_read_predictions(connect_as: ConnectAs, role: str) -> None:
+    _assert_allowed(connect_as(role), _select("sentiment_predictions", _EVERY_COLUMN))

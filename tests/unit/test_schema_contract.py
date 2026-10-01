@@ -27,6 +27,8 @@ HARD_CASE_PARENT = "fae4b8c9814c"
 #: ADR-038: param_group gains world and feedback (CHECK dropped and recreated).
 PARAM_GROUP_REVISION = "9135d8de9f27"
 REGION_REVISION = "ab53ceceeffe"  # ADR-051: locations.region
+OFFLINE_ROLES_REVISION = "95a2f308a9cd"  # ADR-063: grants only, skipped below
+PREDICTIONS_REVISION = "3d7e1a9c5b20"  # ADR-067: sentiment_predictions + grants
 
 EXPECTED_TABLES = {
     # §2 reference
@@ -44,6 +46,8 @@ EXPECTED_TABLES = {
     # §4 ground truth
     "sentiment_labels",
     "generation_parameters",
+    # derived operational (ADR-067)
+    "sentiment_predictions",
 }
 
 # §9 "Indexing considerations for the MCP tools". The listed
@@ -200,6 +204,14 @@ def offline_sql(monkeypatch: pytest.MonkeyPatch) -> str:
     command.upgrade(config, f"{HARD_CASE_PARENT}:{HARD_CASE_REVISION}", sql=True)
     command.upgrade(config, f"{HARD_CASE_REVISION}:{PARAM_GROUP_REVISION}", sql=True)
     command.upgrade(config, f"{PARAM_GROUP_REVISION}:{REGION_REVISION}", sql=True)
+    for var in (
+        "DB_ROLE_SENTIMENT_USER",
+        "DB_ROLE_QA_USER",
+        "DB_ROLE_EVAL_USER",
+        "DB_ROLE_GENERATOR_USER",
+    ):
+        monkeypatch.setenv(var, var.lower())
+    command.upgrade(config, f"{OFFLINE_ROLES_REVISION}:{PREDICTIONS_REVISION}", sql=True)
     return buffer.getvalue()
 
 
@@ -309,3 +321,39 @@ def test_param_group_migration_matches_model(offline_sql: str) -> None:
     )
     assert str(check.sqltext) == expected
     assert expected in offline_sql
+
+
+# --------------------------------------------------------------------------- #
+# ADR-067: sentiment_predictions
+# --------------------------------------------------------------------------- #
+
+
+def test_sentiment_predictions_shape() -> None:
+    table = m.metadata.tables["sentiment_predictions"]
+    assert [c.name for c in table.primary_key.columns] == ["feedback_id", "model_version"]
+    assert table.columns["model_version"].type.length == 64
+    confidence = table.columns["confidence"].type
+    assert (confidence.precision, confidence.scale) == (5, 4)
+    (fk,) = table.foreign_keys
+    assert fk.target_fullname == "service_feedback.feedback_id"
+    assert fk.ondelete == "CASCADE"
+    checks = {c.name for c in table.constraints if isinstance(c, sa.CheckConstraint)}
+    assert checks == {
+        "ck_sentiment_predictions_predicted_label",
+        "ck_sentiment_predictions_confidence_range",
+    }
+
+
+def test_predictions_migration_grants(offline_sql: str) -> None:
+    """Literal grants, rendered offline: column grants after the table grants."""
+    grants = [line for line in offline_sql.splitlines() if line.startswith("GRANT")]
+    tail = [g for g in grants if "sentiment_predictions" in g or "SELECT (" in g]
+    assert tail == [
+        'GRANT SELECT, INSERT ON TABLE "sentiment_predictions" TO "db_role_sentiment_user";',
+        'GRANT SELECT ON TABLE "sentiment_predictions" TO "db_role_qa_user";',
+        'GRANT SELECT ON TABLE "sentiment_predictions" TO "db_role_eval_user";',
+        'GRANT ALL ON TABLE "sentiment_predictions" TO "db_role_generator_user";',
+        'GRANT SELECT ("request_id", "location_id") ON TABLE "service_requests" '
+        'TO "db_role_sentiment_user";',
+        'GRANT SELECT ("location_id", "region") ON TABLE "locations" TO "db_role_sentiment_user";',
+    ]
