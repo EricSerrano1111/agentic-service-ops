@@ -269,6 +269,14 @@ build are appended here as they are found (CLAUDE.md).
   extending it after seeing validation scores is the search drift the protocol exists to
   prevent. The validation gain from C=1 to C=10 was 0.018 for word features.
 - **Recorded in:** ADR-064; `evals/results/sentiment/2026-10-01_baselines/tfidf_validation_grid.json`.
+- **Update 2026-10-01 (validation only):** C=30 and C=100 were run on validation, for
+  both feature sets, without scoring test or changing the selected config. Validation
+  macro-F1: word 1-2-grams 0.9413 (C=30) and 0.9396 (C=100); `char_wb` 2-5-grams 0.9408
+  (C=30) and 0.9402 (C=100). Both peak at C=30. The best gain over the selected config
+  (word, C=10, 0.9333) is +0.0080, from word C=30. The reported TF-IDF baseline is
+  therefore about 0.008 validation macro-F1 below what a slightly wider grid would have
+  found; ADR-065's comparison reports this beside the result. Results:
+  `evals/results/sentiment/2026-10-01_baselines/grid_extension_validation_only.json`.
 
 ### L-27 — Length alone identifies minimal neutral comments (2026-10-01)
 - **What:** The length-only diagnostic classifies every minimal neutral correctly on test

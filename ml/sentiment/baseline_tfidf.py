@@ -37,6 +37,8 @@ FEATURES = {
 }
 CS = (0.1, 1.0, 10.0)
 GRID = [{"features": f, "C": c} for f in FEATURES for c in CS]
+#: L-26 follow-up only: larger C, validation only. Never used to select or re-score.
+EXTENSION_CS = (30.0, 100.0)
 RESULTS_ROOT = data.ROOT / "evals" / "results" / "sentiment"
 
 
@@ -49,22 +51,68 @@ def build(config: dict):
     )
 
 
-def load_split_rows() -> dict[str, list[data.FeedbackRow]]:
+def load_split_rows(
+    splits: tuple[str, ...] = data.SPLITS,
+) -> dict[str, list[data.FeedbackRow]]:
     split = data.load_split("v1")
-    rows = data.load_training_rows()
-    if {r.feedback_id for r in rows} != set(split):
+    rows = data.load_training_rows(splits)
+    if {r.feedback_id for r in rows} != {fid for fid, s in split.items() if s in splits}:
         raise SystemExit("database rows and split_v1 disagree on the set of feedback_ids")
-    by_split: dict[str, list[data.FeedbackRow]] = {s: [] for s in data.SPLITS}
+    by_split: dict[str, list[data.FeedbackRow]] = {s: [] for s in splits}
     for r in rows:
         by_split[split[r.feedback_id]].append(r)
     return by_split
 
 
+def grid_extension(out) -> int:
+    """L-26 follow-up: C in EXTENSION_CS on validation only. Test is never fetched."""
+    by_split = load_split_rows(("train", "validation"))
+    train, val = by_split["train"], by_split["validation"]
+    x_train, y_train = [r.feedback_text for r in train], [r.true_sentiment for r in train]
+    x_val, y_val = [r.feedback_text for r in val], [r.true_sentiment for r in val]
+    rows = []
+    for features in FEATURES:
+        for c in EXTENSION_CS:
+            config = {"features": features, "C": c}
+            pred = build(config).fit(x_train, y_train).predict(x_val)
+            rows.append(
+                {
+                    **config,
+                    "val_macro_f1": round(float(f1_score(y_val, pred, average="macro")), 4),
+                    "val_accuracy": round(float(accuracy_score(y_val, pred)), 4),
+                }
+            )
+            print(f"{features:12} C={c:<6} macro-F1 {rows[-1]['val_macro_f1']:.4f}")
+    path = out / "grid_extension_validation_only.json"
+    path.write_text(
+        json.dumps(
+            {
+                "purpose": "L-26 follow-up; validation only; selected config unchanged; "
+                "test not fetched",
+                "date": date.today().isoformat(),
+                "results": rows,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    print(f"wrote {path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--out-date", default=date.today().isoformat())
+    ap.add_argument(
+        "--grid-extension",
+        action="store_true",
+        help="L-26 follow-up: C in {30, 100}, validation only; writes nothing else",
+    )
     args = ap.parse_args(argv)
     out = RESULTS_ROOT / f"{args.out_date}_baselines"
+    if args.grid_extension:
+        return grid_extension(out)
 
     by_split = load_split_rows()
     train, val = by_split["train"], by_split["validation"]
