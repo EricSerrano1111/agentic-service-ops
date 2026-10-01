@@ -1,0 +1,462 @@
+{
+  "label": "PROXY: real model compute in a CPU-limited local container, not Cloud Run",
+  "adr": "ADR-065",
+  "model": {
+    "id": "google-bert/bert-base-uncased",
+    "revision": "86b5e0934494bd15c9632b12f734a8a67f723594",
+    "head": "random 4-class"
+  },
+  "max_length": 64,
+  "padding": "longest in batch",
+  "image": "service-ops-latency-proxy:local",
+  "network": "none",
+  "slice_sizes": {
+    "full_window": 7521,
+    "last_12_months": 2666,
+    "largest_quarter": 736,
+    "largest_month": 287,
+    "largest_account_quarter": 107,
+    "median_account_quarter": 9,
+    "largest_region_quarter": 225
+  },
+  "slice_repeats": {
+    "full_window": 1,
+    "last_12_months": 1,
+    "largest_quarter": 3,
+    "largest_month": 3,
+    "largest_account_quarter": 3,
+    "median_account_quarter": 3,
+    "largest_region_quarter": 3
+  },
+  "cold_start_repeats": 3,
+  "gate_slices": [
+    "largest_account_quarter",
+    "largest_region_quarter"
+  ],
+  "budget": {
+    "warm_gate_max_s": 30.0,
+    "cold_start_max_s": 20.0
+  },
+  "results": [
+    {
+      "config": {
+        "cpus": 1,
+        "memory": "2g"
+      },
+      "cold_runs": [
+        {
+          "host_s": 13.088,
+          "in_process_s": 12.338,
+          "imports_and_load_s": 12.213,
+          "first_prediction_s": 0.125
+        },
+        {
+          "host_s": 13.118,
+          "in_process_s": 12.388,
+          "imports_and_load_s": 12.289,
+          "first_prediction_s": 0.099
+        },
+        {
+          "host_s": 13.406,
+          "in_process_s": 12.678,
+          "imports_and_load_s": 12.596,
+          "first_prediction_s": 0.082
+        }
+      ],
+      "warm": {
+        "threads": 1,
+        "torch": "2.14.1+cpu",
+        "throughput": {
+          "16": {
+            "median_per_s": 10.74,
+            "min_per_s": 10.72,
+            "runs": [
+              10.74,
+              10.72,
+              10.75
+            ]
+          },
+          "32": {
+            "median_per_s": 9.65,
+            "min_per_s": 9.6,
+            "runs": [
+              9.65,
+              9.96,
+              9.6
+            ]
+          },
+          "64": {
+            "median_per_s": 9.16,
+            "min_per_s": 9.1,
+            "runs": [
+              9.1,
+              9.16,
+              9.19
+            ]
+          }
+        },
+        "best_batch_size": 16,
+        "slices": {
+          "full_window": {
+            "size": 7521,
+            "repeats": 1,
+            "median_s": 669.199,
+            "max_s": 669.199,
+            "runs": [
+              669.199
+            ]
+          },
+          "last_12_months": {
+            "size": 2666,
+            "repeats": 1,
+            "median_s": 238.995,
+            "max_s": 238.995,
+            "runs": [
+              238.995
+            ]
+          },
+          "largest_quarter": {
+            "size": 736,
+            "repeats": 3,
+            "median_s": 65.297,
+            "max_s": 65.442,
+            "runs": [
+              65.297,
+              65.442,
+              65.079
+            ]
+          },
+          "largest_month": {
+            "size": 287,
+            "repeats": 3,
+            "median_s": 25.827,
+            "max_s": 26.174,
+            "runs": [
+              26.174,
+              25.759,
+              25.827
+            ]
+          },
+          "largest_account_quarter": {
+            "size": 107,
+            "repeats": 3,
+            "median_s": 9.843,
+            "max_s": 10.018,
+            "runs": [
+              10.018,
+              9.687,
+              9.843
+            ]
+          },
+          "median_account_quarter": {
+            "size": 9,
+            "repeats": 3,
+            "median_s": 0.757,
+            "max_s": 0.773,
+            "runs": [
+              0.757,
+              0.742,
+              0.773
+            ]
+          },
+          "largest_region_quarter": {
+            "size": 225,
+            "repeats": 3,
+            "median_s": 20.194,
+            "max_s": 20.716,
+            "runs": [
+              20.194,
+              20.716,
+              20.14
+            ]
+          }
+        },
+        "cgroup_memory_peak_bytes": 515661824,
+        "docker_stats_peak_mib": 444.8
+      },
+      "budget": {
+        "cold_start": {
+          "median_s": 13.118,
+          "max_s": 13.406,
+          "budget_s": 20.0,
+          "pass": true
+        },
+        "slices": {
+          "full_window": {
+            "size": 7521,
+            "repeats": 1,
+            "median_s": 669.199,
+            "max_s": 669.199,
+            "gate": false,
+            "within_30s": false,
+            "verdict": "reported (not the gate)"
+          },
+          "last_12_months": {
+            "size": 2666,
+            "repeats": 1,
+            "median_s": 238.995,
+            "max_s": 238.995,
+            "gate": false,
+            "within_30s": false,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_quarter": {
+            "size": 736,
+            "repeats": 3,
+            "median_s": 65.297,
+            "max_s": 65.442,
+            "gate": false,
+            "within_30s": false,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_month": {
+            "size": 287,
+            "repeats": 3,
+            "median_s": 25.827,
+            "max_s": 26.174,
+            "gate": false,
+            "within_30s": true,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_account_quarter": {
+            "size": 107,
+            "repeats": 3,
+            "median_s": 9.843,
+            "max_s": 10.018,
+            "gate": true,
+            "within_30s": true,
+            "verdict": "PASS"
+          },
+          "median_account_quarter": {
+            "size": 9,
+            "repeats": 3,
+            "median_s": 0.757,
+            "max_s": 0.773,
+            "gate": false,
+            "within_30s": true,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_region_quarter": {
+            "size": 225,
+            "repeats": 3,
+            "median_s": 20.194,
+            "max_s": 20.716,
+            "gate": true,
+            "within_30s": true,
+            "verdict": "PASS"
+          }
+        }
+      }
+    },
+    {
+      "config": {
+        "cpus": 2,
+        "memory": "4g"
+      },
+      "cold_runs": [
+        {
+          "host_s": 13.104,
+          "in_process_s": 12.376,
+          "imports_and_load_s": 12.314,
+          "first_prediction_s": 0.063
+        },
+        {
+          "host_s": 12.872,
+          "in_process_s": 12.149,
+          "imports_and_load_s": 12.089,
+          "first_prediction_s": 0.06
+        },
+        {
+          "host_s": 13.024,
+          "in_process_s": 12.305,
+          "imports_and_load_s": 12.251,
+          "first_prediction_s": 0.054
+        }
+      ],
+      "warm": {
+        "threads": 2,
+        "torch": "2.14.1+cpu",
+        "throughput": {
+          "16": {
+            "median_per_s": 17.45,
+            "min_per_s": 17.26,
+            "runs": [
+              17.26,
+              17.51,
+              17.45
+            ]
+          },
+          "32": {
+            "median_per_s": 16.22,
+            "min_per_s": 16.13,
+            "runs": [
+              16.13,
+              16.35,
+              16.22
+            ]
+          },
+          "64": {
+            "median_per_s": 14.98,
+            "min_per_s": 14.45,
+            "runs": [
+              15.13,
+              14.45,
+              14.98
+            ]
+          }
+        },
+        "best_batch_size": 16,
+        "slices": {
+          "full_window": {
+            "size": 7521,
+            "repeats": 1,
+            "median_s": 409.876,
+            "max_s": 409.876,
+            "runs": [
+              409.876
+            ]
+          },
+          "last_12_months": {
+            "size": 2666,
+            "repeats": 1,
+            "median_s": 147.716,
+            "max_s": 147.716,
+            "runs": [
+              147.716
+            ]
+          },
+          "largest_quarter": {
+            "size": 736,
+            "repeats": 3,
+            "median_s": 40.018,
+            "max_s": 40.217,
+            "runs": [
+              40.217,
+              40.018,
+              39.976
+            ]
+          },
+          "largest_month": {
+            "size": 287,
+            "repeats": 3,
+            "median_s": 15.535,
+            "max_s": 15.771,
+            "runs": [
+              15.771,
+              15.484,
+              15.535
+            ]
+          },
+          "largest_account_quarter": {
+            "size": 107,
+            "repeats": 3,
+            "median_s": 6.029,
+            "max_s": 6.054,
+            "runs": [
+              5.901,
+              6.029,
+              6.054
+            ]
+          },
+          "median_account_quarter": {
+            "size": 9,
+            "repeats": 3,
+            "median_s": 0.488,
+            "max_s": 0.498,
+            "runs": [
+              0.45,
+              0.488,
+              0.498
+            ]
+          },
+          "largest_region_quarter": {
+            "size": 225,
+            "repeats": 3,
+            "median_s": 12.279,
+            "max_s": 12.293,
+            "runs": [
+              12.279,
+              12.196,
+              12.293
+            ]
+          }
+        },
+        "cgroup_memory_peak_bytes": 509644800,
+        "docker_stats_peak_mib": 480.2
+      },
+      "budget": {
+        "cold_start": {
+          "median_s": 13.024,
+          "max_s": 13.104,
+          "budget_s": 20.0,
+          "pass": true
+        },
+        "slices": {
+          "full_window": {
+            "size": 7521,
+            "repeats": 1,
+            "median_s": 409.876,
+            "max_s": 409.876,
+            "gate": false,
+            "within_30s": false,
+            "verdict": "reported (not the gate)"
+          },
+          "last_12_months": {
+            "size": 2666,
+            "repeats": 1,
+            "median_s": 147.716,
+            "max_s": 147.716,
+            "gate": false,
+            "within_30s": false,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_quarter": {
+            "size": 736,
+            "repeats": 3,
+            "median_s": 40.018,
+            "max_s": 40.217,
+            "gate": false,
+            "within_30s": false,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_month": {
+            "size": 287,
+            "repeats": 3,
+            "median_s": 15.535,
+            "max_s": 15.771,
+            "gate": false,
+            "within_30s": true,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_account_quarter": {
+            "size": 107,
+            "repeats": 3,
+            "median_s": 6.029,
+            "max_s": 6.054,
+            "gate": true,
+            "within_30s": true,
+            "verdict": "PASS"
+          },
+          "median_account_quarter": {
+            "size": 9,
+            "repeats": 3,
+            "median_s": 0.488,
+            "max_s": 0.498,
+            "gate": false,
+            "within_30s": true,
+            "verdict": "reported (not the gate)"
+          },
+          "largest_region_quarter": {
+            "size": 225,
+            "repeats": 3,
+            "median_s": 12.279,
+            "max_s": 12.293,
+            "gate": true,
+            "within_30s": true,
+            "verdict": "PASS"
+          }
+        }
+      }
+    }
+  ]
+}

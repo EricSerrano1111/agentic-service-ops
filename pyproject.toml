@@ -34,6 +34,15 @@ ml = [
     "scikit-learn==1.9.1",
     "scipy==1.18.1",
 ]
+# BERT fine-tuning and its latency proxy (ADR-065). Offline only, like `ml`. torch comes
+# from the PyTorch CPU wheel index on every platform (see [tool.uv.sources]), so no CUDA
+# or nvidia-* package enters uv.lock.
+bert = [
+    "safetensors==0.8.0",
+    "tokenizers==0.23.2",
+    "torch==2.14.1",
+    "transformers==5.18.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -49,6 +58,14 @@ bypass-selection = true
 # add each new service here when it gets one.
 [tool.uv.sources]
 service-ops-common = { workspace = true }
+# CPU-only torch everywhere (ADR-065). `explicit = true` below means only torch is ever
+# resolved from this index; everything else still comes from PyPI.
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.uv.workspace]
 members = [

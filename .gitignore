@@ -54,3 +54,6 @@ Thumbs.db
 CLAUDE.local.md
 # Corpus build working files: raw responses, stage files, request counts (ADR-036)
 data/generator/corpus/work/
+
+# Local copies of versioned model artifacts and training checkpoints (ADR-062, ADR-065).
+/models/

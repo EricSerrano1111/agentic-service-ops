@@ -1,0 +1,35 @@
+{
+  "label": "OBSERVED: 50 real training steps on this machine (i7-6700HQ, 4 cores / 8 threads), not a container",
+  "adr": "ADR-065",
+  "settings": {
+    "lr": 2e-05,
+    "batch_size": 16,
+    "max_length": 64,
+    "torch_threads": 4,
+    "torch": "2.14.1+cpu",
+    "train_rows": 5264,
+    "steps": 50
+  },
+  "seconds_per_step": {
+    "median": 3.242,
+    "p90": 3.871,
+    "mean": 3.334,
+    "first_step": 4.841
+  },
+  "steps_per_epoch": 329,
+  "validation_pass_s": 53.549,
+  "projection_from_median": {
+    "epoch_h": 0.311,
+    "four_epochs_h": 1.245
+  },
+  "projection_from_p90": {
+    "epoch_h": 0.369,
+    "four_epochs_h": 1.475
+  },
+  "budget_rule": "4-epoch projection <= 3 h allows lr {2e-5, 3e-5}; otherwise 2e-5 only (ADR-065)",
+  "learning_rates_allowed": [
+    2e-05,
+    3e-05
+  ],
+  "note": "Projection excludes checkpoint writes (seconds each) and assumes no thermal throttling or sleep."
+}
