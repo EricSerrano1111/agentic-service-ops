@@ -166,6 +166,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change; no alert has fired.
 
+**Update 2026-09-30 (free-tier limits):** The Gemini free-tier limits in use (ADR-029: Flash-Lite 15 RPM / 250K TPM / 500 RPD; Flash models 5 RPM / 20 RPD; no free Pro quota) were last verified in AI Studio on 2026-09-22. Re-verify them before any deliverable that states them.
+
 ### R-12 — MCP/A2A ecosystem churn breaks a dependency
 **Description:** Both protocols are new and moving fast — MCP had its largest spec revision to date in July 2026. An SDK update mid-project could introduce breaking changes.
 **Mitigation:** Pin SDK versions at project start; don't chase spec updates mid-build. The project targets the 2026-07-28 MCP spec and A2A v1.0 as documented in `architecture.md` §3 — treat that as fixed unless a specific reason forces an upgrade.

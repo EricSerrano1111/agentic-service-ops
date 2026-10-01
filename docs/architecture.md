@@ -408,7 +408,7 @@ agentic-service-ops/
 │
 ├── docs/
 │   ├── architecture.md
-│   ├── security-model.md           # placeholder — filled while drafting `04` in Sprint 3
+│   ├── security-model.md           # seeded from data-dictionary §7 (2026-09-30); completed while drafting `04` in Sprint 3
 │   ├── evaluation-report.md        # stub: append-only Limitations log kept during the build; report written in Sprint 6 (ADR-044)
 │   ├── data-dictionary.md
 │   ├── risk-register.md            # updated every sprint boundary

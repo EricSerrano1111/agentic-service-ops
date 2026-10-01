@@ -15,6 +15,7 @@ Due Date: October 4 **(Assignment Completed)**
 | 1.0         | 9/22/2026 | Eric Serrano | Initial version  |
 | 1.1         | 9/25/2026 | Eric Serrano | Reference copy synced with decisions through ADR-043: 120-second ceiling in Performance notes (ADR-034); feedback labels judge-confirmed against the written label specification (ADR-036, ADR-040); paid spend-capped project for evaluation runs (ADR-041); frozen feedback corpus for reproducibility (ADR-030, ADR-042) |
 | 1.2         | 9/25/2026 | Eric Serrano | FR-19 corrected: web interface is MVP (row had been copied from FR-20; contradicted ADR-009). |
+| 1.3         | 9/30/2026 | Eric Serrano | A-11 corrected: the managed cloud database is used from Sprint 4 for the first deployed slice, and for all services from Sprint 5 (ADR-045). |
 |             |           |              |                  |
 
 **Reviewers**
@@ -129,7 +130,7 @@ Meridian's analytical capacity grows in proportion to service volume without a c
 - **A-08.** The Gemini API free tier remains available with its current rate limits (15 requests per minute and 500 per day for Flash-Lite) through the end of the project. If pricing or access changes, the provider-agnostic model interface allows switching providers without changing the orchestration layer.
 - **A-09.** Full evaluation runs may exceed the free tier's daily limit. They will be split across days or run on the separate paid project with a spending cap that was set up for feedback generation.
 - **A-10.** The MCP (2026-07-28 specification) and A2A (v1.0) software libraries remain stable enough to use. Versions are pinned at project start and not upgraded mid-build without a specific reason.
-- **A-11.** Google Cloud free tiers and existing credits, together with a personal budget of roughly \$100 USD, cover hosting, the database, and model usage. The managed cloud database is used only from Sprint 5 onward.
+- **A-11.** Google Cloud free tiers and existing credits, together with a personal budget of roughly \$100 USD, cover hosting, the database, and model usage. The managed cloud database is used from Sprint 4 for the first deployed slice, and for all services from Sprint 5.
 
 **Project constraints**
 
