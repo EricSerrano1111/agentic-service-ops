@@ -76,6 +76,7 @@
 | 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted |
 | 063 | Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` | Accepted |
 | 064 | Sentiment split and evaluation protocol: near-duplicate groups, committed hashed split, test scored once, interpretation rule fixed in advance | Accepted |
+| 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted |
 
 ---
 
@@ -1942,3 +1943,35 @@ training grants.
 - BERT, its calibration, and any fallback model use split_v1 and the same scorer.
 - A change to the split is a new version (split_v2) and a new ADR, never an edit.
 - Per-type hard-case scores are noisy at these counts (L-22); n is always shown.
+
+### ADR-065 — BERT training, comparison and latency protocol (pre-registered)
+*Date: 2026-10-01. Extends ADR-059 and ADR-064. Committed before any BERT code or result exists. Supersedes nothing.*
+
+**Decision:**
+- Training: pinned `bert-base-uncased` revision; class-balanced cross-entropy; AdamW (weight decay 0.01), 10% warmup then linear decay; batch 16; at most 4 epochs with early stopping on validation macro-F1 (patience 1); seed 20261001; train split only. `max_length` is the smallest of 32/64/96/128 covering 99.5% of train comments.
+- Search budget: learning rates {2e-5, 3e-5} if a 4-epoch run is projected at 3 hours or less, otherwise 2e-5 only. The run and epoch with the best validation macro-F1 is the model; nothing else is tuned.
+- Confidence threshold: calibrated on validation (method fixed in the 3b prompt before calibration runs); low-confidence results are flagged for review.
+- Test: the selected model is scored once and recorded in the ledger, like the baselines.
+- Comparison with TF-IDF, on the same test comments:
+  - Macro-F1 difference with a paired bootstrap 95% interval (10,000 resamples, seed 20261001).
+  - Per-comment correctness compared with McNemar's exact test on the full test set and on the sarcastic, implicit and mixed subsets, reporting the discordant counts (comments one model gets right and the other wrong) every time.
+  - BERT is called better on a metric only if the interval excludes zero (macro-F1) or the McNemar p-value is below 0.05 (subsets). Every subset is reported, whatever its result.
+  - ADR-064's interpretation rule did not fire, but TF-IDF's margin was 0.007 with its selected configuration at the grid edge (L-26). The comparison reports this beside the overall result.
+- Latency budget (Cloud Run proxy, ADR-034's 120 s ceiling):
+  - warm inference on the realistic worst slice is at most 30 s, and cold start at most 20 s.
+  - The realistic worst slice is the largest single-account or single-region quarter. Whole-window and 12-month slices are reported but are not the gate, because a whole-window question needs a different design (sampling or stored predictions), decided separately if needed.
+  - If BERT fails on the configuration chosen for deployment, DistilBERT is evaluated under this same protocol (ADR-059).
+
+**Context:**
+- On test, TF-IDF scored macro-F1 0.943, with sarcastic 36/42 and mixed F1 0.883. Differences of a few comments are within noise at these sizes, so an unpaired comparison of two accuracies can't support a claim.
+- The orchestrator allows up to 2 revision cycles (ADR-055). If each re-runs inference, 3 × 30 s plus a 20 s cold start plus about 6–8 LLM calls approaches 120 s. The sentiment MCP server should therefore reuse a request's inference across revisions (decided with `mcp_feedback`).
+- Latency doesn't depend on fine-tuned weights, so it is measured with the untrained model before any training is spent.
+
+**Alternatives considered:**
+- *Comparing headline scores only* (rejected). It can't distinguish a gain from noise on 42 sarcastic comments.
+- *A wider hyperparameter search* (rejected). CPU-only training makes each run cost hours, and validation selection over a large grid overfits a 1,129-comment validation set.
+- *Measuring latency after training* (rejected). A failure would waste the training time.
+
+**Consequences:**
+- The likely honest outcome is that BERT is indistinguishable from TF-IDF overall and differs, if at all, on hard cases. That is reported as the finding.
+- 3b fixes the calibration method before running it.
