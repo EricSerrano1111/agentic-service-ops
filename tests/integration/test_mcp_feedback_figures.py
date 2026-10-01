@@ -234,3 +234,24 @@ async def test_examples_order_matches_independent_sql(
     ]
     assert expected, "the range should hold at least one matching comment"
     assert all(e["feedback_text"] for e in got)
+
+
+def test_insert_returns_the_number_actually_inserted(sentiment_settings, version):
+    """A conflict inserts nothing and says so; the backfill's total depends on it."""
+    store = SqlStore(make_engine(sentiment_settings))
+    scope_ids = store.unscored(version, _scope(), 3)
+    rows = [
+        (fid, p)
+        for (fid, _), p in zip(
+            scope_ids, HashClassifier().predict([t for _, t in scope_ids]), strict=True
+        )
+    ]
+    assert store.insert(version, rows) == 3
+    assert store.insert(version, rows) == 0
+    assert store.insert(version, []) == 0
+
+
+def _scope():
+    from mcp_feedback.scoring import Scope
+
+    return Scope(dt.date(2026, 8, 1), dt.date(2026, 8, 30))

@@ -132,9 +132,12 @@ class SqlStore:
                 ]
             )
             .on_conflict_do_nothing(index_elements=["feedback_id", "model_version"])
+            # Count what was inserted from the returned rows: a multi-row INSERT's
+            # rowcount comes back as -1 through SQLAlchemy and psycopg.
+            .returning(_p.c.feedback_id)
         )
         with self.engine.begin() as conn:
-            return int(conn.execute(stmt).rowcount)
+            return len(conn.execute(stmt).fetchall())
 
     def label_bucket_counts(self, version: str, scope: Scope, bucket: str) -> list[CountRow]:
         b = func.to_char(func.timezone("UTC", _f.c.submitted_at), _BUCKET_FORMAT[bucket])
