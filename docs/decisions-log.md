@@ -81,7 +81,8 @@
 | 067 | Sentiment predictions stored and scored on arrival (250-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
 | 068 | Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines | Accepted |
 | 069 | Forecast protocol (pre-registered): folds A and B, headline holdout, intervals, release gate on fold B (MAPE ≤ 30% and no worse than seasonal naive) | Accepted — superseded in part by ADR-070 |
-| 070 | Forecast gate correction (26-week eligibility, 20% band ceiling) and `volume_v2` with a year-end indicator; decided after fold results, before the holdout | Accepted |
+| 070 | Forecast gate correction (26-week eligibility, 20% band ceiling) and `volume_v2` with a year-end indicator; decided after fold results, before the holdout | Accepted — superseded in part by ADR-071 |
+| 071 | Forecast serving requires passing on both fold B (ADR-070 gate) and the holdout (MAPE ≤ 20%); shown error is the larger of the two | Accepted |
 
 ---
 
@@ -2118,3 +2119,25 @@ training grants.
 - Nothing in this dataset tests the year-end fix blindly: the holdout (March to August) contains no December. The fold evidence for it is not blind.
 - `gate_v1` remains in the code to reproduce the pre-registered verdicts.
 - Sprint 4 QA reads the corrected-gate verdicts from the `volume_v2` manifest.
+
+### ADR-071 — Forecast serving requires passing on both fold B and the holdout
+*Date: 2026-10-02. Supersedes ADR-070 in part: which slice-bands are served. Decided after the holdout was scored. It only removes slice-bands from service; no reported evaluation figure changes.*
+
+**Decision:**
+- A forecast slice-band is served only if it passes ADR-070's gate on fold B and its `volume_v2` holdout MAPE is at most 20%.
+- The error shown with a served forecast, and used by QA (ADR-055), is the larger of the fold B and holdout MAPE for that slice-band.
+- The manifest records both errors, the ADR-070 verdict and the served flag.
+
+**Context:**
+- Four slice-bands passed fold B and then missed on the blind holdout: install 14–26 weeks (18.5% → 29.4%), upgrade 5–13 (17.3% → 26.9%), upgrade 14–26 (14.6% → 21.2%) and repair 1–4 (7.7% → 27.9%). With about 20–40 requests a week per service type, a single 26-week window cannot certify a slice-band on its own.
+- Once the holdout has been scored and reported, it is part of the model's track record. The production model already trains on those weeks, and QA's per-slice track record should include them.
+- The rule can only tighten what is served, so it cannot flatter any result.
+
+**Alternatives considered:**
+- *Serve on fold B alone* (rejected). It knowingly serves forecasts that missed by 20–30% on blind data, while showing a smaller error.
+- *Raise the ceiling for service types* (rejected). Nothing justifies it, and it would be decided after the results.
+- *Monthly service-type forecasts* (deferred). Aggregation would reduce the noise, but it is new scope.
+
+**Consequences:**
+- Served: the total at every horizon band; install 5–13 weeks; repair 5–13 weeks. Every other service-type slice-band is refused, with its error shown.
+- No later holdout exists in this dataset, so the served set has no further blind test.
