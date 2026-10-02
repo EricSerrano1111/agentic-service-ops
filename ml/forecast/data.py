@@ -19,19 +19,9 @@ import hashlib
 from collections.abc import Mapping
 
 import numpy as np
-from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
+from forecast_runtime import N_WEEKS, WINDOW_START, week_of, week_start  # noqa: F401
 
-WINDOW_START = DATASET_WINDOW_START
-N_WEEKS = ((DATASET_WINDOW_END - DATASET_WINDOW_START).days + 1) // 7
 TOTAL = "total"
-
-
-def week_start(index: int) -> dt.date:
-    return WINDOW_START + dt.timedelta(weeks=int(index))
-
-
-def week_of(t: dt.datetime) -> int:
-    return (t.astimezone(dt.UTC).date() - WINDOW_START).days // 7
 
 
 def weekly_series(rows: list[tuple[dt.datetime, str]]) -> dict[str, np.ndarray]:

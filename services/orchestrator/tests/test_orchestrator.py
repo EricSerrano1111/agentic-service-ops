@@ -154,16 +154,9 @@ def test_reporting_route_calls_the_agent_with_the_question(monkeypatch):
     assert response.headers["X-Trace-Id"] == body["trace_id"]
 
 
-@pytest.mark.parametrize("route", ["forecast"])
-def test_unbuilt_domains_get_a_normal_not_available_answer(monkeypatch, route):
-    sent = Sent()
-    response = _ask(monkeypatch, FakeLLM(decision(route)), sent)
-    assert response.status_code == 200  # not an error
-    body = response.json()
-    assert body["outcome"] == "not_available"
-    assert "aren't available yet" in body["answer"]
-    assert body["reporting"] is None and body["task_id"] is None
-    assert sent.calls == []
+def test_no_route_answers_not_available_yet(monkeypatch):
+    """All three domains are built: the "not available yet" path is gone (ADR-072)."""
+    assert not hasattr(routing, "not_available_message")
 
 
 def test_out_of_scope_gets_a_polite_decline(monkeypatch):
@@ -175,9 +168,10 @@ def test_out_of_scope_gets_a_polite_decline(monkeypatch):
 
 def test_out_of_scope_decline_lists_what_is_supported():
     text = routing.out_of_scope_message()
-    assert "incident and quality reporting, and customer sentiment" in text
-    assert "Volume forecasting isn't available yet." in text
-    assert "to follow" not in text  # sentiment is available now (ADR-068)
+    assert (
+        "incident and quality reporting, customer sentiment, and request-volume forecasts" in text
+    )
+    assert "isn't available yet" not in text and "to follow" not in text
 
 
 def test_multi_domain_names_the_domains_and_asks_for_a_split(monkeypatch):
@@ -220,14 +214,9 @@ def test_settings_as_of_reaches_the_routing_prompt(monkeypatch):
     assert "Today's date is 2025-03-15." in llm.prompts[0]
 
 
-def test_forecast_not_available_message_covers_forward_looking_questions():
-    text = routing.not_available_message(decision("forecast"))
-    assert "SLA outlook" in text  # forecast is not only volume (ADR-053)
-    # It says only that forecasting isn't available: nothing about other domains.
-    assert (
-        text == "Questions about operational forecasts (volumes, SLA outlook) aren't available yet."
-    )
-    assert "sentiment" not in text and "incident" not in text
+def test_forecast_label_still_covers_forward_looking_questions():
+    """Split messages name the forecast domain as ADR-053 framed it."""
+    assert "SLA outlook" in routing.DOMAIN_LABELS["forecast"]
 
 
 # --------------------------------------------------------------------------- routing errors
@@ -634,3 +623,121 @@ def test_sentiment_answer_that_breaks_the_contract_is_rejected(monkeypatch):
 def test_sentiment_timeouts_fit_inside_the_120s_ceiling():
     s = Settings()
     assert s.route_timeout_s + s.sentiment_a2a_timeout_s < 120  # ADR-034
+
+
+# --------------------------------------------------------------------------- forecast (ADR-072)
+
+FORECAST_ANSWER = {
+    "request": {"slice": "install", "horizon_weeks": 6},
+    "as_of": "2026-08-30",
+    "trained_through": "2026-08-30",
+    "model_version": "c5284000" + "0" * 56,
+    "range_assumed": False,
+    "requested_first_week": "2026-08-31",
+    "requested_last_week": "2026-10-05",
+    "beyond_horizon_weeks": 0,
+    "weeks": [
+        *[
+            {"week_start": f"2026-{d}", "horizon": h, "band": "1-4", "served": False}
+            for h, d in enumerate(["08-31", "09-07", "09-14", "09-21"], start=1)
+        ],
+        {
+            "week_start": "2026-09-28",
+            "horizon": 5,
+            "band": "5-13",
+            "served": True,
+            "point": 28.26,
+            "lo80": 22.0,
+            "hi80": 36.0,
+            "lo95": 19.0,
+            "hi95": 41.0,
+        },
+        {
+            "week_start": "2026-10-05",
+            "horizon": 6,
+            "band": "5-13",
+            "served": True,
+            "point": 28.57,
+            "lo80": 22.0,
+            "hi80": 37.0,
+            "lo95": 19.0,
+            "hi95": 42.0,
+        },
+    ],
+    "bands": {
+        "1-4": {"served": False, "shown_error": 43.7},
+        "5-13": {"served": True, "shown_error": 18.0},
+    },
+    "period_total": None,
+    "year_end_weeks": [],
+    "history": [],
+}
+FORECAST_QUESTION = "Forecast install requests for the next 6 weeks."
+
+
+def _forecast_completed(answer=None) -> Task:
+    return _task(
+        parts=[
+            new_text_part("Forecast of install requests ..."),
+            new_data_part(answer or FORECAST_ANSWER),
+        ]
+    )
+
+
+def test_forecast_route_calls_the_forecast_agent_with_a_60s_timeout(monkeypatch):
+    sent = SentTo(_forecast_completed)
+    response = _ask(monkeypatch, FakeLLM(decision("forecast")), sent, question=FORECAST_QUESTION)
+    assert response.status_code == 200
+    body = response.json()
+    assert sent.calls == [FORECAST_QUESTION]
+    assert sent.urls == [Settings().agent_forecast_url]
+    assert sent.timeouts == [60.0] == [Settings().forecast_a2a_timeout_s]
+    assert body["outcome"] == "answered" and body["reporting"] is None and body["sentiment"] is None
+    assert body["forecast"]["bands"]["1-4"] == {"served": False, "shown_error": 43.7}
+    assert body["forecast"]["weeks"][0]["point"] is None
+
+
+def test_forecast_decline_is_a_normal_not_available_answer(monkeypatch):
+    text = "SLA outlook can't be forecast: there's no model for SLA compliance. I can forecast ..."
+    sent = SentTo(lambda: _task(TaskState.TASK_STATE_FAILED, reason=text, code="not_supported"))
+    response = _ask(monkeypatch, FakeLLM(decision("forecast")), sent)
+    assert response.status_code == 200
+    assert (response.json()["outcome"], response.json()["answer"]) == ("not_available", text)
+
+
+@pytest.mark.parametrize(
+    ("exc", "status", "error"),
+    [
+        (TimeoutError(), 504, "agent_timeout"),
+        (httpx.ConnectError("refused"), 502, "agent_unavailable"),
+    ],
+)
+def test_unreachable_forecast_agent_gets_the_existing_failure_handling(
+    monkeypatch, exc, status, error
+):
+    def boom():
+        raise exc
+
+    response = _ask(monkeypatch, FakeLLM(decision("forecast")), SentTo(boom))
+    assert response.status_code == status
+    body = response.json()
+    assert body["error"] == error and "forecast agent" in body["detail"]
+
+
+def test_numbers_for_an_unserved_week_are_rejected(monkeypatch):
+    """Even if an agent sent one, an unserved figure never reaches the user (ADR-072)."""
+    leaky = dict(FORECAST_ANSWER)
+    leaky["weeks"] = [dict(w) for w in FORECAST_ANSWER["weeks"]]
+    leaky["weeks"][0].update(point=30.0, lo80=1.0, hi80=2.0, lo95=1.0, hi95=3.0)
+    response = _ask(
+        monkeypatch, FakeLLM(decision("forecast")), SentTo(lambda: _forecast_completed(leaky))
+    )
+    assert response.status_code == 502
+    body = response.json()
+    assert "forecast" not in body and "answer" not in body
+    assert "failed validation" in body["detail"]
+
+
+def test_forecast_timeouts_fit_inside_the_120s_ceiling():
+    s = Settings()
+    assert s.route_timeout_s + s.forecast_a2a_timeout_s < 120  # ADR-034

@@ -24,12 +24,12 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import hashlib
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
+from forecast_runtime import _sha, forecast_record, load  # noqa: F401  (ADR-072)
 
 from ml.forecast import data, evaluate, ledger, metrics, model
 
@@ -37,10 +37,6 @@ ARTIFACT = "volume_v2"
 ARTIFACT_DIR = ledger.ROOT / "models" / "forecast" / ARTIFACT
 MANIFEST = Path(__file__).resolve().parent / "artifacts" / f"{ARTIFACT}.manifest.json"
 TOLERANCE = 1e-9
-
-
-def _sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def slice_record(name: str, counts: np.ndarray, f: model.Fit) -> dict:
@@ -59,30 +55,6 @@ def slice_record(name: str, counts: np.ndarray, f: model.Fit) -> dict:
         "period": model.PERIOD,
         "horizon_cap": model.HORIZON_CAP,
     }
-
-
-def load(directory: Path, manifest: dict) -> dict[str, dict]:
-    """Every slice's record, hash-checked against the manifest."""
-    out = {}
-    for name, expected in manifest["files"].items():
-        path = directory / name
-        if _sha(path) != expected:
-            raise RuntimeError(f"{name} does not match the manifest's SHA-256")
-        rec = json.loads(path.read_text(encoding="utf-8"))
-        out[rec["slice"]] = rec
-    return out
-
-
-def forecast_record(rec: dict, t: np.ndarray) -> dict[str, np.ndarray]:
-    return model.forecast_from(
-        rec["k"],
-        np.array(rec["params"]),
-        rec["scale"],
-        np.array(rec["xtwx_inv"]),
-        rec["last_t"],
-        t,
-        rec["year_end"],
-    )
 
 
 def main(argv: list[str] | None = None) -> int:

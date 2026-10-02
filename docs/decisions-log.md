@@ -83,6 +83,7 @@
 | 069 | Forecast protocol (pre-registered): folds A and B, headline holdout, intervals, release gate on fold B (MAPE ≤ 30% and no worse than seasonal naive) | Accepted — superseded in part by ADR-070 |
 | 070 | Forecast gate correction (26-week eligibility, 20% band ceiling) and `volume_v2` with a year-end indicator; decided after fold results, before the holdout | Accepted — superseded in part by ADR-071 |
 | 071 | Forecast serving requires passing on both fold B (ADR-070 gate) and the holdout (MAPE ≤ 20%); shown error is the larger of the two | Accepted |
+| 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 
 ---
 
@@ -2141,3 +2142,30 @@ training grants.
 **Consequences:**
 - Served: the total at every horizon band; install 5–13 weeks; repair 5–13 weeks. Every other service-type slice-band is refused, with its error shown.
 - No later holdout exists in this dataset, so the served set has no further blind test.
+
+### ADR-072 — Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only
+*Date: 2026-10-02. Applies ADR-046, ADR-047 and ADR-055 to forecasting; serves `volume_v2` under ADR-071. Supersedes nothing. Extends ADR-035: `get_order_volume_history` reads only `app_forecast`'s three columns, and its contract `(slice, weeks ≤ 52)` replaces the `(granularity, window)` sketch in `architecture.md`. Extends ADR-062: the prediction path moves, unchanged, into the workspace package `packages/forecast_runtime`, which both `ml/forecast` and `mcp_volume` import, so no training code is deployed.*
+
+**Decision:**
+- `mcp_volume` serves the stored `volume_v2` artifact through two tools: `get_volume_forecast(slice, horizon_weeks ≤ 26)` and `get_order_volume_history(slice, weeks ≤ 52)`. It never returns forecast numbers for a slice-band the manifest marks unserved; it returns only the flag and the shown error.
+- The forecast agent makes one parse call into `ForecastRequest`, then renders from templates. Every served forecast shows the held-out error for its horizon band; every unserved band is named with its error; weekly figures carry 80% ranges; a period total is the sum of weekly forecasts and carries no range.
+- Period rules: forecasts cover future weeks only. A period maps to the ISO weeks whose Monday falls inside it. A bare month name or quarter means its next occurrence after the as-of date (2026-08-30). "Next month" is September 2026. Requests past 26 weeks are served to the cap; past periods are declined.
+- Forecasts covering weeks the year-end indicator marks carry a caveat that the adjustment is unvalidated (ADR-070).
+- Declined: SLA outlook, incident or sentiment forecasts, and region, account or technician breakdowns. Each decline names what is supported.
+
+**Context:**
+- ADR-055 requires the error to be shown with every forecast. ADR-071 decides which slice-bands are reliable enough to show at all. Withholding numbers at the server keeps an unreliable figure from ever reaching the agent or the user.
+- Summing per-week intervals would overstate a total's uncertainty, and a correct total interval needs simulation, which isn't worth building at this scale.
+- Forecast questions are about the future, so a bare month means its next occurrence. This avoids the reporting-style rule's August ambiguity (L-38).
+- ADR-053 routes every forward-looking question here; the model projects request volume only.
+- ADR-062 keeps training code out of deployed images. The prediction functions (week indexing, the year-end indicator, the design matrix, the forecast from saved coefficients, the hash-checked artifact load) are pure numpy and are what serving needs; moving them into a package keeps one code path for evaluation and serving.
+
+**Alternatives considered:**
+- *Return all numbers and let QA refuse* (rejected). Defence in depth is cheaper at the source, and QA still checks in Sprint 4.
+- *A simulated interval for period totals* (deferred). Correct, but new scope.
+- *Forecasting SLA compliance or incidents* (rejected). No model or evaluation exists for them.
+- *Copying `ml/forecast` into the `mcp_volume` image* (rejected). It would deploy training and evaluation code (ADR-062).
+
+**Consequences:**
+- Most service-type questions get partial or refused answers, with the reason shown. That is the honest result of ADR-071.
+- Sprint 4 QA verifies forecast answers against the manifest (served flags and shown errors), the history against its own SQL, and the arithmetic (intervals contain the point; the total equals the sum).

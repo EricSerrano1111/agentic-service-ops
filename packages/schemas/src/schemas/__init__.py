@@ -7,6 +7,23 @@ agent container that must not touch the database never installs it.
 
 from __future__ import annotations
 
+from .forecast import (
+    FORECAST_SLICES,
+    HORIZON_BANDS,
+    MAX_HISTORY_WEEKS,
+    MAX_HORIZON_WEEKS,
+    BandVerdict,
+    ForecastAnswer,
+    ForecastRequest,
+    ForecastSlice,
+    ForecastUnsupported,
+    ForecastWeek,
+    HistoryWeek,
+    HorizonBand,
+    VolumeForecast,
+    VolumeHistory,
+    band_of,
+)
 from .incidents import IncidentSummary, SeverityCounts
 from .metrics import (
     MAX_GROUPS,
@@ -48,6 +65,21 @@ from .sentiment import (
 )
 
 __all__ = [
+    "FORECAST_SLICES",
+    "HORIZON_BANDS",
+    "MAX_HISTORY_WEEKS",
+    "MAX_HORIZON_WEEKS",
+    "BandVerdict",
+    "ForecastAnswer",
+    "ForecastRequest",
+    "ForecastSlice",
+    "ForecastUnsupported",
+    "ForecastWeek",
+    "HistoryWeek",
+    "HorizonBand",
+    "VolumeForecast",
+    "VolumeHistory",
+    "band_of",
     "MAX_EXAMPLES",
     "MAX_SPAN_DAYS",
     "SENTIMENT_LABELS",

@@ -1,0 +1,34 @@
+[project]
+name = "agent-forecast"
+version = "0.1.0"
+description = "Forecast agent: A2A server over the volume MCP server; template answers with served-only numbers (ADR-072)"
+requires-python = ">=3.12"
+# Both protocol SDKs are pinned exactly (R-12, ADR-047). No database driver: this
+# container reaches data only through the volume MCP server. Its one LLM call parses the
+# question; every figure comes from mcp_volume and goes into templates (ADR-072).
+dependencies = [
+    "a2a-sdk[fastapi]==1.1.5",
+    "mcp==2.2.0",
+    "service-ops-common",
+    "service-ops-llm",
+    "service-ops-schemas",
+    "fastapi>=0.115.2",
+    "uvicorn>=0.31",
+]
+
+# Siblings resolve to the workspace members, never PyPI.
+[tool.uv.sources]
+service-ops-common = { workspace = true }
+service-ops-llm = { workspace = true }
+service-ops-schemas = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_forecast"]
+
+# Versioned prompt files ship inside the installed package (llm.prompts.load_prompt).
+[tool.hatch.build.targets.wheel.force-include]
+"prompts" = "agent_forecast/prompts"

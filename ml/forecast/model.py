@@ -24,46 +24,21 @@ training week), so a fit exported to disk forecasts identically without statsmod
 
 from __future__ import annotations
 
-import datetime as dt
-import math
 from dataclasses import dataclass, field
 
 import numpy as np
+from forecast_runtime import (  # noqa: F401  (re-exported: one prediction path, ADR-072)
+    HORIZON_CAP,
+    PERIOD,
+    HorizonError,
+    Z,
+    design,
+    forecast_from,
+    year_end_indicator,
+)
 
-from ml.forecast.data import week_start
-
-PERIOD = 52.1775
 K_RANGE = tuple(range(0, 7))
 TUKEY_C = 4.685
-HORIZON_CAP = 26
-Z = {"80": 1.2815515655446004, "95": 1.959963984540054}
-
-
-class HorizonError(ValueError):
-    """A forecast beyond the 26-week cap, or not after the training window."""
-
-
-def _is_year_end(monday: dt.date) -> bool:
-    days = [monday + dt.timedelta(days=i) for i in range(7)]
-    return any((d.month, d.day) in ((12, 25), (1, 1)) for d in days)
-
-
-def year_end_indicator(t: np.ndarray) -> np.ndarray:
-    """1.0 for weeks (by index from the window start) containing Dec 25 or Jan 1."""
-    return np.array([float(_is_year_end(week_start(int(w)))) for w in np.asarray(t)])
-
-
-def design(t: np.ndarray, k: int, year_end: bool = False) -> np.ndarray:
-    """Columns: 1, t, [year-end indicator,] then sin(2πjt/P), cos(2πjt/P) for j = 1..k."""
-    t_int = np.asarray(t)
-    t = np.asarray(t, dtype=np.float64)
-    cols = [np.ones_like(t), t]
-    if year_end:
-        cols.append(year_end_indicator(t_int))
-    for j in range(1, k + 1):
-        angle = 2 * math.pi * j * t / PERIOD
-        cols += [np.sin(angle), np.cos(angle)]
-    return np.column_stack(cols)
 
 
 def aicc(y_log: np.ndarray, t: np.ndarray, k: int, year_end: bool = False) -> float:
@@ -136,32 +111,6 @@ def fit(counts: np.ndarray, t: np.ndarray, year_end: bool = False) -> Fit:
         year_end=year_end,
         bse=np.asarray(res.bse, dtype=np.float64),
     )
-
-
-def forecast_from(
-    k: int,
-    params: np.ndarray,
-    scale: float,
-    xtwx_inv: np.ndarray,
-    last_t: int,
-    t: np.ndarray,
-    year_end: bool = False,
-) -> dict[str, np.ndarray]:
-    """Median and 80%/95% intervals for weeks `t`; pure numpy, so a reloaded fit matches."""
-    t = np.asarray(t, dtype=np.int64)
-    if len(t) == 0 or t.min() <= last_t or t.max() > last_t + HORIZON_CAP:
-        raise HorizonError(
-            f"forecast weeks must be 1 to {HORIZON_CAP} weeks after the last training week"
-        )
-    x = design(t, k, year_end)
-    mu = x @ params
-    h = np.einsum("ij,jk,ik->i", x, xtwx_inv, x)
-    se = scale * np.sqrt(1.0 + h)
-    out = {"median": np.exp(mu)}
-    for level, z in Z.items():
-        out[f"lo{level}"] = np.exp(mu - z * se)
-        out[f"hi{level}"] = np.exp(mu + z * se)
-    return out
 
 
 def forecast(f: Fit, t: np.ndarray) -> dict[str, np.ndarray]:

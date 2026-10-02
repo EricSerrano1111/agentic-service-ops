@@ -13,3 +13,5 @@
 **/.gitkeep
 # The committed artifact manifest only (ADR-067): its hash is mcp_feedback's model_version.
 !ml/sentiment/artifacts/bert_v1.manifest.json
+# The volume_v2 manifest only (ADR-072): mcp_volume verifies the mounted artifact against it.
+!ml/forecast/artifacts/volume_v2.manifest.json

@@ -14,7 +14,7 @@ grants exactly that, reads and writes, in CI. The Postgres `PUBLIC` defaults are
 (ADR-025).
 
 Eight guarantees follow from the matrix and hold at the database level, whatever a prompt
-or a model does, and a ninth follows from how the sentiment agent is built:
+or a model does, and two more follow from how the sentiment and forecast agents are built:
 
 1. **No agent reads `contacts`, so customer PII never enters a prompt.** No agent role
    (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) holds any grant on
@@ -68,6 +68,16 @@ or a model does, and a ninth follows from how the sentiment agent is built:
    QA's call is given the answer without the quoted comments, or this guarantee is
    narrowed to "no comment reaches a model except QA's interpretation check", and the QA
    prompt is treated as a prompt-injection surface (as "Still to write" already notes).
+10. **`mcp_volume` never returns forecast numbers for a slice-band the manifest marks
+    unserved, and the forecast path carries no customer text.** The server reads the
+    `volume_v2` manifest's ADR-071 serving table and puts a week's point and ranges in
+    its result only when that slice-band is served; otherwise the week carries its
+    flag and the band its shown error, nothing else. The shared `ForecastWeek` contract
+    rejects an unserved week carrying numbers, so neither the agent nor the orchestrator
+    can pass one on (ADR-072). The forecast path reads three `service_requests` columns
+    (`request_id`, `scheduled_datetime`, `service_type`; ADR-035) and the stored model:
+    no comment, note or name reaches it, so its one LLM call (the parse) sees only the
+    user's question.
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).
@@ -91,8 +101,8 @@ The `app_generator` role has full access to every table and is used at load time
 not in a service image, a Cloud Run environment, or the Secret Manager entries a service can
 read. The same holds for the Postgres admin credentials the migrations run as. Today only the
 MCP servers receive database credentials in docker-compose, each its own role's:
-`mcp_incidents` holds `app_reporting`'s and `mcp_feedback` holds `app_sentiment`'s, the one
-runtime role with a write (guarantee 7). CI uses ephemeral generator credentials that never
+`mcp_incidents` holds `app_reporting`'s, `mcp_feedback` holds `app_sentiment`'s, the one
+runtime role with a write (guarantee 7), and `mcp_volume` holds `app_forecast`'s. CI uses ephemeral generator credentials that never
 leave the workflow.
 
 ## Still to write (Sprint 3, with `04`)

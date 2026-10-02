@@ -527,3 +527,31 @@ build are appended here as they are found (CLAUDE.md).
   service-type forecasts, which would reduce the noise, are future work and need their own
   ADR.
 - **Recorded in:** ADR-071.
+
+### L-48 — The forecast parse set is small and shares an author with the prompt (2026-10-02)
+- **What:** parse_v1 has 14 questions, written by the same author as `parse_v1.md`. 14/14
+  in every run shows the prompt follows its own period rules on phrasings its author chose;
+  it is not a blind measure of real users' phrasing. "Next year" (calendar 2027) and "the
+  next year" (the coming 12 months) parse differently by rule, a distinction users may not
+  draw.
+- **Why accepted:** It is a parse check, as L-39 is for sentiment. Held-out phrasings belong
+  in the Sprint 5 golden set; every answer states the weeks it covers, so a misread period
+  is visible.
+- **Recorded in:** ADR-072; `evals/forecast_parse/`, `evals/results/forecast_agent/2026-10-02/`.
+
+### L-49 — A forecast question with no period gets next month, a default ADR-072 doesn't set (2026-10-02)
+- **What:** When the question names neither a horizon nor a period, code applies next month
+  (September 2026) and the answer says so. ADR-072 fixes the period rules but not this
+  default; it mirrors ADR-050's previous-month default for reporting.
+- **Why accepted:** It keeps the model from inventing a range, and the answer states the
+  assumption. A different default is a one-line change and an ADR.
+- **Recorded in:** ADR-072; `services/agent_forecast/src/agent_forecast/parsing.py`.
+
+### L-50 — A month's forecast is a set of Monday-start weeks, not calendar days (2026-10-02)
+- **What:** A period maps to the weeks whose Monday falls inside it (ADR-072), so "December"
+  covers 2026-12-07 to 2027-01-03, and "next month" (September) starts 2026-09-07 because
+  2026-08-31 is a Monday in August. A period total therefore counts whole weeks, which can
+  include days of the next month and leave out the first days of the named one.
+- **Why accepted:** The model forecasts weeks; splitting weeks by day would invent a daily
+  profile it doesn't have. Every answer states the exact weeks covered.
+- **Recorded in:** ADR-072; `evals/results/forecast_agent/2026-10-02/``e2e.json`.
