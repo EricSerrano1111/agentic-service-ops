@@ -1,0 +1,322 @@
+{
+  "artifact": "volume_v2",
+  "trained_on": [
+    "2023-09-04",
+    "2026-08-24"
+  ],
+  "series_sha256": {
+    "total": "03d7ae089f7d4a0774c6e42f3a528370541832c7ed72360404335911cc4157ac",
+    "inspection": "b44cc6af431d24c8c49c9c64fad20f0e985c78cc9b1df16d278c5b290c96b36e",
+    "install": "153dbedae1e2635ab4544f69cb23591f78b76f4434b1cdc352750e6890c1a863",
+    "maintenance": "f82ef319df389884ca222eef63d8708edfa237f6f783fef2d44d44263a17bc85",
+    "repair": "93be993d6faa175bf042296860d1d4e69947a70c4dcee326e3ad2b4875e2161e",
+    "upgrade": "3cf0d081b25301d3b0bee080651756e04ba2b67eec9e604a4032ad11bdfbb398"
+  },
+  "model": {
+    "adr": "ADR-069",
+    "adr_model": "ADR-070",
+    "form": "OLS on log weekly count: intercept, linear trend, a calendar year-end indicator (ISO weeks containing Dec 25 or Jan 1), K sine/cosine pairs; K by AICc; robust refit (RLM, Tukey biweight, MAD scale); median point forecast",
+    "year_end_indicator": true,
+    "period_weeks": 52.1775,
+    "k_range": [
+      0,
+      6
+    ],
+    "tukey_c": 4.685,
+    "interval_z": {
+      "80": 1.2815515655446004,
+      "95": 1.959963984540054
+    },
+    "horizon_cap_weeks": 26
+  },
+  "k": {
+    "total": 2,
+    "inspection": 2,
+    "install": 2,
+    "maintenance": 6,
+    "repair": 2,
+    "upgrade": 2
+  },
+  "year_end_effect": {
+    "total": {
+      "coef": -0.15273719330995394,
+      "se": 0.05432501040949615,
+      "ci95": [
+        -0.25921225717232993,
+        -0.046262129447577946
+      ]
+    },
+    "inspection": {
+      "coef": -0.5801157669007582,
+      "se": 0.1304754689427082,
+      "ci95": [
+        -0.8358429868944406,
+        -0.32438854690707575
+      ]
+    },
+    "install": {
+      "coef": -0.2666229963598188,
+      "se": 0.11407048979582138,
+      "ci95": [
+        -0.4901970480584724,
+        -0.04304894466116513
+      ]
+    },
+    "maintenance": {
+      "coef": -0.06240472354974336,
+      "se": 0.11092997676570791,
+      "ci95": [
+        -0.27982348281639585,
+        0.15501403571690914
+      ]
+    },
+    "repair": {
+      "coef": -0.059677806644568676,
+      "se": 0.07843623356480102,
+      "ci95": [
+        -0.21340999951455042,
+        0.09405438622541307
+      ]
+    },
+    "upgrade": {
+      "coef": -0.14570557830829733,
+      "se": 0.13788995645309993,
+      "ci95": [
+        -0.4159649267861696,
+        0.12455377016957492
+      ]
+    }
+  },
+  "files": {
+    "total.json": "38c14827896f55a053031feea033d6f2a31218482f30bd4a5f94d2317dc593d8",
+    "inspection.json": "76fd02e54a6fe85b5d1bbaf04372b0647fd54c387e377941c7b4b3e212218d1f",
+    "install.json": "ea4c21240ee38a0a55c4b46be00ac35bc338a58e95df13b0de4767f1761e69be",
+    "maintenance.json": "7ad1bf994dbe343458f07bc4f6bb354ea11f3ec307b5f963cd4172a1fb6c1e13",
+    "repair.json": "93a30c52dfd049dd2b4b082e4394bb3d9126864b381c34ecb7b0b7167a4b28d2",
+    "upgrade.json": "8cd18b0087c23ff61b22480197edf9941b24a775a01f8e14c601f2151a0ae24a"
+  },
+  "gate_rule": "ADR-070",
+  "gate": {
+    "fold": "fold_B",
+    "rule": "ADR-070: on fold B, a slice is eligible only if its 26-week model MAPE is no higher than seasonal naive's; each band of an eligible slice passes if its band MAPE is at most 20%",
+    "ceiling_mape": 20.0,
+    "bands": [
+      "1-4",
+      "5-13",
+      "14-26"
+    ],
+    "source": "evals/results/forecast/2026-10-02_folds_v2/gates.json",
+    "source_sha256": "09774d8375a12cfbfeaa1b2acafc9f2fd50d6173f4e48940e0741a81286a6d1c",
+    "slices": {
+      "total": {
+        "eligible": true,
+        "model_mape_26": 9.456674473194408,
+        "naive_mape_26": 10.61118215482397,
+        "bands": {
+          "1-4": {
+            "model_mape": 11.771395372209854,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 4.314935549163737,
+            "model_rmse": 18.185896907223587,
+            "naive_rmse": 6.5
+          },
+          "5-13": {
+            "model_mape": 5.488484131615858,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 12.948099989709252,
+            "model_rmse": 11.21681392929881,
+            "naive_rmse": 24.747614924360782
+          },
+          "14-26": {
+            "model_mape": 11.491661356128652,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 10.930622609337307,
+            "model_rmse": 16.551505286323593,
+            "naive_rmse": 20.86402866916388
+          }
+        }
+      },
+      "inspection": {
+        "eligible": false,
+        "model_mape_26": 24.40396426522765,
+        "naive_mape_26": 23.763735437406446,
+        "bands": {
+          "1-4": {
+            "model_mape": 25.711654847544896,
+            "pass": false,
+            "reasons": [
+              "slice ineligible: 26-week MAPE 24.40% above seasonal naive's 23.76%",
+              "band MAPE 25.71% above the 20% ceiling"
+            ],
+            "naive_mape": 29.83173076923077,
+            "model_rmse": 3.9293401018636844,
+            "naive_rmse": 6.123724356957945
+          },
+          "5-13": {
+            "model_mape": 23.854811688509734,
+            "pass": false,
+            "reasons": [
+              "slice ineligible: 26-week MAPE 24.40% above seasonal naive's 23.76%",
+              "band MAPE 23.85% above the 20% ceiling"
+            ],
+            "naive_mape": 28.1650394693873,
+            "model_rmse": 5.467866417059448,
+            "naive_rmse": 6.879922480183431
+          },
+          "14-26": {
+            "model_mape": 24.381780485319357,
+            "pass": false,
+            "reasons": [
+              "slice ineligible: 26-week MAPE 24.40% above seasonal naive's 23.76%",
+              "band MAPE 24.38% above the 20% ceiling"
+            ],
+            "naive_mape": 18.849603313166067,
+            "model_rmse": 6.09627423421539,
+            "naive_rmse": 5.609058607425889
+          }
+        }
+      },
+      "install": {
+        "eligible": true,
+        "model_mape_26": 19.477399942671305,
+        "naive_mape_26": 25.62387131646079,
+        "bands": {
+          "1-4": {
+            "model_mape": 26.022468750185645,
+            "pass": false,
+            "reasons": [
+              "band MAPE 26.02% above the 20% ceiling"
+            ],
+            "naive_mape": 23.3446519524618,
+            "model_rmse": 6.02026069984875,
+            "naive_rmse": 6.819090848492928
+          },
+          "5-13": {
+            "model_mape": 17.957601388809973,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 30.00262487762488,
+            "model_rmse": 6.6850993942903125,
+            "naive_rmse": 11.921036494831778
+          },
+          "14-26": {
+            "model_mape": 18.515700846878573,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 23.293724809193034,
+            "model_rmse": 4.641644873894029,
+            "naive_rmse": 6.569158709747097
+          }
+        }
+      },
+      "maintenance": {
+        "eligible": true,
+        "model_mape_26": 23.50215193388709,
+        "naive_mape_26": 24.794122519053523,
+        "bands": {
+          "1-4": {
+            "model_mape": 27.41034379203255,
+            "pass": false,
+            "reasons": [
+              "band MAPE 27.41% above the 20% ceiling"
+            ],
+            "naive_mape": 25.637065637065636,
+            "model_rmse": 9.708380175616739,
+            "naive_rmse": 8.514693182963201
+          },
+          "5-13": {
+            "model_mape": 22.920142370536908,
+            "pass": false,
+            "reasons": [
+              "band MAPE 22.92% above the 20% ceiling"
+            ],
+            "naive_mape": 26.201990616673154,
+            "model_rmse": 9.020985756192562,
+            "naive_rmse": 11.32843031197762
+          },
+          "14-26": {
+            "model_mape": 22.70256105985401,
+            "pass": false,
+            "reasons": [
+              "band MAPE 22.70% above the 20% ceiling"
+            ],
+            "naive_mape": 23.56007749208236,
+            "model_rmse": 7.418387435643189,
+            "naive_rmse": 8.334358911250371
+          }
+        }
+      },
+      "repair": {
+        "eligible": true,
+        "model_mape_26": 15.195406715946588,
+        "naive_mape_26": 18.66002128922973,
+        "bands": {
+          "1-4": {
+            "model_mape": 7.703328734130395,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 23.11570827489481,
+            "model_rmse": 5.124931284024422,
+            "naive_rmse": 12.893796958227627
+          },
+          "5-13": {
+            "model_mape": 10.844175610995082,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 18.36793099305999,
+            "model_rmse": 7.4645455267869,
+            "naive_rmse": 12.7148207485071
+          },
+          "14-26": {
+            "model_mape": 20.513052244548774,
+            "pass": false,
+            "reasons": [
+              "band MAPE 20.51% above the 20% ceiling"
+            ],
+            "naive_mape": 17.491257037142603,
+            "model_rmse": 9.684303285256783,
+            "naive_rmse": 11.045361017187261
+          }
+        }
+      },
+      "upgrade": {
+        "eligible": true,
+        "model_mape_26": 24.11448080605736,
+        "naive_mape_26": 35.58667286306153,
+        "bands": {
+          "1-4": {
+            "model_mape": 70.23629604222586,
+            "pass": false,
+            "reasons": [
+              "band MAPE 70.24% above the 20% ceiling"
+            ],
+            "naive_mape": 77.54524886877829,
+            "model_rmse": 5.802930955805581,
+            "naive_rmse": 6.284902544988268
+          },
+          "5-13": {
+            "model_mape": 17.28892980290192,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 29.95653704804032,
+            "model_rmse": 4.220007248673242,
+            "naive_rmse": 6.904105059069326
+          },
+          "14-26": {
+            "model_mape": 14.648534504805436,
+            "pass": true,
+            "reasons": [],
+            "naive_mape": 26.57412811785569,
+            "model_rmse": 3.990431446171734,
+            "naive_rmse": 5.233031185136907
+          }
+        }
+      }
+    }
+  },
+  "git_commit": "99b75525cb30c9fb5065d6c758e2a1b87108017b",
+  "git_dirty": false
+}

@@ -196,6 +196,15 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** A model told the generator's basis would show recovery of a known
   signal, not that the method works.
 - **Recorded in:** ADR-058.
+- **Update 2026-10-02 (correction, results):** the description above is wrong about the
+  generator. `parameters.py` builds seasonality from monthly factors
+  (`seasonality_monthly_raw`) plus a late-December trough (`late_december_trough`, Dec 20 to
+  Jan 1), not from three harmonics. A linear trend with harmonics approximates the monthly
+  shape; the calendar year-end indicator (ADR-070) covers the trough. K chosen by AICc on
+  all 156 weeks (`volume_v2`): total 2, inspection 2, install 2, maintenance 6, repair 2,
+  upgrade 2. On fold B, v1 chose total 2, inspection 5, install 2, maintenance 6, repair 2,
+  upgrade 2; on the holdout fit, v1 total 3 against v2 total 2: the indicator absorbs what v1
+  spent a harmonic approximating. Results: `evals/results/forecast/`.
 
 ### L-21 — Disruption down-weighting never uses the generator's anomaly list (2026-09-30)
 - **What:** Disruptions in the volume history are down-weighted by a residual-based robust
@@ -204,6 +213,17 @@ build are appended here as they are found (CLAUDE.md).
   or miss part of one that is.
 - **Why accepted:** Using the anomaly list is answer-key leakage.
 - **Recorded in:** ADR-058; ADR-038 (the planted anomalies).
+- **Update 2026-10-02 (results):** weeks down-weighted below 0.5 by the `volume_v2` fit
+  on all 156 weeks: total 2023-12-25, 2024-06-17, 2025-12-22, 2026-07-13; inspection
+  2023-12-18, 2024-01-01, 2024-05-13, 2026-03-16, 2026-06-29, 2026-07-13; install
+  2026-03-16, 2026-08-24; maintenance 2024-10-14, 2024-12-16, 2026-02-16; repair
+  2024-01-29, 2024-06-17, 2026-03-09; upgrade 2024-06-17, 2024-08-12, 2025-01-13,
+  2025-04-07, 2025-09-01, 2025-09-22, 2026-03-09. 2024-06-17 lies inside the planted volume
+  drop (2024-06-10 to 06-23) for three slices; the other two planted periods
+  (regional drop 2025-02-17 to 03-02, billing surcharge 2025-06-30 to 07-20) are not
+  down-weighted on the total. Several year-end weeks are still down-weighted despite the
+  indicator, because one indicator covers two weeks of unequal depth (L-43). The anomaly
+  dates were read after fitting, for this note only.
 
 ### L-22 — Sentiment test split and hard-case counts (2026-09-30)
 - **What:** Computed from the loaded data (7,521 labelled feedback rows): a 15% split,
@@ -426,3 +446,65 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** It is a parse check, not the Sprint 5 evaluation. Held-out phrasings
   belong in the Sprint 5 golden set, written separately.
 - **Recorded in:** ADR-068; `evals/sentiment_parse/`.
+
+### L-40 — Fold A has one seasonal cycle of history and is reported only (2026-10-02)
+- **What:** Fold A tests 2024-09-02 to 2025-03-02 on the 52 weeks before it: one year, so
+  trend and season are barely separable. Its errors are reported but never gate a release
+  (ADR-069). v2, fold A, total MAPE 9.9% against naive 11.8%; the planted regional drop
+  (2025-02-17 to 03-02) falls in its test window.
+- **Why accepted:** The deployed model trains on three years; gating on fold A would judge a
+  condition the deployed model never faces.
+- **Recorded in:** ADR-069; `evals/results/forecast/2026-10-02_folds/`, `2026-10-02_folds_v2/`, `2026-10-02_holdout/`.
+
+### L-41 — Pre-registered result: `volume_v1` failed ADR-069's gate on the total (2026-10-02)
+- **What:** On fold B, the total failed ADR-069's per-band rule in band 1-4 (model 11.9%
+  against seasonal naive 4.3% MAPE) and band 14-26 (11.9% against 10.9%); it passed 5-13
+  (5.5% against 12.9%). Over the full 26 weeks the model was better (9.7% against 10.6%).
+  Every service-type slice failed at least one band too. The 14-26 loss is mostly one week:
+  Christmas 2025 (actual 88, v1 134, naive 87). The 1-4 band holds 4 weeks.
+- **Why accepted:** It is the pre-registered result and stays on the record; `gate_v1`
+  reproduces it exactly from the committed fold results.
+- **Recorded in:** ADR-069, ADR-070; `evals/results/forecast/2026-10-02_folds/gate.json`.
+
+### L-42 — The gate correction and `volume_v2` were decided after the fold results (2026-10-02)
+- **What:** ADR-070's corrected gate (26-week eligibility against seasonal naive, then a 20%
+  ceiling per band) and `volume_v2` were decided after the ADR-069 fold results were seen and
+  before any holdout result existed. `volume_v1`'s total passes the corrected gate as well
+  (26-week MAPE 9.7% against 10.6%; bands 11.9%, 5.5%, 11.9%, all under 20%), so the
+  correction, not v2, is what changed the total's verdict.
+- **Why accepted:** Disclosed rather than hidden. The flaw it corrects (a model-against-
+  baseline comparison on 4 weeks) does not depend on the direction of the result, and the
+  holdout was scored once each for v1, v2 and seasonal naive, after both decisions.
+- **Recorded in:** ADR-070; `evals/results/forecast/2026-10-02_folds_v2/gates.json`.
+
+### L-43 — The year-end fix is untested blindly, and its fold evidence is mixed (2026-10-02)
+- **What:** The headline holdout (March to August) contains no December, so the year-end
+  indicator is supported only by fold results already seen. On fold B it cut the Christmas
+  2025 overprediction (134 to 120 against an actual 88) but worsened New Year week (130 to
+  117 against 132): one indicator covers two weeks of unequal depth. Its fold B coefficient
+  on the total is -0.118, 95% CI [-0.251, 0.015], which includes zero; on all 156 weeks it
+  is -0.153 [-0.259, -0.046].
+- **Why accepted:** ADR-070 fixed the indicator before the holdout, and the calendar
+  definition uses no generator knowledge. A two-week split, or a test on December data, is a
+  new version and a new ADR.
+- **Recorded in:** ADR-070; `evals/results/forecast/2026-10-02_folds/`, `2026-10-02_folds_v2/`, `2026-10-02_holdout/`.
+
+### L-44 — Slice-bands that fail the corrected gate are not served (2026-10-02)
+- **What:** Under ADR-070 on fold B, `volume_v2`: total passes all bands. Inspection is
+  ineligible (26-week MAPE 24.4% against naive 23.8%), so none of its bands is served.
+  Failing bands of eligible slices: install 1-4 (26.0%); maintenance 1-4 (27.4%), 5-13
+  (22.9%) and 14-26 (22.7%); repair 14-26 (20.5%); upgrade 1-4 (70.2%). Served: total
+  1-4, 5-13, 14-26; install 5-13 and 14-26; repair 1-4 and 5-13; upgrade 5-13 and 14-26.
+  v2 fails maintenance 5-13, which v1 passed under the corrected gate (v1 15.5%).
+- **Why accepted:** Service-type slices are small and noisy; serving them anyway would
+  claim accuracy the folds don't support. QA refuses the failing slice-bands (ADR-055).
+- **Recorded in:** ADR-070; `ml/forecast/artifacts/volume_v2.manifest.json`.
+
+### L-45 — Interval coverage runs below nominal on several slices (2026-10-02)
+- **What:** 80% intervals covered 58% to 88% of fold B weeks across slices (total 81%), and
+  65% to 88% of holdout weeks (total 85%); 95% intervals covered 88% to 100% on fold B.
+  The intervals assume log-normal errors with a constant robust scale, which noisy service-
+  type series and level shifts violate.
+- **Why accepted:** Coverage is reported, not gated (ADR-069). Answers should present the
+  range as approximate for service-type slices.
+- **Recorded in:** ADR-069; `evals/results/forecast/2026-10-02_folds/`, `2026-10-02_folds_v2/`, `2026-10-02_holdout/`.

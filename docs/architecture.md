@@ -221,7 +221,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | A2A | A2A v1.0 SDK — **`a2a-sdk==1.1.5`** (pinned 2026-09-25, ADR-047) | Agent Card discovery + blocking `SendMessage` only; no streaming, push or `input-required` (ADR-047) |
 | Agent runtime | Plain Python services; no agent framework (ADR-060) | The QA loop is bounded and plain, tested code; A2A keeps each agent's internals swappable |
 | Runtime LLM | **Gemini API free tier** (primary). Per role (ADR-049): orchestrator, specialists and QA all `gemini-3.5-flash-lite`. Thinking level follows the model called: its lowest supported level, `minimal` on Flash-Lite (ADR-052) | Model-agnostic by design — see §9 and ADR-029. A separate paid, spend-capped project runs corpus generation and the Sprint 5 eval runs (ADR-041) |
-| Forecasting | scikit-learn / statsmodels | Lean regression — deliberately simple and explainable |
+| Forecasting | statsmodels (OLS, RLM) | `volume_v2` (ADR-069, ADR-070): log weekly volume on a linear trend, a calendar year-end indicator and K annual harmonics chosen by AICc, robust refit (Tukey biweight); median forecast with 80%/95% intervals, horizon ≤ 26 weeks, per slice (total and each service type). The fold B gate verdicts and error table ship in the artifact manifest, and failing slice-bands are not served |
 | Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
 | ORM + migrations | SQLAlchemy 2.0 + Alembic, psycopg 3 | Models in `packages/db_models/` (ADR-026); migrations are frozen snapshots (ADR-027) |
 | CI | GitHub Actions | Lint (ruff), offline unit tests, and integration against a Postgres 16 service container (live since 2026-09-25) |
@@ -454,7 +454,15 @@ agentic-service-ops/
 │   │   ├── calibrate.py            # temperature scaling, ECE, review threshold τ; validation only (ADR-066)
 │   │   ├── predict_bert.py         # bert_v1 predictions with calibrated probabilities and review flags (ADR-066)
 │   │   └── artifacts/              # committed manifests: file SHA-256s, T and τ (bert_v1.manifest.json)
-│   └── forecast/                   # fits the regression on weekly volume; folds + per-slice backtest (ADR-057, ADR-058)
+│   └── forecast/                   # weekly volume model (ADR-058, ADR-069, ADR-070)
+│       ├── data.py                 # weekly series as app_train, total + each service_type, series SHA-256
+│       ├── model.py                # trend + year-end indicator + K harmonics (AICc), RLM refit, intervals, 26-week cap
+│       ├── baseline.py             # seasonal naive (52 weeks earlier)
+│       ├── metrics.py              # MAPE/RMSE by band, coverage; ADR-070 gate (gate_v1 kept for ADR-069's record)
+│       ├── evaluate.py             # folds A/B and the headline holdout, once per model
+│       ├── ledger.py               # append-only holdout ledger (evals/results/forecast/test_ledger.jsonl)
+│       ├── export.py               # volume_v2 refit -> models/forecast/volume_v2 + manifest; reload check
+│       └── artifacts/              # committed manifest: file hashes, fold B error table, gate verdicts (volume_v2.manifest.json)
 │
 ├── models/                         # gitignored: local copies of versioned artifacts, mounted by compose (ADR-062)
 │
