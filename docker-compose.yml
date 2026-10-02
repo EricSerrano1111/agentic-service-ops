@@ -11,8 +11,8 @@
 #
 # Credentials: every value comes from .env by interpolation; nothing secret is written
 # here. No service uses env_file, so each container sees only the variables listed
-# under it. Only mcp_incidents gets database credentials, and only app_reporting's
-# (ADR-023). Only the orchestrator and agent_reporting get the Gemini key, the free one:
+# under it. Only the MCP servers get database credentials, each only its own role's:
+# mcp_incidents app_reporting's, mcp_feedback app_sentiment's (ADR-023). Only the orchestrator and agent_reporting get the Gemini key, the free one:
 # LLM_MODE is pinned to free and the paid key is never passed (ADR-048).
 # tests/unit/test_compose_isolation.py asserts all of this.
 #
@@ -66,6 +66,40 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 5s
+
+  mcp_feedback:
+    build:
+      context: .
+      dockerfile: services/mcp_feedback/Dockerfile
+    # The ADR-065 latency-proxy configuration: 1 CPU, 2 GiB, no swap.
+    cpus: 1
+    mem_limit: 2g
+    memswap_limit: 2g
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432" # the container port, not the host mapping above
+      POSTGRES_DB: ${POSTGRES_DB:-service_ops}
+      DB_ROLE_SENTIMENT_USER: ${DB_ROLE_SENTIMENT_USER:?set DB_ROLE_SENTIMENT_USER in .env}
+      DB_ROLE_SENTIMENT_PASSWORD: ${DB_ROLE_SENTIMENT_PASSWORD:?set DB_ROLE_SENTIMENT_PASSWORD in .env}
+      MODELS_DIR: /models/sentiment/bert_v1
+      MCP_FEEDBACK_PORT: "8102"
+      MCP_DB_STATEMENT_TIMEOUT_MS: ${MCP_DB_STATEMENT_TIMEOUT_MS:-10000}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      # Gitignored local artifacts, read-only; start-up verifies them against the
+      # manifest baked into the image (ADR-062, ADR-067).
+      - ./models:/models:ro
+    expose:
+      - "8102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8102/healthz', timeout=3)"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
       start_period: 5s
 
   agent_reporting:

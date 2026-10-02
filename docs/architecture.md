@@ -185,7 +185,9 @@ Security is a first-class design requirement, not a section in the writeup. MCP'
 **Layer 1 — No raw SQL as an MCP tool.** Never expose a generic `run_query` tool, even read-only. Prompt injection via a malicious string in customer feedback text could craft a query reaching into the billing archive. Expose narrow, purpose-built functions only:
 
 - `get_incidents_by_date_range(start, end, filters)` — reads `incidents` + `service_requests`
-- `get_feedback_batch(date_range, limit)` — reads four columns of `service_feedback` only, `rating` withheld (ADR-027); no grant on `incidents` or `sentiment_labels`
+- `get_sentiment_summary(start, end, region?, bucket)` — counts, shares, monthly or quarterly buckets and the human-review flag count, from stored predictions (`sentiment_predictions`); no comment text (ADR-067)
+- `get_feedback_examples(start, end, region?, label?, flagged_only, limit ≤ 5)` — at most 5 comments with text, for citation (ADR-067)
+  - Both read four columns of `service_feedback` (`rating` withheld, ADR-027) and a comment's region, with no grant on `incidents` or `sentiment_labels`. Neither writes nor accepts free-form query input; storing predictions for unscored comments is internal, at most 250 per call
 - `get_order_volume_history(granularity, window)` — weekly request counts for the univariate forecast series, from three columns of `service_requests` (ADR-035)
 
 Each scoped to exactly the tables and fields it needs. This is also a better MCP demonstration — authoring a server with a real capability boundary, not "database access."
@@ -221,7 +223,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | Feedback corpus (offline, one-off) | `gemini-3.5-flash-lite` writes, `gemma-4-31b-it` judges plain labels | Frozen, committed corpus; `generate.py` never calls an API (ADR-030, ADR-036, ADR-041) |
 | ORM + migrations | SQLAlchemy 2.0 + Alembic, psycopg 3 | Models in `packages/db_models/` (ADR-026); migrations are frozen snapshots (ADR-027) |
 | CI | GitHub Actions | Lint (ruff), offline unit tests, and integration against a Postgres 16 service container (live since 2026-09-25) |
-| Sentiment | Fine-tuned transformer classifier (BERT), trained on `sentiment_labels` (ADR-024) | Softmax confidence for QA thresholding |
+| Sentiment | Fine-tuned transformer classifier (BERT, artifact `bert_v1`), trained on `sentiment_labels` (ADR-024, ADR-066) | Predictions stored in `sentiment_predictions` and scored on arrival: at most 250 per request on demand, a backfill for existing data (ADR-067). Calibrated confidence and the τ flag drive human review (ADR-066) |
 | API layer | FastAPI | |
 | UI | Thin React/Next.js front end | See note below |
 | Containers | Docker + docker-compose (local), Cloud Run (deployed) | |
@@ -477,7 +479,10 @@ agentic-service-ops/
 │   ├── mcp_incidents/ # scoped tools + own DB role (app_reporting). Tools: get_incidents_by_date_range,
 │   │                  # get_incident_rate, get_sla_compliance, get_first_time_fix_rate (§6 metrics;
 │   │                  # group_by account | region | service_type | technician; rates as Decimal strings)
-│   ├── mcp_feedback/ # runs sentiment inference (ADR-062)
+│   ├── mcp_feedback/ # sentiment from stored bert_v1 predictions, own DB role (app_sentiment; ADR-062, ADR-067).
+│   │                 # Tools: get_sentiment_summary, get_feedback_examples. Unscored comments are
+│   │                 # scored on demand (cap 250, newest first); backfill.py scores the rest.
+│   │                 # Model loads on first need; artifact hashes are verified at start-up.
 │   ├── mcp_volume/ # runs forecast inference (ADR-062)
 │   └── api_gateway/ # FastAPI BFF for the UI
 │       └── (each service: Dockerfile, pyproject.toml, src/, tests/)

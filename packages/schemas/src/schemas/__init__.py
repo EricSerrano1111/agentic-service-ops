@@ -26,8 +26,36 @@ from .reporting import (
     RequestGroupBy,
 )
 from .routing import Domain, Route, RouteDecision
+from .sentiment import (
+    MAX_EXAMPLES,
+    MAX_SPAN_DAYS,
+    SENTIMENT_LABELS,
+    Bucket,
+    BucketCounts,
+    Coverage,
+    FeedbackExample,
+    FeedbackExamples,
+    LabelCounts,
+    LabelShares,
+    SentimentLabel,
+    SentimentSummary,
+    SiteRegion,
+)
 
 __all__ = [
+    "MAX_EXAMPLES",
+    "MAX_SPAN_DAYS",
+    "SENTIMENT_LABELS",
+    "Bucket",
+    "BucketCounts",
+    "Coverage",
+    "FeedbackExample",
+    "FeedbackExamples",
+    "LabelCounts",
+    "LabelShares",
+    "SentimentLabel",
+    "SentimentSummary",
+    "SiteRegion",
     "DATASET_WINDOW_END",
     "DATASET_WINDOW_START",
     "MAX_GROUPS",

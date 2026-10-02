@@ -2,3 +2,5 @@
 # so the SHA-256 in a split manifest or the test ledger matches on Windows (core.autocrlf) and in CI alike.
 ml/sentiment/splits/*.csv -text
 evals/results/sentiment/**/*.predictions.csv -text
+# The artifact manifest's SHA-256 is the stored predictions' model_version (ADR-067).
+ml/sentiment/artifacts/*.manifest.json -text

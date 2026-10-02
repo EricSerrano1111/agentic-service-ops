@@ -13,7 +13,7 @@ documentation uses. The actual name each role is created under comes from
 `DB_ROLE_*_USER`, which is required rather than defaulted: see
 `_resolve_credentials()` in the roles migration.
 
-Seven properties this matrix enforces structurally, which a code convention would not
+Nine properties this matrix enforces structurally, which a code convention would not
 (§7):
 
 1. `app_sentiment` cannot read `sentiment_labels` — self-verification is impossible.
@@ -30,6 +30,10 @@ Seven properties this matrix enforces structurally, which a code convention woul
 7. `app_train` cannot read `service_feedback.rating` or `generation_parameters` — a
    model trained on the stars would undermine QA's rating cross-check, and the
    parameters are the forecast's answer key (ADR-058, ADR-063).
+8. `app_train` cannot read `sentiment_predictions` — the model never trains on its own
+   output (ADR-067).
+9. The one write any runtime role holds is `app_sentiment`'s INSERT on
+   `sentiment_predictions`: no UPDATE, no DELETE, and no other table (ADR-067).
 
 `app_eval` and `app_train` are offline read roles: they are used only by scripts on the
 developer machine and are never held by a deployed service (ADR-063).
@@ -83,6 +87,7 @@ ALL_TABLES: Final[tuple[str, ...]] = (
     "service_feedback",
     "sentiment_labels",
     "generation_parameters",
+    "sentiment_predictions",
 )
 
 # --------------------------------------------------------------------------- #
@@ -104,7 +109,9 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
             # service_feedback is column-level only — see COLUMN_SELECT_GRANTS.
         }
     ),
-    ROLE_SENTIMENT: frozenset(),  # service_feedback is column-level only — see ADR-027.
+    # Its own stored predictions (ADR-067); service_feedback, service_requests and
+    # locations are column-level only — see ADR-027 and COLUMN_SELECT_GRANTS.
+    ROLE_SENTIMENT: frozenset({"sentiment_predictions"}),
     ROLE_FORECAST: frozenset(),  # service_requests is column-level only — see ADR-035.
     # Deliberately broad: verification requires cross-checking sources the
     # specialists cannot see. That also makes the QA agent the highest-value target
@@ -121,6 +128,8 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
             "archived_requests",
             "incidents",
             "service_feedback",
+            # The sentiment answers' source, so QA can recompute them (ADR-067).
+            "sentiment_predictions",
         }
     ),
     ROLE_GENERATOR: frozenset(),  # covered by ALL_GRANTS below
@@ -138,6 +147,7 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
             "service_feedback",
             "sentiment_labels",
             "generation_parameters",
+            "sentiment_predictions",  # ADR-067: the reproducibility check reads it
         }
     ),
     # Training: the labels in full; everything else by column — see COLUMN_SELECT_GRANTS.
@@ -147,6 +157,12 @@ SELECT_GRANTS: Final[dict[str, frozenset[str]]] = {
 #: Role → ALL PRIVILEGES tables.
 ALL_GRANTS: Final[dict[str, frozenset[str]]] = {
     ROLE_GENERATOR: frozenset(ALL_TABLES),
+}
+
+#: Role → tables it may INSERT into, and nothing more: no UPDATE, no DELETE. The sentiment
+#: server stores its own predictions with `ON CONFLICT DO NOTHING` (ADR-067).
+INSERT_GRANTS: Final[dict[str, frozenset[str]]] = {
+    ROLE_SENTIMENT: frozenset({"sentiment_predictions"}),
 }
 
 # --------------------------------------------------------------------------- #
@@ -199,7 +215,12 @@ _FORECAST_REQUEST_COLUMNS: Final[tuple[str, ...]] = (
 #: the actual boundary out of step.
 COLUMN_SELECT_GRANTS: Final[dict[str, dict[str, tuple[str, ...]]]] = {
     ROLE_REPORTING: {"service_feedback": _FEEDBACK_NON_TEXT_COLUMNS},
-    ROLE_SENTIMENT: {"service_feedback": _SENTIMENT_FEEDBACK_COLUMNS},
+    ROLE_SENTIMENT: {
+        "service_feedback": _SENTIMENT_FEEDBACK_COLUMNS,
+        # A comment's region, and nothing else about the site or account (ADR-067).
+        "service_requests": ("request_id", "location_id"),
+        "locations": ("location_id", "region"),
+    },
     ROLE_FORECAST: {"service_requests": _FORECAST_REQUEST_COLUMNS},
     # Training reads exactly what the runtime models read, plus the labels (ADR-063):
     # no `rating` (it would undermine QA's rating cross-check) and no

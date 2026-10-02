@@ -1,6 +1,6 @@
 """The access matrix says what `docs/data-dictionary.md` §7 says.
 
-§7 names seven properties that a database grant enforces and a code convention would
+§7 names nine properties that a database grant enforces and a code convention would
 not. Each has a test here, so a future edit to the matrix that quietly reopens one of
 them fails CI rather than shipping.
 
@@ -37,9 +37,44 @@ def test_sentiment_agent_cannot_read_incidents() -> None:
     assert "incidents" not in am.tables_readable_by(am.ROLE_SENTIMENT)
 
 
-def test_sentiment_agent_reads_only_service_feedback() -> None:
-    """The sentiment MCP server's entire world is one table."""
-    assert am.tables_readable_by(am.ROLE_SENTIMENT) == {"service_feedback"}
+def test_sentiment_agent_reads_feedback_its_predictions_and_region_only() -> None:
+    """ADR-067: the comments, its own stored predictions, and a comment's region."""
+    assert am.tables_readable_by(am.ROLE_SENTIMENT) == {
+        "service_feedback",
+        "sentiment_predictions",
+        "service_requests",
+        "locations",
+    }
+    assert am.SELECT_GRANTS[am.ROLE_SENTIMENT] == {"sentiment_predictions"}
+    assert am.COLUMN_SELECT_GRANTS[am.ROLE_SENTIMENT]["service_requests"] == (
+        "request_id",
+        "location_id",
+    )
+    assert am.COLUMN_SELECT_GRANTS[am.ROLE_SENTIMENT]["locations"] == ("location_id", "region")
+
+
+def test_sentiment_agent_cannot_reach_accounts() -> None:
+    """ADR-067: region yes; account identity no (no account_id, no accounts table)."""
+    assert "accounts" not in am.tables_readable_by(am.ROLE_SENTIMENT)
+    for table in ("service_requests", "locations"):
+        assert "account_id" not in am.COLUMN_SELECT_GRANTS[am.ROLE_SENTIMENT][table]
+
+
+def test_the_only_runtime_write_is_sentiment_inserting_its_predictions() -> None:
+    """§7 point 9 / ADR-067: INSERT only, on one table, for one role."""
+    assert {am.ROLE_SENTIMENT: {"sentiment_predictions"}} == am.INSERT_GRANTS
+    assert am.ROLE_SENTIMENT not in am.ALL_GRANTS
+
+
+def test_train_cannot_read_its_models_predictions() -> None:
+    """§7 point 8 / ADR-067: the model never trains on its own output."""
+    assert "sentiment_predictions" not in am.tables_readable_by(am.ROLE_TRAIN)
+
+
+@pytest.mark.parametrize("role", [am.ROLE_REPORTING, am.ROLE_FORECAST, am.ROLE_TRAIN])
+def test_no_grant_on_predictions_for_reporting_forecast_or_train(role: str) -> None:
+    assert "sentiment_predictions" not in am.tables_readable_by(role)
+    assert role not in am.INSERT_GRANTS
 
 
 @pytest.mark.parametrize(
@@ -145,7 +180,8 @@ def test_qa_can_cross_check_every_specialist() -> None:
 
 
 def test_qa_reads_exactly_the_operational_tables_minus_pii() -> None:
-    """§7 / ADR-063: every operational table except PII, all in full, nothing else."""
+    """§7 / ADR-063 / ADR-067: every operational table except PII, plus the stored
+    sentiment predictions it recomputes answers from, all in full, nothing else."""
     assert am.tables_readable_by(am.ROLE_QA) == {
         "accounts",
         "locations",
@@ -155,6 +191,7 @@ def test_qa_reads_exactly_the_operational_tables_minus_pii() -> None:
         "archived_requests",
         "incidents",
         "service_feedback",
+        "sentiment_predictions",
     }
     assert am.ROLE_QA not in am.COLUMN_SELECT_GRANTS
 
@@ -176,7 +213,8 @@ def test_no_runtime_role_reads_ground_truth(role: str, table: str) -> None:
 
 
 def test_eval_reads_what_qa_held_before_adr_063() -> None:
-    """ADR-063: the ten tables app_qa held before the revoke, all in full."""
+    """ADR-063: the ten tables app_qa held before the revoke, all in full; plus the
+    stored predictions (ADR-067)."""
     assert (
         am.tables_readable_by(am.ROLE_EVAL)
         == am.SELECT_GRANTS[am.ROLE_EVAL]
@@ -191,6 +229,7 @@ def test_eval_reads_what_qa_held_before_adr_063() -> None:
             "service_feedback",
             "sentiment_labels",
             "generation_parameters",
+            "sentiment_predictions",
         }
     )
     assert am.ROLE_EVAL not in am.COLUMN_SELECT_GRANTS

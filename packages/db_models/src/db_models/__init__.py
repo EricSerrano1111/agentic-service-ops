@@ -14,6 +14,7 @@ from .access_matrix import (
     ALL_ROLES,
     ALL_TABLES,
     COLUMN_SELECT_GRANTS,
+    INSERT_GRANTS,
     OFFLINE_READ_ROLES,
     PII_RESTRICTED_TABLES,
     ROLE_ENV_VARS,
@@ -28,6 +29,7 @@ from .access_matrix import (
     tables_readable_by,
 )
 from .base import NAMING_CONVENTION, Base, TimestampMixin, metadata_obj
+from .derived import SentimentPrediction
 from .enums import (
     ALL_VOCABULARIES,
     VOCAB_LEN,
@@ -89,6 +91,8 @@ __all__ = [
     "Incident",
     "ServiceFeedback",
     "ServiceRequest",
+    # derived operational tables (ADR-067)
+    "SentimentPrediction",
     # ground-truth tables (§4)
     "GenerationParameter",
     "SentimentLabel",
@@ -125,6 +129,7 @@ __all__ = [
     "ALL_ROLES",
     "ALL_TABLES",
     "COLUMN_SELECT_GRANTS",
+    "INSERT_GRANTS",
     "OFFLINE_READ_ROLES",
     "PII_RESTRICTED_TABLES",
     "ROLE_ENV_VARS",

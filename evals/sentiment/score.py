@@ -176,12 +176,20 @@ def select_split(rows: list[dict], split_name: str, split: Mapping[int, str]) ->
     return chosen
 
 
-def _git() -> tuple[str, bool]:
+def _git(root: Path | None = None, ledger: Path | None = None) -> tuple[str, bool]:
+    """(HEAD, dirty). Dirty means a tracked change other than to the ledger itself.
+
+    Untracked files don't count: new result files are expected at this point. The ledger
+    is excluded because an earlier test step in the same session appends to it, and that
+    line is the record, not a code change.
+    """
+    root = root or data.ROOT
+    ledger = (ledger or LEDGER).resolve().relative_to(root.resolve()).as_posix()
     head = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=data.ROOT, capture_output=True, text=True, check=True
+        ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True, text=True, check=True
     ).stdout.strip()
-    # Tracked changes only: new result files are expected to be untracked at this point.
-    dirty = subprocess.run(["git", "diff", "--quiet", "HEAD"], cwd=data.ROOT).returncode != 0
+    diff = ["git", "diff", "--quiet", "HEAD", "--", ".", f":(exclude){ledger}"]
+    dirty = subprocess.run(diff, cwd=root).returncode != 0
     return head, dirty
 
 

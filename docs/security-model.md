@@ -13,17 +13,21 @@ connects as its own least-privilege Postgres role. The grants are executable, no
 grants exactly that, reads and writes, in CI. The Postgres `PUBLIC` defaults are revoked
 (ADR-025).
 
-Six guarantees follow from the matrix and hold at the database level, whatever a prompt
+Eight guarantees follow from the matrix and hold at the database level, whatever a prompt
 or a model does:
 
 1. **No agent reads `contacts`, so customer PII never enters a prompt.** No agent role
    (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) holds any grant on
    `contacts` or `internal_users`. Only the generator role writes them.
-2. **The sentiment agent can't read `sentiment_labels`, `incidents` or the star rating.**
-   `app_sentiment` has a column-level grant on exactly four `service_feedback` columns
-   (`feedback_id`, `request_id`, `submitted_at`, `feedback_text`) and nothing else. It can't
-   check itself against the ground truth, staff-written incident notes can't reach its
-   pipeline, and `rating` stays an independent cross-check for QA (R-04, ADR-027).
+2. **The sentiment agent can't read `sentiment_labels`, `incidents`, the star rating or
+   any account.** `app_sentiment` has a column-level grant on exactly four
+   `service_feedback` columns (`feedback_id`, `request_id`, `submitted_at`,
+   `feedback_text`), on `service_requests` (`request_id`, `location_id`) and `locations`
+   (`location_id`, `region`) to resolve a comment's region, and on its own
+   `sentiment_predictions`; nothing else. It can't check itself against the ground truth,
+   staff-written incident notes can't reach its pipeline, `rating` stays an independent
+   cross-check for QA (R-04, ADR-027), and it has no path to `accounts`, `account_id` or a
+   site's address (ADR-067).
 3. **The forecast agent sees three `service_requests` columns only.** `app_forecast` has a
    column-level grant on `request_id`, `scheduled_datetime` and `service_type`, and no
    grant on any other table. Billing, cancellation detail and every account, contact and
@@ -39,7 +43,20 @@ or a model does:
    role reads `sentiment_labels` and exactly the columns the runtime models read, so a model
    trained on the stars, or a forecast fitted to the generator's answer key, is ruled out by
    grant (ADR-027, ADR-058, ADR-063). Like `app_eval`, it is never held by a deployed
-   service.
+   service. Nor can it read `sentiment_predictions`, so the model never trains on its own
+   output (ADR-067).
+7. **The sentiment server writes only to its own predictions table, and no tool exposes a
+   write.** `app_sentiment` holds INSERT on `sentiment_predictions` and nothing else that
+   writes: no UPDATE or DELETE there, no write anywhere else, so a stored prediction can't
+   be rewritten or erased by the server. Storing happens inside `mcp_feedback`
+   (`ensure_scored`), never as a tool: both tools are reads, and neither accepts SQL or
+   free text that reaches a query (ADR-023, ADR-067). Every other runtime role is
+   read-only.
+8. **Customer text reaches an LLM only through `get_feedback_examples`, at most 5 comments
+   per call.** `get_sentiment_summary` returns counts, shares and buckets with no text and no
+   comment ids; `get_feedback_examples` rejects a `limit` above 5. This bounds how much
+   customer text, and how much injected text, any one call can put into a prompt
+   (ADR-067).
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).
@@ -61,9 +78,11 @@ can't reach customer PII. The two broadest credentials sit outside the agents en
 The `app_generator` role has full access to every table and is used at load time only, by
 `data/generator/load.py`. Its credentials must never be present in any deployed service:
 not in a service image, a Cloud Run environment, or the Secret Manager entries a service can
-read. The same holds for the Postgres admin credentials the migrations run as. Today only
-`mcp_incidents` receives database credentials (`app_reporting`) in docker-compose, and CI
-uses ephemeral generator credentials that never leave the workflow.
+read. The same holds for the Postgres admin credentials the migrations run as. Today only the
+MCP servers receive database credentials in docker-compose, each its own role's:
+`mcp_incidents` holds `app_reporting`'s and `mcp_feedback` holds `app_sentiment`'s, the one
+runtime role with a write (guarantee 7). CI uses ephemeral generator credentials that never
+leave the workflow.
 
 ## Still to write (Sprint 3, with `04`)
 

@@ -12,14 +12,8 @@ from typing import Final
 #: (last modified upstream 2024-02-19).
 MODEL_ID: Final = "google-bert/bert-base-uncased"
 REVISION: Final = "86b5e0934494bd15c9632b12f734a8a67f723594"
-#: The files the tokenizer and model load; also what the latency image copies in.
-MODEL_FILES: Final = (
-    "config.json",
-    "model.safetensors",
-    "tokenizer.json",
-    "tokenizer_config.json",
-    "vocab.txt",
-)
+#: Which files make up a trained artifact is the manifest's job, never a constant here:
+#: `ml/sentiment/artifacts/<artifact>.manifest.json` lists each file with its SHA-256.
 
 #: Smallest of 32/64/96/128 covering at least 99.5% of train comments (ADR-065).
 #: Train token counts, [CLS] and [SEP] included: p50 25, p90 37, p99 47, p99.5 50,

@@ -12,8 +12,12 @@ connects.
 
 Privileges this assumes for the app_generator role (the §7 matrix grants it ALL on every
 generated table; verify on the Postgres machine):
-  - TRUNCATE on all twelve tables. Truncation is a single statement naming every table,
-    so foreign keys between them do not block it, and it has no RESTART IDENTITY:
+  - TRUNCATE on all twelve tables, and on `sentiment_predictions` (ADR-067), which the
+    generator never fills but which references `service_feedback`: stored predictions of
+    the old comments must not survive a regeneration, and Postgres refuses to truncate a
+    table that a table outside the statement references. Truncation is a single statement
+    naming every table, so foreign keys between them do not block it, and it has no
+    RESTART IDENTITY:
     restarting a sequence needs sequence ownership, which the role does not have.
   - INSERT on all twelve tables, including OVERRIDING SYSTEM VALUE on the
     GENERATED ALWAYS identity columns. Postgres needs no extra privilege for that clause.
@@ -48,6 +52,15 @@ CONNECTION_VARS = (
 )
 #: Columns the database fills itself: generated_at is one now() per load transaction.
 SERVER_DEFAULT_COLUMNS = {"generation_parameters": ("generated_at",)}
+#: Tables derived from the generated ones, cleared with them and never loaded (ADR-067).
+DERIVED_TABLES: tuple[str, ...] = ("sentiment_predictions",)
+
+
+def truncate_tables() -> tuple[str, ...]:
+    """Every table one load clears: the derived tables, then the generated ones."""
+    return (*DERIVED_TABLES, *reversed(gen.TABLES))
+
+
 #: Tables whose first column is a GENERATED ALWAYS identity.
 IDENTITY_TABLES = frozenset(
     {
@@ -128,10 +141,10 @@ def load(dataset: Mapping[str, list[dict]], conninfo: Mapping[str, object]) -> N
     with connect(conninfo) as conn, conn.cursor() as cur:
         cur.execute(
             sql.SQL("TRUNCATE {tables}").format(
-                tables=sql.SQL(", ").join(sql.Identifier(t) for t in reversed(gen.TABLES))
+                tables=sql.SQL(", ").join(sql.Identifier(t) for t in truncate_tables())
             )
         )
-        print(f"truncated {len(gen.TABLES)} tables")
+        print(f"truncated {len(truncate_tables())} tables (stored predictions included)")
         for table in gen.TABLES:
             rows = dataset[table]
             if not rows:

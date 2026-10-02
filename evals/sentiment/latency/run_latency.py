@@ -83,6 +83,17 @@ SLICE_NAMES = (
 )
 
 
+#: The untrained Hub snapshot this proxy measured (ADR-065): not a trained artifact, so it
+#: has no manifest. Trained artifacts list their files in their manifest.
+HUB_FILES = (
+    "config.json",
+    "model.safetensors",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "vocab.txt",
+)
+
+
 def slice_sizes() -> dict[str, int]:
     """Comment counts per slice, as `app_eval`. Calendar periods in UTC; the 12 months are
     2025-08-31 to 2026-08-30 inclusive; the median is over non-empty account-quarters."""
@@ -113,11 +124,11 @@ def build(work: Path) -> None:
         snapshot_download(
             config.MODEL_ID,
             revision=config.REVISION,
-            allow_patterns=list(config.MODEL_FILES),
+            allow_patterns=list(HUB_FILES),
             local_files_only=True,
         )
     )
-    for name in config.MODEL_FILES:
+    for name in HUB_FILES:
         shutil.copyfile(src / name, ctx / "model" / name)
     for name in ("Dockerfile", "bench.py"):
         shutil.copyfile(HERE / name, ctx / name)
