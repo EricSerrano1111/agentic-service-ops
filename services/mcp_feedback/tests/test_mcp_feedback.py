@@ -20,7 +20,7 @@ from db_models import Region, TrueSentiment, values
 from mcp import Client
 from mcp_feedback.artifact import ArtifactIntegrityError, load_verified
 from mcp_feedback.classifier import Prediction, container_cpus, to_predictions
-from mcp_feedback.config import DEFAULT_SCORE_CAP, Settings
+from mcp_feedback.config import DEFAULT_BATCH_SIZE, DEFAULT_SCORE_CAP, Settings
 from mcp_feedback.scoring import (
     CountRow,
     ExampleRow,
@@ -169,9 +169,12 @@ def test_a_second_call_scores_nothing():
     assert clf.calls == [5]  # no second inference
 
 
-def test_the_cap_is_300_by_derivation():
-    """30 s warm budget x ~10.7 comments/s on 1 CPU = 321, rounded down (ADR-067)."""
-    assert DEFAULT_SCORE_CAP == 300 == SETTINGS.score_cap
+def test_the_cap_and_batch_follow_the_real_container_measurement():
+    """Largest multiple of 50 with cap / 9.28 comments/s (slowest repeat, batch 8) <= 30 s."""
+    slowest_per_s = 9.28
+    assert DEFAULT_SCORE_CAP == 250 == SETTINGS.score_cap
+    assert DEFAULT_SCORE_CAP / slowest_per_s <= 30 < (DEFAULT_SCORE_CAP + 50) / slowest_per_s
+    assert DEFAULT_BATCH_SIZE == 8 == SETTINGS.batch_size
 
 
 # --------------------------------------------------------------------------- flags and versions

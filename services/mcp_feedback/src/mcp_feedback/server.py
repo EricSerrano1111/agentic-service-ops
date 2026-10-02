@@ -202,7 +202,7 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
         Counts and shares by label (positive, neutral, negative, mixed), the number of
         comments flagged for human review (low model confidence), and counts per month or
         quarter. Answers from stored model predictions; comments in range without one are
-        scored first, at most 300 per call, oldest first. If `complete` is false, the
+        scored first, at most 250 per call, oldest first. If `complete` is false, the
         figures cover only `n_scored` of `n_comments` and must be reported that way.
         No comment text.
         """

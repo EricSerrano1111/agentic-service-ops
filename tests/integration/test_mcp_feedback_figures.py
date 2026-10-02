@@ -82,7 +82,7 @@ def version(loaded_database) -> Iterator[str]:
         admin.execute("DELETE FROM sentiment_predictions WHERE model_version = %s", (v,))
 
 
-def _backend(settings: Settings, version: str, cap: int = 300) -> tuple[Backend, HashClassifier]:
+def _backend(settings: Settings, version: str, cap: int = 250) -> tuple[Backend, HashClassifier]:
     store = SqlStore(make_engine(settings))
     clf = HashClassifier()
     return Backend(store, clf, version, cap, ready=store.ping), clf
@@ -138,7 +138,7 @@ async def test_summary_matches_independent_sql(
 
     eval_conn = connect_as(ROLE_EVAL)
     (n,) = eval_conn.execute(COUNT_COMMENTS, _params(start, end, region)).fetchone()
-    assert 0 < n <= 300, "pick ranges under the cap so the answer is complete"
+    assert 0 < n <= 250, "pick ranges under the cap so the answer is complete"
     rows = eval_conn.execute(BY_LABEL_MONTH, _params(start, end, region, version)).fetchall()
 
     assert (s["n_comments"], s["n_scored"], s["complete"]) == (n, n, True)

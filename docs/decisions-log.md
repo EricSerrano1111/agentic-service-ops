@@ -78,7 +78,7 @@
 | 064 | Sentiment split and evaluation protocol: near-duplicate groups, committed hashed split, test scored once, interpretation rule fixed in advance | Accepted |
 | 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted — superseded in part by ADR-067 |
 | 066 | Sentiment model selection, calibration and review threshold (pre-registered): `lr2e-5_v1` epoch 4 as `bert_v1`, temperature scaling, 99% / 20% review threshold | Accepted |
-| 067 | Sentiment predictions stored and scored on arrival (300-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
+| 067 | Sentiment predictions stored and scored on arrival (250-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
 
 ---
 
@@ -2006,14 +2006,14 @@ training grants.
 
 **Decision:**
 - New table `sentiment_predictions` (`feedback_id`, `model_version`, `predicted_label`, `confidence`, `flagged`, `scored_at`), keyed on (`feedback_id`, `model_version`). `model_version` is the SHA-256 of the committed artifact manifest.
-- `mcp_feedback` answers only from stored predictions. Before answering, it scores any comments in the requested range that have no prediction for the current version, at most 300 per request (oldest first), stores them, and reports coverage (`n_comments`, `n_scored`, `complete`). A one-off backfill scores the existing data; a new model version requires a fresh backfill.
-- The cap of 300 is the latency budget divided by measured throughput: 30 s of warm inference at about 10.7 comments per second on 1 CPU (ADR-065, L-29).
+- `mcp_feedback` answers only from stored predictions. Before answering, it scores any comments in the requested range that have no prediction for the current version, at most 250 per request (oldest first), stores them, and reports coverage (`n_comments`, `n_scored`, `complete`). A one-off backfill scores the existing data; a new model version requires a fresh backfill.
+- The cap of 250 is the largest multiple of 50 that fits the unchanged 30 s warm-inference budget (ADR-065) at the slowest observed throughput of the real `mcp_feedback` image at 1 CPU / 2 GiB: 300 real comments, 3 repeats per batch size, batch 8 median 31.8 s (9.42 comments/s), slowest 9.28/s, so 250 takes at most 26.9 s; batch 16 median 35.5 s (8.46/s). Batch 8 is used. The latency proxy had measured 10.7/s at batch 16 (ADR-065, L-28); the comments here match the proxy's train-split texts in length and padding (24.6 against 24.4 mean tokens; 41.5 padded tokens per comment at batch 16 in both), so the texts don't explain the gap. The proxy ran a separate image on a Docker VM since rebuilt; the cause isn't isolated. Batch 8 wins on padding: 38.2 padded tokens per comment against 41.5.
 - Two tools: `get_sentiment_summary` returns counts, shares, buckets and flag counts with no text; `get_feedback_examples` returns at most 5 comments with text, for citation. Neither tool writes or accepts free-form query input.
 - Grants: `app_sentiment` gets SELECT and INSERT on `sentiment_predictions` (no UPDATE or DELETE), plus column SELECT on `service_requests` (`request_id`, `location_id`) and `locations` (`location_id`, `region`). `app_qa` and `app_eval` get SELECT; `app_generator` gets ALL. `app_train` gets nothing, so the model can never train on its own output.
 - The model loads on first need; artifact hashes are verified at start-up.
 
 **Context:**
-- FR-07's own example, "is sentiment trending down in a region?", needs region, which `app_sentiment` could not resolve, and it spans months. At about 10.7 comments per second on 1 CPU, a multi-month regional question (400–800 comments) takes 40–80 s per pass, and an all-accounts quarter took 65 s (L-29). Per-request inference cannot meet the 120 s ceiling with revision cycles (ADR-055); stored predictions answer in about a second at any range.
+- FR-07's own example, "is sentiment trending down in a region?", needs region, which `app_sentiment` could not resolve, and it spans months. At about 9 comments per second on 1 CPU, a multi-month regional question (400–800 comments) takes 45–90 s per pass, and an all-accounts quarter took 65 s in the proxy (L-29). Per-request inference cannot meet the 120 s ceiling with revision cycles (ADR-055); stored predictions answer in about a second at any range.
 - Scoring on arrival is how production systems handle recurring sentiment reporting. QA can then recompute counts directly from stored predictions.
 - Region and `location_id` carry no personal information and no staff-written text; `rating` stays withheld (ADR-027).
 
@@ -2026,5 +2026,5 @@ training grants.
 **Consequences:**
 - `mcp_feedback` gains write access to exactly one table, through internal code only; the security model records it.
 - Answers can be partial when more than 300 comments in range are unscored. The agent must state the coverage (4b).
-- The latency gate of ADR-065 now applies only to on-demand scoring of at most 300 comments.
+- The latency gate of ADR-065 now applies only to on-demand scoring of at most 250 comments. The first scoring pass after the container starts is about twice as slow as a warm one (68.8 s for 300 comments, model load 1.25 s included), so the 30 s budget holds for warm requests only.
 - Sprint 4 QA verifies sentiment answers by recomputing them from `sentiment_predictions` and cross-checking ratings. A sentiment answer fails only on errors the agent can fix (wrong comment set, miscounts, a summary that misstates the numbers), never on disagreement with a label.

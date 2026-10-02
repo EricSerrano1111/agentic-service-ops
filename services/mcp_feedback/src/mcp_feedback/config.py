@@ -17,14 +17,17 @@ from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
 DEFAULT_WINDOW_START = DATASET_WINDOW_START
 DEFAULT_WINDOW_END = DATASET_WINDOW_END
 
-#: On-demand scoring cap per request (ADR-067): the 30 s warm-inference budget (ADR-065)
-#: times about 10.7 comments per second measured on 1 CPU in the latency proxy (the
-#: largest region-quarter, 225 comments, in 20.7 s; L-28, L-29) = 321, rounded down.
+#: On-demand scoring cap per request (ADR-067): the largest multiple of 50 whose worst
+#: case fits the 30 s warm-inference budget (ADR-065). Measured in this image at 1 CPU /
+#: 2 GiB on 300 real comments, batch 8, 3 repeats: slowest 9.28 comments/s, so
+#: 250 / 9.28 = 26.9 s (300 would be 32.3 s). Results:
+#: evals/results/sentiment/2026-10-01_mcp_feedback_live/throughput.json.
 #: Comments above the cap are left for a later request or the backfill, and the answer
 #: reports its coverage.
-DEFAULT_SCORE_CAP = 300
-#: Inference batch size, as in training (ADR-065).
-DEFAULT_BATCH_SIZE = 16
+DEFAULT_SCORE_CAP = 250
+#: Inference batch size: 8 had the lower median in the same measurement (31.8 s against
+#: 35.5 s at 16 for 300 comments), from less padding to the longest comment per batch.
+DEFAULT_BATCH_SIZE = 8
 
 
 def _required(name: str) -> str:
