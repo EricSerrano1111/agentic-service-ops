@@ -1,16 +1,20 @@
-"""Production refit `volume_v1` (ADR-069): fit every slice on all 156 weeks, export, reload.
+"""Production refit `volume_v2` (ADR-070): fit every slice on all 156 weeks, export, reload.
 
-    python -m ml.forecast.export --folds <date>_folds [--out-date YYYY-MM-DD]
+    python -m ml.forecast.export --folds <date>_folds_v2 [--out-date YYYY-MM-DD]
 
-Writes `models/forecast/volume_v1/<slice>.json` (gitignored): K, coefficients, robust
-scale, (XᵀWX)⁻¹ and the last training week (everything `model.forecast_from` needs for
-the median and intervals), the down-weighted weeks and the training-series hash. Floats
-are written with `repr`, so they round-trip exactly.
+`volume_v2` is the ADR-069 model plus the calendar year-end indicator (ADR-070); it is the
+production model whatever the holdout showed.
 
-Writes the committed manifest `ml/forecast/artifacts/volume_v1.manifest.json`: file
+Writes `models/forecast/volume_v2/<slice>.json` (gitignored): K, the year-end flag,
+coefficients, robust scale, (XᵀWX)⁻¹ and the last training week (everything
+`model.forecast_from` needs for the median and intervals), the year-end coefficient with
+its 95% CI, the down-weighted weeks and the training-series hash. Floats are written with
+`repr`, so they round-trip exactly.
+
+Writes the committed manifest `ml/forecast/artifacts/volume_v2.manifest.json`: file
 hashes, the model specification, and from fold B the per-slice x per-band error table,
-the gate verdicts and the threshold. QA and `mcp_volume` read the error table from here
-(ADR-055, ADR-069).
+the corrected-gate verdicts, the 20% ceiling and `gate_rule: "ADR-070"`. QA and
+`mcp_volume` read the error table and verdicts from here (ADR-055, ADR-070).
 
 Then the reload check: the artifact is loaded from disk alone, and its 26-week forecasts
 must equal the in-memory fit's to 1e-9 for every slice, or this exits non-zero.
@@ -29,7 +33,7 @@ import numpy as np
 
 from ml.forecast import data, evaluate, ledger, metrics, model
 
-ARTIFACT = "volume_v1"
+ARTIFACT = "volume_v2"
 ARTIFACT_DIR = ledger.ROOT / "models" / "forecast" / ARTIFACT
 MANIFEST = Path(__file__).resolve().parent / "artifacts" / f"{ARTIFACT}.manifest.json"
 TOLERANCE = 1e-9
@@ -43,6 +47,8 @@ def slice_record(name: str, counts: np.ndarray, f: model.Fit) -> dict:
     return {
         "slice": name,
         "k": f.k,
+        "year_end": f.year_end,
+        "year_end_effect": f.year_end_effect(),
         "params": [float(x) for x in f.params],
         "scale": f.scale,
         "xtwx_inv": [[float(x) for x in row] for row in f.xtwx_inv],
@@ -75,6 +81,7 @@ def forecast_record(rec: dict, t: np.ndarray) -> dict[str, np.ndarray]:
         np.array(rec["xtwx_inv"]),
         rec["last_t"],
         t,
+        rec["year_end"],
     )
 
 
@@ -85,7 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     folds_dir = evaluate.RESULTS / args.folds
-    gate = json.loads((folds_dir / "gate.json").read_text(encoding="utf-8"))
+    gates = json.loads((folds_dir / "gates.json").read_text(encoding="utf-8"))
     series = data.load_series()
     t_all = np.arange(data.N_WEEKS)
     t_next = np.arange(data.N_WEEKS, data.N_WEEKS + model.HORIZON_CAP)
@@ -93,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
     fits, files, records = {}, {}, {}
     for name, counts in series.items():
-        f = model.fit(counts[t_all], t_all)
+        f = model.fit(counts[t_all], t_all, year_end=True)
         fits[name] = f
         rec = slice_record(name, counts, f)
         records[name] = rec
@@ -111,8 +118,11 @@ def main(argv: list[str] | None = None) -> int:
         "series_sha256": {n: r["series_sha256"] for n, r in records.items()},
         "model": {
             "adr": "ADR-069",
-            "form": "OLS on log weekly count: intercept, linear trend, K sine/cosine pairs; "
-            "K by AICc; robust refit (RLM, Tukey biweight, MAD scale); median point forecast",
+            "adr_model": "ADR-070",
+            "form": "OLS on log weekly count: intercept, linear trend, a calendar year-end "
+            "indicator (ISO weeks containing Dec 25 or Jan 1), K sine/cosine pairs; K by AICc; "
+            "robust refit (RLM, Tukey biweight, MAD scale); median point forecast",
+            "year_end_indicator": True,
             "period_weeks": model.PERIOD,
             "k_range": [min(model.K_RANGE), max(model.K_RANGE)],
             "tukey_c": model.TUKEY_C,
@@ -120,15 +130,17 @@ def main(argv: list[str] | None = None) -> int:
             "horizon_cap_weeks": model.HORIZON_CAP,
         },
         "k": {n: f.k for n, f in fits.items()},
+        "year_end_effect": {n: f.year_end_effect() for n, f in fits.items()},
         "files": files,
+        "gate_rule": "ADR-070",
         "gate": {
             "fold": "fold_B",
-            "rule": gate["rule"],
-            "ceiling_mape": gate["ceiling_mape"],
+            "rule": gates["rule"],
+            "ceiling_mape": gates["ceiling_mape"],
             "bands": list(metrics.BANDS),
-            "source": f"evals/results/forecast/{args.folds}/gate.json",
-            "source_sha256": _sha(folds_dir / "gate.json"),
-            "slices": gate["slices"],
+            "source": f"evals/results/forecast/{args.folds}/gates.json",
+            "source_sha256": _sha(folds_dir / "gates.json"),
+            "slices": gates["v2_corrected"],
         },
         "git_commit": commit,
         "git_dirty": dirty,
@@ -154,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
         ]
     check = {"evidence": "observed", "max_abs_difference": worst, "tolerance": TOLERANCE}
     check["passed"] = worst <= TOLERANCE
-    out = evaluate.RESULTS / f"{args.out_date}_volume_v1"
+    out = evaluate.RESULTS / f"{args.out_date}_{ARTIFACT}"
     evaluate._write(out / "reload_check.json", check)
     evaluate._write(
         out / "production_forecast.json",
