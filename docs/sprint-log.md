@@ -286,7 +286,17 @@ above.
   7,521 comments backfilled. Stored test-split predictions match 3b's on 1,128/1,128.
   Volume still to do.*
 - [ ] Forecast agent + regression model + seasonal-naive baseline comparison
-  - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
+  - [x] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
+  *2026-10-02: pulled forward. Regression model and seasonal-naive comparison done; the
+  forecast agent is still to build (5b), so the parent item stays open. Protocol
+  pre-registered (ADR-069). `volume_v1` failed ADR-069's gate on the total in bands 1-4
+  and 14-26 (L-41); the gate was corrected and `volume_v2` added a year-end indicator
+  after the fold results and before the holdout, disclosed as post-hoc (ADR-070, L-42).
+  Headline holdout (2026-03-02 to 08-30), total MAPE: v1 9.26%, v2 8.81%, seasonal naive
+  14.80%: the model beats the baseline under ADR-069's definition. Fold B under the
+  corrected gate: the total passes every band; inspection is ineligible, and 6 other
+  service-type bands fail (L-44). `volume_v2` exported with its manifest; reload check
+  exact. Results: `evals/results/forecast/`.*
 - [x] Sentiment agent + confidence scoring
   *2026-10-01: `agent_sentiment` built (ADR-068): one parse call, template answers from
   `mcp_feedback`, the two-proportion trend rule, declines for account, technician and
@@ -349,12 +359,14 @@ above.
   - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
 - [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
 - [ ] Repeat-visit drivers (deferred from Sprint 2).
-- [ ] `ml/` structure (`ml/sentiment/`, `ml/forecast/`) and the training-role decision (ADR-062).
+- [x] `ml/` structure (`ml/sentiment/`, `ml/forecast/`) and the training-role decision (ADR-062).
   *2026-10-01: training-role decision made: `app_train` reads `sentiment_labels` plus exactly
   the columns the runtime models read, no `rating` and no `generation_parameters` (ADR-063).
   The folder structure is still to do.*
   *2026-10-01: `ml/sentiment/` created (split, data access, baselines; ADR-064).
   `ml/forecast/` still to do.*
+  *2026-10-02: `ml/forecast/` created (data, model, baseline, metrics, evaluate, ledger,
+  export; ADR-069, ADR-070). Both halves done.*
 - [x] Evaluation/training read role (with ADR-062's training-role decision); then revoke `sentiment_labels` and `generation_parameters` from `app_qa`. **Required before the QA agent is built in Sprint 4**, so the runtime QA role never ships holding gold labels (ADR-055).
   *2026-10-01: pulled forward from Sprint 3; `app_eval` and `app_train` created, `app_qa`
   revoked (ADR-063). `validate.py` now reads as `app_eval`.*
@@ -390,6 +402,9 @@ above.
 - ADR-066 — Sentiment model selection, calibration and review threshold, pre-registered (2026-10-01, pulled forward)
 - ADR-067 — Sentiment predictions stored and scored on arrival; the sentiment server gains region access (2026-10-01, pulled forward)
 - ADR-068 — Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines (2026-10-01, pulled forward)
+- ADR-069 — Forecast protocol, pre-registered: folds, holdout, intervals and release gate (2026-10-02, pulled forward)
+- ADR-070 — Forecast gate correction and `volume_v2` with a year-end indicator, decided after fold results and before the holdout (2026-10-02, pulled forward)
+- ADR-071 — Forecast serving requires passing on both fold B and the holdout (2026-10-02, pulled forward)
 
 ---
 

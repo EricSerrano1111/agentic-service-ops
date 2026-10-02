@@ -352,10 +352,10 @@ Define these once, here. If the reporting agent and the QA agent each compute th
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
-- **Grain:** weekly. ~156 points across 36 months — roughly 130 to train, the final 26 held out as the headline backtest (ADR-018), plus rolling-origin folds whose test windows cover the Q4 2024 and Q4 2025 peaks, reported separately (ADR-057). Daily is too noisy at these volumes; monthly gives too few points to model
+- **Grain:** weekly, ISO weeks (Monday start, UTC), 156 complete weeks from 2023-09-04 to 2026-08-30. Three windows, each fitted only on weeks before its origin (ADR-069): fold A tests 2024-09-02 to 2025-03-02 on one year of history (reported, not gated); fold B tests 2025-09-01 to 2026-03-01 on two years (sets the release gate); the headline holdout tests the final 26 weeks, 2026-03-02 to 2026-08-30, on 130 (ADR-018). The folds end before the holdout begins. The production model refits on all 156. Daily is too noisy at these volumes; monthly gives too few points to model
 - **Filter:** all requests regardless of final status — you're forecasting *demand*, not completions. Forecasting only completions confounds customer demand with your own cancellation behavior
-- **Segmentation:** total, with optional breakout by `service_type`
-- **Model form:** **univariate** — date in, volume out. It never sees incidents or sentiment. This matters for the coupling decision in §4
+- **Segmentation:** total, with optional breakout by `service_type`. A slice and horizon band is served only if it passed the fold B gate and stayed within 20% MAPE on the holdout (ADR-071): today the total at every band, and install and repair at 5–13 weeks. QA reads `served` and `shown_error` from the `volume_v2` manifest
+- **Model form:** **univariate** — date in, volume out. It never sees incidents or sentiment. This matters for the coupling decision in §4. `volume_v2`'s year-end indicator (ADR-070) is a function of the date alone, so the model stays univariate
 
 ### Signal shape the generator must produce
 

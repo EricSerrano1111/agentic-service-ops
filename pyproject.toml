@@ -33,6 +33,7 @@ ml = [
     "python-dotenv>=1.0",
     "scikit-learn==1.9.1",
     "scipy==1.18.1",
+    "statsmodels==0.15.0",  # RLM with Tukey biweight for the forecast (ADR-069)
 ]
 # BERT fine-tuning and its latency proxy (ADR-065). Offline only, like `ml`. torch comes
 # from the PyTorch CPU wheel index on every platform (see [tool.uv.sources]), so no CUDA
