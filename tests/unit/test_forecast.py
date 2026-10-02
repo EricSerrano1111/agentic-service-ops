@@ -324,3 +324,63 @@ def test_gate_v1_reproduces_the_committed_v1_verdicts_exactly():
     recorded = json.loads((V1_FOLDS / "gate.json").read_text(encoding="utf-8"))
     assert evaluate.gate_table_v1(fold_b["slices"]) == recorded["slices"]
     assert [b for b, g in recorded["slices"]["total"].items() if not g["pass"]] == ["1-4", "14-26"]
+
+
+# --------------------------------------------------------------------------- ADR-071
+
+
+@pytest.mark.parametrize(
+    ("gate_pass", "holdout_mape", "served"),
+    [
+        (True, 19.9, True),
+        (True, 20.0, True),  # "at most 20%"
+        (True, 20.1, False),  # passed fold B, missed on the holdout
+        (False, 5.0, False),  # failed fold B: a good holdout doesn't rescue it
+    ],
+)
+def test_serving_rule_branches(gate_pass, holdout_mape, served):
+    from ml.forecast import serving
+
+    assert serving.serve(gate_pass, holdout_mape) is served
+
+
+def test_shown_error_is_the_larger_of_fold_b_and_holdout():
+    from ml.forecast import serving
+
+    gate = {"s": {"bands": {b: {"model_mape": 10.0, "pass": True} for b in metrics.BANDS}}}
+    holdout = {
+        "s": {
+            "model": {b: {"mape": m} for b, m in zip(metrics.BANDS, (8.0, 12.0, 25.0), strict=True)}
+        }
+    }
+    table = serving.serving_table(gate, holdout)["s"]
+    assert [table[b]["shown_error"] for b in metrics.BANDS] == [10.0, 12.0, 25.0]
+    assert [table[b]["served"] for b in metrics.BANDS] == [True, True, False]
+
+
+MANIFEST_V2 = REPO_ROOT / "ml" / "forecast" / "artifacts" / "volume_v2.manifest.json"
+
+
+def test_manifest_serves_exactly_the_hand_computed_set():
+    """Hand list (ADR-071): fold B pass under ADR-070 and holdout MAPE <= 20%."""
+    from ml.forecast import serving
+
+    m = json.loads(MANIFEST_V2.read_text(encoding="utf-8"))
+    assert m["serving_rule"] == "ADR-071" and m["gate_rule"] == "ADR-070"
+    assert serving.served_set(m["serving"]["slices"]) == [
+        ("total", "1-4"),
+        ("total", "5-13"),
+        ("total", "14-26"),
+        ("install", "5-13"),
+        ("repair", "5-13"),
+    ]
+    # The four slice-bands that passed fold B but missed on the holdout are refused.
+    for s, b in [
+        ("install", "14-26"),
+        ("upgrade", "5-13"),
+        ("upgrade", "14-26"),
+        ("repair", "1-4"),
+    ]:
+        row = m["serving"]["slices"][s][b]
+        assert row["gate_ADR070"] and not row["served"] and row["holdout_mape"] > 20
+        assert row["shown_error"] == row["holdout_mape"]

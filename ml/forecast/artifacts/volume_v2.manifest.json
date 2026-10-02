@@ -318,5 +318,196 @@
     }
   },
   "git_commit": "99b75525cb30c9fb5065d6c758e2a1b87108017b",
-  "git_dirty": false
+  "git_dirty": false,
+  "holdout": {
+    "window": [
+      "2026-03-02",
+      "2026-08-30"
+    ],
+    "source": "evals/results/forecast/2026-10-02_holdout/holdout.json",
+    "source_sha256": "81b60c32f321ba116dac4a3013cc70a1f6197321cfdf7708a5d9ac97a1ed03b3",
+    "slices": {
+      "total": {
+        "overall": 8.808901064412172,
+        "1-4": 13.575509695123564,
+        "5-13": 5.409034814483741,
+        "14-26": 9.696005812605273
+      },
+      "inspection": {
+        "overall": 27.818766079665615,
+        "1-4": 28.907323001438705,
+        "5-13": 17.864004848832604,
+        "14-26": 34.3755832635429
+      },
+      "install": {
+        "overall": 26.39503624521169,
+        "1-4": 43.69451185173943,
+        "5-13": 14.33143395898904,
+        "14-26": 29.42384533366499
+      },
+      "maintenance": {
+        "overall": 14.267591884545652,
+        "1-4": 14.415405103299703,
+        "5-13": 11.320631825361259,
+        "14-26": 16.262314012056674
+      },
+      "repair": {
+        "overall": 13.367922459224893,
+        "1-4": 27.94405151159528,
+        "5-13": 9.231570204332042,
+        "14-26": 11.746588158036738
+      },
+      "upgrade": {
+        "overall": 27.101386342386967,
+        "1-4": 46.62391983697539,
+        "5-13": 26.94573021367801,
+        "14-26": 21.202214894696734
+      }
+    }
+  },
+  "serving_rule": "ADR-071",
+  "serving": {
+    "rule": "served only if the slice-band passes ADR-070's gate on fold B and its volume_v2 holdout MAPE is at most 20%; shown_error is the larger of the two (ADR-071)",
+    "ceiling_mape": 20.0,
+    "slices": {
+      "total": {
+        "1-4": {
+          "foldB_mape": 11.771395372209854,
+          "holdout_mape": 13.575509695123564,
+          "gate_ADR070": true,
+          "served": true,
+          "shown_error": 13.575509695123564
+        },
+        "5-13": {
+          "foldB_mape": 5.488484131615858,
+          "holdout_mape": 5.409034814483741,
+          "gate_ADR070": true,
+          "served": true,
+          "shown_error": 5.488484131615858
+        },
+        "14-26": {
+          "foldB_mape": 11.491661356128652,
+          "holdout_mape": 9.696005812605273,
+          "gate_ADR070": true,
+          "served": true,
+          "shown_error": 11.491661356128652
+        }
+      },
+      "inspection": {
+        "1-4": {
+          "foldB_mape": 25.711654847544896,
+          "holdout_mape": 28.907323001438705,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 28.907323001438705
+        },
+        "5-13": {
+          "foldB_mape": 23.854811688509734,
+          "holdout_mape": 17.864004848832604,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 23.854811688509734
+        },
+        "14-26": {
+          "foldB_mape": 24.381780485319357,
+          "holdout_mape": 34.3755832635429,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 34.3755832635429
+        }
+      },
+      "install": {
+        "1-4": {
+          "foldB_mape": 26.022468750185645,
+          "holdout_mape": 43.69451185173943,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 43.69451185173943
+        },
+        "5-13": {
+          "foldB_mape": 17.957601388809973,
+          "holdout_mape": 14.33143395898904,
+          "gate_ADR070": true,
+          "served": true,
+          "shown_error": 17.957601388809973
+        },
+        "14-26": {
+          "foldB_mape": 18.515700846878573,
+          "holdout_mape": 29.42384533366499,
+          "gate_ADR070": true,
+          "served": false,
+          "shown_error": 29.42384533366499
+        }
+      },
+      "maintenance": {
+        "1-4": {
+          "foldB_mape": 27.41034379203255,
+          "holdout_mape": 14.415405103299703,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 27.41034379203255
+        },
+        "5-13": {
+          "foldB_mape": 22.920142370536908,
+          "holdout_mape": 11.320631825361259,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 22.920142370536908
+        },
+        "14-26": {
+          "foldB_mape": 22.70256105985401,
+          "holdout_mape": 16.262314012056674,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 22.70256105985401
+        }
+      },
+      "repair": {
+        "1-4": {
+          "foldB_mape": 7.703328734130395,
+          "holdout_mape": 27.94405151159528,
+          "gate_ADR070": true,
+          "served": false,
+          "shown_error": 27.94405151159528
+        },
+        "5-13": {
+          "foldB_mape": 10.844175610995082,
+          "holdout_mape": 9.231570204332042,
+          "gate_ADR070": true,
+          "served": true,
+          "shown_error": 10.844175610995082
+        },
+        "14-26": {
+          "foldB_mape": 20.513052244548774,
+          "holdout_mape": 11.746588158036738,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 20.513052244548774
+        }
+      },
+      "upgrade": {
+        "1-4": {
+          "foldB_mape": 70.23629604222586,
+          "holdout_mape": 46.62391983697539,
+          "gate_ADR070": false,
+          "served": false,
+          "shown_error": 70.23629604222586
+        },
+        "5-13": {
+          "foldB_mape": 17.28892980290192,
+          "holdout_mape": 26.94573021367801,
+          "gate_ADR070": true,
+          "served": false,
+          "shown_error": 26.94573021367801
+        },
+        "14-26": {
+          "foldB_mape": 14.648534504805436,
+          "holdout_mape": 21.202214894696734,
+          "gate_ADR070": true,
+          "served": false,
+          "shown_error": 21.202214894696734
+        }
+      }
+    }
+  }
 }
