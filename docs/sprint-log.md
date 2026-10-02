@@ -359,7 +359,10 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   (p = 0.0002): BERT better overall under ADR-065's rule. Sarcastic (1 vs 2), implicit
   (9 vs 4) and mixed (7 vs 2) are not distinguishable. Ledger lines 4 and 5; caveats beside
   the result: L-26 (TF-IDF at grid edge), L-30 (BERT at epoch cap), L-31.*
-- [ ] Orchestrator routes across all three
+- [x] Orchestrator routes across all three
+  *2026-10-02: done in 5b (not ticked then). Reporting, sentiment and forecast questions
+  each route to their agent over A2A (ADR-068, ADR-072); the "not available yet" path is
+  gone, and the out-of-scope decline names all three domains.*
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
   *2026-09-30: seed_v1 (clear, ambiguous, out-of-scope, multi-domain) and routing_v1
