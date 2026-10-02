@@ -1,0 +1,1310 @@
+{
+  "evidence": "observed",
+  "set": "parse_v1",
+  "model": "gemini-3.5-flash-lite",
+  "key": "free",
+  "prompt": "parse_v1",
+  "prompt_sha": "0f61684af8cf",
+  "as_of": "2026-08-30",
+  "k": 3,
+  "stopped": null,
+  "calls": 42,
+  "requests": 42,
+  "per_run": [
+    {
+      "run": 1,
+      "n": 14,
+      "exact": 13,
+      "fields": {
+        "start": 13,
+        "end": 13,
+        "region": 14,
+        "bucket": 14,
+        "want_trend": 14,
+        "want_examples": 14,
+        "example_label": 14,
+        "unsupported": 14
+      },
+      "errors": 0
+    },
+    {
+      "run": 2,
+      "n": 14,
+      "exact": 13,
+      "fields": {
+        "start": 13,
+        "end": 13,
+        "region": 14,
+        "bucket": 14,
+        "want_trend": 14,
+        "want_examples": 14,
+        "example_label": 14,
+        "unsupported": 14
+      },
+      "errors": 0
+    },
+    {
+      "run": 3,
+      "n": 14,
+      "exact": 13,
+      "fields": {
+        "start": 13,
+        "end": 13,
+        "region": 14,
+        "bucket": 14,
+        "want_trend": 14,
+        "want_examples": 14,
+        "example_label": 14,
+        "unsupported": 14
+      },
+      "errors": 0
+    }
+  ],
+  "exact_range": [
+    13,
+    13
+  ],
+  "flips": {},
+  "runs": [
+    [
+      {
+        "id": "p01",
+        "category": "region_trend",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": "west",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p02",
+        "category": "region_trend",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": "central",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p03",
+        "category": "region_trend",
+        "got": {
+          "start": "2025-01-01",
+          "end": "2025-12-31",
+          "region": "southeast",
+          "bucket": "quarter",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p04",
+        "category": "region_trend",
+        "got": {
+          "start": "2026-03-01",
+          "end": "2026-06-30",
+          "region": "northeast",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p05",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-04-01",
+          "end": "2026-06-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p06",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p07",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p08",
+        "category": "examples",
+        "got": {
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": true,
+          "example_label": "negative",
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p09",
+        "category": "examples",
+        "got": {
+          "start": "2026-06-01",
+          "end": "2026-06-30",
+          "region": "west",
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": true,
+          "example_label": "mixed",
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p10",
+        "category": "unsupported",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "account"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p11",
+        "category": "unsupported",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "technician"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p12",
+        "category": "unsupported",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "service_type"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p13",
+        "category": "ambiguous_date",
+        "got": {
+          "start": "2026-03-01",
+          "end": "2026-05-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p14",
+        "category": "ambiguous_date",
+        "got": {
+          "start": "2026-08-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": false,
+          "end": false,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": false
+      }
+    ],
+    [
+      {
+        "id": "p01",
+        "category": "region_trend",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": "west",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p02",
+        "category": "region_trend",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": "central",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p03",
+        "category": "region_trend",
+        "got": {
+          "start": "2025-01-01",
+          "end": "2025-12-31",
+          "region": "southeast",
+          "bucket": "quarter",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p04",
+        "category": "region_trend",
+        "got": {
+          "start": "2026-03-01",
+          "end": "2026-06-30",
+          "region": "northeast",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p05",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-04-01",
+          "end": "2026-06-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p06",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p07",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p08",
+        "category": "examples",
+        "got": {
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": true,
+          "example_label": "negative",
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p09",
+        "category": "examples",
+        "got": {
+          "start": "2026-06-01",
+          "end": "2026-06-30",
+          "region": "west",
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": true,
+          "example_label": "mixed",
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p10",
+        "category": "unsupported",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "account"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p11",
+        "category": "unsupported",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "technician"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p12",
+        "category": "unsupported",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "service_type"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p13",
+        "category": "ambiguous_date",
+        "got": {
+          "start": "2026-03-01",
+          "end": "2026-05-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p14",
+        "category": "ambiguous_date",
+        "got": {
+          "start": "2026-08-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": false,
+          "end": false,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": false
+      }
+    ],
+    [
+      {
+        "id": "p01",
+        "category": "region_trend",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": "west",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p02",
+        "category": "region_trend",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": "central",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p03",
+        "category": "region_trend",
+        "got": {
+          "start": "2025-01-01",
+          "end": "2025-12-31",
+          "region": "southeast",
+          "bucket": "quarter",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p04",
+        "category": "region_trend",
+        "got": {
+          "start": "2026-03-01",
+          "end": "2026-06-30",
+          "region": "northeast",
+          "bucket": "month",
+          "want_trend": true,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p05",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-04-01",
+          "end": "2026-06-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p06",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p07",
+        "category": "time_summary",
+        "got": {
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p08",
+        "category": "examples",
+        "got": {
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": true,
+          "example_label": "negative",
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p09",
+        "category": "examples",
+        "got": {
+          "start": "2026-06-01",
+          "end": "2026-06-30",
+          "region": "west",
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": true,
+          "example_label": "mixed",
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p10",
+        "category": "unsupported",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "account"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p11",
+        "category": "unsupported",
+        "got": {
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "technician"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p12",
+        "category": "unsupported",
+        "got": {
+          "start": null,
+          "end": null,
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": "service_type"
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p13",
+        "category": "ambiguous_date",
+        "got": {
+          "start": "2026-03-01",
+          "end": "2026-05-31",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": true,
+          "end": true,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "p14",
+        "category": "ambiguous_date",
+        "got": {
+          "start": "2026-08-01",
+          "end": "2026-08-30",
+          "region": null,
+          "bucket": "month",
+          "want_trend": false,
+          "want_examples": false,
+          "example_label": null,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "start": false,
+          "end": false,
+          "region": true,
+          "bucket": true,
+          "want_trend": true,
+          "want_examples": true,
+          "example_label": true,
+          "unsupported": true
+        },
+        "exact": false
+      }
+    ]
+  ],
+  "expected": {
+    "p01": {
+      "start": null,
+      "end": null,
+      "region": "west",
+      "bucket": "month",
+      "want_trend": true,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p02": {
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "region": "central",
+      "bucket": "month",
+      "want_trend": true,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p03": {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "region": "southeast",
+      "bucket": "quarter",
+      "want_trend": true,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p04": {
+      "start": "2026-03-01",
+      "end": "2026-06-30",
+      "region": "northeast",
+      "bucket": "month",
+      "want_trend": true,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p05": {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p06": {
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p07": {
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p08": {
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": true,
+      "example_label": "negative",
+      "unsupported": null
+    },
+    "p09": {
+      "start": "2026-06-01",
+      "end": "2026-06-30",
+      "region": "west",
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": true,
+      "example_label": "mixed",
+      "unsupported": null
+    },
+    "p10": {
+      "start": null,
+      "end": null,
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": "account"
+    },
+    "p11": {
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": "technician"
+    },
+    "p12": {
+      "start": null,
+      "end": null,
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": "service_type"
+    },
+    "p13": {
+      "start": "2026-03-01",
+      "end": "2026-05-31",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    },
+    "p14": {
+      "start": "2025-08-01",
+      "end": "2025-08-31",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+    }
+  }
+}

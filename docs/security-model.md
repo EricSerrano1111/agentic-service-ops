@@ -14,7 +14,7 @@ grants exactly that, reads and writes, in CI. The Postgres `PUBLIC` defaults are
 (ADR-025).
 
 Eight guarantees follow from the matrix and hold at the database level, whatever a prompt
-or a model does:
+or a model does, and a ninth follows from how the sentiment agent is built:
 
 1. **No agent reads `contacts`, so customer PII never enters a prompt.** No agent role
    (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) holds any grant on
@@ -57,6 +57,17 @@ or a model does:
    comment ids; `get_feedback_examples` rejects a `limit` above 5. This bounds how much
    customer text, and how much injected text, any one call can put into a prompt
    (ADR-067).
+9. **On the sentiment path, no customer comment is sent to any LLM at answer time.** The
+   sentiment agent's only model call parses the user's question; figures come from
+   `mcp_feedback` and the answer is rendered from templates, so the up-to-3 comments
+   returned by `get_feedback_examples` reach only the template and the user (ADR-068).
+   Customer text therefore has no model to instruct on this path. A unit test asserts no
+   quoted comment appears in the parse prompt. **Sprint 4 QA must keep this true or say
+   where it doesn't:** ADR-056 gives QA one LLM call that checks interpretation over the
+   specialist's output, and a sentiment answer's text includes the quoted comments. Either
+   QA's call is given the answer without the quoted comments, or this guarantee is
+   narrowed to "no comment reaches a model except QA's interpretation check", and the QA
+   prompt is treated as a prompt-injection surface (as "Still to write" already notes).
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).
