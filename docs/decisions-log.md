@@ -69,7 +69,7 @@
 | 055 | The orchestrator owns the QA loop; QA verifies with its own SQL, per-agent answer-time scope | Accepted — supersedes ADR-003 and ADR-022 in part; superseded in part by ADR-069 |
 | 056 | QA checks numbers without a model and interpretation with one LLM call; Pro QA comparison optional | Accepted |
 | 057 | Forecast evaluation: 26-week headline holdout plus rolling-origin folds over the Q4 peaks | Accepted — superseded in part by ADR-069 |
-| 058 | Forecast model form: log-linear trend plus K annual harmonics chosen from data, robust down-weighting, 26-week horizon | Accepted |
+| 058 | Forecast model form: log-linear trend plus K annual harmonics chosen from data, robust down-weighting, 26-week horizon | Accepted — superseded in part by ADR-070 |
 | 059 | Sentiment training: pinned `bert-base-uncased`, stratified split, class weights, calibrated threshold, required TF-IDF baseline | Accepted |
 | 060 | No agent framework; LangGraph removed from the stack | Accepted |
 | 061 | Portability without Terraform; Terraform a buffer-only stretch goal | Accepted — supersedes ADR-005 in part |
@@ -80,7 +80,8 @@
 | 066 | Sentiment model selection, calibration and review threshold (pre-registered): `lr2e-5_v1` epoch 4 as `bert_v1`, temperature scaling, 99% / 20% review threshold | Accepted |
 | 067 | Sentiment predictions stored and scored on arrival (250-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
 | 068 | Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines | Accepted |
-| 069 | Forecast protocol (pre-registered): folds A and B, headline holdout, intervals, release gate on fold B (MAPE ≤ 30% and no worse than seasonal naive) | Accepted |
+| 069 | Forecast protocol (pre-registered): folds A and B, headline holdout, intervals, release gate on fold B (MAPE ≤ 30% and no worse than seasonal naive) | Accepted — superseded in part by ADR-070 |
+| 070 | Forecast gate correction (26-week eligibility, 20% band ceiling) and `volume_v2` with a year-end indicator; decided after fold results, before the holdout | Accepted |
 
 ---
 
@@ -2091,3 +2092,29 @@ training grants.
 - Some service-type slices may fail the gate; their forecasts are not served.
 - Interval coverage is reported, not gated.
 - Changing any choice above after results means a new ADR and a new model version.
+
+### ADR-070 — Forecast gate correction and `volume_v2` with a year-end indicator (decided after fold results, before the holdout)
+*Date: 2026-10-02. Supersedes ADR-069 in part: the release-gate rule, and the production model becomes `volume_v2`. Supersedes ADR-058 in part (the model form gains a calendar year-end indicator; ADR-058's leakage rules — K chosen from data, no planted-anomaly knowledge — still hold). Decided after the ADR-069 fold results were seen and before any holdout result existed; disclosed as post-hoc.*
+
+**Decision:**
+- The ADR-069 gate result stands on the record: `volume_v1` failed on the total slice in bands 1–4 (model 11.9% vs naive 4.3% MAPE) and 14–26 (11.9% vs 10.9%), and in several service-type bands.
+- Corrected gate, applied to fold B: a slice is eligible only if its model MAPE over the full 26-week window is no higher than seasonal naive's. Each horizon band of an eligible slice passes if its band MAPE is at most 20%. Ineligible slices and failing bands are not served.
+- `volume_v2` = the ADR-069 model plus one regressor: a year-end indicator for ISO weeks containing December 25 or January 1, included in both K selection and the robust fit. `volume_v2` is the production model whatever the holdout shows; the holdout reports v1 and v2 side by side.
+- The holdout is scored once each for v1, v2 and seasonal naive.
+
+**Context:**
+- ADR-069 compared model with baseline inside each band. The 1–4 band holds 4 weeks; with about 10% weekly noise, that comparison cannot separate two forecasters. The flaw does not depend on the direction of the result: the comparison would have been equally uninformative had the model won. Over 26 weeks the comparison carries information. The per-band 20% ceiling, which judges usefulness rather than relative skill, is kept.
+- Disclosure: `volume_v1`'s total slice passes the corrected gate as well, so the correction, not v2, is what changes the total's verdict. The corrected gate still rejects most service-type bands.
+- v1 overpredicted the Christmas 2025 week by 52%, while seasonal naive was 1% off. The evidence for a year-end effect was available before that test window: v1's robust fit down-weighted the year-end weeks of 2023 and 2024 in training. An operator inspecting their own history would see a recurring year-end dip. The indicator is defined from the calendar (Dec 25, Jan 1), not from the generator's trough dates, which would be answer-key leakage (ADR-058).
+- The production forecast's 26 weeks from 2026-08-31 include Christmas 2026, so v1 would overstate holiday-week volume.
+
+**Alternatives considered:**
+- *Accept ADR-069's verdicts and serve nothing failing* (rejected). It would refuse the total's near-term forecast on the strength of a 4-week comparison that measures noise.
+- *Lower the bar on service-type slices* (rejected). Nothing in the fold results justifies it.
+- *Indicators for every US federal holiday* (rejected). Only the year-end shows a recurring residual in training; adding the rest would be fishing for fit.
+- *Choosing v1 or v2 after the holdout* (rejected). That would turn the holdout into a selection set.
+
+**Consequences:**
+- Nothing in this dataset tests the year-end fix blindly: the holdout (March to August) contains no December. The fold evidence for it is not blind.
+- `gate_v1` remains in the code to reproduce the pre-registered verdicts.
+- Sprint 4 QA reads the corrected-gate verdicts from the `volume_v2` manifest.
