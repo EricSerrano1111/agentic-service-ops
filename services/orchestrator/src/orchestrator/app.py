@@ -1,9 +1,9 @@
 """FastAPI app: `POST /ask` and `/healthz`.
 
 Each question is routed by one LLM call (`routing.Router`). Reporting questions go to
-the reporting agent and sentiment questions to the sentiment agent, over A2A with the
-question text (ADR-046, ADR-068). Forecast gets a "not available yet" answer,
-multi-domain questions a split instruction (ADR-032), and anything else a polite
+the reporting agent, sentiment questions to the sentiment agent and forecast questions to
+the forecast agent, over A2A with the question text (ADR-046, ADR-068, ADR-072).
+Multi-domain questions get a split instruction (ADR-032), and anything else a polite
 decline. Errors map to clear HTTP responses; no raw exception
 text reaches the caller.
 """
@@ -33,8 +33,13 @@ from pydantic import BaseModel, Field
 
 from .a2a_client import AgentProtocolError, send_question
 from .config import Settings
-from .result import TaskFailed, extract_answer, extract_sentiment_answer
-from .routing import Router, RoutingLLM, not_available_message, out_of_scope_message, split_message
+from .result import (
+    TaskFailed,
+    extract_answer,
+    extract_forecast_answer,
+    extract_sentiment_answer,
+)
+from .routing import Router, RoutingLLM, out_of_scope_message, split_message
 
 log = logging.getLogger("orchestrator")
 
@@ -57,7 +62,8 @@ class AskResponse(BaseModel):
     `reporting` holds the specialist's validated payload: the parsed request, the range
     queried, the as-of date and the figures; `task_id` is the A2A task. For an answered
     sentiment question, `sentiment` holds the sentiment agent's validated payload instead
-    (ADR-068). `trace_id` correlates the log lines of every service that handled the
+    (ADR-068), and for a forecast question `forecast` holds the forecast agent's
+    (ADR-072). `trace_id` correlates the log lines of every service that handled the
     request.
     """
 
@@ -67,6 +73,7 @@ class AskResponse(BaseModel):
     prompt_version: str
     reporting: dict[str, Any] | None = None
     sentiment: dict[str, Any] | None = None
+    forecast: dict[str, Any] | None = None
     task_id: str | None = None
     trace_id: str
 
@@ -193,7 +200,7 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                 return JSONResponse(payload.model_dump(), headers={"X-Trace-Id": trace_id})
 
             if decision.route == "forecast":
-                return respond(not_available_message(decision), "not_available")
+                return await ask_forecast(body.question, trace_id, base, respond)
             if decision.route == "sentiment":
                 return await ask_sentiment(body.question, trace_id, base, respond)
             if decision.route == "multi_domain":
@@ -305,6 +312,58 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
             )
         return respond(
             answer, "answered", sentiment=sentiment.model_dump(mode="json"), task_id=task.id
+        )
+
+    async def ask_forecast(question: str, trace_id: str, base: dict, respond) -> Any:
+        """The forecast route (ADR-072), with the same failure handling as the others."""
+        timeout_s = settings.forecast_a2a_timeout_s
+        try:
+            task = await send_question(
+                settings.agent_forecast_url, question, trace_id=trace_id, timeout_s=timeout_s
+            )
+            answer, forecast = extract_forecast_answer(task)
+        except (TimeoutError, A2AClientTimeoutError, httpx.TimeoutException):
+            log.warning("agent timed out", extra={"agent": "forecast", "timeout_s": timeout_s})
+            return _error(
+                504,
+                "agent_timeout",
+                f"The forecast agent did not answer within {timeout_s:g}s.",
+                trace_id,
+                route=base["route"],
+            )
+        except TaskFailed as exc:
+            if exc.error_code == "not_supported":
+                # Unsupported forecasts and past periods: a normal answer whose text names
+                # what is supported (ADR-072), not an error.
+                return respond(exc.reason, "not_available", task_id=exc.task_id)
+            log.warning(
+                "agent task failed",
+                extra={"task_id": exc.task_id, "reason": exc.reason, "code": exc.error_code},
+            )
+            status, error = _AGENT_ERRORS.get(exc.error_code or "", (502, "agent_task_failed"))
+            headers = {"Retry-After": str(RATE_LIMIT_RETRY_AFTER_S)} if status == 429 else None
+            return _error(
+                status,
+                error,
+                exc.reason,
+                trace_id,
+                headers=headers,
+                task_id=exc.task_id,
+                route=base["route"],
+            )
+        except (A2AClientError, httpx.HTTPError, AgentProtocolError) as exc:
+            log.warning(
+                "agent unavailable", extra={"agent": "forecast", "error": type(exc).__name__}
+            )
+            return _error(
+                502,
+                "agent_unavailable",
+                "The forecast agent is unavailable.",
+                trace_id,
+                route=base["route"],
+            )
+        return respond(
+            answer, "answered", forecast=forecast.model_dump(mode="json"), task_id=task.id
         )
 
     return app

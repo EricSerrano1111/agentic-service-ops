@@ -1,6 +1,7 @@
 # Local development stack: Postgres plus the walking skeleton (Sprint 2):
 #   orchestrator --A2A--> agent_reporting --MCP--> mcp_incidents --SQL--> postgres
 #   orchestrator --A2A--> agent_sentiment --MCP--> mcp_feedback  --SQL--> postgres
+#   orchestrator --A2A--> agent_forecast  --MCP--> mcp_volume    --SQL--> postgres
 #
 # Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint 5
 # (ADR-007), because an always-on managed instance would consume roughly a third of
@@ -13,9 +14,9 @@
 # Credentials: every value comes from .env by interpolation; nothing secret is written
 # here. No service uses env_file, so each container sees only the variables listed
 # under it. Only the MCP servers get database credentials, each only its own role's:
-# mcp_incidents app_reporting's, mcp_feedback app_sentiment's (ADR-023). Only the
-# orchestrator and the two agents get the Gemini key, the free one: LLM_MODE is pinned
-# to free and the paid key is never passed (ADR-048).
+# mcp_incidents app_reporting's, mcp_feedback app_sentiment's, mcp_volume app_forecast's
+# (ADR-023). Only the orchestrator and the three agents get the Gemini key, the free
+# one: LLM_MODE is pinned to free and the paid key is never passed (ADR-048).
 # tests/unit/test_compose_isolation.py asserts all of this.
 #
 # Ports: only the orchestrator publishes a host port among the application services.
@@ -161,6 +162,64 @@ services:
       retries: 10
       start_period: 5s
 
+  mcp_volume:
+    build:
+      context: .
+      dockerfile: services/mcp_volume/Dockerfile
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432" # the container port, not the host mapping above
+      POSTGRES_DB: ${POSTGRES_DB:-service_ops}
+      DB_ROLE_FORECAST_USER: ${DB_ROLE_FORECAST_USER:?set DB_ROLE_FORECAST_USER in .env}
+      DB_ROLE_FORECAST_PASSWORD: ${DB_ROLE_FORECAST_PASSWORD:?set DB_ROLE_FORECAST_PASSWORD in .env}
+      MODELS_DIR: /models/forecast/volume_v2
+      MCP_VOLUME_PORT: "8103"
+      MCP_DB_STATEMENT_TIMEOUT_MS: ${MCP_DB_STATEMENT_TIMEOUT_MS:-10000}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      # Gitignored local artifact, read-only; start-up verifies it against the manifest
+      # baked into the image (ADR-062, ADR-072).
+      - ./models/forecast:/models/forecast:ro
+    expose:
+      - "8103"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8103/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  agent_forecast:
+    build:
+      context: .
+      dockerfile: services/agent_forecast/Dockerfile
+    # No database credentials: it reaches data only through mcp_volume (ADR-072).
+    environment:
+      MCP_VOLUME_URL: http://mcp_volume:8103/mcp
+      MCP_TIMEOUT_S: ${FORECAST_MCP_TIMEOUT_S:-20}
+      PARSE_TIMEOUT_S: ${PARSE_TIMEOUT_S:-30}
+      REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:?set GOOGLE_AI_API_KEY in .env}
+      GEMINI_MODEL_SPECIALIST: ${GEMINI_MODEL_SPECIALIST:?set GEMINI_MODEL_SPECIALIST in .env}
+      LLM_MODE: free
+      AGENT_FORECAST_PUBLIC_URL: http://agent_forecast:8003/
+      AGENT_FORECAST_PORT: "8003"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    expose:
+      - "8003"
+    depends_on:
+      mcp_volume:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   orchestrator:
     build:
       context: .
@@ -168,6 +227,8 @@ services:
     environment:
       AGENT_REPORTING_URL: http://agent_reporting:8001
       AGENT_SENTIMENT_URL: http://agent_sentiment:8002
+      AGENT_FORECAST_URL: http://agent_forecast:8003
+      FORECAST_A2A_TIMEOUT_S: ${FORECAST_A2A_TIMEOUT_S:-60}
       SENTIMENT_A2A_TIMEOUT_S: ${SENTIMENT_A2A_TIMEOUT_S:-85}
       ROUTE_TIMEOUT_S: ${ROUTE_TIMEOUT_S:-30}
       A2A_TIMEOUT_S: ${A2A_TIMEOUT_S:-60}
@@ -183,6 +244,8 @@ services:
       agent_reporting:
         condition: service_healthy
       agent_sentiment:
+        condition: service_healthy
+      agent_forecast:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]

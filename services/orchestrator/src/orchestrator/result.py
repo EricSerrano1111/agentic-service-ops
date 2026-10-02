@@ -11,7 +11,7 @@ from __future__ import annotations
 from a2a.types import Task, TaskState
 from google.protobuf.json_format import MessageToDict
 from pydantic import ValidationError
-from schemas import ReportingAnswer, SentimentAnswer
+from schemas import ForecastAnswer, ReportingAnswer, SentimentAnswer
 
 
 class TaskFailed(RuntimeError):
@@ -83,6 +83,36 @@ def extract_sentiment_answer(task: Task) -> tuple[str, SentimentAnswer]:
         raise TaskFailed(task.id, state, "completed task is missing its text or data part", None)
     try:
         answer = SentimentAnswer.model_validate(data[0])
+    except ValidationError as exc:
+        raise TaskFailed(
+            task.id, state, f"answer failed validation: {exc.error_count()} error(s)", None
+        ) from None
+    return "\n".join(texts), answer
+
+
+def extract_forecast_answer(task: Task) -> tuple[str, ForecastAnswer]:
+    """(answer text, validated answer) from the forecast agent's completed task (ADR-072).
+
+    `ForecastAnswer` rejects a payload carrying numbers for an unserved week, so the
+    orchestrator never passes one on, whatever the agent sent.
+    """
+    state = TaskState.Name(task.status.state)
+    if task.status.state != TaskState.TASK_STATE_COMPLETED:
+        text, code = _status(task)
+        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
+
+    texts: list[str] = []
+    data: list[dict] = []
+    for artifact in task.artifacts:
+        for part in artifact.parts:
+            if part.HasField("text"):
+                texts.append(part.text)
+            elif part.HasField("data"):
+                data.append(MessageToDict(part.data))
+    if not texts or len(data) != 1:
+        raise TaskFailed(task.id, state, "completed task is missing its text or data part", None)
+    try:
+        answer = ForecastAnswer.model_validate(data[0])
     except ValidationError as exc:
         raise TaskFailed(
             task.id, state, f"answer failed validation: {exc.error_count()} error(s)", None

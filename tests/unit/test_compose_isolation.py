@@ -29,15 +29,17 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DB_PREFIXES = ("POSTGRES_", "DB_ROLE_")
-NO_DB_SERVICES = ("agent_reporting", "agent_sentiment", "orchestrator")
+NO_DB_SERVICES = ("agent_reporting", "agent_sentiment", "agent_forecast", "orchestrator")
 APP_SERVICES = (
     "mcp_incidents",
     "mcp_feedback",
+    "mcp_volume",
     "agent_reporting",
     "agent_sentiment",
+    "agent_forecast",
     "orchestrator",
 )
-LLM_SERVICES = ("agent_reporting", "agent_sentiment", "orchestrator")
+LLM_SERVICES = ("agent_reporting", "agent_sentiment", "agent_forecast", "orchestrator")
 LLM_PREFIXES = ("GOOGLE_", "GEMINI_", "LLM_", "ANTHROPIC_")
 
 
@@ -141,3 +143,22 @@ def test_mcp_feedback_mounts_models_read_only_at_the_proxy_limits(compose):
     assert (mount["target"], mount.get("read_only")) == ("/models", True)
     assert float(service["cpus"]) == 1.0
     assert str(service["mem_limit"]) in ("2g", "2147483648")
+
+
+def test_mcp_volume_holds_only_app_forecast_credentials_and_no_model_key(compose):
+    service = compose["mcp_volume"]
+    assert "env_file" not in service
+    db_vars = {key for key in _env(service) if key.startswith(DB_PREFIXES)}
+    assert db_vars == {
+        "POSTGRES_HOST",
+        "POSTGRES_PORT",
+        "POSTGRES_DB",
+        "DB_ROLE_FORECAST_USER",
+        "DB_ROLE_FORECAST_PASSWORD",
+    }
+    assert [k for k in _env(service) if k.startswith(LLM_PREFIXES)] == []
+
+
+def test_mcp_volume_mounts_only_the_forecast_models_read_only(compose):
+    (mount,) = compose["mcp_volume"]["volumes"]
+    assert (mount["target"], mount.get("read_only")) == ("/models/forecast", True)

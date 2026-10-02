@@ -18,6 +18,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "agent-forecast",
     "agent-reporting",
     "agent-sentiment",
     "agentic-service-ops",
@@ -25,6 +26,7 @@ members = [
     "forecast-runtime",
     "mcp-feedback",
     "mcp-incidents",
+    "mcp-volume",
     "orchestrator",
     "service-ops-common",
     "service-ops-llm",
@@ -55,6 +57,31 @@ fastapi = [
     { name = "fastapi" },
     { name = "sse-starlette" },
     { name = "starlette" },
+]
+
+[[package]]
+name = "agent-forecast"
+version = "0.1.0"
+source = { editable = "services/agent_forecast" }
+dependencies = [
+    { name = "a2a-sdk", extra = ["fastapi"] },
+    { name = "fastapi" },
+    { name = "mcp" },
+    { name = "service-ops-common" },
+    { name = "service-ops-llm" },
+    { name = "service-ops-schemas" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "a2a-sdk", extras = ["fastapi"], specifier = "==1.1.5" },
+    { name = "fastapi", specifier = ">=0.115.2" },
+    { name = "mcp", specifier = "==2.2.0" },
+    { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-llm", editable = "packages/llm" },
+    { name = "service-ops-schemas", editable = "packages/schemas" },
+    { name = "uvicorn", specifier = ">=0.31" },
 ]
 
 [[package]]
@@ -1444,6 +1471,35 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ae/91/762d7755d971aff8a28d75f7961656148edf27875c8026e6385aaab08ae7/mcp_types-2.2.0.tar.gz", hash = "sha256:d3ed53703ddd10d9c6399f29d322bb66f3f67ab41348ac8556ba23e07fedefad", size = 65892, upload-time = "2026-09-07T16:06:25.187Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/d7/6ffba5d8cd5dd9b8a19478875c50e04945314ba5074e84d749283f27f62d/mcp_types-2.2.0-py3-none-any.whl", hash = "sha256:ea476b73ee86709ab5abc9452385ed36cc05907e582355622e294595c9a04f13", size = 69106, upload-time = "2026-09-07T16:06:21.461Z" },
+]
+
+[[package]]
+name = "mcp-volume"
+version = "0.1.0"
+source = { editable = "services/mcp_volume" }
+dependencies = [
+    { name = "anyio" },
+    { name = "db-models" },
+    { name = "forecast-runtime" },
+    { name = "mcp" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "service-ops-common" },
+    { name = "service-ops-schemas" },
+    { name = "sqlalchemy" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anyio", specifier = ">=4.9" },
+    { name = "db-models", editable = "packages/db_models" },
+    { name = "forecast-runtime", editable = "packages/forecast_runtime" },
+    { name = "mcp", specifier = "==2.2.0" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-schemas", editable = "packages/schemas" },
+    { name = "sqlalchemy", specifier = ">=2.0.30" },
+    { name = "uvicorn", specifier = ">=0.31" },
 ]
 
 [[package]]

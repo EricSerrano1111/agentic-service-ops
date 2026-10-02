@@ -1,0 +1,32 @@
+[project]
+name = "mcp-volume"
+version = "0.1.0"
+description = "Volume MCP server: served-only volume_v2 forecasts and weekly history, as app_forecast (ADR-008, ADR-023, ADR-072)"
+requires-python = ">=3.12"
+# The MCP SDK is pinned exactly (R-12, ADR-047). Forecasts come from forecast-runtime, the
+# prediction path ml/forecast also uses (ADR-072): numpy only, no statsmodels, no torch.
+dependencies = [
+    "mcp==2.2.0",
+    "db-models",
+    "forecast-runtime",
+    "service-ops-common",
+    "service-ops-schemas",
+    "SQLAlchemy>=2.0.30",
+    "psycopg[binary]>=3.2",
+    "anyio>=4.9",
+    "uvicorn>=0.31",
+]
+
+# Siblings resolve to the workspace members, never PyPI.
+[tool.uv.sources]
+db-models = { workspace = true }
+forecast-runtime = { workspace = true }
+service-ops-common = { workspace = true }
+service-ops-schemas = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_volume"]

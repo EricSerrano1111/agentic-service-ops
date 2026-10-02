@@ -77,8 +77,10 @@ members = [
     "packages/forecast_runtime",
     "services/mcp_incidents",
     "services/mcp_feedback",
+    "services/mcp_volume",
     "services/agent_reporting",
     "services/agent_sentiment",
+    "services/agent_forecast",
     "services/orchestrator",
 ]
 
