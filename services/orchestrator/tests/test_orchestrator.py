@@ -154,7 +154,7 @@ def test_reporting_route_calls_the_agent_with_the_question(monkeypatch):
     assert response.headers["X-Trace-Id"] == body["trace_id"]
 
 
-@pytest.mark.parametrize("route", ["sentiment", "forecast"])
+@pytest.mark.parametrize("route", ["forecast"])
 def test_unbuilt_domains_get_a_normal_not_available_answer(monkeypatch, route):
     sent = Sent()
     response = _ask(monkeypatch, FakeLLM(decision(route)), sent)
@@ -491,3 +491,134 @@ def test_not_supported_metric_is_a_normal_not_available_answer(monkeypatch):
     body = response.json()
     assert (body["outcome"], body["answer"], body["task_id"]) == ("not_available", text, "task-1")
     assert body["reporting"] is None
+
+
+# --------------------------------------------------------------------------- sentiment (ADR-068)
+
+SENTIMENT_ANSWER = {
+    "request": {"region": "west", "want_trend": True},
+    "start": "2026-03-01",
+    "end": "2026-08-30",
+    "range_assumed": True,
+    "as_of": "2026-08-30",
+    "summary": {
+        "model_version": "0fa27f" + "0" * 58,
+        "n_comments": 85,
+        "n_scored": 85,
+        "complete": True,
+        "start": "2026-03-01",
+        "end": "2026-08-30",
+        "region": "west",
+        "bucket": "month",
+        "counts": {"positive": 74, "neutral": 0, "negative": 11, "mixed": 0},
+        "shares": {
+            "positive": "0.8706",
+            "neutral": "0.0000",
+            "negative": "0.1294",
+            "mixed": "0.0000",
+        },
+        "flagged_count": 1,
+        "buckets": [
+            {
+                "bucket": "2026-07",
+                "n_scored": 45,
+                "counts": {"positive": 42, "neutral": 0, "negative": 3, "mixed": 0},
+                "flagged_count": 0,
+            },
+            {
+                "bucket": "2026-08",
+                "n_scored": 40,
+                "counts": {"positive": 32, "neutral": 0, "negative": 8, "mixed": 0},
+                "flagged_count": 1,
+            },
+        ],
+    },
+    "trend": {"verdict": "no clear change", "latest_bucket": "2026-08", "latest_n": 40},
+    "examples": [],
+    "quoted_feedback_ids": [],
+}
+SENTIMENT_QUESTION = "Is sentiment trending down in the West?"
+
+
+class SentTo(Sent):
+    """Records which agent URL each question went to."""
+
+    def __init__(self, behaviour=None):
+        super().__init__(behaviour)
+        self.urls: list[str] = []
+
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s):
+        self.urls.append(agent_url)
+        self.timeouts = getattr(self, "timeouts", []) + [timeout_s]
+        return await super().__call__(agent_url, question, trace_id=trace_id, timeout_s=timeout_s)
+
+
+def _sentiment_completed() -> Task:
+    return _task(
+        parts=[
+            new_text_part("Customer feedback sentiment in the West ..."),
+            new_data_part(SENTIMENT_ANSWER),
+        ]
+    )
+
+
+def test_sentiment_route_calls_the_sentiment_agent_with_the_question(monkeypatch):
+    sent = SentTo(_sentiment_completed)
+    response = _ask(monkeypatch, FakeLLM(decision("sentiment")), sent, question=SENTIMENT_QUESTION)
+    assert response.status_code == 200
+    body = response.json()
+    assert sent.calls == [SENTIMENT_QUESTION]
+    assert sent.urls == [Settings().agent_sentiment_url]
+    assert sent.timeouts == [Settings().sentiment_a2a_timeout_s]
+    assert body["outcome"] == "answered"
+    assert body["reporting"] is None
+    assert body["sentiment"]["summary"]["n_scored"] == 85
+    assert isinstance(body["sentiment"]["summary"]["n_scored"], int)
+    assert body["answer"].startswith("Customer feedback sentiment in the West")
+
+
+def test_reporting_route_still_goes_to_the_reporting_agent(monkeypatch):
+    sent = SentTo()
+    response = _ask(monkeypatch, FakeLLM(decision("reporting")), sent)
+    assert sent.urls == [Settings().agent_reporting_url]
+    assert sent.timeouts == [Settings().a2a_timeout_s]
+    assert response.json()["sentiment"] is None
+
+
+def test_sentiment_decline_is_a_normal_not_available_answer(monkeypatch):
+    text = "Sentiment can't be broken down by account. I can report ..."
+    sent = SentTo(lambda: _task(TaskState.TASK_STATE_FAILED, reason=text, code="not_supported"))
+    response = _ask(monkeypatch, FakeLLM(decision("sentiment")), sent)
+    assert response.status_code == 200
+    assert (response.json()["outcome"], response.json()["answer"]) == ("not_available", text)
+
+
+@pytest.mark.parametrize(
+    ("exc", "status", "error"),
+    [
+        (TimeoutError(), 504, "agent_timeout"),
+        (httpx.ConnectError("refused"), 502, "agent_unavailable"),
+    ],
+)
+def test_unreachable_sentiment_agent_gets_the_existing_failure_handling(
+    monkeypatch, exc, status, error
+):
+    def boom():
+        raise exc
+
+    response = _ask(monkeypatch, FakeLLM(decision("sentiment")), SentTo(boom))
+    assert response.status_code == status
+    body = response.json()
+    assert body["error"] == error and "sentiment agent" in body["detail"]
+
+
+def test_sentiment_answer_that_breaks_the_contract_is_rejected(monkeypatch):
+    broken = dict(SENTIMENT_ANSWER, quoted_feedback_ids=[1])
+    sent = SentTo(lambda: _task(parts=[new_text_part("x"), new_data_part(broken)]))
+    response = _ask(monkeypatch, FakeLLM(decision("sentiment")), sent)
+    assert response.status_code == 502
+
+
+def test_sentiment_timeouts_fit_inside_the_120s_ceiling():
+    s = Settings()
+    assert s.route_timeout_s + s.sentiment_a2a_timeout_s < 120  # ADR-034

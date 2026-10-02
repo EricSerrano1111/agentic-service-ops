@@ -1,5 +1,6 @@
 # Local development stack: Postgres plus the walking skeleton (Sprint 2):
 #   orchestrator --A2A--> agent_reporting --MCP--> mcp_incidents --SQL--> postgres
+#   orchestrator --A2A--> agent_sentiment --MCP--> mcp_feedback  --SQL--> postgres
 #
 # Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint 5
 # (ADR-007), because an always-on managed instance would consume roughly a third of
@@ -12,8 +13,9 @@
 # Credentials: every value comes from .env by interpolation; nothing secret is written
 # here. No service uses env_file, so each container sees only the variables listed
 # under it. Only the MCP servers get database credentials, each only its own role's:
-# mcp_incidents app_reporting's, mcp_feedback app_sentiment's (ADR-023). Only the orchestrator and agent_reporting get the Gemini key, the free one:
-# LLM_MODE is pinned to free and the paid key is never passed (ADR-048).
+# mcp_incidents app_reporting's, mcp_feedback app_sentiment's (ADR-023). Only the
+# orchestrator and the two agents get the Gemini key, the free one: LLM_MODE is pinned
+# to free and the paid key is never passed (ADR-048).
 # tests/unit/test_compose_isolation.py asserts all of this.
 #
 # Ports: only the orchestrator publishes a host port among the application services.
@@ -130,12 +132,43 @@ services:
       retries: 10
       start_period: 5s
 
+  agent_sentiment:
+    build:
+      context: .
+      dockerfile: services/agent_sentiment/Dockerfile
+    # No database credentials: it reaches data only through mcp_feedback, and its one
+    # LLM call (the parse) sees the question, never a customer comment (ADR-068).
+    environment:
+      MCP_FEEDBACK_URL: http://mcp_feedback:8102/mcp
+      MCP_TIMEOUT_S: ${SENTIMENT_MCP_TIMEOUT_S:-45}
+      PARSE_TIMEOUT_S: ${PARSE_TIMEOUT_S:-30}
+      REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:?set GOOGLE_AI_API_KEY in .env}
+      GEMINI_MODEL_SPECIALIST: ${GEMINI_MODEL_SPECIALIST:?set GEMINI_MODEL_SPECIALIST in .env}
+      LLM_MODE: free
+      AGENT_SENTIMENT_PUBLIC_URL: http://agent_sentiment:8002/
+      AGENT_SENTIMENT_PORT: "8002"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    expose:
+      - "8002"
+    depends_on:
+      mcp_feedback:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   orchestrator:
     build:
       context: .
       dockerfile: services/orchestrator/Dockerfile
     environment:
       AGENT_REPORTING_URL: http://agent_reporting:8001
+      AGENT_SENTIMENT_URL: http://agent_sentiment:8002
+      SENTIMENT_A2A_TIMEOUT_S: ${SENTIMENT_A2A_TIMEOUT_S:-85}
       ROUTE_TIMEOUT_S: ${ROUTE_TIMEOUT_S:-30}
       A2A_TIMEOUT_S: ${A2A_TIMEOUT_S:-60}
       REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
@@ -148,6 +181,8 @@ services:
       - "${ORCHESTRATOR_PORT:-8000}:8000"
     depends_on:
       agent_reporting:
+        condition: service_healthy
+      agent_sentiment:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
