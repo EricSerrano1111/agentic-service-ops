@@ -74,6 +74,7 @@ members = [
     "packages/common",
     "packages/schemas",
     "packages/llm",
+    "packages/forecast_runtime",
     "services/mcp_incidents",
     "services/mcp_feedback",
     "services/agent_reporting",
