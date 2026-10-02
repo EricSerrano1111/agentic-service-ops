@@ -66,9 +66,9 @@
 | 052 | Thinking level follows the model called: each model's supported levels in `prices.toml`, default the lowest, a per-role override only if supported | Accepted — supersedes ADR-049 in part |
 | 053 | Routing prompt `route_v2`: forecast covers forward-looking questions about the operation, not only request volume | Accepted |
 | 054 | Routing prompt `route_v3`: the as-of date is given to the router as today's date; every routing eval reports k=3 runs | Accepted |
-| 055 | The orchestrator owns the QA loop; QA verifies with its own SQL, per-agent answer-time scope | Accepted — supersedes ADR-003 and ADR-022 in part |
+| 055 | The orchestrator owns the QA loop; QA verifies with its own SQL, per-agent answer-time scope | Accepted — supersedes ADR-003 and ADR-022 in part; superseded in part by ADR-069 |
 | 056 | QA checks numbers without a model and interpretation with one LLM call; Pro QA comparison optional | Accepted |
-| 057 | Forecast evaluation: 26-week headline holdout plus rolling-origin folds over the Q4 peaks | Accepted |
+| 057 | Forecast evaluation: 26-week headline holdout plus rolling-origin folds over the Q4 peaks | Accepted — superseded in part by ADR-069 |
 | 058 | Forecast model form: log-linear trend plus K annual harmonics chosen from data, robust down-weighting, 26-week horizon | Accepted |
 | 059 | Sentiment training: pinned `bert-base-uncased`, stratified split, class weights, calibrated threshold, required TF-IDF baseline | Accepted |
 | 060 | No agent framework; LangGraph removed from the stack | Accepted |
@@ -80,6 +80,7 @@
 | 066 | Sentiment model selection, calibration and review threshold (pre-registered): `lr2e-5_v1` epoch 4 as `bert_v1`, temperature scaling, 99% / 20% review threshold | Accepted |
 | 067 | Sentiment predictions stored and scored on arrival (250-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
 | 068 | Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines | Accepted |
+| 069 | Forecast protocol (pre-registered): folds A and B, headline holdout, intervals, release gate on fold B (MAPE ≤ 30% and no worse than seasonal naive) | Accepted |
 
 ---
 
@@ -2056,3 +2057,37 @@ training grants.
 - Many short-range regional questions will honestly return "no clear change". That is the correct answer at these sample sizes.
 - Sprint 4 QA verifies the trend claim by recomputing the test from `sentiment_predictions`.
 - An account breakdown needs a new grant and its own ADR (ADR-067's alternatives).
+
+### ADR-069 — Forecast protocol (pre-registered): folds, holdout, intervals and release gate
+*Date: 2026-10-02. Extends ADR-057 and ADR-058. Supersedes ADR-055 in part: the release gate is applied on fold B only, not over both folds; and ADR-057 in part: its consequence that the gate threshold is set from both folds. Committed before any forecast code or result exists.*
+
+**Decision:**
+- Series: weekly counts of `service_requests` by `scheduled_datetime`, all statuses, ISO weeks (Monday start, UTC), complete weeks only: 156 weeks from 2023-09-04 to 2026-08-30. Slices: the total and each of the 5 service types, each modelled separately.
+- Model (ADR-058): OLS on log weekly count with an intercept, a linear trend and K sine/cosine pairs (period 52.1775 weeks). K ∈ {0, …, 6} is chosen by AICc on the OLS fit, then refitted at that K with robust regression (Tukey biweight, c = 4.685, MAD scale). The point forecast is the exponentiated fitted log (the median). 80% and 95% intervals come from the robust scale and leverage, on the log scale, then exponentiated. Horizon capped at 26 weeks.
+- Baseline: seasonal naive (the same week 52 weeks earlier).
+- Evaluation windows, each fitted only on weeks before its origin:
+  - Fold A: test 2024-09-02 to 2025-03-02 (26 weeks, over the Q4 2024 peak); about one year of history. Reported, not gated.
+  - Fold B: test 2025-09-01 to 2026-03-01 (26 weeks, over the Q4 2025 peak); about two years of history. Sets the release gate.
+  - Headline holdout: test 2026-03-02 to 2026-08-30 (26 weeks). Scored once per model, recorded in an append-only ledger.
+  The folds end before the holdout begins, so no fold result uses holdout weeks.
+- Metrics: MAPE (primary) and RMSE, overall and by horizon band (1–4, 5–13, 14–26 weeks); interval coverage at 80% and 95%.
+- Release gate (ADR-055): a slice and band passes if, on fold B, the model's MAPE is at most 30% and no higher than seasonal naive's. Failing slice-bands are stored as failing; QA refuses forecast answers for them and shows the error.
+- "Beats the baseline" (the Sprint 3 goal): lower MAPE than seasonal naive on the headline holdout, total slice.
+- Production model `volume_v1`: refitted on all complete weeks for every slice. Its manifest carries the fold B error table and the gate verdicts.
+
+**Context:**
+- Fold A's single year of history barely separates trend from season, and the deployed model trains on three years. Gating on fold A would block deployment over a condition the deployed model never faces, so fold A is reported as a stress test.
+- The headline holdout misses the Q4 peak (ADR-057); the folds cover it.
+- Weekly noise is about 10.6% effective (ADR-038), so about 8–9% MAPE is the floor on the total. Service-type slices have fewer requests a week and noisier counts. The 30% ceiling is the owner's operational judgment: a forecast whose average weekly error is within 30% is still usable for coarse, service-type-level staffing on messy operational data. MAPE is an average error, not a confidence level; how often the true value falls inside the forecast range is measured separately, by interval coverage. The ceiling is deliberately loose, so the binding condition for most slices is expected to be beating seasonal naive.
+- Robust down-weighting uses only residuals, never the generator's anomaly list (ADR-058).
+
+**Alternatives considered:**
+- *Gating on both folds* (rejected). Fold A's history is unrepresentative of deployment.
+- *Fold windows reaching into the holdout* (rejected). They would let fold results use holdout weeks.
+- *Choosing K on holdout or fold error* (rejected). The information criterion keeps selection inside each training window.
+- *A mean forecast with a smearing correction* (rejected for now). The median is the natural point for a log model, and operators read it as "typical week".
+
+**Consequences:**
+- Some service-type slices may fail the gate; their forecasts are not served.
+- Interval coverage is reported, not gated.
+- Changing any choice above after results means a new ADR and a new model version.
