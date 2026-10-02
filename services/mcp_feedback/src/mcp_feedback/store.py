@@ -108,7 +108,7 @@ class SqlStore:
             select(_f.c.feedback_id, _f.c.feedback_text)
             .select_from(_feedback_with_region())
             .where(_in_scope(scope), ~has_prediction)
-            .order_by(_f.c.submitted_at, _f.c.feedback_id)
+            .order_by(_f.c.submitted_at.desc(), _f.c.feedback_id.desc())
             .limit(limit)
         )
         with self.engine.connect() as conn:

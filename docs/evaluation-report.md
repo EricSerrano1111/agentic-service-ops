@@ -346,13 +346,14 @@ build are appended here as they are found (CLAUDE.md).
   not mean "correct", so QA should not treat un-flagged sentiment results as verified.
 - **Recorded in:** ADR-066; `evals/results/sentiment/2026-10-01_bert_v1/bert_v1.test.metrics.json`.
 
-### L-33 — Answers above the on-demand cap are partial, and skew old (2026-10-01)
+### L-33 — Answers above the on-demand cap are partial and leave out the oldest comments (2026-10-01)
 - **What:** When a range holds more than 250 comments without a stored prediction,
-  `mcp_feedback` scores the 250 oldest and answers over the scored subset, with
-  `complete: false` (ADR-067). Oldest-first means a partial monthly or quarterly trend
-  covers its early buckets and omits its latest, which is the part a "trending down?"
-  question cares about most. Observed: before the backfill, 2025 Q4 answered over 300 of
-  736 comments (cap 300 at the time).
+  `mcp_feedback` scores the 250 newest and answers over the scored subset, with
+  `complete: false` (ADR-067). A partial answer leaves out the oldest comments in range, so
+  a monthly or quarterly trend can lack its earliest buckets, or show them thinly, and
+  compare the latest period against an incomplete baseline. Observed: before the
+  backfill, 2025 Q4 answered over 300 of 736 comments (at the time, cap 300 and
+  oldest-first).
 - **Why accepted:** Scoring on arrival plus the backfill keeps stored coverage complete
   in normal operation, so a partial answer means un-backfilled data. The agent must state
   the coverage (4b), and QA can check `n_scored` against `n_comments`.

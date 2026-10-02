@@ -10,7 +10,7 @@ Tools (ADR-067):
   No comment text.
 - `get_feedback_examples`: at most 5 comments with text, for citation.
 
-Both score unscored comments in range first (at most the cap, oldest first) and report
+Both score unscored comments in range first (at most the cap, newest first) and report
 coverage: `n_comments`, `n_scored`, `complete`.
 """
 
@@ -202,7 +202,7 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
         Counts and shares by label (positive, neutral, negative, mixed), the number of
         comments flagged for human review (low model confidence), and counts per month or
         quarter. Answers from stored model predictions; comments in range without one are
-        scored first, at most 250 per call, oldest first. If `complete` is false, the
+        scored first, at most 250 per call, newest first. If `complete` is false, the
         figures cover only `n_scored` of `n_comments` and must be reported that way.
         No comment text.
         """

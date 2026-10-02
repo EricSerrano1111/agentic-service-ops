@@ -481,7 +481,7 @@ agentic-service-ops/
 │   │                  # group_by account | region | service_type | technician; rates as Decimal strings)
 │   ├── mcp_feedback/ # sentiment from stored bert_v1 predictions, own DB role (app_sentiment; ADR-062, ADR-067).
 │   │                 # Tools: get_sentiment_summary, get_feedback_examples. Unscored comments are
-│   │                 # scored on demand (cap 250, oldest first); backfill.py scores the rest.
+│   │                 # scored on demand (cap 250, newest first); backfill.py scores the rest.
 │   │                 # Model loads on first need; artifact hashes are verified at start-up.
 │   ├── mcp_volume/ # runs forecast inference (ADR-062)
 │   └── api_gateway/ # FastAPI BFF for the UI

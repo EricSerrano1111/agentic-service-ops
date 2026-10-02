@@ -167,7 +167,7 @@ async def test_a_second_call_inserts_nothing(connect_as: ConnectAs, sentiment_se
     assert second.structured_content == first.structured_content
 
 
-async def test_above_the_cap_the_oldest_are_stored(
+async def test_above_the_cap_the_newest_are_stored(
     connect_as: ConnectAs, sentiment_settings, version
 ):
     backend, _ = _backend(sentiment_settings, version, cap=50)
@@ -180,10 +180,12 @@ async def test_above_the_cap_the_oldest_are_stored(
     eval_conn = connect_as(ROLE_EVAL)
     (n,) = eval_conn.execute(COUNT_COMMENTS, _params(start, end, None)).fetchone()
     assert (s["n_comments"], s["n_scored"], s["complete"]) == (n, 50, False)
-    oldest = [
+    newest = [
         r[0]
         for r in eval_conn.execute(
-            "SELECT f.feedback_id " + IN_SCOPE + " ORDER BY f.submitted_at, f.feedback_id LIMIT 50",
+            "SELECT f.feedback_id "
+            + IN_SCOPE
+            + " ORDER BY f.submitted_at DESC, f.feedback_id DESC LIMIT 50",
             _params(start, end, None),
         )
     ]
@@ -193,7 +195,7 @@ async def test_above_the_cap_the_oldest_are_stored(
             "SELECT feedback_id FROM sentiment_predictions WHERE model_version = %s", (version,)
         )
     )
-    assert stored == sorted(oldest)
+    assert stored == sorted(newest)
 
 
 @pytest.mark.parametrize("flagged_only", [False, True])

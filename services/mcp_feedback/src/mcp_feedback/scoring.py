@@ -2,7 +2,7 @@
 
 `ensure_scored` is internal, never a tool: before a tool answers, it scores the comments
 in range that have no prediction for the current model version, at most `cap` of them
-(oldest first), and stores them with `ON CONFLICT DO NOTHING`. The tools then answer
+(newest first), and stores them with `ON CONFLICT DO NOTHING`. The tools then answer
 from stored predictions only.
 
 The database sits behind `Store`, so this logic is tested offline with an in-memory
@@ -76,7 +76,7 @@ class Store(Protocol):
     def count_scored(self, version: str, scope: Scope) -> int: ...
 
     def unscored(self, version: str, scope: Scope, limit: int) -> list[tuple[int, str]]:
-        """(feedback_id, text) without a prediction for `version`, oldest first."""
+        """(feedback_id, text) without a prediction for `version`, newest first."""
         ...
 
     def insert(self, version: str, rows: Sequence[tuple[int, Prediction]]) -> int:
@@ -101,7 +101,11 @@ class Coverage:
 def ensure_scored(
     store: Store, classifier: Classifier, version: str, scope: Scope, cap: int
 ) -> Coverage:
-    """Score up to `cap` unscored comments in scope, oldest first; report coverage."""
+    """Score up to `cap` unscored comments in scope, newest first; report coverage.
+
+    Newest first: in a live system the unscored comments are the most recent, and the
+    latest period is what an operations question most needs (ADR-067).
+    """
     n_comments = store.count_comments(scope)
     todo = store.unscored(version, scope, cap)
     n_new = 0

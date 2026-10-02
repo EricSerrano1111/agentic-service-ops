@@ -93,7 +93,7 @@ class MemoryStore:
 
     def unscored(self, version, scope, limit):
         todo = [c for c in self._in(scope) if (c[0], version) not in self.predictions]
-        todo.sort(key=lambda c: (c[1], c[0]))
+        todo.sort(key=lambda c: (c[1], c[0]), reverse=True)
         return [(c[0], c[3]) for c in todo[:limit]]
 
     def insert(self, version, rows):
@@ -150,15 +150,24 @@ def test_at_most_the_cap_everything_is_scored_and_complete():
     assert clf.calls == [300]
 
 
-def test_above_the_cap_the_oldest_are_scored_and_coverage_is_partial():
+def test_above_the_cap_the_newest_are_scored_and_coverage_is_partial():
     rows = comments(301)
     store = MemoryStore(rows)
     cov = ensure_scored(store, StubClassifier(), V1, SCOPE, 300)
     assert (cov.n_comments, cov.n_scored, cov.complete) == (301, 300, False)
-    newest = max(rows, key=lambda c: c[1])
-    assert (newest[0], V1) not in store.predictions  # the newest is the one left out
+    oldest = min(rows, key=lambda c: c[1])
+    assert (oldest[0], V1) not in store.predictions  # the oldest is the one left out
+    newest = sorted(rows, key=lambda c: c[1], reverse=True)[:300]
+    assert {(c[0], V1) for c in newest} == set(store.predictions)
     again = ensure_scored(store, StubClassifier(), V1, SCOPE, 300)
     assert (again.n_scored, again.complete, again.n_new) == (301, True, 1)
+
+
+def test_ties_on_submitted_at_go_to_the_highest_id():
+    rows = [(i, T0, "west", "neutral 0.9") for i in (5, 9, 7)]
+    store = MemoryStore(rows)
+    ensure_scored(store, StubClassifier(), V1, SCOPE, 2)
+    assert set(store.predictions) == {(9, V1), (7, V1)}
 
 
 def test_a_second_call_scores_nothing():
