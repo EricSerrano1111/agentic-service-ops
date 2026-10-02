@@ -1,0 +1,195 @@
+{
+  "evidence": "observed",
+  "rule": "fold B, per slice and band: model MAPE <= 30% and <= seasonal naive MAPE (ADR-069)",
+  "ceiling_mape": 30.0,
+  "anomaly_periods": {
+    "volume_drop": [
+      "2024-06-10",
+      "2024-06-23"
+    ],
+    "regional_drop": [
+      "2025-02-17",
+      "2025-03-02"
+    ],
+    "billing_surcharge": [
+      "2025-06-30",
+      "2025-07-20"
+    ]
+  },
+  "slices": {
+    "total": {
+      "1-4": {
+        "model_mape": 11.940566926801848,
+        "naive_mape": 4.314935549163737,
+        "model_rmse": 18.513496017432324,
+        "naive_rmse": 6.5,
+        "pass": false,
+        "reasons": [
+          "MAPE 11.94% above seasonal naive's 4.31%"
+        ]
+      },
+      "5-13": {
+        "model_mape": 5.483636544453973,
+        "naive_mape": 12.948099989709252,
+        "model_rmse": 11.282539462364502,
+        "naive_rmse": 24.747614924360782,
+        "pass": true,
+        "reasons": []
+      },
+      "14-26": {
+        "model_mape": 11.917177884315317,
+        "naive_mape": 10.930622609337307,
+        "model_rmse": 18.38493790659301,
+        "naive_rmse": 20.86402866916388,
+        "pass": false,
+        "reasons": [
+          "MAPE 11.92% above seasonal naive's 10.93%"
+        ]
+      }
+    },
+    "inspection": {
+      "1-4": {
+        "model_mape": 31.861169164072024,
+        "naive_mape": 29.83173076923077,
+        "model_rmse": 5.067742272188806,
+        "naive_rmse": 6.123724356957945,
+        "pass": false,
+        "reasons": [
+          "MAPE 31.86% above the 30% ceiling",
+          "MAPE 31.86% above seasonal naive's 29.83%"
+        ]
+      },
+      "5-13": {
+        "model_mape": 23.36097639219504,
+        "naive_mape": 28.1650394693873,
+        "model_rmse": 5.3387472457936775,
+        "naive_rmse": 6.879922480183431,
+        "pass": true,
+        "reasons": []
+      },
+      "14-26": {
+        "model_mape": 28.242376292082476,
+        "naive_mape": 18.849603313166067,
+        "model_rmse": 6.2865718852958805,
+        "naive_rmse": 5.609058607425889,
+        "pass": false,
+        "reasons": [
+          "MAPE 28.24% above seasonal naive's 18.85%"
+        ]
+      }
+    },
+    "install": {
+      "1-4": {
+        "model_mape": 26.022002974208792,
+        "naive_mape": 23.3446519524618,
+        "model_rmse": 6.015254762322936,
+        "naive_rmse": 6.819090848492928,
+        "pass": false,
+        "reasons": [
+          "MAPE 26.02% above seasonal naive's 23.34%"
+        ]
+      },
+      "5-13": {
+        "model_mape": 18.757468765059958,
+        "naive_mape": 30.00262487762488,
+        "model_rmse": 6.9358876988493385,
+        "naive_rmse": 11.921036494831778,
+        "pass": true,
+        "reasons": []
+      },
+      "14-26": {
+        "model_mape": 21.915488161286817,
+        "naive_mape": 23.293724809193034,
+        "model_rmse": 5.142410613056359,
+        "naive_rmse": 6.569158709747097,
+        "pass": true,
+        "reasons": []
+      }
+    },
+    "maintenance": {
+      "1-4": {
+        "model_mape": 34.22555191800111,
+        "naive_mape": 25.637065637065636,
+        "model_rmse": 11.535452015297338,
+        "naive_rmse": 8.514693182963201,
+        "pass": false,
+        "reasons": [
+          "MAPE 34.23% above the 30% ceiling",
+          "MAPE 34.23% above seasonal naive's 25.64%"
+        ]
+      },
+      "5-13": {
+        "model_mape": 15.512671949146972,
+        "naive_mape": 26.201990616673154,
+        "model_rmse": 5.809007932583918,
+        "naive_rmse": 11.32843031197762,
+        "pass": true,
+        "reasons": []
+      },
+      "14-26": {
+        "model_mape": 20.21491182539957,
+        "naive_mape": 23.56007749208236,
+        "model_rmse": 6.653848235319163,
+        "naive_rmse": 8.334358911250371,
+        "pass": true,
+        "reasons": []
+      }
+    },
+    "repair": {
+      "1-4": {
+        "model_mape": 7.7268375506757465,
+        "naive_mape": 23.11570827489481,
+        "model_rmse": 5.131581051251558,
+        "naive_rmse": 12.893796958227627,
+        "pass": true,
+        "reasons": []
+      },
+      "5-13": {
+        "model_mape": 10.64797345606545,
+        "naive_mape": 18.36793099305999,
+        "model_rmse": 7.401723543526355,
+        "naive_rmse": 12.7148207485071,
+        "pass": true,
+        "reasons": []
+      },
+      "14-26": {
+        "model_mape": 20.63651861850779,
+        "naive_mape": 17.491257037142603,
+        "model_rmse": 9.748041703996966,
+        "naive_rmse": 11.045361017187261,
+        "pass": false,
+        "reasons": [
+          "MAPE 20.64% above seasonal naive's 17.49%"
+        ]
+      }
+    },
+    "upgrade": {
+      "1-4": {
+        "model_mape": 71.71248888400434,
+        "naive_mape": 77.54524886877829,
+        "model_rmse": 5.903163619843276,
+        "naive_rmse": 6.284902544988268,
+        "pass": false,
+        "reasons": [
+          "MAPE 71.71% above the 30% ceiling"
+        ]
+      },
+      "5-13": {
+        "model_mape": 16.588518686097377,
+        "naive_mape": 29.95653704804032,
+        "model_rmse": 4.205140228632378,
+        "naive_rmse": 6.904105059069326,
+        "pass": true,
+        "reasons": []
+      },
+      "14-26": {
+        "model_mape": 13.726449436651562,
+        "naive_mape": 26.57412811785569,
+        "model_rmse": 3.9640970892822023,
+        "naive_rmse": 5.233031185136907,
+        "pass": true,
+        "reasons": []
+      }
+    }
+  }
+}
