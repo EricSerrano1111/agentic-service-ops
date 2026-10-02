@@ -1,0 +1,41 @@
+{
+  "evidence": "observed",
+  "role": "app_eval",
+  "reads": "sentiment_predictions only; no label column; test not scored; ledger untouched",
+  "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+  "manifest_sha256_in_3b_predictions_meta": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+  "versions_in_table": [
+    [
+      "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+      7521
+    ]
+  ],
+  "reproducibility": {
+    "reference": "evals/results/sentiment/2026-10-01_bert_v1/bert_v1.predictions.csv (split=test)",
+    "n_test": 1128,
+    "missing_from_store": 0,
+    "predicted_label_matches": 1128,
+    "flagged_matches": 1128,
+    "max_abs_confidence_difference": 5e-05,
+    "note": "stored confidence is NUMERIC(5,4); reference c_* is 6 decimals",
+    "mismatches": [],
+    "passed": true
+  },
+  "totals": {
+    "n_comments": 7521,
+    "n_stored": 7521,
+    "by_label": {
+      "negative": 1464,
+      "mixed": 601,
+      "positive": 3771,
+      "neutral": 1685
+    },
+    "flagged": 54,
+    "flagged_by_label": {
+      "negative": 11,
+      "mixed": 8,
+      "positive": 33,
+      "neutral": 2
+    }
+  }
+}

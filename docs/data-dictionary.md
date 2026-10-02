@@ -221,6 +221,24 @@ Post-visit customer survey responses. **New on review.** This is the sentiment a
 
 ---
 
+### `sentiment_predictions` (derived — ADR-067)
+**Operational and derived, not ground truth.** What the deployed sentiment model said about each comment, stored so answers come from a table rather than per-request inference. One row per comment per model version. Written only by `mcp_feedback` as `app_sentiment` (INSERT, never UPDATE or DELETE): scored on arrival when a question first covers a comment, or by the one-off backfill.
+
+How it differs from `sentiment_labels` (§4): a label is the generator's answer key, assigned before any model saw the text and read only offline; a prediction is the model's opinion, read at runtime to answer questions and by QA to recompute them. The two are never joined at runtime, and `app_train` cannot read predictions, so the model never trains on its own output.
+
+| Column | Type | Description |
+|---|---|---|
+| `feedback_id` | BIGINT, FK → service_feedback, ON DELETE CASCADE; PK part | The comment. A regeneration clears this table in the same TRUNCATE as `service_feedback` (`load.py`) |
+| `model_version` | VARCHAR(64); PK part | SHA-256 of the committed artifact manifest (`ml/sentiment/artifacts/bert_v1.manifest.json`), so a new model or a new T or τ is a new version, never an overwrite |
+| `predicted_label` | ENUM (`positive`, `neutral`, `negative`, `mixed`) | The same vocabulary as `sentiment_labels.true_sentiment` |
+| `confidence` | NUMERIC(5,4), CHECK 0–1 | Calibrated probability of the predicted class, softmax(logits / T) (ADR-066), rounded to 4 places |
+| `flagged` | BOOLEAN | `confidence < τ` for this version, decided before rounding: routed to human review (ADR-066) |
+| `scored_at` | TIMESTAMPTZ, default now() | When the prediction was stored |
+
+Primary key (`feedback_id`, `model_version`).
+
+---
+
 ## 4. Ground-Truth Tables (generator/eval only — not part of the operational schema)
 
 ### `generation_parameters`
@@ -401,20 +419,21 @@ Role names are `app_*` (the `role_*` labels used in earlier drafts of this table
 |---|---|---|---|---|---|---|---|
 | `accounts` | SELECT | — | — | SELECT | ALL | SELECT | — |
 | `contacts` | — | — | — | — | ALL | — | — |
-| `locations` | SELECT | — | — | SELECT | ALL | SELECT | — |
+| `locations` | SELECT | SELECT (columns)⁶ | — | SELECT | ALL | SELECT | — |
 | `technicians` | SELECT | — | — | SELECT | ALL | SELECT | — |
 | `technician_skills` | SELECT | — | — | SELECT | ALL | SELECT | — |
 | `internal_users` | — | — | — | — | ALL | — | — |
-| `service_requests` | SELECT | — | SELECT (columns)³ | SELECT | ALL | SELECT | SELECT (columns)⁵ |
+| `service_requests` | SELECT | SELECT (columns)⁶ | SELECT (columns)³ | SELECT | ALL | SELECT | SELECT (columns)⁵ |
 | `archived_requests` | SELECT | — | — | SELECT | ALL | SELECT | — |
 | `incidents` | SELECT | **—** | — | SELECT | ALL | SELECT | **—** |
 | `service_feedback` | SELECT (aggregate)¹ | SELECT (columns)² | — | SELECT | ALL | SELECT | SELECT (columns)⁴ |
 | `sentiment_labels` | — | **—** | — | **—** | ALL | SELECT | SELECT |
 | `generation_parameters` | — | — | — | **—** | ALL | SELECT | **—** |
+| `sentiment_predictions` | — | SELECT, INSERT⁷ | — | SELECT | ALL | SELECT | **—** |
 
 ¹ Postgres has no aggregate-only privilege. This is implemented as a **column-level** `GRANT SELECT` covering every column of `service_feedback` **except `feedback_text`**, so the reporting agent can count and average ratings but is structurally unable to read a customer's raw words. See ADR-025.
 
-² A **column-level** `GRANT SELECT` on exactly `feedback_id`, `request_id`, `submitted_at` and `feedback_text`: the text to classify, an identifier to report against, and the timestamp `get_feedback_batch(date_range, …)` filters on. **`rating` is withheld** because it is the QA agent's independent cross-check on sentiment classification (R-04); a sentiment agent that can see the stars is no longer being checked independently. See ADR-027, which supersedes ADR-025's table-level grant here.
+² A **column-level** `GRANT SELECT` on exactly `feedback_id`, `request_id`, `submitted_at` and `feedback_text`: the text to classify, an identifier to report against, and the timestamp the sentiment tools filter on (`get_sentiment_summary` and `get_feedback_examples`, which replaced `get_feedback_batch`; ADR-067). **`rating` is withheld** because it is the QA agent's independent cross-check on sentiment classification (R-04); a sentiment agent that can see the stars is no longer being checked independently. See ADR-027, which supersedes ADR-025's table-level grant here.
 
 ³ A **column-level** `GRANT SELECT` on exactly `request_id`, `scheduled_datetime` and `service_type`. That is all the univariate forecast needs (ADR-018): a weekly count by `scheduled_datetime`, optionally broken out by `service_type`, with an identifier to count against. Billing and payment fields, cancellation detail, and every account, contact and technician identifier are withheld, and the forecast role has no access to `accounts`, `locations` or `archived_requests`. A breakout beyond `service_type` needs a new grant, migration and ADR. See ADR-035.
 
@@ -422,11 +441,15 @@ Role names are `app_*` (the `role_*` labels used in earlier drafts of this table
 
 ⁵ The same three columns as `app_forecast` (³): `request_id`, `scheduled_datetime`, `service_type`. Training reads exactly what inference reads; with no grant on `generation_parameters`, forecast training can't read the generator's answer key (ADR-058, ADR-063).
 
+⁶ **Column-level** `GRANT SELECT` on `service_requests` (`request_id`, `location_id`) and `locations` (`location_id`, `region`): exactly the join from a comment to its site's region, which FR-07's regional questions need. No `account_id`, no `state`, no `accounts`; region carries no personal information and no staff-written text (ADR-067).
+
+⁷ The only write any runtime role holds: `app_sentiment` may INSERT its own predictions (with `ON CONFLICT DO NOTHING`) and read them back, but holds no UPDATE or DELETE, so the server can't rewrite a stored prediction. `app_qa` and `app_eval` read it; `app_train` can't (ADR-067).
+
 **Offline roles.** `app_eval` (validation and evaluation) and `app_train` (training) are read-only roles used only by offline scripts on the developer machine. No deployed service, compose service or Dockerfile ever holds their credentials; `tests/unit/test_offline_roles_isolation.py` fails if one references `DB_ROLE_EVAL_*` or `DB_ROLE_TRAIN_*`. `app_eval` holds what `app_qa` held before ADR-063, gold labels and generator parameters included; `app_qa` no longer reads either (ADR-055, ADR-063). Grants control tables and columns, not rows, so `app_train` could still read the test split's labels: split integrity rests on a split fixed and committed before training, and on review (L-25).
 
 **Implementation:** this matrix is executable, not prose — `packages/db_models/src/db_models/access_matrix.py` is the authority for what is granted. `tests/unit/test_access_matrix.py` asserts it says what this table says, and `tests/integration/test_access_matrix_grants.py` asserts the migrated database grants exactly that, reads and writes both. Migrations carry frozen literal copies of the grants they applied rather than importing the module (ADR-027), so every grant change is a new migration. The roles migration additionally revokes the Postgres `PUBLIC` defaults (ADR-025), which this table does not cover.
 
-Seven things this matrix enforces that a code convention wouldn't:
+Nine things this matrix enforces that a code convention wouldn't:
 
 1. **The sentiment agent cannot read `sentiment_labels`.** Circular self-verification becomes structurally impossible, not just discouraged.
 2. **The sentiment agent cannot read `incidents`.** Staff-written notes can never leak into the sentiment pipeline.
@@ -435,6 +458,8 @@ Seven things this matrix enforces that a code convention wouldn't:
 5. **The forecast agent cannot read billing or any customer or technician identifier.** It sees three columns of `service_requests` and nothing else (ADR-035).
 6. **The runtime QA role cannot read gold labels or generator parameters.** `app_qa` has no grant on `sentiment_labels` or `generation_parameters`; answers in a real deployment have no gold labels, so QA never checks against them (ADR-055, ADR-063).
 7. **Training cannot read `rating` or `generation_parameters`.** `app_train` reads the labels and exactly the columns the runtime models read, so neither leakage rule rests on convention (ADR-027, ADR-058, ADR-063).
+8. **Training cannot read `sentiment_predictions`.** The model never trains on its own output (ADR-067).
+9. **The only runtime write is `app_sentiment`'s INSERT into `sentiment_predictions`.** No UPDATE or DELETE, and no other table; every other runtime role is read-only (ADR-067).
 
 Note that `app_qa` is deliberately broad: verification requires cross-checking sources the specialists can't see. That's the point — but it also makes the QA agent the highest-value target in the system, which is worth one paragraph in the threat model.
 
@@ -469,6 +494,11 @@ Worth writing as actual DB constraints where possible, and as QA-agent checks wh
 **Generator-validation check, run as `app_eval`** (moved from the QA list by ADR-063: it concerns how the data was generated, not any answer, and the runtime QA role can't read `sentiment_labels`):
 - Every `service_feedback` row has a corresponding `sentiment_labels` row
 
+**Derived-table invariants (`sentiment_predictions`, ADR-067):**
+- At most one prediction per comment per model version: the primary key (`feedback_id`, `model_version`) enforces it
+- `flagged` equals `confidence < τ` for that version's τ (from its manifest). The flag is decided on the unrounded probability, so a stored `confidence` within 0.00005 of τ can sit on the other side of τ after rounding; QA checks the rule with that tolerance
+- `predicted_label` is the class with the highest calibrated probability, and `confidence` is that probability (CHECK 0–1)
+
 The QA-agent invariants double as your data-generator validation suite (`validate.py` runs them all, as `app_eval`). Run it immediately after generation in Sprint 1 — finding a broken invariant in Sprint 4 means regenerating and redoing every downstream measurement.
 
 ---
@@ -497,13 +527,13 @@ All seven open questions resolved. Recorded here so the reasoning survives into 
 | 7 | **Enums locked; `upgrade` added to `service_type`; VARCHAR+CHECK implementation** | Hardware refresh is a real category with its own seasonality; CHECK constraints avoid painful enum migrations |
 | 8 | **Severity influences sentiment, with noise** | No leakage path given a univariate forecast; the correlation is what makes the synthetic world coherent |
 
-### DDL status — **implemented** (2026-09-20; current through Alembic head `95a2f308a9cd`, 2026-10-01)
+### DDL status — **implemented** (2026-09-20; current through Alembic head `3d7e1a9c5b20`, 2026-10-01)
 
-The schema in this document is now implemented in code. Migration chain: `0f3c81a47b21` → `7d54e0c9a318` → `1ee8342c81a7` → `fae4b8c9814c` → `4c6589542b27` → `9135d8de9f27` → `ab53ceceeffe` → `95a2f308a9cd` (head).
+The schema in this document is now implemented in code. Migration chain: `0f3c81a47b21` → `7d54e0c9a318` → `1ee8342c81a7` → `fae4b8c9814c` → `4c6589542b27` → `9135d8de9f27` → `ab53ceceeffe` → `95a2f308a9cd` → `3d7e1a9c5b20` (head).
 
 | Artifact | Location |
 |---|---|
-| SQLAlchemy models (all 12 tables) | `packages/db_models/src/db_models/` |
+| SQLAlchemy models (all 13 tables) | `packages/db_models/src/db_models/` |
 | Controlled vocabularies | `packages/db_models/src/db_models/enums.py` |
 | §7 access matrix, as data | `packages/db_models/src/db_models/access_matrix.py` |
 | Initial migration — tables, constraints, §9 indexes (`0f3c81a47b21`) | `data/migrations/versions/*_initial_schema.py` |
@@ -514,6 +544,7 @@ The schema in this document is now implemented in code. Migration chain: `0f3c81
 | `generation_parameters.param_group` gains `world` and `feedback` (ADR-038, `9135d8de9f27`) | `data/migrations/versions/*_param_group_world_and_feedback.py` |
 | `locations.region`, the customer site's region (ADR-051, `ab53ceceeffe`) | `data/migrations/versions/*_locations_region.py` |
 | Offline read roles `app_eval` and `app_train`; `sentiment_labels` and `generation_parameters` revoked from `app_qa` (ADR-063, `95a2f308a9cd`) | `data/migrations/versions/*_offline_read_roles.py` |
+| `sentiment_predictions`; `app_sentiment` INSERT on it plus region column grants; SELECT for `app_qa` and `app_eval` (ADR-067, `3d7e1a9c5b20`) | `data/migrations/versions/*_sentiment_predictions_and_region_access.py` |
 | Contract tests | `tests/unit/` |
 | Live grant tests (reads and writes, per role; run in CI) | `tests/integration/` |
 | Generator, loader and validation (ADR-042, ADR-043); dataset loaded 2026-09-25 | `data/generator/` |

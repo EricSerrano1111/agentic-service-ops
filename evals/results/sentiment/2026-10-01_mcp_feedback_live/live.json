@@ -1,0 +1,540 @@
+{
+  "evidence": "observed",
+  "runs": [
+    {
+      "step": "2a largest region-quarter, cold (lazy load + scoring)",
+      "tool": "get_sentiment_summary",
+      "args": {
+        "start": "2026-04-01",
+        "end": "2026-06-30",
+        "region": "northeast"
+      },
+      "wall_s": 44.97,
+      "n_comments": 225,
+      "n_scored": 225,
+      "complete": true,
+      "counts": {
+        "positive": 112,
+        "neutral": 51,
+        "negative": 45,
+        "mixed": 17
+      },
+      "shares": {
+        "positive": "0.4978",
+        "neutral": "0.2267",
+        "negative": "0.2000",
+        "mixed": "0.0756"
+      },
+      "flagged_count": 2,
+      "buckets": [
+        [
+          "2026-04",
+          75,
+          {
+            "positive": 36,
+            "neutral": 17,
+            "negative": 18,
+            "mixed": 4
+          },
+          1
+        ],
+        [
+          "2026-05",
+          77,
+          {
+            "positive": 38,
+            "neutral": 18,
+            "negative": 17,
+            "mixed": 4
+          },
+          0
+        ],
+        [
+          "2026-06",
+          73,
+          {
+            "positive": 38,
+            "neutral": 16,
+            "negative": 10,
+            "mixed": 9
+          },
+          1
+        ]
+      ]
+    },
+    {
+      "step": "2b largest region-quarter, stored",
+      "tool": "get_sentiment_summary",
+      "args": {
+        "start": "2026-04-01",
+        "end": "2026-06-30",
+        "region": "northeast"
+      },
+      "wall_s": 0.06,
+      "n_comments": 225,
+      "n_scored": 225,
+      "complete": true,
+      "counts": {
+        "positive": 112,
+        "neutral": 51,
+        "negative": 45,
+        "mixed": 17
+      },
+      "shares": {
+        "positive": "0.4978",
+        "neutral": "0.2267",
+        "negative": "0.2000",
+        "mixed": "0.0756"
+      },
+      "flagged_count": 2,
+      "buckets": [
+        [
+          "2026-04",
+          75,
+          {
+            "positive": 36,
+            "neutral": 17,
+            "negative": 18,
+            "mixed": 4
+          },
+          1
+        ],
+        [
+          "2026-05",
+          77,
+          {
+            "positive": 38,
+            "neutral": 18,
+            "negative": 17,
+            "mixed": 4
+          },
+          0
+        ],
+        [
+          "2026-06",
+          73,
+          {
+            "positive": 38,
+            "neutral": 16,
+            "negative": 10,
+            "mixed": 9
+          },
+          1
+        ]
+      ]
+    },
+    {
+      "step": "3 largest all-accounts quarter, pre-backfill",
+      "tool": "get_sentiment_summary",
+      "args": {
+        "start": "2025-10-01",
+        "end": "2025-12-31"
+      },
+      "wall_s": 43.07,
+      "n_comments": 736,
+      "n_scored": 300,
+      "complete": false,
+      "counts": {
+        "positive": 145,
+        "neutral": 71,
+        "negative": 62,
+        "mixed": 22
+      },
+      "shares": {
+        "positive": "0.4833",
+        "neutral": "0.2367",
+        "negative": "0.2067",
+        "mixed": "0.0733"
+      },
+      "flagged_count": 4,
+      "buckets": [
+        [
+          "2025-10",
+          274,
+          {
+            "positive": 133,
+            "neutral": 62,
+            "negative": 58,
+            "mixed": 21
+          },
+          3
+        ],
+        [
+          "2025-11",
+          26,
+          {
+            "positive": 12,
+            "neutral": 9,
+            "negative": 4,
+            "mixed": 1
+          },
+          1
+        ]
+      ]
+    },
+    {
+      "step": "5a largest all-accounts quarter, post-backfill",
+      "tool": "get_sentiment_summary",
+      "args": {
+        "start": "2025-10-01",
+        "end": "2025-12-31"
+      },
+      "wall_s": 1.03,
+      "n_comments": 736,
+      "n_scored": 736,
+      "complete": true,
+      "counts": {
+        "positive": 361,
+        "neutral": 175,
+        "negative": 145,
+        "mixed": 55
+      },
+      "shares": {
+        "positive": "0.4905",
+        "neutral": "0.2378",
+        "negative": "0.1970",
+        "mixed": "0.0747"
+      },
+      "flagged_count": 4,
+      "buckets": [
+        [
+          "2025-10",
+          274,
+          {
+            "positive": 133,
+            "neutral": 62,
+            "negative": 58,
+            "mixed": 21
+          },
+          3
+        ],
+        [
+          "2025-11",
+          277,
+          {
+            "positive": 137,
+            "neutral": 69,
+            "negative": 53,
+            "mixed": 18
+          },
+          1
+        ],
+        [
+          "2025-12",
+          185,
+          {
+            "positive": 91,
+            "neutral": 44,
+            "negative": 34,
+            "mixed": 16
+          },
+          0
+        ]
+      ]
+    },
+    {
+      "step": "5b six-month West trend, monthly",
+      "tool": "get_sentiment_summary",
+      "args": {
+        "start": "2026-03-01",
+        "end": "2026-08-30",
+        "region": "west",
+        "bucket": "month"
+      },
+      "wall_s": 0.07,
+      "n_comments": 241,
+      "n_scored": 241,
+      "complete": true,
+      "counts": {
+        "positive": 120,
+        "neutral": 59,
+        "negative": 37,
+        "mixed": 25
+      },
+      "shares": {
+        "positive": "0.4979",
+        "neutral": "0.2448",
+        "negative": "0.1535",
+        "mixed": "0.1037"
+      },
+      "flagged_count": 2,
+      "buckets": [
+        [
+          "2026-03",
+          36,
+          {
+            "positive": 21,
+            "neutral": 9,
+            "negative": 5,
+            "mixed": 1
+          },
+          0
+        ],
+        [
+          "2026-04",
+          42,
+          {
+            "positive": 20,
+            "neutral": 15,
+            "negative": 5,
+            "mixed": 2
+          },
+          1
+        ],
+        [
+          "2026-05",
+          49,
+          {
+            "positive": 23,
+            "neutral": 10,
+            "negative": 8,
+            "mixed": 8
+          },
+          0
+        ],
+        [
+          "2026-06",
+          45,
+          {
+            "positive": 22,
+            "neutral": 12,
+            "negative": 8,
+            "mixed": 3
+          },
+          1
+        ],
+        [
+          "2026-07",
+          37,
+          {
+            "positive": 18,
+            "neutral": 9,
+            "negative": 4,
+            "mixed": 6
+          },
+          0
+        ],
+        [
+          "2026-08",
+          32,
+          {
+            "positive": 16,
+            "neutral": 4,
+            "negative": 7,
+            "mixed": 5
+          },
+          0
+        ]
+      ]
+    },
+    {
+      "step": "6a examples negative",
+      "tool": "get_feedback_examples",
+      "args": {
+        "start": "2025-10-01",
+        "end": "2025-12-31",
+        "label": "negative",
+        "limit": 5
+      },
+      "wall_s": 0.1,
+      "n_comments": 736,
+      "n_scored": 736,
+      "complete": true,
+      "examples": [
+        {
+          "feedback_id": 4977,
+          "submitted_at": "2025-10-02T01:09:00Z",
+          "region": "northeast",
+          "label": "negative",
+          "confidence": "0.9953",
+          "flagged": false,
+          "feedback_text": "Waiting three weeks for an access point installation that was supposed to take two days completely stalled our new office rollout and forced us to delay onboarding staff."
+        },
+        {
+          "feedback_id": 5028,
+          "submitted_at": "2025-10-03T19:26:00Z",
+          "region": "northeast",
+          "label": "negative",
+          "confidence": "0.9952",
+          "flagged": false,
+          "feedback_text": "how are we supposed to run the office network when the recent switch upgrade keeps dropping packets every twenty minutes? productivity has taken a massive hit since the team left."
+        },
+        {
+          "feedback_id": 5062,
+          "submitted_at": "2025-10-09T00:33:00Z",
+          "region": "central",
+          "label": "negative",
+          "confidence": "0.9952",
+          "flagged": false,
+          "feedback_text": "How is a critical server repair supposed to happen when the technician shows up three days after the outage was reported? Our team lost an entire business day waiting."
+        },
+        {
+          "feedback_id": 5531,
+          "submitted_at": "2025-12-08T07:29:00Z",
+          "region": "northeast",
+          "label": "negative",
+          "confidence": "0.9952",
+          "flagged": false,
+          "feedback_text": "Showed up three days late for the switch upgrade."
+        },
+        {
+          "feedback_id": 5027,
+          "submitted_at": "2025-10-03T20:52:00Z",
+          "region": "west",
+          "label": "negative",
+          "confidence": "0.9950",
+          "flagged": false,
+          "feedback_text": "How are we supposed to run credit card transactions when the new switch keeps dropping connection every ten minutes after the installation crew left?"
+        }
+      ]
+    },
+    {
+      "step": "6b examples mixed",
+      "tool": "get_feedback_examples",
+      "args": {
+        "start": "2025-10-01",
+        "end": "2025-12-31",
+        "label": "mixed",
+        "limit": 5
+      },
+      "wall_s": 0.05,
+      "n_comments": 736,
+      "n_scored": 736,
+      "complete": true,
+      "examples": [
+        {
+          "feedback_id": 7475,
+          "submitted_at": "2025-10-22T14:34:00Z",
+          "region": "central",
+          "label": "mixed",
+          "confidence": "0.9931",
+          "flagged": false,
+          "feedback_text": "Tech showed up two hours past the scheduled window causing major scheduling issues for our team, but once on site they worked efficiently and resolved the switch failure completely."
+        },
+        {
+          "feedback_id": 5510,
+          "submitted_at": "2025-12-01T16:40:00Z",
+          "region": "central",
+          "label": "mixed",
+          "confidence": "0.9928",
+          "flagged": false,
+          "feedback_text": "Yesterday afternoon the tech finally got our patch panel sorted out and running smoothly, though it took much longer than expected to track down the intermittent port failure."
+        },
+        {
+          "feedback_id": 5076,
+          "submitted_at": "2025-10-11T17:47:00Z",
+          "region": "west",
+          "label": "mixed",
+          "confidence": "0.9926",
+          "flagged": false,
+          "feedback_text": "By the time the tech actually showed up, we were already behind schedule, though once on site the communication regarding what needed to be done with our network switches was handled professionally and clearly."
+        },
+        {
+          "feedback_id": 5277,
+          "submitted_at": "2025-11-05T10:32:00Z",
+          "region": "northeast",
+          "label": "mixed",
+          "confidence": "0.9926",
+          "flagged": false,
+          "feedback_text": "Getting our network switches inspected went smoothly and the office runs fine now, though scheduling the follow-up paperwork took longer than expected."
+        },
+        {
+          "feedback_id": 5116,
+          "submitted_at": "2025-10-17T11:15:00Z",
+          "region": "central",
+          "label": "mixed",
+          "confidence": "0.9925",
+          "flagged": false,
+          "feedback_text": "Earlier today, the technician arrived nearly two hours past our scheduled window, which threw off our entire morning. However, once on site, they handled the switch replacement efficiently and got the network rack completely sorted out without further issues."
+        }
+      ]
+    },
+    {
+      "step": "6c examples flagged_only",
+      "tool": "get_feedback_examples",
+      "args": {
+        "start": "2025-10-01",
+        "end": "2025-12-31",
+        "flagged_only": true,
+        "limit": 5
+      },
+      "wall_s": 0.05,
+      "n_comments": 736,
+      "n_scored": 736,
+      "complete": true,
+      "examples": [
+        {
+          "feedback_id": 5045,
+          "submitted_at": "2025-10-07T05:14:00Z",
+          "region": "northeast",
+          "label": "mixed",
+          "confidence": "0.5820",
+          "flagged": true,
+          "feedback_text": "Initial scheduling mix-up was frustrating, but once the technician arrived for the routine UPS maintenance, they worked efficiently and got everything tested without disrupting our office staff."
+        },
+        {
+          "feedback_id": 5102,
+          "submitted_at": "2025-10-17T00:35:00Z",
+          "region": "central",
+          "label": "positive",
+          "confidence": "0.7037",
+          "flagged": true,
+          "feedback_text": "Though the router failure caused a brief outage, the technician fixed the issue promptly and left the rack area spotless."
+        },
+        {
+          "feedback_id": 5235,
+          "submitted_at": "2025-11-01T08:04:00Z",
+          "region": "central",
+          "label": "positive",
+          "confidence": "0.7270",
+          "flagged": true,
+          "feedback_text": "Downtime during the server upgrade lasted exactly two hours."
+        },
+        {
+          "feedback_id": 5012,
+          "submitted_at": "2025-10-02T14:48:00Z",
+          "region": "southeast",
+          "label": "positive",
+          "confidence": "0.7906",
+          "flagged": true,
+          "feedback_text": "prior to the scheduled start time, the crew arrived ready to deploy the new wireless access points across our office floor."
+        }
+      ]
+    }
+  ],
+  "cold_start": {
+    "compose_up_returned_s": 2.2,
+    "ready_s": 14.89,
+    "healthz": {
+      "status": "ok",
+      "service": "mcp_feedback",
+      "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad"
+    },
+    "measured": "host: from `docker compose up -d` to first 200 on /healthz"
+  },
+  "cold_start_second_observation": {
+    "ready_s": 29.36,
+    "measured": "host: from `docker compose up -d` to first 200 on /healthz, image 348e8d6",
+    "note": "first start after a Windows restart: hashing the 438 MB weights through the Windows bind mount on a cold file cache"
+  },
+  "backfill": {
+    "step": "4",
+    "command": "docker compose run --rm mcp_feedback python -m mcp_feedback.backfill",
+    "image": "338e9b8 (batch 16, cap 300 per chunk)",
+    "inserted": 6996,
+    "n_scored": 7521,
+    "n_comments": 7521,
+    "complete": true,
+    "total_s": 856.6,
+    "source": "the container's `backfill done` log line, captured in a host-side redirect; the container was --rm and its docker logs were gone. Corroborated by scored_at: 6,996 rows between 23:55:17.8 and 00:09:58.1 UTC (880.3 s, model load included).",
+    "host_wall_s": null,
+    "host_wall_note": "not recorded: Claude Code stopped the host shell for low memory; the container ran on"
+  },
+  "notes": [
+    "Steps 1-3 ran on the image built from eaf8329, before 338e9b8: the insert count was logged as -1 (multi-row INSERT rowcount through SQLAlchemy and psycopg). Answers were unaffected: they recount from the table.",
+    "Steps 1-4 scored at batch 16 with a cap of 300 per call; steps 5-6 ran on 348e8d6 (batch 8, cap 250) but scored nothing new: everything was already stored.",
+    "Step 6 ranges: 2025 Q4 (the 736-comment quarter), not specified by the plan.",
+    "Six-month West trend: 2026-03-01 to 2026-08-30 (March to August).",
+    "Throughput re-measured in the real image: throughput.json (made by throughput_measure.py)."
+  ]
+}

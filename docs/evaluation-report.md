@@ -345,3 +345,62 @@ build are appended here as they are found (CLAUDE.md).
   finding is for the QA design (ADR-055): a flag means "look at this", but no flag does
   not mean "correct", so QA should not treat un-flagged sentiment results as verified.
 - **Recorded in:** ADR-066; `evals/results/sentiment/2026-10-01_bert_v1/bert_v1.test.metrics.json`.
+
+### L-33 — Answers above the on-demand cap are partial, and skew old (2026-10-01)
+- **What:** When a range holds more than 250 comments without a stored prediction,
+  `mcp_feedback` scores the 250 oldest and answers over the scored subset, with
+  `complete: false` (ADR-067). Oldest-first means a partial monthly or quarterly trend
+  covers its early buckets and omits its latest, which is the part a "trending down?"
+  question cares about most. Observed: before the backfill, 2025 Q4 answered over 300 of
+  736 comments (cap 300 at the time).
+- **Why accepted:** Scoring on arrival plus the backfill keeps stored coverage complete
+  in normal operation, so a partial answer means un-backfilled data. The agent must state
+  the coverage (4b), and QA can check `n_scored` against `n_comments`.
+- **Recorded in:** ADR-067; `evals/results/sentiment/2026-10-01_mcp_feedback_live/`.
+
+### L-34 — Stored predictions belong to one model version; a new model needs a fresh backfill (2026-10-01)
+- **What:** Predictions are keyed on the SHA-256 of the artifact manifest. A new model, or
+  a new T or τ for the same model, is a new version with no stored predictions; until a
+  backfill runs, every answer is scored on demand and is partial above the cap. The
+  backfill took 856.6 s for 6,996 comments on 1 CPU. Rows of old versions stay in the table
+  (`app_sentiment` can't delete), so it grows with every version.
+- **Why accepted:** Versioned rows keep each answer traceable to the model that produced it
+  and make a rollback a configuration change. Pruning old versions is the generator role's
+  or an operator's job, not the server's.
+- **Recorded in:** ADR-067; `evals/results/sentiment/2026-10-01_mcp_feedback_live/``reproducibility_and_totals.json`.
+
+### L-35 — The real container is slower than the latency proxy, and a cold first request exceeds the warm budget (2026-10-01)
+- **What:** In the real `mcp_feedback` image at 1 CPU / 2 GiB, warm inference on 300 real
+  comments ran at 8.46/s at batch 16 and 9.42/s at batch 8 (slowest 9.28/s), against the
+  proxy's 10.74/s at batch 16 (L-28). The texts match the proxy's in length and padding, so
+  they don't explain it; the proxy ran a separate image on a Docker VM since rebuilt, and the
+  cause isn't isolated. The cap was set from the slowest real repeat: 250 at batch 8
+  (26.9 s). The first scoring pass after a start is about twice as slow (68.8 s for 300
+  comments), so the first on-demand request after a cold start exceeds the 30 s warm budget;
+  the 120 s ceiling (ADR-034) still holds for one pass.
+- **Why accepted:** With predictions stored, on-demand scoring is the exception, not the
+  normal path. A warm-up pass at start-up would fix the cold penalty, but it adds start-up
+  time against the 20 s cold-start budget (L-36). It is left as a decision for the deploy.
+- **Recorded in:** ADR-065, ADR-067; `evals/results/sentiment/2026-10-01_mcp_feedback_live/``throughput.json`.
+
+### L-36 — Cold start is dominated by hashing the weights, and once exceeded the 20 s budget (2026-10-01)
+- **What:** Start-up verifies every artifact file's SHA-256 before the server listens
+  (ADR-066). Through the Windows bind mount, the 438 MB weights took the container to ready
+  in 14.9 s, and in 29.4 s on the first start after a Windows restart (cold file cache),
+  over ADR-065's 20 s cold-start budget. The model itself loads later, on first need
+  (about 1.2 s).
+- **Why accepted:** This is a local bind-mount measurement. On Cloud Run the artifact is
+  baked into the image (ADR-062), so neither the bind mount nor the host's file cache
+  applies; the budget is checked there. Skipping the hash check to start faster would give
+  up the integrity guarantee.
+- **Recorded in:** ADR-065, ADR-066, ADR-067; `evals/results/sentiment/2026-10-01_mcp_feedback_live/``live.json`.
+
+### L-37 — Stored confidence is rounded, so the flag rule holds to a tolerance (2026-10-01)
+- **What:** `confidence` is stored as NUMERIC(5,4), and `flagged` is decided on the
+  unrounded probability. A comment within 0.00005 of τ can therefore show a stored
+  confidence on the other side of τ from its flag. Observed against 3b's 6-decimal
+  predictions: largest difference 0.00005, with flags matching on 1,128 of 1,128 test
+  comments.
+- **Why accepted:** Four places is ample for reporting, and the flag carries the decision.
+  QA checks `flagged = confidence < τ` with a 0.00005 tolerance (data dictionary §8).
+- **Recorded in:** ADR-066, ADR-067; `evals/results/sentiment/2026-10-01_mcp_feedback_live/``reproducibility_and_totals.json`.

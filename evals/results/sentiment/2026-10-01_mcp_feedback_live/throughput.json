@@ -1,0 +1,37 @@
+{
+ "evidence": "observed",
+ "image": "agentic-service-ops-mcp_feedback (commit 338e9b8 code)",
+ "cgroup_cpu_max": "100000 100000",
+ "cgroup_memory_max": "2147483648",
+ "container_cpus": 1,
+ "torch": "2.14.1+cpu",
+ "torch_threads": 1,
+ "n_texts": 300,
+ "texts": "300 oldest comments submitted in 2025 Q4 (UTC)",
+ "warmup_incl_model_load_s": 68.77,
+ "load_seconds": 1.25,
+ "batches": {
+  "8": {
+   "seconds": [
+    32.33,
+    31.84,
+    31.4
+   ],
+   "median_s": 31.84,
+   "max_s": 32.33,
+   "median_per_s": 9.42,
+   "slowest_per_s": 9.28
+  },
+  "16": {
+   "seconds": [
+    34.84,
+    35.45,
+    35.59
+   ],
+   "median_s": 35.45,
+   "max_s": 35.59,
+   "median_per_s": 8.46,
+   "slowest_per_s": 8.43
+  }
+ }
+}

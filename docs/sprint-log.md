@@ -280,6 +280,11 @@ above.
 
 **Planned:**
 - [ ] MCP servers #2 and #3 (feedback, volume)
+  *2026-10-01: feedback done (ADR-067). `mcp_feedback` answers from stored predictions
+  (`sentiment_predictions`, migration `3d7e1a9c5b20`) with `get_sentiment_summary` and
+  `get_feedback_examples`, scoring unscored comments on demand (cap 250, batch 8); all
+  7,521 comments backfilled. Stored test-split predictions match 3b's on 1,128/1,128.
+  Volume still to do.*
 - [ ] Forecast agent + regression model + seasonal-naive baseline comparison
   - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
 - [ ] Sentiment agent + confidence scoring
@@ -289,7 +294,7 @@ above.
   τ = 0.841 (the 99% target set it, not the 20% cap), both fitted on validation. On test:
   ECE 0.0106 raw, 0.0094 calibrated; 1.4% flagged; un-flagged accuracy 98.65%, flagged 50%;
   8 of 23 errors flagged (L-32). Results: `evals/results/sentiment/2026-10-01_bert_v1/`.*
-  - [ ] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
+  - [x] Measure BERT CPU inference latency on a realistic feedback batch against the 120 s ceiling.
     *2026-10-01: proxy measured with the untrained model (pinned `bert-base-uncased`,
     random head) in a CPU-limited local container (ADR-065, L-28). Gate slices pass at
     1 CPU / 2 GiB and 2 CPU / 4 GiB: largest account-quarter (107) 10.0 s / 6.1 s, largest
@@ -298,6 +303,15 @@ above.
     (2,666) 239 s / 148 s, full window (7,521) 669 s / 410 s; the last two ran 1 repeat
     (L-29). Peak memory under 0.5 GiB. Stays unticked until measured on the real
     container. Results: `evals/results/sentiment/2026-10-01_latency_proxy/`.*
+    *2026-10-01: measured on the real `mcp_feedback` container at 1 CPU / 2 GiB (local
+    Docker; L-28 still applies, no Cloud Run measurement). Cold start to ready (hash
+    check, no model) 14.9 s, and 29.4 s on the first start after a Windows restart
+    (L-36). Largest region-quarter (225) cold, model load and scoring included, 45.0 s;
+    stored 0.06 s. Largest quarter (736) before backfill: 300 scored in 43.1 s,
+    partial. Warm inference on 300 comments: batch 8 median 31.8 s (9.42/s), batch 16
+    35.5 s (8.46/s), below the proxy's 10.74/s (L-35), so the cap is 250 at batch 8
+    (ADR-067). Backfill of 6,996 in 856.6 s. With predictions stored, answers take
+    0.05–1.0 s. Results: `evals/results/sentiment/2026-10-01_mcp_feedback_live/`.*
   - [x] TF-IDF plus logistic regression baseline, required (ADR-059).
     *2026-10-01: pulled forward. Split v1 committed first (ADR-064). Selected on validation:
     word 1-2-grams, C=10 (validation macro-F1 0.9333; at the grid edge, L-26). Test
@@ -365,6 +379,7 @@ above.
 - ADR-064 — Sentiment split and evaluation protocol (2026-10-01, pulled forward)
 - ADR-065 — BERT training, comparison and latency protocol, pre-registered (2026-10-01, pulled forward)
 - ADR-066 — Sentiment model selection, calibration and review threshold, pre-registered (2026-10-01, pulled forward)
+- ADR-067 — Sentiment predictions stored and scored on arrival; the sentiment server gains region access (2026-10-01, pulled forward)
 
 ---
 
