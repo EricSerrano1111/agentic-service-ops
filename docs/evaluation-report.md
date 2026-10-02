@@ -405,3 +405,24 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** Four places is ample for reporting, and the flag carries the decision.
   QA checks `flagged = confidence < τ` with a 0.00005 tolerance (data dictionary §8).
 - **Recorded in:** ADR-066, ADR-067; `evals/results/sentiment/2026-10-01_mcp_feedback_live/``reproducibility_and_totals.json`.
+
+### L-38 — "In August" parses as the current partial month, against the prompt's own rule (2026-10-01)
+- **What:** Both parse prompts (`agent_reporting` `parse_v2`, `agent_sentiment` `parse_v1`)
+  say a named month without a year is the most recent such month that *ends* on or before
+  the as-of date. With the as-of date 2026-08-30, "in August" should therefore be August
+  2025. In all three runs Flash-Lite returned 2026-08-01 to 2026-08-30, the current partial
+  month (parse set item p14). The label was kept. On the merits, the model's reading is
+  probably what a user means, so the rule is the likelier fault, not the model.
+- **Why accepted:** One item of 14, consistent across runs, and the answer states its
+  range, so the reader sees which August was used. Changing the rule is a prompt revision
+  for both agents and a decision for the owner; no revision was made in 4b.
+- **Recorded in:** ADR-050, ADR-068; `evals/results/sentiment_agent/2026-10-01/``parse_parse_v1_k3.json`.
+
+### L-39 — The sentiment parse set is small and shares an author with the prompt (2026-10-01)
+- **What:** parse_v1 has 14 questions, written by the same author as `parse_v1.md`, just
+  after the prompt. 13/14 shows the prompt does what its author intended on phrasings its
+  author chose; it is not a blind measure of real users' phrasing. No revision was made,
+  so the set is still unused for tuning.
+- **Why accepted:** It is a parse check, not the Sprint 5 evaluation. Held-out phrasings
+  belong in the Sprint 5 golden set, written separately.
+- **Recorded in:** ADR-068; `evals/sentiment_parse/`.

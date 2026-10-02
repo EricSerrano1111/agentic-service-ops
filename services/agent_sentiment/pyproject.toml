@@ -1,0 +1,34 @@
+[project]
+name = "agent-sentiment"
+version = "0.1.0"
+description = "Sentiment agent: A2A server over the feedback MCP server; template answers from stored predictions (ADR-068)"
+requires-python = ">=3.12"
+# Both protocol SDKs are pinned exactly (R-12, ADR-047). No database driver: this
+# container reaches data only through the feedback MCP server, and it never sends a
+# customer comment to an LLM (ADR-068).
+dependencies = [
+    "a2a-sdk[fastapi]==1.1.5",
+    "mcp==2.2.0",
+    "service-ops-common",
+    "service-ops-llm",
+    "service-ops-schemas",
+    "fastapi>=0.115.2",
+    "uvicorn>=0.31",
+]
+
+# Siblings resolve to the workspace members, never PyPI.
+[tool.uv.sources]
+service-ops-common = { workspace = true }
+service-ops-llm = { workspace = true }
+service-ops-schemas = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_sentiment"]
+
+# Versioned prompt files ship inside the installed package (llm.prompts.load_prompt).
+[tool.hatch.build.targets.wheel.force-include]
+"prompts" = "agent_sentiment/prompts"

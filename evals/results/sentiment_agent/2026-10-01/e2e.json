@@ -1,0 +1,576 @@
+{
+  "evidence": "observed",
+  "stack": "docker compose up -d orchestrator (orchestrator, agent_reporting, mcp_incidents, agent_sentiment, mcp_feedback; postgres already running)",
+  "stack_ready_s": 50.7,
+  "stack_ready_measured": "host: from `docker compose up -d orchestrator` to the orchestrator's first 200 on /healthz (compose health chain)",
+  "runs": [
+    {
+      "id": "q1-cold",
+      "question": "Is sentiment trending down in the West?",
+      "wall_s": 2.62,
+      "http_status": 200,
+      "response": {
+        "answer": "Customer feedback sentiment in the West from 2026-03-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30; no period was named, so this range was assumed.\n241 comments: positive 120 (49.8%), neutral 59 (24.5%), negative 37 (15.4%), mixed 25 (10.4%).\n2 comments (0.8%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-08: 7 of 32 negative (21.9%). Earlier months, 2026-03 to 2026-07: 30 of 209 negative (14.4%). Two-proportion test p = 0.2718.",
+        "outcome": "answered",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question asks about the trend in customer sentiment for a specific region."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": {
+          "request": {
+            "start": null,
+            "end": null,
+            "region": "west",
+            "bucket": "month",
+            "want_trend": true,
+            "want_examples": false,
+            "example_label": null,
+            "unsupported": null
+          },
+          "start": "2026-03-01",
+          "end": "2026-08-30",
+          "range_assumed": true,
+          "as_of": "2026-08-30",
+          "summary": {
+            "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+            "n_comments": 241,
+            "n_scored": 241,
+            "complete": true,
+            "start": "2026-03-01",
+            "end": "2026-08-30",
+            "region": "west",
+            "bucket": "month",
+            "counts": {
+              "positive": 120,
+              "neutral": 59,
+              "negative": 37,
+              "mixed": 25
+            },
+            "shares": {
+              "positive": "0.4979",
+              "neutral": "0.2448",
+              "negative": "0.1535",
+              "mixed": "0.1037"
+            },
+            "flagged_count": 2,
+            "buckets": [
+              {
+                "bucket": "2026-03",
+                "n_scored": 36,
+                "counts": {
+                  "positive": 21,
+                  "neutral": 9,
+                  "negative": 5,
+                  "mixed": 1
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-04",
+                "n_scored": 42,
+                "counts": {
+                  "positive": 20,
+                  "neutral": 15,
+                  "negative": 5,
+                  "mixed": 2
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-05",
+                "n_scored": 49,
+                "counts": {
+                  "positive": 23,
+                  "neutral": 10,
+                  "negative": 8,
+                  "mixed": 8
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-06",
+                "n_scored": 45,
+                "counts": {
+                  "positive": 22,
+                  "neutral": 12,
+                  "negative": 8,
+                  "mixed": 3
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-07",
+                "n_scored": 37,
+                "counts": {
+                  "positive": 18,
+                  "neutral": 9,
+                  "negative": 4,
+                  "mixed": 6
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-08",
+                "n_scored": 32,
+                "counts": {
+                  "positive": 16,
+                  "neutral": 4,
+                  "negative": 7,
+                  "mixed": 5
+                },
+                "flagged_count": 0
+              }
+            ]
+          },
+          "trend": {
+            "verdict": "no clear change",
+            "latest_bucket": "2026-08",
+            "latest_n": 32,
+            "latest_negative": 7,
+            "earlier_buckets": [
+              "2026-03",
+              "2026-04",
+              "2026-05",
+              "2026-06",
+              "2026-07"
+            ],
+            "earlier_n": 209,
+            "earlier_negative": 30,
+            "z": 1.099,
+            "p_value": 0.2718,
+            "small_sample": false
+          },
+          "examples": [],
+          "quoted_feedback_ids": []
+        },
+        "task_id": "0f166bf8-af3c-482a-996c-9ba2d1b640d0",
+        "trace_id": "e43893e1681e483e920d0e94bb81e0c7"
+      }
+    },
+    {
+      "id": "q1-warm",
+      "question": "Is sentiment trending down in the West?",
+      "wall_s": 1.76,
+      "http_status": 200,
+      "response": {
+        "answer": "Customer feedback sentiment in the West from 2026-03-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30; no period was named, so this range was assumed.\n241 comments: positive 120 (49.8%), neutral 59 (24.5%), negative 37 (15.4%), mixed 25 (10.4%).\n2 comments (0.8%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-08: 7 of 32 negative (21.9%). Earlier months, 2026-03 to 2026-07: 30 of 209 negative (14.4%). Two-proportion test p = 0.2718.",
+        "outcome": "answered",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question asks about the trend in customer sentiment."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": {
+          "request": {
+            "start": null,
+            "end": null,
+            "region": "west",
+            "bucket": "month",
+            "want_trend": true,
+            "want_examples": false,
+            "example_label": null,
+            "unsupported": null
+          },
+          "start": "2026-03-01",
+          "end": "2026-08-30",
+          "range_assumed": true,
+          "as_of": "2026-08-30",
+          "summary": {
+            "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+            "n_comments": 241,
+            "n_scored": 241,
+            "complete": true,
+            "start": "2026-03-01",
+            "end": "2026-08-30",
+            "region": "west",
+            "bucket": "month",
+            "counts": {
+              "positive": 120,
+              "neutral": 59,
+              "negative": 37,
+              "mixed": 25
+            },
+            "shares": {
+              "positive": "0.4979",
+              "neutral": "0.2448",
+              "negative": "0.1535",
+              "mixed": "0.1037"
+            },
+            "flagged_count": 2,
+            "buckets": [
+              {
+                "bucket": "2026-03",
+                "n_scored": 36,
+                "counts": {
+                  "positive": 21,
+                  "neutral": 9,
+                  "negative": 5,
+                  "mixed": 1
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-04",
+                "n_scored": 42,
+                "counts": {
+                  "positive": 20,
+                  "neutral": 15,
+                  "negative": 5,
+                  "mixed": 2
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-05",
+                "n_scored": 49,
+                "counts": {
+                  "positive": 23,
+                  "neutral": 10,
+                  "negative": 8,
+                  "mixed": 8
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-06",
+                "n_scored": 45,
+                "counts": {
+                  "positive": 22,
+                  "neutral": 12,
+                  "negative": 8,
+                  "mixed": 3
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-07",
+                "n_scored": 37,
+                "counts": {
+                  "positive": 18,
+                  "neutral": 9,
+                  "negative": 4,
+                  "mixed": 6
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-08",
+                "n_scored": 32,
+                "counts": {
+                  "positive": 16,
+                  "neutral": 4,
+                  "negative": 7,
+                  "mixed": 5
+                },
+                "flagged_count": 0
+              }
+            ]
+          },
+          "trend": {
+            "verdict": "no clear change",
+            "latest_bucket": "2026-08",
+            "latest_n": 32,
+            "latest_negative": 7,
+            "earlier_buckets": [
+              "2026-03",
+              "2026-04",
+              "2026-05",
+              "2026-06",
+              "2026-07"
+            ],
+            "earlier_n": 209,
+            "earlier_negative": 30,
+            "z": 1.099,
+            "p_value": 0.2718,
+            "small_sample": false
+          },
+          "examples": [],
+          "quoted_feedback_ids": []
+        },
+        "task_id": "2575d90e-04ad-4064-bed8-0fdea6eda3bd",
+        "trace_id": "e40352ca42aa45efa4c5162a9d0db352"
+      }
+    },
+    {
+      "id": "q2",
+      "question": "How did customers feel last quarter?",
+      "wall_s": 1.64,
+      "http_status": 200,
+      "response": {
+        "answer": "Customer feedback sentiment from 2026-04-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n723 comments: positive 366 (50.6%), neutral 176 (24.3%), negative 128 (17.7%), mixed 53 (7.3%).\n5 comments (0.7%) are low-confidence and flagged for review.",
+        "outcome": "answered",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question asks how customers felt during a past period, which corresponds to the sentiment domain."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": {
+          "request": {
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "region": null,
+            "bucket": "month",
+            "want_trend": false,
+            "want_examples": false,
+            "example_label": null,
+            "unsupported": null
+          },
+          "start": "2026-04-01",
+          "end": "2026-06-30",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "summary": {
+            "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+            "n_comments": 723,
+            "n_scored": 723,
+            "complete": true,
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "region": null,
+            "bucket": "month",
+            "counts": {
+              "positive": 366,
+              "neutral": 176,
+              "negative": 128,
+              "mixed": 53
+            },
+            "shares": {
+              "positive": "0.5062",
+              "neutral": "0.2434",
+              "negative": "0.1770",
+              "mixed": "0.0733"
+            },
+            "flagged_count": 5,
+            "buckets": [
+              {
+                "bucket": "2026-04",
+                "n_scored": 242,
+                "counts": {
+                  "positive": 117,
+                  "neutral": 64,
+                  "negative": 47,
+                  "mixed": 14
+                },
+                "flagged_count": 2
+              },
+              {
+                "bucket": "2026-05",
+                "n_scored": 252,
+                "counts": {
+                  "positive": 133,
+                  "neutral": 59,
+                  "negative": 41,
+                  "mixed": 19
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-06",
+                "n_scored": 229,
+                "counts": {
+                  "positive": 116,
+                  "neutral": 53,
+                  "negative": 40,
+                  "mixed": 20
+                },
+                "flagged_count": 2
+              }
+            ]
+          },
+          "trend": null,
+          "examples": [],
+          "quoted_feedback_ids": []
+        },
+        "task_id": "0d4d96ed-1ea9-49fe-9fb1-b09e49cc48a2",
+        "trace_id": "9a5c48a8a27e493c8c5ff2432a97acd6"
+      }
+    },
+    {
+      "id": "q3",
+      "question": "Show me a few negative comments from July.",
+      "wall_s": 1.91,
+      "http_status": 200,
+      "response": {
+        "answer": "Customer feedback sentiment from 2026-07-01 to 2026-07-31 (inclusive, UTC), as of 2026-08-30.\n212 comments: positive 111 (52.4%), neutral 51 (24.1%), negative 33 (15.6%), mixed 17 (8.0%).\n2 comments (0.9%) are low-confidence and flagged for review.\nExample negative comments, quoted as written:\n- [negative, confidence 0.9950] \"Technician showed up over two hours late without any heads-up call or update sent to our office desk.\" (feedback 7065, 2026-07-12, the Northeast)\n- [negative, confidence 0.9949] \"How did a routine security camera replacement end up with a cracked mounting bracket and a severed power line that nobody bothered to fix before leaving?\" (feedback 7182, 2026-07-31, the Central region)\n- [negative, confidence 0.9948] \"did anyone read the arrival window we confirmed last week? someone finally showed up ninety minutes late to check the security cameras without leaving any paperwork behind.\" (feedback 7030, 2026-07-07, the West)",
+        "outcome": "answered",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question asks for negative customer comments from a specific past month."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": {
+          "request": {
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "region": null,
+            "bucket": "month",
+            "want_trend": false,
+            "want_examples": true,
+            "example_label": "negative",
+            "unsupported": null
+          },
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "summary": {
+            "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+            "n_comments": 212,
+            "n_scored": 212,
+            "complete": true,
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "region": null,
+            "bucket": "month",
+            "counts": {
+              "positive": 111,
+              "neutral": 51,
+              "negative": 33,
+              "mixed": 17
+            },
+            "shares": {
+              "positive": "0.5236",
+              "neutral": "0.2406",
+              "negative": "0.1557",
+              "mixed": "0.0802"
+            },
+            "flagged_count": 2,
+            "buckets": [
+              {
+                "bucket": "2026-07",
+                "n_scored": 212,
+                "counts": {
+                  "positive": 111,
+                  "neutral": 51,
+                  "negative": 33,
+                  "mixed": 17
+                },
+                "flagged_count": 2
+              }
+            ]
+          },
+          "trend": null,
+          "examples": [
+            {
+              "feedback_id": 7065,
+              "submitted_at": "2026-07-12T04:08:00Z",
+              "region": "northeast",
+              "label": "negative",
+              "confidence": "0.9950",
+              "flagged": false,
+              "feedback_text": "Technician showed up over two hours late without any heads-up call or update sent to our office desk."
+            },
+            {
+              "feedback_id": 7182,
+              "submitted_at": "2026-07-31T03:38:00Z",
+              "region": "central",
+              "label": "negative",
+              "confidence": "0.9949",
+              "flagged": false,
+              "feedback_text": "How did a routine security camera replacement end up with a cracked mounting bracket and a severed power line that nobody bothered to fix before leaving?"
+            },
+            {
+              "feedback_id": 7030,
+              "submitted_at": "2026-07-07T17:04:00Z",
+              "region": "west",
+              "label": "negative",
+              "confidence": "0.9948",
+              "flagged": false,
+              "feedback_text": "did anyone read the arrival window we confirmed last week? someone finally showed up ninety minutes late to check the security cameras without leaving any paperwork behind."
+            }
+          ],
+          "quoted_feedback_ids": [
+            7065,
+            7182,
+            7030
+          ]
+        },
+        "task_id": "b7d90e8d-d62b-4282-b6d0-0fd669207be5",
+        "trace_id": "a0b22c2f4ba3458d8c0ac93b3d5955e5"
+      }
+    },
+    {
+      "id": "q4",
+      "question": "What's sentiment for our largest account?",
+      "wall_s": 1.39,
+      "http_status": 200,
+      "response": {
+        "answer": "Sentiment can't be broken down by account. I can report customer feedback sentiment over a date range, for all sites or one region (Northeast, Southeast, Central or West), as a trend by month or quarter, and quote example comments.",
+        "outcome": "not_available",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question asks about customer feelings and feedback for a specific account."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "task_id": "4dd4ae6d-42cf-4634-9ff6-63743dc5e1cf",
+        "trace_id": "ce432ecf84e248feacf1621cbc2c9ac5"
+      }
+    },
+    {
+      "id": "q5-reporting",
+      "question": "How many incidents were reported last month?",
+      "wall_s": 2.23,
+      "http_status": 200,
+      "response": {
+        "answer": "As of 2026-08-30: 54 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 6 high, 12 medium, 36 low severity.",
+        "outcome": "answered",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "The question asks for past incident volume from last month."
+        },
+        "prompt_version": "route_v3",
+        "reporting": {
+          "request": {
+            "metric": "incident_count",
+            "group_by": null,
+            "start": "2026-07-01",
+            "end": "2026-07-31"
+          },
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "figures": {
+            "metric": "incident_count",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "incident_count": 54,
+            "by_severity": {
+              "low": 36,
+              "medium": 12,
+              "high": 6
+            }
+          }
+        },
+        "sentiment": null,
+        "task_id": "3559ac4a-5595-4d78-86f7-17bc31742c87",
+        "trace_id": "b913f6ea6be64ce5984b0014cb5b6509"
+      }
+    }
+  ]
+}

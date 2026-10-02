@@ -102,9 +102,11 @@ Three layers, following current industry practice as of late 2026:
 
 - **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, sends the draft to the QA agent and owns the revision loop (ADR-055), and returns the verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
 - **Reporting/Metrics Agent** — Incident and quality metrics reporting. Figures are computed deterministically; one LLM call parses the question into a typed request (ADR-046).
-- **Sentiment Agent** — Sentiment classification on freeform customer feedback text.
+- **Sentiment Agent** — Customer feedback sentiment over a date range, for all sites or one region: counts and shares by label, the low-confidence flag count, a monthly or quarterly trend in the negative share (a two-proportion test, ADR-068), and up to 3 quoted comments. Figures come from `mcp_feedback`'s stored predictions (ADR-067); one LLM call parses the question, and answers are templated, so no customer comment reaches an LLM. Account, technician and service-type breakdowns are declined (ADR-068).
 - **Forecast Agent** — Regression-based forward volume forecasting.
 - **QA Agent** — Reviews each draft the orchestrator sends it, with its own SQL as `app_qa`, never the specialists' MCP tools (ADR-055). Figures are checked without a model; one LLM call checks interpretation (ADR-056). Can accept, or reject with revision guidance.
+
+**Request flow as built (Sprint 3, before QA).** The orchestrator routes each question with one LLM call (`route_v3`). A reporting question goes over A2A to `agent_reporting`, which parses it with one LLM call and calls `mcp_incidents`. A sentiment question goes to `agent_sentiment`, which parses it with one LLM call, then calls `get_sentiment_summary` (and `get_feedback_examples` when examples are asked for) on `mcp_feedback`, computes the trend in code, and renders the answer from templates. A forecast question still gets "not available yet". Every answer carries a text part and a data part validated against its `packages/schemas` model. The QA hop in the diagram arrives in Sprint 4.
 
 **Explicitly out of scope:** A research/web-scraping agent. Considered and cut — no clear job to do, and scope creep at the expense of QA rigor. May be revisited only if the core system is complete and stable with time remaining.
 
@@ -470,7 +472,9 @@ agentic-service-ops/
 │   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046)
 │   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dates resolve as of REPORTING_AS_OF_DATE (ADR-050)
 │   │
-│   ├── agent_sentiment/
+│   ├── agent_sentiment/ # one LLM call parses the question; templates render figures from mcp_feedback;
+│   │                    # trend.py (ADR-068's two-proportion rule); never sends a comment to an LLM
+│   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dateless trend questions default to 6 months
 │   │
 │   ├── agent_forecast/
 │   │
@@ -497,6 +501,7 @@ agentic-service-ops/
 │   │   ├── run_seed.py             # live: runs a set (--file, default seed_v1) through the orchestrator's Router; --model for comparisons (ADR-049)
 │   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
+│   ├── sentiment_parse/            # parse_v1.jsonl: 14 labelled questions for the sentiment agent's parse; run.py (k runs, free key)
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064); ECE and flags (ADR-066)
 │   │   ├── compare.py              # paired bootstrap + McNemar between two models on test; its own ledger line (ADR-065)

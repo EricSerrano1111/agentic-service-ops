@@ -11,6 +11,7 @@ resolution-markers = [
 [manifest]
 members = [
     "agent-reporting",
+    "agent-sentiment",
     "agentic-service-ops",
     "db-models",
     "mcp-feedback",
@@ -51,6 +52,31 @@ fastapi = [
 name = "agent-reporting"
 version = "0.1.0"
 source = { editable = "services/agent_reporting" }
+dependencies = [
+    { name = "a2a-sdk", extra = ["fastapi"] },
+    { name = "fastapi" },
+    { name = "mcp" },
+    { name = "service-ops-common" },
+    { name = "service-ops-llm" },
+    { name = "service-ops-schemas" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "a2a-sdk", extras = ["fastapi"], specifier = "==1.1.5" },
+    { name = "fastapi", specifier = ">=0.115.2" },
+    { name = "mcp", specifier = "==2.2.0" },
+    { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-llm", editable = "packages/llm" },
+    { name = "service-ops-schemas", editable = "packages/schemas" },
+    { name = "uvicorn", specifier = ">=0.31" },
+]
+
+[[package]]
+name = "agent-sentiment"
+version = "0.1.0"
+source = { editable = "services/agent_sentiment" }
 dependencies = [
     { name = "a2a-sdk", extra = ["fastapi"] },
     { name = "fastapi" },

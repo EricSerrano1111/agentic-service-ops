@@ -11,7 +11,7 @@ from __future__ import annotations
 from a2a.types import Task, TaskState
 from google.protobuf.json_format import MessageToDict
 from pydantic import ValidationError
-from schemas import ReportingAnswer
+from schemas import ReportingAnswer, SentimentAnswer
 
 
 class TaskFailed(RuntimeError):
@@ -54,6 +54,35 @@ def extract_answer(task: Task) -> tuple[str, ReportingAnswer]:
     try:
         # Only the reporting agent is routed to today, so its contract is known here.
         answer = ReportingAnswer.model_validate(data[0])
+    except ValidationError as exc:
+        raise TaskFailed(
+            task.id, state, f"answer failed validation: {exc.error_count()} error(s)", None
+        ) from None
+    return "\n".join(texts), answer
+
+
+def extract_sentiment_answer(task: Task) -> tuple[str, SentimentAnswer]:
+    """(answer text, validated answer) from the sentiment agent's completed task.
+
+    The sentiment agent's contract (ADR-068); `TaskFailed` otherwise, as for reporting.
+    """
+    state = TaskState.Name(task.status.state)
+    if task.status.state != TaskState.TASK_STATE_COMPLETED:
+        text, code = _status(task)
+        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
+
+    texts: list[str] = []
+    data: list[dict] = []
+    for artifact in task.artifacts:
+        for part in artifact.parts:
+            if part.HasField("text"):
+                texts.append(part.text)
+            elif part.HasField("data"):
+                data.append(MessageToDict(part.data))
+    if not texts or len(data) != 1:
+        raise TaskFailed(task.id, state, "completed task is missing its text or data part", None)
+    try:
+        answer = SentimentAnswer.model_validate(data[0])
     except ValidationError as exc:
         raise TaskFailed(
             task.id, state, f"answer failed validation: {exc.error_count()} error(s)", None

@@ -79,6 +79,7 @@
 | 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted — superseded in part by ADR-067 |
 | 066 | Sentiment model selection, calibration and review threshold (pre-registered): `lr2e-5_v1` epoch 4 as `bert_v1`, temperature scaling, 99% / 20% review threshold | Accepted |
 | 067 | Sentiment predictions stored and scored on arrival (250-comment on-demand cap); two `mcp_feedback` tools; `app_sentiment` gains region access and INSERT on its predictions table | Accepted |
+| 068 | Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines | Accepted |
 
 ---
 
@@ -2028,3 +2029,30 @@ training grants.
 - Answers can be partial when more than 300 comments in range are unscored. The agent must state the coverage (4b).
 - The latency gate of ADR-065 now applies only to on-demand scoring of at most 250 comments. The first scoring pass after the container starts is about twice as slow as a warm one (68.8 s for 300 comments, model load 1.25 s included), so the 30 s budget holds for warm requests only.
 - Sprint 4 QA verifies sentiment answers by recomputing them from `sentiment_predictions` and cross-checking ratings. A sentiment answer fails only on errors the agent can fix (wrong comment set, miscounts, a summary that misstates the numbers), never on disagreement with a label.
+
+### ADR-068 — Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines
+*Date: 2026-10-01. Applies ADR-046 and ADR-047 to sentiment; builds on ADR-067. Supersedes nothing.*
+
+**Decision:**
+- The agent makes one LLM call to parse the question into `SentimentRequest` (time range, optional region, bucket, whether a trend or examples are wanted, or an unsupported dimension). Every figure comes from `mcp_feedback`; answers are rendered from templates.
+- Customer comments are never sent to an LLM by the agent. Quoted examples (at most 3) go straight into the template.
+- Every answer states the range, the as-of date, the region if any, counts and shares by label, and the flagged count. When coverage is incomplete, the answer opens with the coverage line.
+- A question that names no period gets a range applied by code, never by the model: for a trend question, the six whole calendar months ending at the as-of month (2026-03-01 to 2026-08-30 by default), in monthly buckets; otherwise ADR-050's default, the previous calendar month. The answer says the range was assumed.
+- Trend rule: compare the negative share in the latest bucket with the pooled negative share of all earlier buckets in range. Report "rose" or "fell" only if both sides have at least 20 comments and a two-proportion z-test gives p < 0.05; otherwise "no clear change". Both shares and counts are always shown.
+- Account, technician and service-type breakdowns are declined with a message naming what is supported. No MCP call is made for a decline.
+
+**Context:**
+- FR-07 asks whether sentiment is trending down in a region. A monthly regional bucket holds about 40 comments, where the negative share's sampling error is about 6 points, so "trending" has to mean more than a visible change.
+- Negative share is the measure because FR-07's purpose is surfacing dissatisfaction.
+- Template-only answers keep every figure checkable and remove the agent as a prompt-injection target: customer text has nothing to instruct.
+- FR-07's own question names no period. ADR-050's one-month default, which is scoped to the reporting agent, would give a trend question a single bucket, so trend questions get a six-month default instead.
+
+**Alternatives considered:**
+- *A fixed percentage-point threshold* (rejected). At these sample sizes it reports noise as trends.
+- *An LLM-written summary* (rejected). It would put customer text in a model's context and make figures uncheckable (ADR-046).
+- *Answering account-level questions from region data* (rejected). It misstates what was asked.
+
+**Consequences:**
+- Many short-range regional questions will honestly return "no clear change". That is the correct answer at these sample sizes.
+- Sprint 4 QA verifies the trend claim by recomputing the test from `sentiment_predictions`.
+- An account breakdown needs a new grant and its own ADR (ADR-067's alternatives).

@@ -81,18 +81,16 @@ def _join(labels: list[str]) -> str:
 
 
 def not_available_message(decision: RouteDecision) -> str:
+    """Only forecast reaches this today: it says that domain isn't available yet, nothing more."""
     label = DOMAIN_LABELS[decision.route]  # type: ignore[index]
-    return (
-        f"Questions about {label} aren't supported yet. Right now I can answer questions "
-        "about incidents and quality metrics over a date range."
-    )
+    return f"Questions about {label} aren't available yet."
 
 
 def out_of_scope_message() -> str:
     return (
         "Sorry, that's outside what I can help with. I answer questions about this "
-        "field-service operation's records: incidents and quality metrics today, with "
-        "customer sentiment and operational forecasts to follow."
+        "field-service operation's records: incident and quality reporting, and customer "
+        "sentiment. Volume forecasting isn't available yet."
     )
 
 

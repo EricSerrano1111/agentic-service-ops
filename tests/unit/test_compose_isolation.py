@@ -8,7 +8,7 @@ Asserted from `docker compose config`, the resolved configuration Docker actuall
   reach data only through MCP, so a compromised agent has no credentials to misuse.
 - `mcp_incidents` gets `app_reporting`'s credentials and nothing else: no admin
   password, no other role (ADR-023).
-- Only the orchestrator and the reporting agent get the Gemini key (they make LLM
+- Only the orchestrator and the two agents get the Gemini key (they make LLM
   calls), and only the free one, with `LLM_MODE` pinned to free. `mcp_incidents` gets
   no model key or setting: it holds database credentials, so it must not also hold a
   key (ADR-048).
@@ -29,9 +29,15 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DB_PREFIXES = ("POSTGRES_", "DB_ROLE_")
-NO_DB_SERVICES = ("agent_reporting", "orchestrator")
-APP_SERVICES = ("mcp_incidents", "mcp_feedback", "agent_reporting", "orchestrator")
-LLM_SERVICES = ("agent_reporting", "orchestrator")
+NO_DB_SERVICES = ("agent_reporting", "agent_sentiment", "orchestrator")
+APP_SERVICES = (
+    "mcp_incidents",
+    "mcp_feedback",
+    "agent_reporting",
+    "agent_sentiment",
+    "orchestrator",
+)
+LLM_SERVICES = ("agent_reporting", "agent_sentiment", "orchestrator")
 LLM_PREFIXES = ("GOOGLE_", "GEMINI_", "LLM_", "ANTHROPIC_")
 
 

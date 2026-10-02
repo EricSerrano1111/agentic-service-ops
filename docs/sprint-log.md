@@ -287,7 +287,16 @@ above.
   Volume still to do.*
 - [ ] Forecast agent + regression model + seasonal-naive baseline comparison
   - [ ] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
-- [ ] Sentiment agent + confidence scoring
+- [x] Sentiment agent + confidence scoring
+  *2026-10-01: `agent_sentiment` built (ADR-068): one parse call, template answers from
+  `mcp_feedback`, the two-proportion trend rule, declines for account, technician and
+  service type, at most 3 quoted comments, none sent to an LLM. The orchestrator routes
+  sentiment to it; forecast keeps "not available yet". Parse set parse_v1 (14
+  questions): 13/14 exact match in each of 3 runs, no flips; the one miss is p14 "in
+  August" (L-38). FR-07's example, "Is sentiment trending down in the West?", is now
+  answered end to end: 241 comments, March to August 2026 (range assumed), negative
+  21.9% in August against 14.4% before, p = 0.27, no clear change; 2.6 s on the first
+  question after a cold stack start, 1.8 s warm. 54 free-tier calls. Results: `evals/results/sentiment_agent/2026-10-01/`.*
   *2026-10-01: model and threshold done, agent still to build. Artifact `bert_v1`
   (`lr2e-5_v1` epoch 4, ADR-066) exported with a hashed manifest; reload check matched the
   checkpoint on 1,129/1,129 validation comments. Temperature T = 1.032 and review threshold
@@ -380,6 +389,7 @@ above.
 - ADR-065 — BERT training, comparison and latency protocol, pre-registered (2026-10-01, pulled forward)
 - ADR-066 — Sentiment model selection, calibration and review threshold, pre-registered (2026-10-01, pulled forward)
 - ADR-067 — Sentiment predictions stored and scored on arrival; the sentiment server gains region access (2026-10-01, pulled forward)
+- ADR-068 — Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines (2026-10-01, pulled forward)
 
 ---
 
@@ -409,6 +419,19 @@ above.
   - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 - [ ] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
+
+*Planning note, 2026-10-01 (from 4b):*
+- *ADR-034's 120 s ceiling is not enforced as one request deadline today. Each hop has
+  its own timeout: routing 30 s, then the specialist's A2A call up to 60 s (reporting) or
+  85 s (sentiment), so the bound holds only by adding them up. The Sprint 4 QA loop
+  multiplies hops (QA, up to two revisions), so it must add a single per-request deadline,
+  set once and passed through every step, and on expiry return the degraded result with a
+  warning and an escalation flag that NFR-1 describes (`02`, non-functional requirement 1,
+  Performance).*
+- *QA's interpretation call (ADR-056) must not receive quoted customer comments (security
+  guarantee 9). It gets the sentiment answer with each quote replaced by its feedback ID;
+  the quotes are verified mechanically against the database (the IDs exist, are in range
+  and region, and the quoted text matches `feedback_text`).*
 
 **Shipped:**
 *(fill in at sprint end)*

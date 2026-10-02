@@ -1,9 +1,10 @@
 """FastAPI app: `POST /ask` and `/healthz`.
 
 Each question is routed by one LLM call (`routing.Router`). Reporting questions go to
-the reporting agent over A2A with the question text (ADR-046). Sentiment and forecast
-get a "not available yet" answer, multi-domain questions a split instruction (ADR-032),
-and anything else a polite decline. Errors map to clear HTTP responses; no raw exception
+the reporting agent and sentiment questions to the sentiment agent, over A2A with the
+question text (ADR-046, ADR-068). Forecast gets a "not available yet" answer,
+multi-domain questions a split instruction (ADR-032), and anything else a polite
+decline. Errors map to clear HTTP responses; no raw exception
 text reaches the caller.
 """
 
@@ -32,7 +33,7 @@ from pydantic import BaseModel, Field
 
 from .a2a_client import AgentProtocolError, send_question
 from .config import Settings
-from .result import TaskFailed, extract_answer
+from .result import TaskFailed, extract_answer, extract_sentiment_answer
 from .routing import Router, RoutingLLM, not_available_message, out_of_scope_message, split_message
 
 log = logging.getLogger("orchestrator")
@@ -54,8 +55,10 @@ class AskResponse(BaseModel):
     `route` is the routing decision (with its reason, for the trace) and
     `prompt_version` the routing prompt that made it. For an answered reporting question,
     `reporting` holds the specialist's validated payload: the parsed request, the range
-    queried, the as-of date and the figures; `task_id` is the A2A task. `trace_id`
-    correlates the log lines of every service that handled the request.
+    queried, the as-of date and the figures; `task_id` is the A2A task. For an answered
+    sentiment question, `sentiment` holds the sentiment agent's validated payload instead
+    (ADR-068). `trace_id` correlates the log lines of every service that handled the
+    request.
     """
 
     answer: str
@@ -63,6 +66,7 @@ class AskResponse(BaseModel):
     route: dict[str, Any]
     prompt_version: str
     reporting: dict[str, Any] | None = None
+    sentiment: dict[str, Any] | None = None
     task_id: str | None = None
     trace_id: str
 
@@ -188,8 +192,10 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                 payload = AskResponse(answer=answer, outcome=outcome, **base, **more)
                 return JSONResponse(payload.model_dump(), headers={"X-Trace-Id": trace_id})
 
-            if decision.route in ("sentiment", "forecast"):
+            if decision.route == "forecast":
                 return respond(not_available_message(decision), "not_available")
+            if decision.route == "sentiment":
+                return await ask_sentiment(body.question, trace_id, base, respond)
             if decision.route == "multi_domain":
                 return respond(split_message(decision), "split_required")
             if decision.route == "out_of_scope":
@@ -248,5 +254,57 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                 reporting=reporting.model_dump(mode="json"),
                 task_id=task.id,
             )
+
+    async def ask_sentiment(question: str, trace_id: str, base: dict, respond) -> Any:
+        """The sentiment route (ADR-068), with the same failure handling as reporting's."""
+        timeout_s = settings.sentiment_a2a_timeout_s
+        try:
+            task = await send_question(
+                settings.agent_sentiment_url, question, trace_id=trace_id, timeout_s=timeout_s
+            )
+            answer, sentiment = extract_sentiment_answer(task)
+        except (TimeoutError, A2AClientTimeoutError, httpx.TimeoutException):
+            log.warning("agent timed out", extra={"agent": "sentiment", "timeout_s": timeout_s})
+            return _error(
+                504,
+                "agent_timeout",
+                f"The sentiment agent did not answer within {timeout_s:g}s.",
+                trace_id,
+                route=base["route"],
+            )
+        except TaskFailed as exc:
+            if exc.error_code == "not_supported":
+                # A breakdown the agent doesn't offer: a normal answer whose text names
+                # what it can do (ADR-068), not an error.
+                return respond(exc.reason, "not_available", task_id=exc.task_id)
+            log.warning(
+                "agent task failed",
+                extra={"task_id": exc.task_id, "reason": exc.reason, "code": exc.error_code},
+            )
+            status, error = _AGENT_ERRORS.get(exc.error_code or "", (502, "agent_task_failed"))
+            headers = {"Retry-After": str(RATE_LIMIT_RETRY_AFTER_S)} if status == 429 else None
+            return _error(
+                status,
+                error,
+                exc.reason,
+                trace_id,
+                headers=headers,
+                task_id=exc.task_id,
+                route=base["route"],
+            )
+        except (A2AClientError, httpx.HTTPError, AgentProtocolError) as exc:
+            log.warning(
+                "agent unavailable", extra={"agent": "sentiment", "error": type(exc).__name__}
+            )
+            return _error(
+                502,
+                "agent_unavailable",
+                "The sentiment agent is unavailable.",
+                trace_id,
+                route=base["route"],
+            )
+        return respond(
+            answer, "answered", sentiment=sentiment.model_dump(mode="json"), task_id=task.id
+        )
 
     return app
