@@ -1,9 +1,9 @@
 """Question parsing (ADR-046) and date resolution (ADR-050).
 
 One LLM call maps the question to a `ReportingRequest`: the metric, an optional
-breakdown, and an inclusive date range, or no dates when the question states none.
-Code, not the model, then applies the default for a dateless question: the calendar
-month before the as-of date's month. Figures stay
+breakdown, a technician named in the question, and an inclusive date range, or no dates
+when the question states none. Code, not the model, then applies the default for a
+dateless question: the calendar month before the as-of date's month. Figures stay
 deterministic; only this step uses a model.
 """
 
@@ -20,7 +20,9 @@ from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START, ReportingRequest
 
 log = logging.getLogger("agent_reporting")
 
-PROMPT_NAME = "parse_v2"  # parse_v1 stays in prompts/ for the record; v2 adds metric and group_by
+#: parse_v1 and parse_v2 stay in prompts/ for the record. v2 added metric and group_by;
+#: v3 adds incident-count breakdowns, a technician name and repeat-visit drivers (ADR-073).
+PROMPT_NAME = "parse_v3"
 
 
 class ParsingLLM(Protocol):
@@ -75,6 +77,7 @@ class Parser:
             extra={
                 "metric": result.parsed.metric,
                 "group_by": result.parsed.group_by,
+                "technician_named": result.parsed.technician_name is not None,
                 "parsed_start": _iso(result.parsed.start),
                 "parsed_end": _iso(result.parsed.end),
                 "start": resolved.start.isoformat(),

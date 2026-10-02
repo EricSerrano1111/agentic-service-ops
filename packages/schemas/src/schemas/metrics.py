@@ -59,11 +59,19 @@ class _MetricResult(BaseModel):
     groups: list[GroupRate] | None = None
     group_count: int | None = Field(default=None, ge=0, description="Groups before the cap.")
     truncated: bool = False
+    #: Single-technician filter (ADR-073), on the column this metric's technician breakdown
+    #: uses; the figures above are then that technician's alone.
+    technician_id: int | None = None
+    technician_name: str | None = None
 
     @model_validator(mode="after")
     def _consistent(self):
         if self.start > self.end:
             raise ValueError("start must not be after end")
+        if (self.technician_id is None) != (self.technician_name is None):
+            raise ValueError("technician_id and technician_name go together")
+        if self.technician_id is not None and self.group_by is not None:
+            raise ValueError("a single-technician figure has no breakdown")
         if (self.group_by is None) != (self.groups is None):
             raise ValueError("groups are present exactly when group_by is set")
         if self.groups is not None:

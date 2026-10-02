@@ -9,16 +9,34 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .incidents import IncidentSummary
 from .metrics import FirstTimeFixResult, IncidentRateResult, SlaComplianceResult
+from .repeats import RepeatDriversResult
 
 #: What the parsing call may ask for. "unsupported" lets the model say a question asks
 #: for a metric or breakdown the agent doesn't offer, instead of guessing the nearest.
 Metric = Literal[
-    "incident_count", "incident_rate", "sla_compliance", "first_time_fix_rate", "unsupported"
+    "incident_count",
+    "incident_rate",
+    "sla_compliance",
+    "first_time_fix_rate",
+    "repeat_visit_drivers",
+    "unsupported",
 ]
-RequestGroupBy = Literal["account", "region", "service_type", "technician", "unsupported"]
+RequestGroupBy = Literal[
+    "account",
+    "region",
+    "service_type",
+    "technician",
+    "incident_type",
+    "severity",
+    "unsupported",
+]
 
 Figures = Annotated[
-    IncidentSummary | IncidentRateResult | SlaComplianceResult | FirstTimeFixResult,
+    IncidentSummary
+    | IncidentRateResult
+    | SlaComplianceResult
+    | FirstTimeFixResult
+    | RepeatDriversResult,
     Field(discriminator="metric"),
 ]
 
@@ -43,6 +61,9 @@ class ReportingRequest(BaseModel):
     group_by: RequestGroupBy | None = None
     start: dt.date | None = Field(default=None, description="First day, inclusive.")
     end: dt.date | None = Field(default=None, description="Last day, inclusive.")
+    #: A technician named in the question, as written (ADR-073). Resolved by
+    #: `find_technician`, never by the model.
+    technician_name: str | None = Field(default=None, min_length=1, max_length=100)
 
     @model_validator(mode="after")
     def _both_or_neither(self) -> ReportingRequest:
@@ -70,8 +91,15 @@ class ReportingAnswer(BaseModel):
             raise ValueError("figures must cover the queried range")
         if self.figures.metric != self.request.metric:
             raise ValueError("figures must be for the requested metric")
-        if getattr(self.figures, "group_by", None) != self.request.group_by:
+        expected_group = self.request.group_by
+        if self.request.metric == "repeat_visit_drivers" and expected_group is None:
+            expected_group = "incident_type"  # the default breakdown (ADR-073)
+        if getattr(self.figures, "group_by", None) != expected_group:
             raise ValueError("figures must use the requested breakdown")
+        if (self.request.technician_name is None) != (
+            getattr(self.figures, "technician_id", None) is None
+        ):
+            raise ValueError("figures are filtered to a technician exactly when one was named")
         if self.range_assumed != (self.request.start is None):
             raise ValueError("range_assumed must match whether the request had dates")
         return self

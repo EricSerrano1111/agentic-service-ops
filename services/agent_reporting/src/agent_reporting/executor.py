@@ -4,6 +4,11 @@ Every task ends in a terminal state, completed or failed, inside one `SendMessag
 No `input-required`, no streaming, no push (ADR-047). A failed task's status message
 carries user-facing text plus an `error_code` in its metadata, which the orchestrator
 maps to an HTTP status. A range is never guessed: an unparseable question fails.
+
+A technician named in the question is resolved with `find_technician` before the metric
+call (ADR-073). No match, or more than one, ends the task with no figures (codes
+`technician_not_found`, `technician_ambiguous`); nothing is kept for a follow-up, so the
+user asks again with the full name (ADR-031).
 """
 
 from __future__ import annotations
@@ -28,9 +33,11 @@ from schemas import (
     FirstTimeFixResult,
     IncidentRateResult,
     IncidentSummary,
+    RepeatDriversResult,
     ReportingAnswer,
     ReportingRequest,
     SlaComplianceResult,
+    TechnicianMatches,
 )
 
 from .config import Settings
@@ -48,11 +55,30 @@ TOOLS: dict[str, tuple[str, type]] = {
     "incident_rate": ("get_incident_rate", IncidentRateResult),
     "sla_compliance": ("get_sla_compliance", SlaComplianceResult),
     "first_time_fix_rate": ("get_first_time_fix_rate", FirstTimeFixResult),
+    "repeat_visit_drivers": ("get_repeat_visit_drivers", RepeatDriversResult),
 }
+FIND_TECHNICIAN = "find_technician"
 SUPPORTED = (
-    "incident counts, incident rate, SLA compliance and first-time fix rate, over a date "
-    "range; the rates can be broken down by account, region, service type or technician"
+    "incident counts, incident rate, SLA compliance and first-time fix rate over a date "
+    "range, by account, region, service type or technician, or for one named technician "
+    "(incident counts also by incident type or severity); and which incident types, "
+    "service types, regions, accounts or technicians have more repeat visits"
 )
+#: Breakdowns each metric offers (ADR-073).
+_BREAKDOWNS = {
+    "incident_count": {
+        "account",
+        "region",
+        "service_type",
+        "technician",
+        "incident_type",
+        "severity",
+    },
+    "incident_rate": {"account", "region", "service_type", "technician"},
+    "sla_compliance": {"account", "region", "service_type", "technician"},
+    "first_time_fix_rate": {"account", "region", "service_type", "technician"},
+    "repeat_visit_drivers": {"incident_type", "service_type", "region", "account", "technician"},
+}
 
 
 def unsupported_reason(request: ReportingRequest) -> str | None:
@@ -61,10 +87,42 @@ def unsupported_reason(request: ReportingRequest) -> str | None:
         return f"That metric isn't supported yet. I can report {SUPPORTED}."
     if request.group_by == "unsupported":
         return f"That breakdown isn't supported yet. I can report {SUPPORTED}."
-    if request.metric == "incident_count" and request.group_by is not None:
+    if request.group_by is not None and request.group_by not in _BREAKDOWNS[request.metric]:
         return (
-            "Incident counts can't be broken down yet; the incident rate can. "
+            f"That metric can't be broken down by {request.group_by.replace('_', ' ')}. "
             f"I can report {SUPPORTED}."
+        )
+    if request.technician_name is not None:
+        if request.metric == "repeat_visit_drivers":
+            return (
+                "Repeat-visit drivers can't be filtered to one technician; ask for them by "
+                f"technician instead. I can report {SUPPORTED}."
+            )
+        if request.group_by is not None:
+            return (
+                "A single technician's figures can't also be broken down. Ask for the "
+                f"technician alone, or for the breakdown alone. I can report {SUPPORTED}."
+            )
+    return None
+
+
+def _match_list(matches: TechnicianMatches) -> str:
+    names = [m.full_name for m in matches.matches]
+    more = matches.total_matches - len(names)
+    if more > 0:
+        return ", ".join(names) + f" and {more} more"
+    return ", ".join(names[:-1]) + f" and {names[-1]}"
+
+
+def technician_reply(matches: TechnicianMatches) -> tuple[str, str] | None:
+    """(error_code, text) when the name doesn't pick out one technician, else None."""
+    if matches.total_matches == 0:
+        return "technician_not_found", f"No technician matches {matches.name}."
+    if matches.total_matches > 1:
+        return (
+            "technician_ambiguous",
+            f"{matches.total_matches} technicians match {matches.name}: "
+            f"{_match_list(matches)}. Please ask again with the full name.",
         )
     return None
 
@@ -146,42 +204,30 @@ class ReportingExecutor(AgentExecutor):
 
             tool, result_model = TOOLS[request.metric]
             arguments = {"start": resolved.start.isoformat(), "end": resolved.end.isoformat()}
-            if request.group_by is not None:
+            if request.metric == "repeat_visit_drivers":
+                arguments["by"] = request.group_by or "incident_type"
+            elif request.group_by is not None:
                 arguments["group_by"] = request.group_by
-            try:
-                figures = await call_tool(
-                    self.settings.mcp_incidents_url,
-                    tool,
-                    arguments,
-                    result_model,
-                    trace_id=trace_id,
-                    timeout_s=self.settings.mcp_timeout_s,
-                )
-            except TimeoutError:
-                await self._fail(
+
+            if request.technician_name is not None:
+                matches = await self._call(
                     updater,
                     task.id,
-                    "tool_timeout",
-                    f"The incidents query timed out after {self.settings.mcp_timeout_s:g}s.",
+                    trace_id,
+                    FIND_TECHNICIAN,
+                    {"name": request.technician_name},
+                    TechnicianMatches,
                 )
-                return
-            except McpToolError as exc:
-                if _TOOL_QUERY_FAILED in str(exc):
-                    await self._fail(updater, task.id, "tool_error", "The incidents query failed.")
-                else:  # the tool rejected the range: its message is written for users
-                    await self._fail(
-                        updater,
-                        task.id,
-                        "invalid_range",
-                        f"That date range can't be answered: {exc}. "
-                        f"Dates are resolved as of {self.settings.as_of.isoformat()}.",
-                    )
-                return
-            except Exception:
-                log.exception("MCP call failed", extra={"task_id": task.id})
-                await self._fail(
-                    updater, task.id, "tool_unavailable", "The incidents service is unavailable."
-                )
+                if matches is None:
+                    return
+                reply = technician_reply(matches)
+                if reply is not None:
+                    await self._fail(updater, task.id, *reply)
+                    return
+                arguments["technician_id"] = matches.matches[0].technician_id
+
+            figures = await self._call(updater, task.id, trace_id, tool, arguments, result_model)
+            if figures is None:
                 return
 
             answer = ReportingAnswer(
@@ -208,6 +254,48 @@ class ReportingExecutor(AgentExecutor):
                 "task completed",
                 extra={"task_id": task.id, "metric": request.metric, "tool": tool},
             )
+
+    async def _call(self, updater, task_id, trace_id, tool, arguments, result_model):
+        """One MCP call; on failure, fail the task and return None."""
+        try:
+            return await call_tool(
+                self.settings.mcp_incidents_url,
+                tool,
+                arguments,
+                result_model,
+                trace_id=trace_id,
+                timeout_s=self.settings.mcp_timeout_s,
+            )
+        except TimeoutError:
+            await self._fail(
+                updater,
+                task_id,
+                "tool_timeout",
+                f"The incidents query timed out after {self.settings.mcp_timeout_s:g}s.",
+            )
+        except McpToolError as exc:
+            if _TOOL_QUERY_FAILED in str(exc):
+                await self._fail(updater, task_id, "tool_error", "The incidents query failed.")
+            elif tool == FIND_TECHNICIAN:
+                # The name has characters no display name has (the tool rejects patterns).
+                name = arguments["name"]
+                await self._fail(
+                    updater, task_id, "technician_not_found", f"No technician matches {name}."
+                )
+            else:  # the tool rejected the range: its message is written for users
+                await self._fail(
+                    updater,
+                    task_id,
+                    "invalid_range",
+                    f"That date range can't be answered: {exc}. "
+                    f"Dates are resolved as of {self.settings.as_of.isoformat()}.",
+                )
+        except Exception:
+            log.exception("MCP call failed", extra={"task_id": task_id, "tool": tool})
+            await self._fail(
+                updater, task_id, "tool_unavailable", "The incidents service is unavailable."
+            )
+        return None
 
     async def _fail(self, updater: TaskUpdater, task_id: str, code: str, reason: str) -> None:
         log.warning("task failed", extra={"task_id": task_id, "code": code, "reason": reason})
