@@ -103,10 +103,10 @@ Three layers, following current industry practice as of late 2026:
 - **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, sends the draft to the QA agent and owns the revision loop (ADR-055), and returns the verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
 - **Reporting/Metrics Agent** — Incident and quality metrics reporting. Figures are computed deterministically; one LLM call parses the question into a typed request (ADR-046).
 - **Sentiment Agent** — Customer feedback sentiment over a date range, for all sites or one region: counts and shares by label, the low-confidence flag count, a monthly or quarterly trend in the negative share (a two-proportion test, ADR-068), and up to 3 quoted comments. Figures come from `mcp_feedback`'s stored predictions (ADR-067); one LLM call parses the question, and answers are templated, so no customer comment reaches an LLM. Account, technician and service-type breakdowns are declined (ADR-068).
-- **Forecast Agent** — Regression-based forward volume forecasting.
+- **Forecast Agent** — Weekly request-volume forecasts from the stored `volume_v2` model, in total or by service type, up to 26 weeks ahead (ADR-072). One LLM call parses the question; answers are templated. Every served forecast carries its 80% range and the held-out error for its horizon band; bands the manifest marks unserved (ADR-071) are named with their error and no numbers. A period total is the sum of weekly forecasts, with no range. Past periods, SLA, incident and sentiment forecasts, and region, account or technician breakdowns are declined.
 - **QA Agent** — Reviews each draft the orchestrator sends it, with its own SQL as `app_qa`, never the specialists' MCP tools (ADR-055). Figures are checked without a model; one LLM call checks interpretation (ADR-056). Can accept, or reject with revision guidance.
 
-**Request flow as built (Sprint 3, before QA).** The orchestrator routes each question with one LLM call (`route_v3`). A reporting question goes over A2A to `agent_reporting`, which parses it with one LLM call and calls `mcp_incidents`. A sentiment question goes to `agent_sentiment`, which parses it with one LLM call, then calls `get_sentiment_summary` (and `get_feedback_examples` when examples are asked for) on `mcp_feedback`, computes the trend in code, and renders the answer from templates. A forecast question still gets "not available yet". Every answer carries a text part and a data part validated against its `packages/schemas` model. The QA hop in the diagram arrives in Sprint 4.
+**Request flow as built (Sprint 3, before QA).** The orchestrator routes each question with one LLM call (`route_v3`). A reporting question goes over A2A to `agent_reporting`, which parses it with one LLM call and calls `mcp_incidents`. A sentiment question goes to `agent_sentiment`, which parses it with one LLM call, then calls `get_sentiment_summary` (and `get_feedback_examples` when examples are asked for) on `mcp_feedback`, computes the trend in code, and renders the answer from templates. A forecast question goes to `agent_forecast`, which parses it with one LLM call, maps the period to weeks in code (ADR-072), calls `get_volume_forecast` (and `get_order_volume_history` when history is asked for) on `mcp_volume`, and renders the answer from templates; `mcp_volume` returns numbers only for served slice-bands. Every answer carries a text part and a data part validated against its `packages/schemas` model. The QA hop in the diagram arrives in Sprint 4.
 
 **Explicitly out of scope:** A research/web-scraping agent. Considered and cut — no clear job to do, and scope creep at the expense of QA rigor. May be revisited only if the core system is complete and stable with time remaining.
 
@@ -190,7 +190,8 @@ Security is a first-class design requirement, not a section in the writeup. MCP'
 - `get_sentiment_summary(start, end, region?, bucket)` — counts, shares, monthly or quarterly buckets and the human-review flag count, from stored predictions (`sentiment_predictions`); no comment text (ADR-067)
 - `get_feedback_examples(start, end, region?, label?, flagged_only, limit ≤ 5)` — at most 5 comments with text, for citation (ADR-067)
   - Both read four columns of `service_feedback` (`rating` withheld, ADR-027) and a comment's region, with no grant on `incidents` or `sentiment_labels`. Neither writes nor accepts free-form query input; storing predictions for unscored comments is internal, at most 250 per call
-- `get_order_volume_history(granularity, window)` — weekly request counts for the univariate forecast series, from three columns of `service_requests` (ADR-035)
+- `get_volume_forecast(slice, horizon_weeks ≤ 26)` — weekly `volume_v2` forecasts with 80%/95% ranges, numbers only for slice-bands the manifest serves (ADR-071, ADR-072); every band carries its served flag and shown error
+- `get_order_volume_history(slice, weeks ≤ 52)` — actual weekly request counts for the most recent complete weeks, from three columns of `service_requests` (ADR-035, ADR-072)
 
 Each scoped to exactly the tables and fields it needs. This is also a better MCP demonstration — authoring a server with a real capability boundary, not "database access."
 
@@ -472,6 +473,7 @@ agentic-service-ops/
 │   ├── common/                     # config, structured logging, trace IDs, errors
 │   ├── a2a_core/                   # Agent Card helpers, task lifecycle client/server
 │   ├── llm/                        # the one LLM client: Gemini, free by default, typed errors, metering (ADR-048)
+│   ├── forecast_runtime/           # the forecast prediction path, numpy only, shared by ml/forecast and mcp_volume (ADR-072)
 │   └── schemas/                    # Pydantic contracts shared across services
 │
 ├── services/
@@ -485,7 +487,8 @@ agentic-service-ops/
 │   │                    # trend.py (ADR-068's two-proportion rule); never sends a comment to an LLM
 │   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dateless trend questions default to 6 months
 │   │
-│   ├── agent_forecast/
+│   ├── agent_forecast/ # one LLM call parses the question; period-to-weeks rules in code (ADR-072); templates
+│   │   └── prompts/ # versioned parsing prompt (parse_v1.md): bare months and quarters mean their next occurrence
 │   │
 │   ├── agent_qa/ # figures verified without a model; one model call checks interpretation (ADR-056)
 │   │
@@ -496,7 +499,9 @@ agentic-service-ops/
 │   │                 # Tools: get_sentiment_summary, get_feedback_examples. Unscored comments are
 │   │                 # scored on demand (cap 250, newest first); backfill.py scores the rest.
 │   │                 # Model loads on first need; artifact hashes are verified at start-up.
-│   ├── mcp_volume/ # runs forecast inference (ADR-062)
+│   ├── mcp_volume/ # volume_v2 forecasts and weekly history, own DB role (app_forecast; ADR-062, ADR-072).
+│   │               # Tools: get_volume_forecast, get_order_volume_history. Served-only numbers
+│   │               # (ADR-071); artifact hashes verified at start-up; numpy only, no training code.
 │   └── api_gateway/ # FastAPI BFF for the UI
 │       └── (each service: Dockerfile, pyproject.toml, src/, tests/)
 │
@@ -511,6 +516,7 @@ agentic-service-ops/
 │   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment_parse/            # parse_v1.jsonl: 14 labelled questions for the sentiment agent's parse; run.py (k runs, free key)
+│   ├── forecast_parse/             # parse_v1.jsonl: 14 labelled questions for the forecast agent's parse; run.py
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064); ECE and flags (ADR-066)
 │   │   ├── compare.py              # paired bootstrap + McNemar between two models on test; its own ledger line (ADR-065)

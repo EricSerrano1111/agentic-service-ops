@@ -1,0 +1,1108 @@
+{
+  "evidence": "observed",
+  "set": "parse_v1",
+  "model": "gemini-3.5-flash-lite",
+  "key": "free",
+  "prompt": "parse_v1",
+  "prompt_sha": "44cd63997912",
+  "as_of": "2026-08-30",
+  "k": 3,
+  "stopped": null,
+  "calls": 42,
+  "requests": 42,
+  "per_run": [
+    {
+      "run": 1,
+      "n": 14,
+      "exact": 14,
+      "fields": {
+        "slice": 14,
+        "horizon_weeks": 14,
+        "period_start": 14,
+        "period_end": 14,
+        "want_history": 14,
+        "unsupported": 14
+      },
+      "errors": 0
+    },
+    {
+      "run": 2,
+      "n": 14,
+      "exact": 14,
+      "fields": {
+        "slice": 14,
+        "horizon_weeks": 14,
+        "period_start": 14,
+        "period_end": 14,
+        "want_history": 14,
+        "unsupported": 14
+      },
+      "errors": 0
+    },
+    {
+      "run": 3,
+      "n": 14,
+      "exact": 14,
+      "fields": {
+        "slice": 14,
+        "horizon_weeks": 14,
+        "period_start": 14,
+        "period_end": 14,
+        "want_history": 14,
+        "unsupported": 14
+      },
+      "errors": 0
+    }
+  ],
+  "exact_range": [
+    14,
+    14
+  ],
+  "flips": {},
+  "runs": [
+    [
+      {
+        "id": "f01",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f02",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": 8,
+          "period_start": null,
+          "period_end": null,
+          "want_history": true,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f03",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-12-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f04",
+        "category": "service_type",
+        "got": {
+          "slice": "install",
+          "horizon_weeks": 10,
+          "period_start": null,
+          "period_end": null,
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f05",
+        "category": "service_type",
+        "got": {
+          "slice": "repair",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f06",
+        "category": "service_type",
+        "got": {
+          "slice": "maintenance",
+          "horizon_weeks": null,
+          "period_start": "2026-11-01",
+          "period_end": "2026-11-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f07",
+        "category": "beyond_horizon",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-01-01",
+          "period_end": "2027-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f08",
+        "category": "beyond_horizon",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-04-01",
+          "period_end": "2027-06-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f09",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-10-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": "sla"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f10",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": "incidents"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f11",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": 8,
+          "period_start": null,
+          "period_end": null,
+          "want_history": false,
+          "unsupported": "region"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f12",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-07-01",
+          "period_end": "2026-07-31",
+          "want_history": false,
+          "unsupported": "past_period"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f13",
+        "category": "ambiguous",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-01-01",
+          "period_end": "2027-01-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f14",
+        "category": "ambiguous",
+        "got": {
+          "slice": "repair",
+          "horizon_weeks": null,
+          "period_start": "2026-10-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      }
+    ],
+    [
+      {
+        "id": "f01",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f02",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": 8,
+          "period_start": null,
+          "period_end": null,
+          "want_history": true,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f03",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-12-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f04",
+        "category": "service_type",
+        "got": {
+          "slice": "install",
+          "horizon_weeks": 10,
+          "period_start": null,
+          "period_end": null,
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f05",
+        "category": "service_type",
+        "got": {
+          "slice": "repair",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f06",
+        "category": "service_type",
+        "got": {
+          "slice": "maintenance",
+          "horizon_weeks": null,
+          "period_start": "2026-11-01",
+          "period_end": "2026-11-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f07",
+        "category": "beyond_horizon",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-01-01",
+          "period_end": "2027-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f08",
+        "category": "beyond_horizon",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-04-01",
+          "period_end": "2027-06-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f09",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-10-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": "sla"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f10",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": "incidents"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f11",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": 8,
+          "period_start": null,
+          "period_end": null,
+          "want_history": false,
+          "unsupported": "region"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f12",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-07-01",
+          "period_end": "2026-07-31",
+          "want_history": false,
+          "unsupported": "past_period"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f13",
+        "category": "ambiguous",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-01-01",
+          "period_end": "2027-01-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f14",
+        "category": "ambiguous",
+        "got": {
+          "slice": "repair",
+          "horizon_weeks": null,
+          "period_start": "2026-10-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      }
+    ],
+    [
+      {
+        "id": "f01",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f02",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": 8,
+          "period_start": null,
+          "period_end": null,
+          "want_history": true,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f03",
+        "category": "total",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-12-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f04",
+        "category": "service_type",
+        "got": {
+          "slice": "install",
+          "horizon_weeks": 10,
+          "period_start": null,
+          "period_end": null,
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f05",
+        "category": "service_type",
+        "got": {
+          "slice": "repair",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f06",
+        "category": "service_type",
+        "got": {
+          "slice": "maintenance",
+          "horizon_weeks": null,
+          "period_start": "2026-11-01",
+          "period_end": "2026-11-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f07",
+        "category": "beyond_horizon",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-01-01",
+          "period_end": "2027-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f08",
+        "category": "beyond_horizon",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-04-01",
+          "period_end": "2027-06-30",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f09",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-10-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": "sla"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f10",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-09-01",
+          "period_end": "2026-09-30",
+          "want_history": false,
+          "unsupported": "incidents"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f11",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": 8,
+          "period_start": null,
+          "period_end": null,
+          "want_history": false,
+          "unsupported": "region"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f12",
+        "category": "unsupported",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2026-07-01",
+          "period_end": "2026-07-31",
+          "want_history": false,
+          "unsupported": "past_period"
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f13",
+        "category": "ambiguous",
+        "got": {
+          "slice": "total",
+          "horizon_weeks": null,
+          "period_start": "2027-01-01",
+          "period_end": "2027-01-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      },
+      {
+        "id": "f14",
+        "category": "ambiguous",
+        "got": {
+          "slice": "repair",
+          "horizon_weeks": null,
+          "period_start": "2026-10-01",
+          "period_end": "2026-12-31",
+          "want_history": false,
+          "unsupported": null
+        },
+        "error": null,
+        "fields": {
+          "slice": true,
+          "horizon_weeks": true,
+          "period_start": true,
+          "period_end": true,
+          "want_history": true,
+          "unsupported": true
+        },
+        "exact": true
+      }
+    ]
+  ],
+  "expected": {
+    "f01": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2026-09-01",
+      "period_end": "2026-09-30",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f02": {
+      "slice": "total",
+      "horizon_weeks": 8,
+      "period_start": null,
+      "period_end": null,
+      "want_history": true,
+      "unsupported": null
+    },
+    "f03": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2026-12-01",
+      "period_end": "2026-12-31",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f04": {
+      "slice": "install",
+      "horizon_weeks": 10,
+      "period_start": null,
+      "period_end": null,
+      "want_history": false,
+      "unsupported": null
+    },
+    "f05": {
+      "slice": "repair",
+      "horizon_weeks": null,
+      "period_start": "2026-09-01",
+      "period_end": "2026-09-30",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f06": {
+      "slice": "maintenance",
+      "horizon_weeks": null,
+      "period_start": "2026-11-01",
+      "period_end": "2026-11-30",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f07": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2027-01-01",
+      "period_end": "2027-12-31",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f08": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2027-04-01",
+      "period_end": "2027-06-30",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f09": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2026-10-01",
+      "period_end": "2026-12-31",
+      "want_history": false,
+      "unsupported": "sla"
+    },
+    "f10": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2026-09-01",
+      "period_end": "2026-09-30",
+      "want_history": false,
+      "unsupported": "incidents"
+    },
+    "f11": {
+      "slice": "total",
+      "horizon_weeks": 8,
+      "period_start": null,
+      "period_end": null,
+      "want_history": false,
+      "unsupported": "region"
+    },
+    "f12": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2026-07-01",
+      "period_end": "2026-07-31",
+      "want_history": false,
+      "unsupported": "past_period"
+    },
+    "f13": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2027-01-01",
+      "period_end": "2027-01-31",
+      "want_history": false,
+      "unsupported": null
+    },
+    "f14": {
+      "slice": "repair",
+      "horizon_weeks": null,
+      "period_start": "2026-10-01",
+      "period_end": "2026-12-31",
+      "want_history": false,
+      "unsupported": null
+    }
+  }
+}

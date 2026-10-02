@@ -1,0 +1,870 @@
+{
+  "evidence": "observed",
+  "stack": "docker compose up -d orchestrator (orchestrator, agent_reporting, mcp_incidents, agent_sentiment, mcp_feedback, agent_forecast, mcp_volume; postgres already running)",
+  "stack_ready_s": 70.31,
+  "stack_ready_measured": "host: from `docker compose up -d orchestrator` to the orchestrator's first 200 on /healthz (compose health chain)",
+  "runs": [
+    {
+      "id": "q1-next-month",
+      "question": "What will request volume look like next month?",
+      "wall_s": 2.54,
+      "http_status": 200,
+      "response": {
+        "answer": "Forecast of total request volume, 4 weeks from 2026-09-07 to 2026-10-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\nTotal over these 4 weeks: about 649 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.",
+        "outcome": "answered",
+        "route": {
+          "route": "forecast",
+          "domains": [
+            "forecast"
+          ],
+          "reason": "The question asks about expected request volume for next month, which is forward-looking."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": {
+          "request": {
+            "slice": "total",
+            "horizon_weeks": null,
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "want_history": false,
+            "unsupported": null
+          },
+          "as_of": "2026-08-30",
+          "trained_through": "2026-08-30",
+          "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+          "range_assumed": false,
+          "requested_first_week": "2026-09-07",
+          "requested_last_week": "2026-09-28",
+          "beyond_horizon_weeks": 0,
+          "weeks": [
+            {
+              "week_start": "2026-09-07",
+              "horizon": 2,
+              "band": "1-4",
+              "served": true,
+              "point": 155.50225491843807,
+              "lo80": 135.27665550477684,
+              "hi80": 178.75184150945415,
+              "lo95": 125.65760243110228,
+              "hi95": 192.43524320764635
+            },
+            {
+              "week_start": "2026-09-14",
+              "horizon": 3,
+              "band": "1-4",
+              "served": true,
+              "point": 160.177810048846,
+              "lo80": 139.31614241039813,
+              "hi80": 184.1633739503344,
+              "lo95": 129.39612060314806,
+              "hi95": 198.28207145972183
+            },
+            {
+              "week_start": "2026-09-21",
+              "horizon": 4,
+              "band": "1-4",
+              "served": true,
+              "point": 164.6502757650155,
+              "lo80": 143.1795109320367,
+              "hi80": 189.3407313170937,
+              "lo95": 132.97132075238622,
+              "hi95": 203.87639346666526
+            },
+            {
+              "week_start": "2026-09-28",
+              "horizon": 5,
+              "band": "5-13",
+              "served": true,
+              "point": 168.66202084016217,
+              "lo80": 146.64381552937115,
+              "hi80": 193.9862050860897,
+              "lo95": 136.17668778213553,
+              "hi95": 208.89682174821655
+            }
+          ],
+          "bands": {
+            "5-13": {
+              "served": true,
+              "shown_error": 5.488484131615858
+            },
+            "1-4": {
+              "served": true,
+              "shown_error": 13.575509695123564
+            }
+          },
+          "period_total": 648.9923615724617,
+          "year_end_weeks": [],
+          "history": []
+        },
+        "task_id": "53cff7bb-5bfd-4709-a8fe-0ab0c6460c46",
+        "trace_id": "8c497ebf6c8f4bcca62134aec881e6f9"
+      }
+    },
+    {
+      "id": "q2-install-10-weeks",
+      "question": "Forecast install requests for the next 10 weeks.",
+      "wall_s": 1.63,
+      "http_status": 200,
+      "response": {
+        "answer": "Forecast of install requests, 10 weeks from 2026-08-31 to 2026-11-08 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-28: about 28 requests (80% range 21-39)\n- Week of 2026-10-05: about 29 requests (80% range 21-39)\n- Week of 2026-10-12: about 29 requests (80% range 21-39)\n- Week of 2026-10-19: about 29 requests (80% range 21-39)\n- Week of 2026-10-26: about 29 requests (80% range 21-39)\n- Week of 2026-11-02: about 28 requests (80% range 21-39)\nNo total is given, because some of these weeks aren't shown.\nForecasts for install requests at 1-4 weeks ahead aren't shown: they were off by 43.7% on held-out weeks.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 18.0% on average.",
+        "outcome": "answered",
+        "route": {
+          "route": "forecast",
+          "domains": [
+            "forecast"
+          ],
+          "reason": "The question asks for a forward-looking projection of install requests over the next 10 weeks."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": {
+          "request": {
+            "slice": "install",
+            "horizon_weeks": 10,
+            "period_start": null,
+            "period_end": null,
+            "want_history": false,
+            "unsupported": null
+          },
+          "as_of": "2026-08-30",
+          "trained_through": "2026-08-30",
+          "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+          "range_assumed": false,
+          "requested_first_week": "2026-08-31",
+          "requested_last_week": "2026-11-02",
+          "beyond_horizon_weeks": 0,
+          "weeks": [
+            {
+              "week_start": "2026-08-31",
+              "horizon": 1,
+              "band": "1-4",
+              "served": false,
+              "point": null,
+              "lo80": null,
+              "hi80": null,
+              "lo95": null,
+              "hi95": null
+            },
+            {
+              "week_start": "2026-09-07",
+              "horizon": 2,
+              "band": "1-4",
+              "served": false,
+              "point": null,
+              "lo80": null,
+              "hi80": null,
+              "lo95": null,
+              "hi95": null
+            },
+            {
+              "week_start": "2026-09-14",
+              "horizon": 3,
+              "band": "1-4",
+              "served": false,
+              "point": null,
+              "lo80": null,
+              "hi80": null,
+              "lo95": null,
+              "hi95": null
+            },
+            {
+              "week_start": "2026-09-21",
+              "horizon": 4,
+              "band": "1-4",
+              "served": false,
+              "point": null,
+              "lo80": null,
+              "hi80": null,
+              "lo95": null,
+              "hi95": null
+            },
+            {
+              "week_start": "2026-09-28",
+              "horizon": 5,
+              "band": "5-13",
+              "served": true,
+              "point": 28.264499973870358,
+              "lo80": 20.613388077582638,
+              "hi80": 38.75549015844286,
+              "lo95": 17.44123754331662,
+              "hi95": 45.80420149595658
+            },
+            {
+              "week_start": "2026-10-05",
+              "horizon": 6,
+              "band": "5-13",
+              "served": true,
+              "point": 28.574632384446247,
+              "lo80": 20.832655626665662,
+              "hi80": 39.19373653261552,
+              "lo95": 17.623666901156962,
+              "hi95": 46.330290993677465
+            },
+            {
+              "week_start": "2026-10-12",
+              "horizon": 7,
+              "band": "5-13",
+              "served": true,
+              "point": 28.75109507846599,
+              "lo80": 20.955399785952,
+              "hi80": 39.44689562855017,
+              "lo95": 17.724858822888706,
+              "hi95": 46.63650506166751
+            },
+            {
+              "week_start": "2026-10-19",
+              "horizon": 8,
+              "band": "5-13",
+              "served": true,
+              "point": 28.77397713015294,
+              "lo80": 20.967105034500502,
+              "hi80": 39.487652612233326,
+              "lo95": 17.7325334951729,
+              "hi95": 46.690551020921205
+            },
+            {
+              "week_start": "2026-10-26",
+              "horizon": 9,
+              "band": "5-13",
+              "served": true,
+              "point": 28.63369077533668,
+              "lo80": 20.86070973323828,
+              "hi80": 39.302989107376206,
+              "lo95": 17.640684577579385,
+              "hi95": 46.47712189467106
+            },
+            {
+              "week_start": "2026-11-02",
+              "horizon": 10,
+              "band": "5-13",
+              "served": true,
+              "point": 28.332172939957857,
+              "lo80": 20.637530066422332,
+              "hi80": 38.89574095912323,
+              "lo95": 17.450382285728896,
+              "hi95": 45.99968128813697
+            }
+          ],
+          "bands": {
+            "5-13": {
+              "served": true,
+              "shown_error": 17.957601388809973
+            },
+            "1-4": {
+              "served": false,
+              "shown_error": 43.69451185173943
+            }
+          },
+          "period_total": null,
+          "year_end_weeks": [],
+          "history": []
+        },
+        "task_id": "8e5efb3e-ce8c-41d9-9c35-36f94d65aebb",
+        "trace_id": "72afde4f021a4c139387e1d867d36f83"
+      }
+    },
+    {
+      "id": "q3-december",
+      "question": "How busy will December be?",
+      "wall_s": 1.5,
+      "http_status": 200,
+      "response": {
+        "answer": "Forecast of total request volume, 4 weeks from 2026-12-07 to 2027-01-03 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-12-07: about 156 requests (80% range 135-179)\n- Week of 2026-12-14: about 151 requests (80% range 131-174)\n- Week of 2026-12-21: about 126 requests (80% range 108-147)\n- Week of 2026-12-28: about 122 requests (80% range 105-143)\nTotal over these 4 weeks: about 555 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.\nChristmas and New Year weeks include a holiday adjustment that hasn't been validated on held-out data.",
+        "outcome": "answered",
+        "route": {
+          "route": "forecast",
+          "domains": [
+            "forecast"
+          ],
+          "reason": "The question asks about expected future volume for December."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": {
+          "request": {
+            "slice": "total",
+            "horizon_weeks": null,
+            "period_start": "2026-12-01",
+            "period_end": "2026-12-31",
+            "want_history": false,
+            "unsupported": null
+          },
+          "as_of": "2026-08-30",
+          "trained_through": "2026-08-30",
+          "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+          "range_assumed": false,
+          "requested_first_week": "2026-12-07",
+          "requested_last_week": "2026-12-28",
+          "beyond_horizon_weeks": 0,
+          "weeks": [
+            {
+              "week_start": "2026-12-07",
+              "horizon": 15,
+              "band": "14-26",
+              "served": true,
+              "point": 155.7826172272241,
+              "lo80": 135.34633510434207,
+              "hi80": 179.30462477210634,
+              "lo95": 125.63674445738894,
+              "hi95": 193.1618328298426
+            },
+            {
+              "week_start": "2026-12-14",
+              "horizon": 16,
+              "band": "14-26",
+              "served": true,
+              "point": 151.01149387083234,
+              "lo80": 131.2007921880656,
+              "hi80": 173.81351820202494,
+              "lo95": 121.78844200078137,
+              "hi95": 187.24659669227168
+            },
+            {
+              "week_start": "2026-12-21",
+              "horizon": 17,
+              "band": "14-26",
+              "served": true,
+              "point": 125.72519085666178,
+              "lo80": 107.79219944126778,
+              "hi80": 146.64162803873967,
+              "lo95": 99.3589601237764,
+              "hi95": 159.08805402404258
+            },
+            {
+              "week_start": "2026-12-28",
+              "horizon": 18,
+              "band": "14-26",
+              "served": true,
+              "point": 122.19699137390204,
+              "lo80": 104.77801816228326,
+              "hi80": 142.5118069870935,
+              "lo95": 96.58585148204742,
+              "hi95": 154.59929660203852
+            }
+          ],
+          "bands": {
+            "14-26": {
+              "served": true,
+              "shown_error": 11.491661356128652
+            }
+          },
+          "period_total": 554.7162933286203,
+          "year_end_weeks": [
+            "2026-12-21",
+            "2026-12-28"
+          ],
+          "history": []
+        },
+        "task_id": "7eee35f0-3031-4af5-a647-8cc849e16c32",
+        "trace_id": "c3e489e5bde348c09a7123eff3d5cf74"
+      }
+    },
+    {
+      "id": "q4-next-year",
+      "question": "Forecast volume for the next year.",
+      "wall_s": 1.75,
+      "http_status": 200,
+      "response": {
+        "answer": "Forecast of total request volume, 52 weeks from 2026-09-07 to 2027-09-05 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\n- Week of 2026-10-05: about 172 requests (80% range 149-198)\n- Week of 2026-10-12: about 174 requests (80% range 152-201)\n- Week of 2026-10-19: about 176 requests (80% range 153-202)\n- Week of 2026-10-26: about 176 requests (80% range 153-202)\n- Week of 2026-11-02: about 175 requests (80% range 152-201)\n- Week of 2026-11-09: about 172 requests (80% range 150-198)\n- Week of 2026-11-16: about 169 requests (80% range 147-195)\n- Week of 2026-11-23: about 165 requests (80% range 143-190)\n- Week of 2026-11-30: about 161 requests (80% range 139-185)\n- Week of 2026-12-07: about 156 requests (80% range 135-179)\n- Week of 2026-12-14: about 151 requests (80% range 131-174)\n- Week of 2026-12-21: about 126 requests (80% range 108-147)\n- Week of 2026-12-28: about 122 requests (80% range 105-143)\n- Week of 2027-01-04: about 139 requests (80% range 121-160)\n- Week of 2027-01-11: about 136 requests (80% range 118-157)\n- Week of 2027-01-18: about 134 requests (80% range 116-154)\n- Week of 2027-01-25: about 133 requests (80% range 115-153)\n- Week of 2027-02-01: about 132 requests (80% range 115-152)\n- Week of 2027-02-08: about 133 requests (80% range 115-153)\n- Week of 2027-02-15: about 134 requests (80% range 116-154)\n- Week of 2027-02-22: about 136 requests (80% range 118-156)\nTotal over these 25 weeks: about 3,819 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.\nChristmas and New Year weeks include a holiday adjustment that hasn't been validated on held-out data.\nThe remaining 27 weeks fall beyond the 26-week forecast horizon and aren't forecast.",
+        "outcome": "answered",
+        "route": {
+          "route": "forecast",
+          "domains": [
+            "forecast"
+          ],
+          "reason": "The question asks for projected volume over the next year."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": {
+          "request": {
+            "slice": "total",
+            "horizon_weeks": null,
+            "period_start": "2026-09-01",
+            "period_end": "2027-08-31",
+            "want_history": false,
+            "unsupported": null
+          },
+          "as_of": "2026-08-30",
+          "trained_through": "2026-08-30",
+          "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+          "range_assumed": false,
+          "requested_first_week": "2026-09-07",
+          "requested_last_week": "2027-08-30",
+          "beyond_horizon_weeks": 27,
+          "weeks": [
+            {
+              "week_start": "2026-09-07",
+              "horizon": 2,
+              "band": "1-4",
+              "served": true,
+              "point": 155.50225491843807,
+              "lo80": 135.27665550477684,
+              "hi80": 178.75184150945415,
+              "lo95": 125.65760243110228,
+              "hi95": 192.43524320764635
+            },
+            {
+              "week_start": "2026-09-14",
+              "horizon": 3,
+              "band": "1-4",
+              "served": true,
+              "point": 160.177810048846,
+              "lo80": 139.31614241039813,
+              "hi80": 184.1633739503344,
+              "lo95": 129.39612060314806,
+              "hi95": 198.28207145972183
+            },
+            {
+              "week_start": "2026-09-21",
+              "horizon": 4,
+              "band": "1-4",
+              "served": true,
+              "point": 164.6502757650155,
+              "lo80": 143.1795109320367,
+              "hi80": 189.3407313170937,
+              "lo95": 132.97132075238622,
+              "hi95": 203.87639346666526
+            },
+            {
+              "week_start": "2026-09-28",
+              "horizon": 5,
+              "band": "5-13",
+              "served": true,
+              "point": 168.66202084016217,
+              "lo80": 146.64381552937115,
+              "hi80": 193.9862050860897,
+              "lo95": 136.17668778213553,
+              "hi95": 208.89682174821655
+            },
+            {
+              "week_start": "2026-10-05",
+              "horizon": 6,
+              "band": "5-13",
+              "served": true,
+              "point": 171.96256540810066,
+              "lo80": 149.4920974395783,
+              "hi80": 197.81061613432342,
+              "lo95": 138.81115212722267,
+              "hi95": 213.03132672389953
+            },
+            {
+              "week_start": "2026-10-12",
+              "horizon": 7,
+              "band": "5-13",
+              "served": true,
+              "point": 174.33172414255722,
+              "lo80": 151.53339500488605,
+              "hi80": 200.56008143641685,
+              "lo95": 140.69761721372998,
+              "hi95": 216.0061459772249
+            },
+            {
+              "week_start": "2026-10-19",
+              "horizon": 8,
+              "band": "5-13",
+              "served": true,
+              "point": 175.60261920463884,
+              "lo80": 152.6227314247156,
+              "hi80": 202.0425108611036,
+              "lo95": 141.7015104642084,
+              "hi95": 217.61433431803928
+            },
+            {
+              "week_start": "2026-10-26",
+              "horizon": 9,
+              "band": "5-13",
+              "served": true,
+              "point": 175.68069895268124,
+              "lo80": 152.67772789558586,
+              "hi80": 202.14937967645074,
+              "lo95": 141.74624870908553,
+              "hi95": 217.73915193936514
+            },
+            {
+              "week_start": "2026-11-02",
+              "horizon": 10,
+              "band": "5-13",
+              "served": true,
+              "point": 174.55519354690304,
+              "lo80": 151.68871082154553,
+              "hi80": 200.86870953793456,
+              "lo95": 140.82269625461717,
+              "hi95": 216.36793219117027
+            },
+            {
+              "week_start": "2026-11-09",
+              "horizon": 11,
+              "band": "5-13",
+              "served": true,
+              "point": 172.30071618813304,
+              "lo80": 149.72026588200603,
+              "hi80": 198.28669568580787,
+              "lo95": 138.99068749735687,
+              "hi95": 213.5937114456544
+            },
+            {
+              "week_start": "2026-11-16",
+              "horizon": 12,
+              "band": "5-13",
+              "served": true,
+              "point": 169.06867387718196,
+              "lo80": 146.90388746683064,
+              "hi80": 194.57767237809094,
+              "lo95": 136.37225861771444,
+              "hi95": 209.6043343149256
+            },
+            {
+              "week_start": "2026-11-23",
+              "horizon": 13,
+              "band": "5-13",
+              "served": true,
+              "point": 165.07021355487848,
+              "lo80": 143.423185485664,
+              "hi80": 189.98445272836872,
+              "lo95": 133.13792710660195,
+              "hi95": 204.66125615156903
+            },
+            {
+              "week_start": "2026-11-30",
+              "horizon": 14,
+              "band": "14-26",
+              "served": true,
+              "point": 160.55398313019458,
+              "lo80": 139.49449754714612,
+              "hi80": 184.79281944621897,
+              "lo95": 129.488662202682,
+              "hi95": 199.07211226433458
+            },
+            {
+              "week_start": "2026-12-07",
+              "horizon": 15,
+              "band": "14-26",
+              "served": true,
+              "point": 155.7826172272241,
+              "lo80": 135.34633510434207,
+              "hi80": 179.30462477210634,
+              "lo95": 125.63674445738894,
+              "hi95": 193.1618328298426
+            },
+            {
+              "week_start": "2026-12-14",
+              "horizon": 16,
+              "band": "14-26",
+              "served": true,
+              "point": 151.01149387083234,
+              "lo80": 131.2007921880656,
+              "hi80": 173.81351820202494,
+              "lo95": 121.78844200078137,
+              "hi95": 187.24659669227168
+            },
+            {
+              "week_start": "2026-12-21",
+              "horizon": 17,
+              "band": "14-26",
+              "served": true,
+              "point": 125.72519085666178,
+              "lo80": 107.79219944126778,
+              "hi80": 146.64162803873967,
+              "lo95": 99.3589601237764,
+              "hi95": 159.08805402404258
+            },
+            {
+              "week_start": "2026-12-28",
+              "horizon": 18,
+              "band": "14-26",
+              "served": true,
+              "point": 122.19699137390204,
+              "lo80": 104.77801816228326,
+              "hi80": 142.5118069870935,
+              "lo95": 96.58585148204742,
+              "hi95": 154.59929660203852
+            },
+            {
+              "week_start": "2027-01-04",
+              "horizon": 19,
+              "band": "14-26",
+              "served": true,
+              "point": 138.83743260273044,
+              "lo80": 120.63602038252297,
+              "hi80": 159.7850511861736,
+              "lo95": 111.98758985214323,
+              "hi95": 172.12472129427482
+            },
+            {
+              "week_start": "2027-01-11",
+              "horizon": 20,
+              "band": "14-26",
+              "served": true,
+              "point": 136.01556505389263,
+              "lo80": 118.19119851971854,
+              "hi80": 156.5280170489446,
+              "lo95": 109.72152837177401,
+              "hi95": 168.6107932642406
+            },
+            {
+              "week_start": "2027-01-18",
+              "horizon": 21,
+              "band": "14-26",
+              "served": true,
+              "point": 133.9736865710361,
+              "lo80": 116.42422069286076,
+              "hi80": 154.16851052656315,
+              "lo95": 108.08477076413611,
+              "hi95": 166.06362364039822
+            },
+            {
+              "week_start": "2027-01-25",
+              "horizon": 22,
+              "band": "14-26",
+              "served": true,
+              "point": 132.7534453177601,
+              "lo80": 115.3704900710343,
+              "hi80": 152.7555030136792,
+              "lo95": 107.10979629904595,
+              "hi95": 164.53655830444802
+            },
+            {
+              "week_start": "2027-02-01",
+              "horizon": 23,
+              "band": "14-26",
+              "served": true,
+              "point": 132.3636771638458,
+              "lo80": 115.03700175221579,
+              "hi80": 152.30006663484107,
+              "lo95": 106.80276303916123,
+              "hi95": 164.0420391175714
+            },
+            {
+              "week_start": "2027-02-08",
+              "horizon": 24,
+              "band": "14-26",
+              "served": true,
+              "point": 132.78262877749296,
+              "lo80": 115.40436091936851,
+              "hi80": 152.77781848625466,
+              "lo95": 107.14542391487535,
+              "hi95": 164.5541718988309
+            },
+            {
+              "week_start": "2027-02-15",
+              "horizon": 25,
+              "band": "14-26",
+              "served": true,
+              "point": 133.9590885301623,
+              "lo80": 116.42783602243173,
+              "hi80": 154.13012912457168,
+              "lo95": 108.0961391753091,
+              "hi95": 166.0099753491547
+            },
+            {
+              "week_start": "2027-02-22",
+              "horizon": 26,
+              "band": "14-26",
+              "served": true,
+              "point": 135.81264880030852,
+              "lo80": 118.03763405245303,
+              "hi80": 156.26436197424462,
+              "lo95": 109.59015527278734,
+              "hi95": 168.30960343329392
+            }
+          ],
+          "bands": {
+            "1-4": {
+              "served": true,
+              "shown_error": 13.575509695123564
+            },
+            "14-26": {
+              "served": true,
+              "shown_error": 11.491661356128652
+            },
+            "5-13": {
+              "served": true,
+              "shown_error": 5.488484131615858
+            }
+          },
+          "period_total": 3819.33321572358,
+          "year_end_weeks": [
+            "2026-12-21",
+            "2026-12-28"
+          ],
+          "history": []
+        },
+        "task_id": "681acc70-929b-4dcc-bd7a-394312d6eba5",
+        "trace_id": "dc0ab14a67a34100af79fc3a29d00781"
+      }
+    },
+    {
+      "id": "q5-sla-decline",
+      "question": "What's the SLA outlook for Q4?",
+      "wall_s": 1.52,
+      "http_status": 200,
+      "response": {
+        "answer": "SLA outlook can't be forecast: there's no model for SLA compliance. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+        "outcome": "not_available",
+        "route": {
+          "route": "forecast",
+          "domains": [
+            "forecast"
+          ],
+          "reason": "The question asks about the future SLA outlook for Q4."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "21a194d0-d388-48b2-9420-fece3e29dea2",
+        "trace_id": "dda04bbf1da7411ea568efb50cbdcac3"
+      }
+    },
+    {
+      "id": "q6-reporting",
+      "question": "How many incidents were reported last month?",
+      "wall_s": 2.12,
+      "http_status": 200,
+      "response": {
+        "answer": "As of 2026-08-30: 54 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 6 high, 12 medium, 36 low severity.",
+        "outcome": "answered",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "The question asks for a count of past incidents from last month."
+        },
+        "prompt_version": "route_v3",
+        "reporting": {
+          "request": {
+            "metric": "incident_count",
+            "group_by": null,
+            "start": "2026-07-01",
+            "end": "2026-07-31"
+          },
+          "start": "2026-07-01",
+          "end": "2026-07-31",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "figures": {
+            "metric": "incident_count",
+            "start": "2026-07-01",
+            "end": "2026-07-31",
+            "incident_count": 54,
+            "by_severity": {
+              "low": 36,
+              "medium": 12,
+              "high": 6
+            }
+          }
+        },
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "0f1a82bf-4e1f-4413-a993-26725337696e",
+        "trace_id": "df0c3061ad9d4cea80be8e6ab425bc5c"
+      }
+    },
+    {
+      "id": "q7-sentiment",
+      "question": "How did customers feel last quarter?",
+      "wall_s": 2.21,
+      "http_status": 200,
+      "response": {
+        "answer": "Customer feedback sentiment from 2026-04-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n723 comments: positive 366 (50.6%), neutral 176 (24.3%), negative 128 (17.7%), mixed 53 (7.3%).\n5 comments (0.7%) are low-confidence and flagged for review.",
+        "outcome": "answered",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question asks how customers felt, which pertains to customer sentiment."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": {
+          "request": {
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "region": null,
+            "bucket": "month",
+            "want_trend": false,
+            "want_examples": false,
+            "example_label": null,
+            "unsupported": null
+          },
+          "start": "2026-04-01",
+          "end": "2026-06-30",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "summary": {
+            "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+            "n_comments": 723,
+            "n_scored": 723,
+            "complete": true,
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "region": null,
+            "bucket": "month",
+            "counts": {
+              "positive": 366,
+              "neutral": 176,
+              "negative": 128,
+              "mixed": 53
+            },
+            "shares": {
+              "positive": "0.5062",
+              "neutral": "0.2434",
+              "negative": "0.1770",
+              "mixed": "0.0733"
+            },
+            "flagged_count": 5,
+            "buckets": [
+              {
+                "bucket": "2026-04",
+                "n_scored": 242,
+                "counts": {
+                  "positive": 117,
+                  "neutral": 64,
+                  "negative": 47,
+                  "mixed": 14
+                },
+                "flagged_count": 2
+              },
+              {
+                "bucket": "2026-05",
+                "n_scored": 252,
+                "counts": {
+                  "positive": 133,
+                  "neutral": 59,
+                  "negative": 41,
+                  "mixed": 19
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-06",
+                "n_scored": 229,
+                "counts": {
+                  "positive": 116,
+                  "neutral": 53,
+                  "negative": 40,
+                  "mixed": 20
+                },
+                "flagged_count": 2
+              }
+            ]
+          },
+          "trend": null,
+          "examples": [],
+          "quoted_feedback_ids": []
+        },
+        "forecast": null,
+        "task_id": "9ec24075-7d40-42e7-a17c-65308dd274d7",
+        "trace_id": "a90b304d18ff427c91f0bd2f546d0972"
+      }
+    }
+  ]
+}

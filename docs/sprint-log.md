@@ -277,15 +277,28 @@ above.
 
 ## Sprint 3 (Weeks 5–6, 2026-10-12 to 2026-10-25) — Analytical agents
 **Goal (increment):** All three specialists working; forecast beats a naive baseline or the gap is documented.
+*2026-10-02: met, pulled forward. Reporting, sentiment and forecast each answer end to
+end through the orchestrator, and the forecast beats seasonal naive on the headline
+holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 
 **Planned:**
-- [ ] MCP servers #2 and #3 (feedback, volume)
+- [x] MCP servers #2 and #3 (feedback, volume)
   *2026-10-01: feedback done (ADR-067). `mcp_feedback` answers from stored predictions
   (`sentiment_predictions`, migration `3d7e1a9c5b20`) with `get_sentiment_summary` and
   `get_feedback_examples`, scoring unscored comments on demand (cap 250, batch 8); all
   7,521 comments backfilled. Stored test-split predictions match 3b's on 1,128/1,128.
   Volume still to do.*
-- [ ] Forecast agent + regression model + seasonal-naive baseline comparison
+  *2026-10-02: volume done (ADR-072). `mcp_volume` serves `volume_v2` through
+  `get_volume_forecast` (numbers only for served slice-bands, ADR-071) and
+  `get_order_volume_history`, as `app_forecast`; numpy only, image 410 MB.*
+- [x] Forecast agent + regression model + seasonal-naive baseline comparison
+  *2026-10-02: forecast agent built (ADR-072): one parse call, period rules in code,
+  template answers with the held-out error per band, unserved bands named with their
+  error, declines for SLA, incidents, sentiment, breakdowns and past periods. Parse set
+  parse_v1: 14/14 exact match in each of 3 runs, no flips. End to end: next month,
+  install for 10 weeks (weeks 1-4 refused, 5-10 served), December (year-end caveat),
+  the next year (served to 26 weeks), and the SLA decline, 1.5-2.5 s each; reporting
+  and sentiment unchanged. 56 free-tier calls. Results: `evals/results/forecast_agent/2026-10-02/`.*
   - [x] Rolling-origin folds over the Q4 2024 and Q4 2025 peaks, reported separately alongside the 26-week holdout; backtest threshold set from them (ADR-057, ADR-055).
   *2026-10-02: pulled forward. Regression model and seasonal-naive comparison done; the
   forecast agent is still to build (5b), so the parent item stays open. Protocol
@@ -405,6 +418,7 @@ above.
 - ADR-069 — Forecast protocol, pre-registered: folds, holdout, intervals and release gate (2026-10-02, pulled forward)
 - ADR-070 — Forecast gate correction and `volume_v2` with a year-end indicator, decided after fold results and before the holdout (2026-10-02, pulled forward)
 - ADR-071 — Forecast serving requires passing on both fold B and the holdout (2026-10-02, pulled forward)
+- ADR-072 — Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only (2026-10-02, pulled forward)
 
 ---
 
