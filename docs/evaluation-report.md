@@ -508,3 +508,22 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** Coverage is reported, not gated (ADR-069). Answers should present the
   range as approximate for service-type slices.
 - **Recorded in:** ADR-069; `evals/results/forecast/2026-10-02_folds/`, `2026-10-02_folds_v2/`, `2026-10-02_holdout/`.
+
+### L-46 — Four slice-bands passed fold B and missed the 20% bar on the holdout (2026-10-02)
+- **What:** Under ADR-070's gate these passed fold B, then exceeded 20% MAPE on the blind
+  holdout with `volume_v2`: install 14–26 weeks (fold B 18.5%, holdout 29.4%), upgrade 5–13
+  (17.3%, 26.9%), upgrade 14–26 (14.6%, 21.2%) and repair 1–4 (7.7%, 27.9%). ADR-071 removes
+  them from service; L-44's "Served" list is narrowed accordingly.
+- **Why accepted:** The rule only tightens what is served, and no evaluation figure changes.
+  It was decided after the holdout, so it is disclosed as such (ADR-071).
+- **Recorded in:** ADR-071; `ml/forecast/artifacts/volume_v2.manifest.json` (`serving`).
+
+### L-47 — Weekly service-type forecasts are mostly not served at these volumes (2026-10-02)
+- **What:** With about 15–45 requests a week per service type, weekly errors are large and
+  unstable between windows. Under ADR-071 only install and repair at 5–13 weeks are served;
+  the other 13 service-type slice-bands are refused with their error shown. The total is
+  served at every band.
+- **Why accepted:** Serving them would claim accuracy the data doesn't support. Monthly
+  service-type forecasts, which would reduce the noise, are future work and need their own
+  ADR.
+- **Recorded in:** ADR-071.

@@ -404,6 +404,7 @@ above.
 - ADR-068 — Sentiment agent: one parse call, template answers, a significance-based trend rule, explicit declines (2026-10-01, pulled forward)
 - ADR-069 — Forecast protocol, pre-registered: folds, holdout, intervals and release gate (2026-10-02, pulled forward)
 - ADR-070 — Forecast gate correction and `volume_v2` with a year-end indicator, decided after fold results and before the holdout (2026-10-02, pulled forward)
+- ADR-071 — Forecast serving requires passing on both fold B and the holdout (2026-10-02, pulled forward)
 
 ---
 
