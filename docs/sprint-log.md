@@ -420,6 +420,19 @@ above.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 - [ ] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
 
+*Planning note, 2026-10-01 (from 4b):*
+- *ADR-034's 120 s ceiling is not enforced as one request deadline today. Each hop has
+  its own timeout: routing 30 s, then the specialist's A2A call up to 60 s (reporting) or
+  85 s (sentiment), so the bound holds only by adding them up. The Sprint 4 QA loop
+  multiplies hops (QA, up to two revisions), so it must add a single per-request deadline,
+  set once and passed through every step, and on expiry return the degraded result with a
+  warning and an escalation flag that NFR-1 describes (`02`, non-functional requirement 1,
+  Performance).*
+- *QA's interpretation call (ADR-056) must not receive quoted customer comments (security
+  guarantee 9). It gets the sentiment answer with each quote replaced by its feedback ID;
+  the quotes are verified mechanically against the database (the IDs exist, are in range
+  and region, and the quoted text matches `feedback_text`).*
+
 **Shipped:**
 *(fill in at sprint end)*
 

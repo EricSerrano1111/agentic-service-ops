@@ -426,13 +426,3 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** It is a parse check, not the Sprint 5 evaluation. Held-out phrasings
   belong in the Sprint 5 golden set, written separately.
 - **Recorded in:** ADR-068; `evals/sentiment_parse/`.
-
-### L-40 — Two orchestrator texts still say sentiment isn't available (2026-10-01)
-- **What:** The out-of-scope decline says the system answers "incidents and quality metrics
-  today, with customer sentiment and operational forecasts to follow", and the forecast
-  "not available yet" text says "Right now I can answer questions about incidents and
-  quality metrics over a date range". Both are now wrong about sentiment. 4b's scope kept
-  the forecast text unchanged and did not touch the out-of-scope text.
-- **Why accepted:** For now, recorded: the texts mislead about scope, not about any figure.
-  They should be corrected with the next orchestrator change.
-- **Recorded in:** ADR-068; `services/orchestrator/src/orchestrator/routing.py`.

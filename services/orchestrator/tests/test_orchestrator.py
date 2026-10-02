@@ -161,7 +161,7 @@ def test_unbuilt_domains_get_a_normal_not_available_answer(monkeypatch, route):
     assert response.status_code == 200  # not an error
     body = response.json()
     assert body["outcome"] == "not_available"
-    assert "aren't supported yet" in body["answer"]
+    assert "aren't available yet" in body["answer"]
     assert body["reporting"] is None and body["task_id"] is None
     assert sent.calls == []
 
@@ -171,6 +171,13 @@ def test_out_of_scope_gets_a_polite_decline(monkeypatch):
     body = _ask(monkeypatch, FakeLLM(decision("out_of_scope")), sent).json()
     assert body["outcome"] == "declined" and body["answer"].startswith("Sorry")
     assert sent.calls == []
+
+
+def test_out_of_scope_decline_lists_what_is_supported():
+    text = routing.out_of_scope_message()
+    assert "incident and quality reporting, and customer sentiment" in text
+    assert "Volume forecasting isn't available yet." in text
+    assert "to follow" not in text  # sentiment is available now (ADR-068)
 
 
 def test_multi_domain_names_the_domains_and_asks_for_a_split(monkeypatch):
@@ -216,6 +223,11 @@ def test_settings_as_of_reaches_the_routing_prompt(monkeypatch):
 def test_forecast_not_available_message_covers_forward_looking_questions():
     text = routing.not_available_message(decision("forecast"))
     assert "SLA outlook" in text  # forecast is not only volume (ADR-053)
+    # It says only that forecasting isn't available: nothing about other domains.
+    assert (
+        text == "Questions about operational forecasts (volumes, SLA outlook) aren't available yet."
+    )
+    assert "sentiment" not in text and "incident" not in text
 
 
 # --------------------------------------------------------------------------- routing errors
