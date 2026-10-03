@@ -95,16 +95,14 @@ async def run(args: argparse.Namespace) -> int:
             rows.append(row)
             mark = "ok  " if row["exact"] else "MISS"
             wrong = [f for f, ok in row["fields"].items() if not ok]
-            print(f"  k{k} {mark} {item['id']} [{item['category']}] {', '.join(wrong) or ''}")
+            got = {f: row["got"][f] for f in wrong} if row["got"] else row["error"]
+            print(f"  k{k} {mark} {item['id']} [{item['category']}] {got if wrong else ''}")
         runs.append(rows)
         if stopped:
             print(f"stopped: {stopped}")
             break
 
     summary = summarise(items, runs)
-    print(json.dumps(summary["per_run"], indent=1))
-    print("flips:", summary["flips"] or "none")
-    print(f"calls {client.totals.calls}, requests {client.totals.requests} (retries included)")
     out = ROOT / "evals" / "results" / "forecast_agent" / args.date
     out.mkdir(parents=True, exist_ok=True)
     path = out / f"parse_{parser.prompt.version}_k{args.k}.json"
@@ -131,6 +129,9 @@ async def run(args: argparse.Namespace) -> int:
         + "\n",
         encoding="utf-8",
     )
+    print(json.dumps(summary["per_run"], indent=1))
+    print("flips:", summary["flips"] or "none")
+    print(f"calls {client.totals.calls}, requests {client.totals.requests} (retries included)")
     print(f"wrote {path.relative_to(ROOT)}")
     return 0
 
@@ -165,6 +166,9 @@ def summarise(items: list[dict], runs: list[list[dict]]) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Model output can hold characters the Windows console code page can't print; the
+    # results file is written before the summary is printed either way.
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--file", default="parse_v1")
     ap.add_argument("--prompt", default="parse_v1")
