@@ -606,3 +606,42 @@ build are appended here as they are found (CLAUDE.md).
   name or the range; the answer is unaffected. The off-by-one would matter for a supported
   metric asked over "the last N weeks"; the golden set (5c-2) should include one.
 - **Recorded in:** `evals/reporting_parse/`; `evals/results/reporting_agent/2026-10-02/`.
+
+### L-54 — The golden set exists and is blind until Sprint 5 (2026-10-02)
+- **What:** `evals/golden/golden_v1.jsonl` (36 items) and its expected figures were built
+  without calling any agent, the orchestrator or an MCP server, and no LLM call was made.
+  Nothing about how the current system answers these questions is known yet; the first
+  run is the Sprint 5 evaluation (ADR-074). The questions' authorship is partly shared
+  with the system's: the 26 drafted items, like the parse sets (L-48, L-53), were written
+  by the same process that wrote the prompts, so they may favour phrasings the prompts
+  handle. The 10 owner-written items are the check on that.
+- **Why accepted:** Running it now would end its blindness. If it is ever used to revise
+  a prompt, it becomes v2 and that use is disclosed (ADR-074).
+- **Recorded in:** ADR-074; `evals/golden/golden_v1.manifest.json` (SHA-256 of the
+  questions and expected files).
+
+### L-55 — The forecast oracle shares prediction code with the server (2026-10-02)
+- **What:** The golden set's forecast expectations come from `packages/forecast_runtime`,
+  the same prediction code `mcp_volume` runs. A bug in that code would appear in both the
+  answer and the expectation, and the golden set wouldn't catch it.
+- **Why accepted:** ADR-074's documented exception. The golden set checks that the agent
+  presents the model's served numbers, ranges and errors correctly and withholds the
+  rest; the model's accuracy is judged by the holdout (ADR-069 to ADR-071). One forecast
+  week (G25, week 1) is also computed by hand from the stored coefficients, without
+  `forecast_runtime`, in `tests/integration/test_golden_oracles.py`.
+- **Recorded in:** ADR-074.
+
+### L-56 — Four golden items are stretch items the current design may fail (2026-10-02)
+- **What:** Each asks for something the data or design doesn't support, and checks that
+  the answer says so rather than substituting:
+  - G02, a city ("repeat truck rolls in Chicago"): regions only; must not present
+    all-region or Central figures as Chicago.
+  - G04, complaint themes since an app update: no theme extraction and no app-update date;
+    must not invent either.
+  - G05, a cause ("why did CSAT crater after the storm"): must not assert a cause or a
+    trend.
+  - G10, a product line ("fiber install"): install volume only; must say it isn't
+    fiber-specific, and withhold the unserved weeks.
+- **Why accepted:** They record behaviour a correct system should show. Their failures
+  will be reported in Sprint 5 as known limitations, not hidden (ADR-074).
+- **Recorded in:** `evals/golden/golden_v1.jsonl` (`stretch: true`).
