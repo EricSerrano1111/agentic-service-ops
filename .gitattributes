@@ -10,3 +10,6 @@ evals/golden/golden_v1.jsonl -text
 evals/golden/golden_v1.expected.json -text
 evals/golden/golden_v1.manifest.json -text
 evals/golden/oracles.py -text
+evals/golden/golden_v2.jsonl -text
+evals/golden/golden_v2.expected.json -text
+evals/golden/golden_v2.manifest.json -text

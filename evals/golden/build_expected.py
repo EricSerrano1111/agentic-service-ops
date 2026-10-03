@@ -1,6 +1,6 @@
 """Compute golden set v1's expected figures and hash the set (ADR-074).
 
-    .venv\\Scripts\\python evals/golden/build_expected.py
+    .venv\\Scripts\\python evals/golden/build_expected.py [--set golden_v2]
 
 Runs every item's oracle against Postgres as `app_eval` (and the forecast artifact from
 local files), then writes:
@@ -28,9 +28,24 @@ sys.path.insert(0, str(HERE))
 import oracles  # noqa: E402
 from schema import Item  # noqa: E402
 
-QUESTIONS = HERE / "golden_v1.jsonl"
-EXPECTED = HERE / "golden_v1.expected.json"
-MANIFEST = HERE / "golden_v1.manifest.json"
+#: Why each later version exists. ADR-074: a new version keeps the earlier one and says
+#: why it changed; it records that the set was not run or used to tune anything.
+DERIVATIONS = {
+    "golden_v2": {
+        "derived_from": "golden_v1",
+        "reason": (
+            "ADR-075. G35 ('How's the Southeast doing?') is ambiguous under ADR-075's "
+            "definition and now expects needs_clarification with reason intent_ambiguous, "
+            "where v1 accepted a reporting or sentiment answer. G01 and G16 are scored on "
+            "AskResponse.reason (technician_not_found, technician_ambiguous): v1 named "
+            "error codes the API never returned. Every other item is unchanged."
+        ),
+        "disclosure": (
+            "The golden set has not been run against the system, and neither v1 nor v2 was "
+            "used to tune any prompt. It stays blind until the Sprint 5 evaluation."
+        ),
+    }
+}
 TABLES = (
     "accounts",
     "locations",
@@ -52,13 +67,21 @@ def git(*args: str) -> str:
     ).stdout.strip()
 
 
-def load_items() -> list[Item]:
-    lines = QUESTIONS.read_text(encoding="utf-8").splitlines()
+def load_items(questions: Path) -> list[Item]:
+    lines = questions.read_text(encoding="utf-8").splitlines()
     return [Item.model_validate_json(line) for line in lines if line]
 
 
-def main() -> int:
-    items = load_items()
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--set", default="golden_v1", help="set stem (golden_v1, golden_v2)")
+    name = ap.parse_args(argv).set
+    questions = HERE / f"{name}.jsonl"
+    expected_path = HERE / f"{name}.expected.json"
+    manifest_path = HERE / f"{name}.manifest.json"
+    items = load_items(questions)
     conn = oracles.connect()
     counts = {t: conn.execute(f"SELECT count(*) FROM {t}").fetchone()[0] for t in TABLES}
     counts["sentiment_predictions@model_version"] = conn.execute(
@@ -69,10 +92,12 @@ def main() -> int:
     for item in items:
         if item.oracle is not None:
             expected[item.id] = oracles.ORACLES[item.oracle](conn)
+    conn.close()
     dirty = bool(git("status", "--porcelain", "--", "evals/golden/oracles.py"))
     out = {
         "evidence": "observed",
-        "set": "golden_v1",
+        "set": name,
+        **DERIVATIONS.get(name, {}),
         "as_of": oracles.AS_OF.isoformat(),
         "oracle_code": {
             "git_commit": git("rev-parse", "HEAD"),
@@ -84,13 +109,14 @@ def main() -> int:
         "forecast_manifest_sha256": sha256(oracles.FORECAST_MANIFEST),
         "items": expected,
     }
-    EXPECTED.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    MANIFEST.write_text(
+    expected_path.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_path.write_text(
         json.dumps(
             {
-                "set": "golden_v1",
-                "questions": {"file": QUESTIONS.name, "sha256": sha256(QUESTIONS)},
-                "expected": {"file": EXPECTED.name, "sha256": sha256(EXPECTED)},
+                "set": name,
+                **DERIVATIONS.get(name, {}),
+                "questions": {"file": questions.name, "sha256": sha256(questions)},
+                "expected": {"file": expected_path.name, "sha256": sha256(expected_path)},
             },
             indent=2,
         )
@@ -99,7 +125,7 @@ def main() -> int:
     )
     print(
         f"{len(items)} items, {len(expected)} with oracles; rows {counts}; "
-        f"wrote {EXPECTED.name} and {MANIFEST.name}"
+        f"wrote {expected_path.name} and {manifest_path.name}"
     )
     return 0
 
