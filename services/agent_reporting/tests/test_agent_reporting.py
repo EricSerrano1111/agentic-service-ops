@@ -906,3 +906,19 @@ def test_answer_rejects_figures_for_another_metric_or_breakdown():
         _metric_answer(figures, req("incident_rate", group_by="region", start=JULY[0], end=JULY[1]))
     with pytest.raises(ValueError, match="breakdown"):
         _metric_answer(figures, req("sla_compliance", start=JULY[0], end=JULY[1]))
+
+
+def test_prompt_json_template_keys_follow_the_schema_property_order():
+    """Gemini's structured output writes keys in the schema's property order. If the
+    prompt's template orders them differently, the model can write a later key first and
+    then has no way back to the ones it skipped: parse_v3 lost every date this way while
+    `technician_name` sat after `end` in the model (L-51)."""
+    import re
+
+    from agent_reporting.parsing import load_parse_prompt
+
+    template = next(
+        line for line in load_parse_prompt().text.splitlines() if line.startswith('{"metric"')
+    )
+    keys = re.findall(r'"(\w+)":', template)
+    assert keys == list(ReportingRequest.model_json_schema()["properties"])

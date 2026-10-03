@@ -59,11 +59,14 @@ class ReportingRequest(BaseModel):
 
     metric: Metric
     group_by: RequestGroupBy | None = None
+    #: A technician named in the question, as written (ADR-073). Resolved by
+    #: `find_technician`, never by the model. Field order is the order Gemini's structured
+    #: output writes keys in, and it must match the parse prompt's JSON template: with
+    #: this field after `end`, the model wrote it third and then could not go back to the
+    #: dates (L-51). A unit test holds the two orders together.
+    technician_name: str | None = Field(default=None, min_length=1, max_length=100)
     start: dt.date | None = Field(default=None, description="First day, inclusive.")
     end: dt.date | None = Field(default=None, description="Last day, inclusive.")
-    #: A technician named in the question, as written (ADR-073). Resolved by
-    #: `find_technician`, never by the model.
-    technician_name: str | None = Field(default=None, min_length=1, max_length=100)
 
     @model_validator(mode="after")
     def _both_or_neither(self) -> ReportingRequest:
