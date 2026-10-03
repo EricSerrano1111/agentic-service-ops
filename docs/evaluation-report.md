@@ -555,3 +555,67 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** The model forecasts weeks; splitting weeks by day would invent a daily
   profile it doesn't have. Every answer states the exact weeks covered.
 - **Recorded in:** ADR-072; `evals/results/forecast_agent/2026-10-02/``e2e.json`.
+
+### L-06 update — resolved by ADR-073 (2026-10-02)
+- **What:** Incident counts now break down by account, region, service type, technician
+  (attributed, with an "unattributed" group), incident type and severity; repeat-visit
+  drivers are a tool (`get_repeat_visit_drivers`); one technician can be asked about by
+  name (`find_technician` plus a `technician_id` filter on every reporting tool). L-06
+  itself is unchanged; this entry records its resolution.
+- **Still open from L-06:** technician home region isn't a breakdown.
+- **Recorded in:** ADR-073; `docs/sprint-log.md` (Sprint 3).
+
+### L-51 — parse_v3 lost every date to a key-order clash, caught by the parse eval (2026-10-02)
+- **What:** Gemini's structured output writes keys in the response schema's property
+  order. ADR-073's first build added `technician_name` after `end` in `ReportingRequest`,
+  while parse_v3's JSON template puts it third. The model wrote it third and could not go
+  back to the optional dates, so every dated question parsed with no range and would have
+  been answered for the default month, with the answer saying so. The first k=3 run scored
+  0, 1 and 0 of 16 (dates 1/16, the one undated item); 48 calls were spent and the results
+  file was lost to a console-encoding crash in the runner. A two-item diagnostic showed the
+  raw output omitting `start` and `end`; the same prompt with the schema reordered parsed
+  both exactly. The field moved after `group_by`; prompt and labels unchanged; rerun 15/16
+  x3.
+- **Why accepted:** It is fixed, and a unit test now holds the prompt template's key order
+  to the schema's. The coupling itself remains: any future field added out of template
+  order would fail the same way. The test covers the reporting agent; the sentiment and
+  forecast templates were checked by hand on 2026-10-02 and match their schemas, with no
+  test.
+- **Recorded in:** commit 77d2cee; `evals/results/reporting_agent/2026-10-02/`.
+
+### L-52 — The repeat-driver significance rule still flags noise about 1 time in 20 (2026-10-02)
+- **What:** Bonferroni holds the chance of any false standout at about 5% per question, not
+  zero. For 2026 Q2 by service type, `repair` stands out (14 of 572 jobs repeated against 8
+  of 1,104, adjusted p 0.027), though the generator draws priority and incidents
+  independently of service type, so the difference is chance. Over the full window, no
+  service type, region, account or technician stands out. Across many questions and
+  ranges, standouts will appear at about that rate.
+- **Why accepted:** The rule is ADR-073's and stays; it removes most noise and states its
+  test. The answer says "beyond what chance explains", which overstates a 5% rule
+  slightly; QA (Sprint 4) recomputes the p-values but can't tell a true driver from a
+  chance one either.
+- **Recorded in:** ADR-073; observed 2026-10-02 as `app_reporting`.
+
+### L-53 — The reporting parse set is small; r17 parses stably wrong on two fields (2026-10-02)
+- **What:** parse_v3 is 16 questions written by the prompt's author, as for L-48. r17 ("Is
+  Sarah's average resolution time improving over the last two weeks?") misses in all three
+  runs the same way: no `technician_name` (the model drops the name when the metric is
+  unsupported) and a start of 2026-08-16, 15 days, against the label's 14 (2026-08-17).
+  "The past 30 days" (c03) was read correctly.
+- **Why accepted:** r17's metric is unsupported, so the agent declines it before using the
+  name or the range; the answer is unaffected. The off-by-one would matter for a supported
+  metric asked over "the last N weeks"; the golden set (5c-2) should include one.
+- **Recorded in:** `evals/reporting_parse/`; `evals/results/reporting_agent/2026-10-02/`.
+
+### L-54 — The fixed association caveat can contradict a short range's figures (2026-10-02)
+- **What:** ADR-073 has every `by=incident_type` answer end with "Jobs with several
+  incidents are more likely to need a repeat visit; this shows association, not cause."
+  End to end for "this quarter" (2026-07-01 to 2026-08-30), jobs with any other incident
+  repeated at 1.12% (1 of 89) and jobs with none at 1.21% (10 of 827), so the sentence
+  states the opposite of the figures printed just before it. Over the full window it holds
+  (4.24% against 1.81%).
+- **Why accepted:** Not accepted yet; raised for a decision. The sentence is ADR-073's
+  wording, and changing it changes an accepted ADR. A likely fix: state the association
+  only when the any-other rate is above the none rate, and otherwise say the two don't
+  differ in this range.
+- **Recorded in:** `evals/results/reporting_agent/2026-10-02/e2e.json`.

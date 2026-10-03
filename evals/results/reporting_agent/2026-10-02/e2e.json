@@ -1,0 +1,588 @@
+{
+  "evidence": "observed",
+  "stack": "docker compose up -d --build (all services)",
+  "runs": [
+    {
+      "id": "r15",
+      "question": "How is Dave doing with meeting his appointment windows?",
+      "wall_s": 3.6,
+      "http_status": 200,
+      "response": {
+        "answer": "No technician matches Dave.",
+        "outcome": "needs_clarification",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "This question asks about a technician's past or current performance metrics regarding appointment windows."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "9b8dc604-04c2-4dca-aa41-ed8da5a73d5b",
+        "trace_id": "4e581ad66a9748ff941106ffd1c9ebb5"
+      }
+    },
+    {
+      "id": "r17",
+      "question": "Is Sarah's average resolution time improving over the last two weeks?",
+      "wall_s": 2.2,
+      "http_status": 200,
+      "response": {
+        "answer": "That metric isn't supported yet. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity); and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+        "outcome": "not_available",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "The question asks for past operational performance metrics regarding a technician."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "2008a540-8e9d-4568-8b7c-90b5b867f3f7",
+        "trace_id": "f877fdec75694fa6bb9b34c5a51b5ab9"
+      }
+    },
+    {
+      "id": "drivers-business-case",
+      "question": "Which incident types are driving the most repeat visits this quarter?",
+      "wall_s": 2.29,
+      "http_status": 200,
+      "response": {
+        "answer": "As of 2026-08-30: 11 of 916 jobs completed from 2026-07-01 to 2026-08-30 (inclusive, UTC) needed a repeat visit (1.20%). Every repeat visit is recorded through a repeat-visit-required incident on the original job. No other incident type stands out: no difference is larger than chance would explain (Fisher's exact test, Bonferroni-corrected, groups with at least 20 jobs). By other incident type, worst first: billing dispute 5.00% (1 of 20 jobs); missed sla 0.00% (0 of 29 jobs). 4 with fewer than 20 jobs left out of the list; all are in the data. Jobs with any other incident: 1.12% (1 of 89 jobs); jobs with none: 1.21% (10 of 827 jobs). Jobs with several incidents are more likely to need a repeat visit; this shows association, not cause.",
+        "outcome": "answered",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "This question asks for operational incident types and repeat visit metrics over the current quarter."
+        },
+        "prompt_version": "route_v3",
+        "reporting": {
+          "request": {
+            "metric": "repeat_visit_drivers",
+            "group_by": "incident_type",
+            "technician_name": null,
+            "start": "2026-07-01",
+            "end": "2026-08-30"
+          },
+          "start": "2026-07-01",
+          "end": "2026-08-30",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "figures": {
+            "metric": "repeat_visit_drivers",
+            "start": "2026-07-01",
+            "end": "2026-08-30",
+            "group_by": "incident_type",
+            "overall": {
+              "jobs": 916,
+              "repeated": 11,
+              "rate": "0.0120"
+            },
+            "groups": [
+              {
+                "group": "billing_dispute",
+                "group_id": null,
+                "this": {
+                  "jobs": 20,
+                  "repeated": 1,
+                  "rate": "0.0500"
+                },
+                "rest": {
+                  "jobs": 896,
+                  "repeated": 10,
+                  "rate": "0.0112"
+                },
+                "compared": true,
+                "p_value": 0.21665821897499107,
+                "p_adjusted": 0.43331643794998215,
+                "stands_out": false
+              },
+              {
+                "group": "missed_sla",
+                "group_id": null,
+                "this": {
+                  "jobs": 29,
+                  "repeated": 0,
+                  "rate": "0.0000"
+                },
+                "rest": {
+                  "jobs": 887,
+                  "repeated": 11,
+                  "rate": "0.0124"
+                },
+                "compared": true,
+                "p_value": 0.999999999998337,
+                "p_adjusted": 1.0,
+                "stands_out": false
+              },
+              {
+                "group": "wrong_dispatch_info",
+                "group_id": null,
+                "this": {
+                  "jobs": 18,
+                  "repeated": 0,
+                  "rate": "0.0000"
+                },
+                "rest": {
+                  "jobs": 898,
+                  "repeated": 11,
+                  "rate": "0.0122"
+                },
+                "compared": false,
+                "p_value": null,
+                "p_adjusted": null,
+                "stands_out": false
+              },
+              {
+                "group": "equipment_damage",
+                "group_id": null,
+                "this": {
+                  "jobs": 13,
+                  "repeated": 0,
+                  "rate": "0.0000"
+                },
+                "rest": {
+                  "jobs": 903,
+                  "repeated": 11,
+                  "rate": "0.0122"
+                },
+                "compared": false,
+                "p_value": null,
+                "p_adjusted": null,
+                "stands_out": false
+              },
+              {
+                "group": "other",
+                "group_id": null,
+                "this": {
+                  "jobs": 8,
+                  "repeated": 0,
+                  "rate": "0.0000"
+                },
+                "rest": {
+                  "jobs": 908,
+                  "repeated": 11,
+                  "rate": "0.0121"
+                },
+                "compared": false,
+                "p_value": null,
+                "p_adjusted": null,
+                "stands_out": false
+              },
+              {
+                "group": "technician_conduct",
+                "group_id": null,
+                "this": {
+                  "jobs": 7,
+                  "repeated": 0,
+                  "rate": "0.0000"
+                },
+                "rest": {
+                  "jobs": 909,
+                  "repeated": 11,
+                  "rate": "0.0121"
+                },
+                "compared": false,
+                "p_value": null,
+                "p_adjusted": null,
+                "stands_out": false
+              }
+            ],
+            "group_count": 6,
+            "truncated": false,
+            "groups_compared": 2,
+            "any_other_incident": {
+              "jobs": 89,
+              "repeated": 1,
+              "rate": "0.0112"
+            },
+            "no_other_incident": {
+              "jobs": 827,
+              "repeated": 10,
+              "rate": "0.0121"
+            }
+          }
+        },
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "1b8dda92-ac10-4a3d-a429-b3bc1d599844",
+        "trace_id": "58e2648b34ea441fa2bee180687d5443"
+      }
+    },
+    {
+      "id": "counts-by-region",
+      "question": "Incident counts by region for last quarter",
+      "wall_s": 2.16,
+      "http_status": 200,
+      "response": {
+        "answer": "As of 2026-08-30: 169 incidents reported from 2026-04-01 to 2026-06-30 (inclusive, UTC): 28 high, 57 medium, 84 low severity. By region, highest first: northeast 61; central 42; southeast 36; west 30.",
+        "outcome": "answered",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "This question asks for historical operational incident counts over a past period."
+        },
+        "prompt_version": "route_v3",
+        "reporting": {
+          "request": {
+            "metric": "incident_count",
+            "group_by": "region",
+            "technician_name": null,
+            "start": "2026-04-01",
+            "end": "2026-06-30"
+          },
+          "start": "2026-04-01",
+          "end": "2026-06-30",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "figures": {
+            "metric": "incident_count",
+            "start": "2026-04-01",
+            "end": "2026-06-30",
+            "incident_count": 169,
+            "by_severity": {
+              "low": 84,
+              "medium": 57,
+              "high": 28
+            },
+            "group_by": "region",
+            "groups": [
+              {
+                "group": "northeast",
+                "group_id": null,
+                "count": 61
+              },
+              {
+                "group": "central",
+                "group_id": null,
+                "count": 42
+              },
+              {
+                "group": "southeast",
+                "group_id": null,
+                "count": 36
+              },
+              {
+                "group": "west",
+                "group_id": null,
+                "count": 30
+              }
+            ],
+            "group_count": 4,
+            "truncated": false,
+            "technician_id": null,
+            "technician_name": null
+          }
+        },
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "b07f21bd-97b7-4519-b4d4-f12e556748a5",
+        "trace_id": "174a6766564e464f851881ce29792bb4"
+      }
+    },
+    {
+      "id": "ambiguous-technician",
+      "question": "What was Priya's first-time fix rate last quarter?",
+      "wall_s": 2.24,
+      "http_status": 200,
+      "response": {
+        "answer": "2 technicians match Priya: Priya Castillo and Priya Kim. Please ask again with the full name.",
+        "outcome": "needs_clarification",
+        "route": {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "reason": "The question asks for a technician's past operational performance metric."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": null,
+        "task_id": "fa48a888-03e6-4132-82c8-ef4021e9dbc7",
+        "trace_id": "b5180e2470584136a9cce757873391eb"
+      }
+    },
+    {
+      "id": "sentiment",
+      "question": "How has customer sentiment in the northeast changed this year?",
+      "wall_s": 2.95,
+      "http_status": 200,
+      "response": {
+        "answer": "Customer feedback sentiment in the Northeast from 2026-01-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30.\n500 comments: positive 262 (52.4%), neutral 112 (22.4%), negative 90 (18.0%), mixed 36 (7.2%).\n3 comments (0.6%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-08: 7 of 55 negative (12.7%). Earlier months, 2026-01 to 2026-07: 83 of 445 negative (18.7%). Two-proportion test p = 0.2806.",
+        "outcome": "answered",
+        "route": {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "reason": "The question specifically asks about customer sentiment trends over the current year."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": {
+          "request": {
+            "start": "2026-01-01",
+            "end": "2026-08-30",
+            "region": "northeast",
+            "bucket": "month",
+            "want_trend": true,
+            "want_examples": false,
+            "example_label": null,
+            "unsupported": null
+          },
+          "start": "2026-01-01",
+          "end": "2026-08-30",
+          "range_assumed": false,
+          "as_of": "2026-08-30",
+          "summary": {
+            "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+            "n_comments": 500,
+            "n_scored": 500,
+            "complete": true,
+            "start": "2026-01-01",
+            "end": "2026-08-30",
+            "region": "northeast",
+            "bucket": "month",
+            "counts": {
+              "positive": 262,
+              "neutral": 112,
+              "negative": 90,
+              "mixed": 36
+            },
+            "shares": {
+              "positive": "0.5240",
+              "neutral": "0.2240",
+              "negative": "0.1800",
+              "mixed": "0.0720"
+            },
+            "flagged_count": 3,
+            "buckets": [
+              {
+                "bucket": "2026-01",
+                "n_scored": 49,
+                "counts": {
+                  "positive": 25,
+                  "neutral": 13,
+                  "negative": 9,
+                  "mixed": 2
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-02",
+                "n_scored": 52,
+                "counts": {
+                  "positive": 28,
+                  "neutral": 10,
+                  "negative": 12,
+                  "mixed": 2
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-03",
+                "n_scored": 56,
+                "counts": {
+                  "positive": 29,
+                  "neutral": 14,
+                  "negative": 8,
+                  "mixed": 5
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-04",
+                "n_scored": 75,
+                "counts": {
+                  "positive": 36,
+                  "neutral": 17,
+                  "negative": 18,
+                  "mixed": 4
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-05",
+                "n_scored": 77,
+                "counts": {
+                  "positive": 38,
+                  "neutral": 18,
+                  "negative": 17,
+                  "mixed": 4
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-06",
+                "n_scored": 73,
+                "counts": {
+                  "positive": 38,
+                  "neutral": 16,
+                  "negative": 10,
+                  "mixed": 9
+                },
+                "flagged_count": 1
+              },
+              {
+                "bucket": "2026-07",
+                "n_scored": 63,
+                "counts": {
+                  "positive": 35,
+                  "neutral": 13,
+                  "negative": 9,
+                  "mixed": 6
+                },
+                "flagged_count": 0
+              },
+              {
+                "bucket": "2026-08",
+                "n_scored": 55,
+                "counts": {
+                  "positive": 33,
+                  "neutral": 11,
+                  "negative": 7,
+                  "mixed": 4
+                },
+                "flagged_count": 0
+              }
+            ]
+          },
+          "trend": {
+            "verdict": "no clear change",
+            "latest_bucket": "2026-08",
+            "latest_n": 55,
+            "latest_negative": 7,
+            "earlier_buckets": [
+              "2026-01",
+              "2026-02",
+              "2026-03",
+              "2026-04",
+              "2026-05",
+              "2026-06",
+              "2026-07"
+            ],
+            "earlier_n": 445,
+            "earlier_negative": 83,
+            "z": -1.0789,
+            "p_value": 0.2806,
+            "small_sample": false
+          },
+          "examples": [],
+          "quoted_feedback_ids": []
+        },
+        "forecast": null,
+        "task_id": "29f82f03-aa24-423f-8426-8cf6808a63ed",
+        "trace_id": "8b4869c247304419a819b33419293fb7"
+      }
+    },
+    {
+      "id": "forecast",
+      "question": "What will request volume look like next month?",
+      "wall_s": 2.68,
+      "http_status": 200,
+      "response": {
+        "answer": "Forecast of total request volume, 4 weeks from 2026-09-07 to 2026-10-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\nTotal over these 4 weeks: about 649 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.",
+        "outcome": "answered",
+        "route": {
+          "route": "forecast",
+          "domains": [
+            "forecast"
+          ],
+          "reason": "The question asks about expected request volume for next month, which is forward-looking."
+        },
+        "prompt_version": "route_v3",
+        "reporting": null,
+        "sentiment": null,
+        "forecast": {
+          "request": {
+            "slice": "total",
+            "horizon_weeks": null,
+            "period_start": "2026-09-01",
+            "period_end": "2026-09-30",
+            "want_history": false,
+            "unsupported": null
+          },
+          "as_of": "2026-08-30",
+          "trained_through": "2026-08-30",
+          "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+          "range_assumed": false,
+          "requested_first_week": "2026-09-07",
+          "requested_last_week": "2026-09-28",
+          "beyond_horizon_weeks": 0,
+          "weeks": [
+            {
+              "week_start": "2026-09-07",
+              "horizon": 2,
+              "band": "1-4",
+              "served": true,
+              "point": 155.50225491843807,
+              "lo80": 135.27665550477684,
+              "hi80": 178.75184150945415,
+              "lo95": 125.65760243110228,
+              "hi95": 192.43524320764635
+            },
+            {
+              "week_start": "2026-09-14",
+              "horizon": 3,
+              "band": "1-4",
+              "served": true,
+              "point": 160.177810048846,
+              "lo80": 139.31614241039813,
+              "hi80": 184.1633739503344,
+              "lo95": 129.39612060314806,
+              "hi95": 198.28207145972183
+            },
+            {
+              "week_start": "2026-09-21",
+              "horizon": 4,
+              "band": "1-4",
+              "served": true,
+              "point": 164.6502757650155,
+              "lo80": 143.1795109320367,
+              "hi80": 189.3407313170937,
+              "lo95": 132.97132075238622,
+              "hi95": 203.87639346666526
+            },
+            {
+              "week_start": "2026-09-28",
+              "horizon": 5,
+              "band": "5-13",
+              "served": true,
+              "point": 168.66202084016217,
+              "lo80": 146.64381552937115,
+              "hi80": 193.9862050860897,
+              "lo95": 136.17668778213553,
+              "hi95": 208.89682174821655
+            }
+          ],
+          "bands": {
+            "5-13": {
+              "served": true,
+              "shown_error": 5.488484131615858
+            },
+            "1-4": {
+              "served": true,
+              "shown_error": 13.575509695123564
+            }
+          },
+          "period_total": 648.9923615724617,
+          "year_end_weeks": [],
+          "history": []
+        },
+        "task_id": "26898a9d-9891-495a-9825-8ce9c337b1b8",
+        "trace_id": "a8976e9c8e42477cbcb0539ced75f506"
+      }
+    }
+  ]
+}
