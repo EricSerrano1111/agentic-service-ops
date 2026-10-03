@@ -23,7 +23,7 @@ from schemas import DATASET_WINDOW_END, Domain, RouteDecision
 
 log = logging.getLogger("orchestrator")
 
-PROMPT_NAME = "route_v4"
+PROMPT_NAME = "route_v5"
 
 DOMAIN_LABELS: dict[Domain, str] = {
     "reporting": "incident and quality reporting",

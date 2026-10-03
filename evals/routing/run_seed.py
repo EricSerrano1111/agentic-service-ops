@@ -79,14 +79,15 @@ async def run(args: argparse.Namespace) -> int:
         if wait > 0:
             await asyncio.sleep(wait)
         last = time.monotonic()
-        row = {**item, "predicted": None, "domains": None, "candidates": None, "reason": None}
+        row = {**item, "predicted": None, "domains": None, "predicted_candidates": None}
+        row["reason"] = None
         row |= {"error": None, "error_message": None}
         try:
             decision = await router.classify(item["question"], trace_id=f"seed-{item['id']}")
             row.update(
                 predicted=decision.route,
                 domains=decision.domains,
-                candidates=decision.candidates,
+                predicted_candidates=decision.candidates,
                 dropped_candidates=decision.dropped_candidates,
                 reason=decision.reason,
             )

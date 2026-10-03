@@ -1,0 +1,330 @@
+{
+  "seed_set": "routing_v2.jsonl",
+  "model": "gemini-3.5-flash-lite",
+  "mode": "free",
+  "thinking_level": "minimal",
+  "prompt_version": "route_v3",
+  "prompt_sha": "1201bc648069",
+  "as_of": "2026-08-30",
+  "run_at": "20261003T175445Z",
+  "answered": 18,
+  "correct": 16,
+  "accuracy_by_tag": {
+    "ambiguous": "0/1 (0%)",
+    "near_miss": "4/5 (80%)",
+    "technician": "5/5 (100%)",
+    "underspecified": "7/7 (100%)"
+  },
+  "stopped_early": null,
+  "calls": 18,
+  "requests": 18,
+  "input_tokens": 10736,
+  "output_tokens": 759,
+  "list_price_cost_usd": 0.005118,
+  "rows": [
+    {
+      "id": "r01",
+      "question": "Are clients feeling better about response times this quarter?",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "note": "Interpreted as client sentiment rather than pure SLA duration metrics, but could be parsed as reporting.",
+      "candidates": [],
+      "expected_v1": "sentiment",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "'Feeling better' names sentiment; response times are its subject, not a second measure.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "reason": "The question asks how clients feel about response times based on their post-visit feedback.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r02",
+      "question": "Did the route reorganization actually help the North zone?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "note": "Interpreted as operational metric reporting (completion rates/times), though could lean forecast if assessing trend stability. 'North zone' is not a region in the data (northeast, southeast, central, west), so parsing will fail; this also tests graceful failure.",
+      "candidates": [],
+      "expected_v1": "reporting",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "'Did it help' names no measure: operational metrics (reporting) or customer sentiment.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "This question asks to evaluate past operational performance data for the North zone.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r03",
+      "question": "Why are escalations up in district 4?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "note": "Could blend sentiment (complaint text) and reporting (ticket volume); routed to reporting as root-cause volume analysis. 'District 4' does not exist in the data, so parsing will fail; this also tests graceful failure.",
+      "candidates": [],
+      "expected_v1": "reporting",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "Escalations are logged operational events (reporting); 'why' and 'district 4' are unsupported details the agent declines, not a second domain.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "This question asks for an analysis of past operational incident volumes.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r04",
+      "question": "Are we going to hit our SLA targets next month?",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "note": "Predictive target tracking, though often confused with reporting against current baseline SLA.",
+      "candidates": [],
+      "expected_v1": "forecast",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "A future SLA question is forecast by the routing rules; it is one thing asked.",
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "reason": "The question asks about expected SLA targets for next month, which is a forward-looking projection.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r05",
+      "question": "Did customer satisfaction dip after the software rollout?",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "note": "Interpreted as customer feedback/sentiment, though could be read as reporting on failure/incident rates post-launch.",
+      "candidates": [],
+      "expected_v1": "sentiment",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "'Customer satisfaction' names sentiment; the rollout date is a missing detail.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "reason": "The question asks about customer satisfaction levels following an event.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r06",
+      "question": "Is the field team falling behind today?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "note": "Could be reporting on today's backlog or real-time pace versus a daily forecast; routed to reporting.",
+      "candidates": [],
+      "expected_v1": "reporting",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "'Falling behind today' is current operational performance (reporting); which measure is a detail within reporting.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "The question asks about current operational status today, which falls under reporting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r07",
+      "question": "How bad is client frustration regarding the outage last Tuesday?",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "note": "Focuses on customer mood and emotional severity rather than incident log reporting.",
+      "candidates": [],
+      "expected_v1": "sentiment",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "'Client frustration' names sentiment; the outage is context.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "reason": "The question asks about client frustration and how customers feel regarding an event.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r08",
+      "question": "Are we expected to see an increase in call volume next week?",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "note": "Forward-looking demand projection, though dispatchers sometimes use this phrasing to ask for historical multi-week reports.",
+      "candidates": [],
+      "expected_v1": "forecast",
+      "tag_v1": "ambiguous",
+      "relabel_v2": "'Expected ... next week' is a projection (forecast).",
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "reason": "This question asks about future call volume trends for next week.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r09",
+      "question": "What is our total fuel spend across the fleet this pay period?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "note": "Financial and fleet accounting metric not tracked in core operational ticket/incident systems.",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "reason": "Fuel spend across the fleet is not part of reporting, sentiment, or forecast service records.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r10",
+      "question": "Which technicians hold active EPA universal certifications?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "note": "Sharpest near-miss: technician_skills does store certifications (proficiency = certified) for network, hardware, cabling, security_systems and power_systems, but not EPA. The data half-supports the question, so it tests whether routing over-reaches.",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "reason": "Technician certifications are personnel records not tracked in operational reporting, sentiment, or forecasting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r11",
+      "question": "Why did the Peterson account decide not to renew their service contract?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "note": "Commercial/sales contract negotiation reason not available in operational dispatch data.",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "reason": "This question asks about customer feedback and reasons behind their cancellation, which relates to sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r12",
+      "question": "How much overtime pay was approved for dispatchers last weekend?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "note": "Payroll/labor expense data rather than service desk ticket performance.",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "reason": "Payroll and overtime pay data for dispatchers are not part of operational reporting, sentiment, or forecasts.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r13",
+      "question": "What make and model of spare parts are currently stocked in warehouse 3?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "note": "Physical inventory and ERP supply-chain data unavailable in operational performance datasets.",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "reason": "Inventory stock details of warehouse spare parts are not part of operational reporting, sentiment, or forecasts.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r14",
+      "question": "Which tech has the highest first-time fix rate this month?",
+      "expected": "reporting",
+      "tag": "technician",
+      "note": "Breakdown across all technicians; supported by current reporting aggregations.",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "This question asks for current operational performance metrics over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r15",
+      "question": "How is Dave doing with meeting his appointment windows?",
+      "expected": "reporting",
+      "tag": "technician",
+      "note": "Requires a single-technician filter; currently unsupported by reporting tool.",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "Evaluating technician performance against appointment windows falls under operational reporting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r16",
+      "question": "Who is racking up the most return visits for the same issue?",
+      "expected": "reporting",
+      "tag": "technician",
+      "note": "Technician breakdown of first-time fix; supported. 'Same issue' is not modelled: any follow-up request counts against its parent, whatever its cause.",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "This question asks for historical operational metrics regarding repeat visits for past issues.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r17",
+      "question": "Is Sarah's average resolution time improving over the last two weeks?",
+      "expected": "reporting",
+      "tag": "technician",
+      "note": "Requires a single-technician filter; currently unsupported by reporting tool.",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "The question asks about past technician performance trends over a completed two-week period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "r18",
+      "question": "Which technicians are logging the most unassigned idle time between jobs?",
+      "expected": "reporting",
+      "tag": "technician",
+      "note": "Technician operations are reporting's domain, but this is not supported: no idle-time field or metric exists, and it could only be derived from gaps between job timestamps, which no tool does.",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "reason": "This question asks for current operational performance metrics based on past records.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    }
+  ]
+}
