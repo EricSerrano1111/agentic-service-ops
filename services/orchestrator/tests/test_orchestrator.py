@@ -629,21 +629,61 @@ def test_response_model_ties_reason_to_needs_clarification():
     assert app_mod.AskResponse(**base, outcome="needs_clarification", reason="intent_ambiguous")
 
 
-@pytest.mark.parametrize("name", ["route_v3", "route_v4", "route_v5"])
-def test_route_prompt_json_template_keys_follow_the_schema_property_order(name):
-    """Gemini writes keys in schema order, so a template's keys must appear in that order:
-    a key written ahead of an earlier one leaves no way back to it (L-51). A template may
-    leave a key out (route_v3 has no `candidates`); the model then skips it."""
-    template = next(
-        line
-        for line in load_prompt("orchestrator", name, routing.__file__).text.splitlines()
-        if line.startswith('{"route"')
-    )
+def defines_ambiguous(text: str) -> bool:
+    """Whether a route prompt can return `ambiguous`: its route list defines it."""
+    return re.search(r'^- "ambiguous":', text, re.MULTILINE) is not None
+
+
+def check_template_keys(text: str) -> None:
+    """Gemini writes keys in schema order (L-51). A prompt that defines `ambiguous` must
+    list every RouteDecision key, in schema order: without `candidates` the model can't
+    name what an ambiguous question could mean. Any other prompt's keys must appear in
+    schema order, and it may omit keys it never needs (route_v1-v3 have no `candidates`;
+    the model then skips them)."""
+    template = next(line for line in text.splitlines() if line.startswith('{"route"'))
     keys = re.findall(r'"(\w+)":', template)
     schema = list(RouteDecision.model_json_schema()["properties"])
-    assert keys == [k for k in schema if k in keys]
-    if name != "route_v3":
-        assert keys == schema
+    if defines_ambiguous(text):
+        assert keys == schema, f"template keys {keys} != RouteDecision keys {schema}"
+    else:
+        assert keys == [k for k in schema if k in keys], f"template keys {keys} out of order"
+
+
+@pytest.mark.parametrize(
+    ("name", "exact"),
+    [
+        ("route_v1", False),
+        ("route_v2", False),
+        ("route_v3", False),
+        ("route_v4", True),
+        ("route_v5", True),
+    ],
+)
+def test_route_prompt_json_template_keys_follow_the_schema_property_order(name, exact):
+    text = load_prompt("orchestrator", name, routing.__file__).text
+    assert defines_ambiguous(text) is exact  # which check applies, by what the prompt can do
+    check_template_keys(text)
+
+
+def test_default_route_prompt_passes_its_key_check():
+    check_template_keys(routing.load_route_prompt().text)
+
+
+AMBIGUOUS_WITHOUT_CANDIDATES = """Routes:
+- "reporting": counts and rates.
+- "ambiguous": the question could mean different things to different specialists.
+
+Respond with JSON only:
+{"route": "<route>", "domains": ["<domain>", ...], "reason": "<one short sentence>"}
+"""
+
+
+def test_a_prompt_defining_ambiguous_without_candidates_fails_the_key_check():
+    assert defines_ambiguous(AMBIGUOUS_WITHOUT_CANDIDATES)
+    with pytest.raises(AssertionError, match="candidates"):
+        check_template_keys(AMBIGUOUS_WITHOUT_CANDIDATES)
+    # The same template is fine for a prompt that can't return `ambiguous`.
+    check_template_keys(AMBIGUOUS_WITHOUT_CANDIDATES.replace('- "ambiguous"', '- "other"'))
 
 
 def test_route_v3_is_the_default_after_the_adr_075_gate_failed():
