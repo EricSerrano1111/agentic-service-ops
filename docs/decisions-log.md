@@ -85,6 +85,7 @@
 | 071 | Forecast serving requires passing on both fold B (ADR-070 gate) and the holdout (MAPE ≤ 20%); shown error is the larger of the two | Accepted |
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
+| 074 | Golden set v1: blind, independently computed expected answers | Accepted |
 
 ---
 
@@ -2206,3 +2207,25 @@ training grants.
 - The incident-type breakdown of repeat drivers will flag every common type over long ranges, and the any-other comparison will usually be significant there; the answer then states it is association, not cause. Over short ranges it usually says the two didn't differ clearly.
 - QA (Sprint 4) recomputes the counts, rates and Fisher p-values from its own SQL.
 - Technician-name questions that name nobody in the data ("Dave", "Sarah") get "No technician matches", with no guessed person.
+
+### ADR-074 — Golden set v1: blind, independently computed expected answers
+*Date: 2026-10-02. Supports the Sprint 5 evaluation and `05`. Supersedes nothing.*
+
+**Decision:**
+- `evals/golden/golden_v1.jsonl` holds 36 questions: 10 written by the owner in dispatch phrasing (verbatim) and 26 drafted to cover each agent's main paths, every decline type, splits, clarify and no-match replies, and known weak spots. Each records acceptable routes, the expected behaviour, the resolved intent, what the answer must and must not do, and a stretch flag.
+- Expected figures are computed by oracles that do not share code with the system: fresh SQL as `app_eval` (reporting, and sentiment over stored predictions), and scipy/statsmodels for statistical tests. Exception: forecast expectations use `packages/forecast_runtime` with the `volume_v2` manifest, because the golden set tests that the agent presents the model's served numbers and errors correctly; model accuracy is judged by the holdout (ADR-069 to ADR-071).
+- The golden set is blind: built without calling the system, and first run in the Sprint 5 evaluation. Prompt tuning uses the routing and parse sets only. If the golden set is ever used to revise a prompt, it becomes v2 and that use is disclosed.
+- Stretch items record behaviour a correct system should show but the current design may not (unsupported qualifiers such as a city, a cause, or a product line). Their failures are reported as known limitations, not hidden.
+
+**Context:**
+- Sentiment expectations check answers against stored predictions, not gold labels: model quality is measured separately (ADR-064 to ADR-066).
+- Owner phrasing tests realistic input; the drafted items guarantee coverage.
+
+**Alternatives considered:**
+- *Expected answers taken from the system's own output* (rejected). It would test the system against itself.
+- *Running the golden set now to check it* (rejected). That would end its blindness before the evaluation it exists for.
+- *An LLM-written question set* (rejected for the owner subset). Realistic phrasing has to come from someone who has asked these questions.
+
+**Consequences:**
+- Sprint 5 defines how `must_not` criteria are scored (owner review or a rubric).
+- A later data or model change means re-running `build_expected.py` and recording the new hashes.
