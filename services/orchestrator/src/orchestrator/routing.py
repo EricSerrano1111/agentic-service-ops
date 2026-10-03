@@ -4,6 +4,10 @@ The decision is logged with the prompt's version and content hash, so any routin
 can be traced to the exact prompt text that produced it. Errors from the call propagate
 as `llm` errors for the API layer to map. An unparseable decision is never defaulted to
 a route.
+
+An `ambiguous` decision (ADR-075) is answered with `clarification_message`: what each
+candidate domain answers, with an example rephrasing. Candidate values dropped during
+validation are each logged with the trace ID.
 """
 
 from __future__ import annotations
@@ -12,13 +16,14 @@ import datetime as dt
 import logging
 from typing import Protocol
 
+from common import bind_trace_id
 from llm import LLMResult
 from llm.prompts import Prompt, load_prompt
 from schemas import DATASET_WINDOW_END, Domain, RouteDecision
 
 log = logging.getLogger("orchestrator")
 
-PROMPT_NAME = "route_v3"
+PROMPT_NAME = "route_v4"
 
 DOMAIN_LABELS: dict[Domain, str] = {
     "reporting": "incident and quality reporting",
@@ -62,11 +67,18 @@ class Router:
             trace_id=trace_id,
         )
         decision = result.parsed
+        with bind_trace_id(trace_id):
+            for value in decision.dropped_candidates:
+                log.warning(
+                    "route candidate dropped",
+                    extra={"route": decision.route, "candidate": value[:50]},
+                )
         log.info(
             "route decision",
             extra={
                 "route": decision.route,
                 "domains": list(decision.domains),
+                "candidates": list(decision.candidates),
                 "reason": decision.reason,
                 "prompt_version": self.prompt.version,
                 "prompt_sha": self.prompt.sha,
@@ -86,6 +98,41 @@ def out_of_scope_message() -> str:
         "field-service operation's records: incident and quality reporting, customer "
         "sentiment, and request-volume forecasts."
     )
+
+
+#: ADR-075: what each domain answers, and one example rephrasing for it.
+CLARIFY_OPTIONS: dict[Domain, tuple[str, str]] = {
+    "reporting": (
+        "Incident and quality reporting: counts and rates from the operation's records, "
+        "such as incidents, SLA compliance and first-time fix rate.",
+        "What was our SLA compliance in the Southeast last month?",
+    ),
+    "sentiment": (
+        "Customer feedback sentiment: how customers feel, from the words in their "
+        "post-visit feedback.",
+        "How did customers in the Southeast feel last month?",
+    ),
+    "forecast": (
+        "Request-volume forecasts: how many service requests to expect in the coming weeks.",
+        "How many requests should we expect next month?",
+    ),
+}
+
+
+def clarification_message(decision: RouteDecision) -> str:
+    """ADR-075: the question could mean several things; say what each candidate answers,
+    with an example. Fewer than two valid candidates: list all three domains."""
+    candidates = list(decision.candidates)
+    if len(candidates) < 2:
+        candidates = list(CLARIFY_OPTIONS)
+    lines = [
+        "Your question could mean different things, and each would get a different "
+        "answer. Please ask again, naming what you'd like measured:"
+    ]
+    for domain in candidates:
+        what, example = CLARIFY_OPTIONS[domain]
+        lines.append(f'- {what} For example: "{example}"')
+    return "\n".join(lines)
 
 
 def split_message(decision: RouteDecision) -> str:
