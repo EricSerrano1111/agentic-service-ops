@@ -1,0 +1,11 @@
+{
+  "set": "golden_v1",
+  "questions": {
+    "file": "golden_v1.jsonl",
+    "sha256": "d7b483d1cdf8d4ecc335d4b6fbd6052661de13aaf5f36b6fcb4c21aac3258590"
+  },
+  "expected": {
+    "file": "golden_v1.expected.json",
+    "sha256": "a972153ebe657664b6d716bdcad9e73713c2ffc0dc251eb67071804e9bb11c44"
+  }
+}

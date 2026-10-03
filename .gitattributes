@@ -5,3 +5,7 @@ evals/results/sentiment/**/*.predictions.csv -text
 # The artifact manifest's SHA-256 is the stored predictions' model_version (ADR-067).
 ml/sentiment/artifacts/*.manifest.json -text
 ml/forecast/artifacts/*.manifest.json -text
+# Golden set v1: the manifest hashes the questions and expected files (ADR-074).
+evals/golden/golden_v1.jsonl -text
+evals/golden/golden_v1.expected.json -text
+evals/golden/golden_v1.manifest.json -text
