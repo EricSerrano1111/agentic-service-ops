@@ -43,3 +43,22 @@ agent can't answer it yet; out_of_scope means no agent's domain covers it."
 
 Run it with `--file routing_v1`; results are written as
 `evals/results/routing_routing_v1_<model>_<prompt>_<UTC time>.json`.
+
+## seed_v2 and routing_v2 (ADR-075)
+
+Relabelled under ADR-075's definition before any `route_v4` run. A question is
+**ambiguous** when it could reasonably mean different measurable things to different
+specialists, so the answers would differ in kind; it expects route `ambiguous` with its
+`candidates`. A question that clearly fits one domain but leaves out a detail (period,
+region, bucket, which measure within the domain) is **underspecified** and keeps its
+domain. Multi-domain asks for two things; ambiguous asks for one thing, but which is
+unclear. The v1 files stay unchanged.
+
+Each relabelled row keeps `expected_v1` and `tag_v1` and states its reason in
+`relabel_v2`. These are owner judgement (L-57), and the v2 sets are not blind: they were
+written knowing the `route_v3` behaviour they correct.
+
+| Set | Ambiguous | Underspecified (was ambiguous, or new control) | Other |
+|---|---|---|---|
+| seed_v2 (31) | s15, s16, s20, s29 (new) | s17, s19, s30 (new), s31 (new) | s18 moved to multi_domain; 14 clear, 4 out_of_scope, 4 multi_domain unchanged |
+| routing_v2 (18) | r02 | r01, r03, r04, r05, r06, r07, r08 | 5 near_miss, 5 technician unchanged |

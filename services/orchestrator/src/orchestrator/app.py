@@ -29,7 +29,7 @@ from llm import (
     LLMRequestError,
     LLMUnavailable,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .a2a_client import AgentProtocolError, send_question
 from .config import Settings
@@ -39,15 +39,23 @@ from .result import (
     extract_forecast_answer,
     extract_sentiment_answer,
 )
-from .routing import Router, RoutingLLM, out_of_scope_message, split_message
+from .routing import (
+    Router,
+    RoutingLLM,
+    clarification_message,
+    out_of_scope_message,
+    split_message,
+)
 
 log = logging.getLogger("orchestrator")
 
 RATE_LIMIT_RETRY_AFTER_S = 60
 
 Outcome = Literal["answered", "not_available", "split_required", "declined", "needs_clarification"]
-#: Reporting-agent codes for a technician name that picks out no one, or several
-#: (ADR-073). The agent's text says which and asks again; no figures, no error.
+#: Why an answer is `needs_clarification` (ADR-075): the reporting agent's codes for a
+#: technician name that picks out no one or several (ADR-073), or an ambiguous question.
+#: Null for every other outcome.
+Reason = Literal["technician_not_found", "technician_ambiguous", "intent_ambiguous"]
 _CLARIFY = ("technician_not_found", "technician_ambiguous")
 
 
@@ -66,12 +74,14 @@ class AskResponse(BaseModel):
     queried, the as-of date and the figures; `task_id` is the A2A task. For an answered
     sentiment question, `sentiment` holds the sentiment agent's validated payload instead
     (ADR-068), and for a forecast question `forecast` holds the forecast agent's
-    (ADR-072). `trace_id` correlates the log lines of every service that handled the
-    request.
+    (ADR-072). `reason` says why an answer is `needs_clarification`, and is null for every
+    other outcome (ADR-075). `trace_id` correlates the log lines of every service that
+    handled the request.
     """
 
     answer: str
     outcome: Outcome
+    reason: Reason | None = None
     route: dict[str, Any]
     prompt_version: str
     reporting: dict[str, Any] | None = None
@@ -79,6 +89,12 @@ class AskResponse(BaseModel):
     forecast: dict[str, Any] | None = None
     task_id: str | None = None
     trace_id: str
+
+    @model_validator(mode="after")
+    def _reason_only_for_clarification(self) -> AskResponse:
+        if (self.outcome == "needs_clarification") != (self.reason is not None):
+            raise ValueError("reason is set exactly when the outcome is needs_clarification")
+        return self
 
 
 def _error(
@@ -210,6 +226,13 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                 return respond(split_message(decision), "split_required")
             if decision.route == "out_of_scope":
                 return respond(out_of_scope_message(), "declined")
+            if decision.route == "ambiguous":
+                # ADR-075: no specialist call and no QA; the turn ends (ADR-031).
+                return respond(
+                    clarification_message(decision),
+                    "needs_clarification",
+                    reason="intent_ambiguous",
+                )
 
             try:
                 task = await send_question(
@@ -234,7 +257,12 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                     # like an unbuilt domain, not an error. The agent's text says so.
                     return respond(exc.reason, "not_available", task_id=exc.task_id)
                 if exc.error_code in _CLARIFY:
-                    return respond(exc.reason, "needs_clarification", task_id=exc.task_id)
+                    return respond(
+                        exc.reason,
+                        "needs_clarification",
+                        reason=exc.error_code,
+                        task_id=exc.task_id,
+                    )
                 log.warning(
                     "agent task failed",
                     extra={"task_id": exc.task_id, "reason": exc.reason, "code": exc.error_code},

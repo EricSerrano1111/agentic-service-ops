@@ -1,0 +1,14 @@
+{
+  "set": "golden_v2",
+  "derived_from": "golden_v1",
+  "reason": "ADR-075. G35 ('How's the Southeast doing?') is ambiguous under ADR-075's definition and now expects needs_clarification with reason intent_ambiguous, where v1 accepted a reporting or sentiment answer. G01 and G16 are scored on AskResponse.reason (technician_not_found, technician_ambiguous): v1 named error codes the API never returned. Every other item is unchanged.",
+  "disclosure": "The golden set has not been run against the system, and neither v1 nor v2 was used to tune any prompt. It stays blind until the Sprint 5 evaluation.",
+  "questions": {
+    "file": "golden_v2.jsonl",
+    "sha256": "758b097fdc68c8c6aeb03dc6073f468b3dcbd5cae260374b713f166c07122476"
+  },
+  "expected": {
+    "file": "golden_v2.expected.json",
+    "sha256": "47ac879067b7fc42a159e8e845e7b55bfef2fcca75016cd2569087bfc46e10df"
+  }
+}

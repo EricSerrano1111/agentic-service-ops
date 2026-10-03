@@ -1,0 +1,1143 @@
+{
+  "evidence": "observed",
+  "set": "golden_v2",
+  "derived_from": "golden_v1",
+  "reason": "ADR-075. G35 ('How's the Southeast doing?') is ambiguous under ADR-075's definition and now expects needs_clarification with reason intent_ambiguous, where v1 accepted a reporting or sentiment answer. G01 and G16 are scored on AskResponse.reason (technician_not_found, technician_ambiguous): v1 named error codes the API never returned. Every other item is unchanged.",
+  "disclosure": "The golden set has not been run against the system, and neither v1 nor v2 was used to tune any prompt. It stays blind until the Sprint 5 evaluation.",
+  "as_of": "2026-08-30",
+  "oracle_code": {
+    "git_commit": "55194d1f2852ad12e826c5c73c2a80256748d00f",
+    "oracles_py_sha256": "45faf04657d1d2378d65514e04985236b21089747478ed825c858394003b7ed6",
+    "uncommitted_at_build": false
+  },
+  "database_row_counts": {
+    "accounts": 50,
+    "locations": 197,
+    "technicians": 32,
+    "service_requests": 20230,
+    "archived_requests": 18063,
+    "incidents": 2067,
+    "service_feedback": 7521,
+    "sentiment_predictions@model_version": 7521
+  },
+  "sentiment_model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+  "forecast_manifest_sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+  "items": {
+    "G01": {
+      "technician_matches": []
+    },
+    "G02": {
+      "start": "2026-07-31",
+      "end": "2026-08-30",
+      "all_regions": {
+        "jobs": 425,
+        "repeated": 4,
+        "rate": "0.0094"
+      },
+      "central": {
+        "jobs": 119,
+        "repeated": 4,
+        "rate": "0.0336"
+      }
+    },
+    "G03": {
+      "start": "2026-06-01",
+      "end": "2026-08-30",
+      "overall": {
+        "numerator": 1305,
+        "denominator": 1467,
+        "rate": "0.8896"
+      },
+      "worst_first": [
+        {
+          "group": "northeast",
+          "numerator": 393,
+          "denominator": 451,
+          "rate": "0.8714",
+          "in_text": true
+        },
+        {
+          "group": "southeast",
+          "numerator": 338,
+          "denominator": 379,
+          "rate": "0.8918",
+          "in_text": true
+        },
+        {
+          "group": "central",
+          "numerator": 333,
+          "denominator": 371,
+          "rate": "0.8976",
+          "in_text": true
+        },
+        {
+          "group": "west",
+          "numerator": 241,
+          "denominator": 266,
+          "rate": "0.9060",
+          "in_text": true
+        }
+      ]
+    },
+    "G04": {
+      "dateless_default": {
+        "start": "2026-07-01",
+        "end": "2026-07-31",
+        "region": "southeast",
+        "unscored_in_range": 0,
+        "comments": 62,
+        "counts": {
+          "positive": 31,
+          "neutral": 17,
+          "negative": 11,
+          "mixed": 3
+        },
+        "shares": {
+          "positive": "0.5000",
+          "neutral": "0.2742",
+          "negative": "0.1774",
+          "mixed": "0.0484"
+        },
+        "flagged": 1
+      },
+      "six_month_window": {
+        "start": "2026-03-01",
+        "end": "2026-08-30",
+        "region": "southeast",
+        "unscored_in_range": 0,
+        "comments": 340,
+        "counts": {
+          "positive": 180,
+          "neutral": 79,
+          "negative": 65,
+          "mixed": 16
+        },
+        "shares": {
+          "positive": "0.5294",
+          "neutral": "0.2324",
+          "negative": "0.1912",
+          "mixed": "0.0471"
+        },
+        "flagged": 3
+      }
+    },
+    "G05": {
+      "weekend_2026_08_22": {
+        "start": "2026-08-22",
+        "end": "2026-08-23",
+        "region": null,
+        "unscored_in_range": 0,
+        "comments": 10,
+        "counts": {
+          "positive": 8,
+          "neutral": 0,
+          "negative": 2,
+          "mixed": 0
+        },
+        "shares": {
+          "positive": "0.8000",
+          "neutral": "0.0000",
+          "negative": "0.2000",
+          "mixed": "0.0000"
+        },
+        "flagged": 0
+      },
+      "weekend_2026_08_29": {
+        "start": "2026-08-29",
+        "end": "2026-08-30",
+        "region": null,
+        "unscored_in_range": 0,
+        "comments": 7,
+        "counts": {
+          "positive": 5,
+          "neutral": 1,
+          "negative": 1,
+          "mixed": 0
+        },
+        "shares": {
+          "positive": "0.7143",
+          "neutral": "0.1429",
+          "negative": "0.1429",
+          "mixed": "0.0000"
+        },
+        "flagged": 0
+      }
+    },
+    "G07": {
+      "slice": "total",
+      "horizons": [
+        1,
+        26
+      ],
+      "manifest_sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+      "weeks": [
+        {
+          "week_start": "2026-08-31",
+          "horizon": 1,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 150.86834642212153,
+          "lo80": 131.27271881218553,
+          "hi80": 173.38909529793656,
+          "point_rounded": 151
+        },
+        {
+          "week_start": "2026-09-07",
+          "horizon": 2,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 155.50225491843807,
+          "lo80": 135.27665550477684,
+          "hi80": 178.75184150945415,
+          "point_rounded": 156
+        },
+        {
+          "week_start": "2026-09-14",
+          "horizon": 3,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 160.177810048846,
+          "lo80": 139.31614241039813,
+          "hi80": 184.1633739503344,
+          "point_rounded": 160
+        },
+        {
+          "week_start": "2026-09-21",
+          "horizon": 4,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 164.6502757650155,
+          "lo80": 143.1795109320367,
+          "hi80": 189.3407313170937,
+          "point_rounded": 165
+        },
+        {
+          "week_start": "2026-09-28",
+          "horizon": 5,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 168.66202084016217,
+          "lo80": 146.64381552937115,
+          "hi80": 193.9862050860897,
+          "point_rounded": 169
+        },
+        {
+          "week_start": "2026-10-05",
+          "horizon": 6,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 171.96256540810066,
+          "lo80": 149.4920974395783,
+          "hi80": 197.81061613432342,
+          "point_rounded": 172
+        },
+        {
+          "week_start": "2026-10-12",
+          "horizon": 7,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 174.33172414255722,
+          "lo80": 151.53339500488605,
+          "hi80": 200.56008143641685,
+          "point_rounded": 174
+        },
+        {
+          "week_start": "2026-10-19",
+          "horizon": 8,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 175.60261920463884,
+          "lo80": 152.6227314247156,
+          "hi80": 202.0425108611036,
+          "point_rounded": 176
+        },
+        {
+          "week_start": "2026-10-26",
+          "horizon": 9,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 175.68069895268124,
+          "lo80": 152.67772789558586,
+          "hi80": 202.14937967645074,
+          "point_rounded": 176
+        },
+        {
+          "week_start": "2026-11-02",
+          "horizon": 10,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 174.55519354690304,
+          "lo80": 151.68871082154553,
+          "hi80": 200.86870953793456,
+          "point_rounded": 175
+        },
+        {
+          "week_start": "2026-11-09",
+          "horizon": 11,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 172.30071618813304,
+          "lo80": 149.72026588200603,
+          "hi80": 198.28669568580787,
+          "point_rounded": 172
+        },
+        {
+          "week_start": "2026-11-16",
+          "horizon": 12,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 169.06867387718196,
+          "lo80": 146.90388746683064,
+          "hi80": 194.57767237809094,
+          "point_rounded": 169
+        },
+        {
+          "week_start": "2026-11-23",
+          "horizon": 13,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 165.07021355487848,
+          "lo80": 143.423185485664,
+          "hi80": 189.98445272836872,
+          "point_rounded": 165
+        },
+        {
+          "week_start": "2026-11-30",
+          "horizon": 14,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 160.55398313019458,
+          "lo80": 139.49449754714612,
+          "hi80": 184.79281944621897,
+          "point_rounded": 161
+        },
+        {
+          "week_start": "2026-12-07",
+          "horizon": 15,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 155.7826172272241,
+          "lo80": 135.34633510434207,
+          "hi80": 179.30462477210634,
+          "point_rounded": 156
+        },
+        {
+          "week_start": "2026-12-14",
+          "horizon": 16,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 151.01149387083234,
+          "lo80": 131.2007921880656,
+          "hi80": 173.81351820202494,
+          "point_rounded": 151
+        },
+        {
+          "week_start": "2026-12-21",
+          "horizon": 17,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": true,
+          "point": 125.72519085666178,
+          "lo80": 107.79219944126778,
+          "hi80": 146.64162803873967,
+          "point_rounded": 126
+        },
+        {
+          "week_start": "2026-12-28",
+          "horizon": 18,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": true,
+          "point": 122.19699137390205,
+          "lo80": 104.77801816228326,
+          "hi80": 142.5118069870935,
+          "point_rounded": 122
+        },
+        {
+          "week_start": "2027-01-04",
+          "horizon": 19,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 138.83743260273044,
+          "lo80": 120.63602038252297,
+          "hi80": 159.7850511861736,
+          "point_rounded": 139
+        },
+        {
+          "week_start": "2027-01-11",
+          "horizon": 20,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 136.01556505389263,
+          "lo80": 118.19119851971854,
+          "hi80": 156.5280170489446,
+          "point_rounded": 136
+        },
+        {
+          "week_start": "2027-01-18",
+          "horizon": 21,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 133.9736865710361,
+          "lo80": 116.42422069286076,
+          "hi80": 154.16851052656315,
+          "point_rounded": 134
+        },
+        {
+          "week_start": "2027-01-25",
+          "horizon": 22,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 132.7534453177601,
+          "lo80": 115.3704900710343,
+          "hi80": 152.7555030136792,
+          "point_rounded": 133
+        },
+        {
+          "week_start": "2027-02-01",
+          "horizon": 23,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 132.3636771638458,
+          "lo80": 115.03700175221579,
+          "hi80": 152.30006663484107,
+          "point_rounded": 132
+        },
+        {
+          "week_start": "2027-02-08",
+          "horizon": 24,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 132.78262877749296,
+          "lo80": 115.40436091936851,
+          "hi80": 152.77781848625466,
+          "point_rounded": 133
+        },
+        {
+          "week_start": "2027-02-15",
+          "horizon": 25,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 133.9590885301623,
+          "lo80": 116.42783602243173,
+          "hi80": 154.13012912457168,
+          "point_rounded": 134
+        },
+        {
+          "week_start": "2027-02-22",
+          "horizon": 26,
+          "band": "14-26",
+          "served": true,
+          "shown_error_pct": 11.5,
+          "year_end": false,
+          "point": 135.81264880030852,
+          "lo80": 118.03763405245303,
+          "hi80": 156.26436197424462,
+          "point_rounded": 136
+        }
+      ],
+      "served_weeks": 26,
+      "withheld_weeks": 0,
+      "served_total": 3970.2015621457012,
+      "served_total_rounded": 3970,
+      "bands_shown_error_pct": {
+        "1-4": 13.6,
+        "14-26": 11.5,
+        "5-13": 5.5
+      }
+    },
+    "G10": {
+      "slice": "install",
+      "horizons": [
+        2,
+        5
+      ],
+      "manifest_sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+      "weeks": [
+        {
+          "week_start": "2026-09-07",
+          "horizon": 2,
+          "band": "1-4",
+          "served": false,
+          "shown_error_pct": 43.7,
+          "year_end": false
+        },
+        {
+          "week_start": "2026-09-14",
+          "horizon": 3,
+          "band": "1-4",
+          "served": false,
+          "shown_error_pct": 43.7,
+          "year_end": false
+        },
+        {
+          "week_start": "2026-09-21",
+          "horizon": 4,
+          "band": "1-4",
+          "served": false,
+          "shown_error_pct": 43.7,
+          "year_end": false
+        },
+        {
+          "week_start": "2026-09-28",
+          "horizon": 5,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 18.0,
+          "year_end": false,
+          "point": 28.264499973870358,
+          "lo80": 20.613388077582638,
+          "hi80": 38.75549015844286,
+          "point_rounded": 28
+        }
+      ],
+      "served_weeks": 1,
+      "withheld_weeks": 3,
+      "served_total": 28.264499973870358,
+      "served_total_rounded": 28,
+      "bands_shown_error_pct": {
+        "1-4": 43.7,
+        "5-13": 18.0
+      }
+    },
+    "G11": {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "overall": {
+        "numerator": 1487,
+        "denominator": 1672,
+        "rate": "0.8894"
+      }
+    },
+    "G12": {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "overall": {
+        "numerator": 725,
+        "denominator": 6271,
+        "rate": "11.5612"
+      },
+      "worst_first_in_text": [
+        {
+          "group": "Granite Financial Group",
+          "numerator": 27,
+          "denominator": 137,
+          "rate": "19.7080",
+          "in_text": true
+        },
+        {
+          "group": "Meridian Distribution Partners",
+          "numerator": 16,
+          "denominator": 91,
+          "rate": "17.5824",
+          "in_text": true
+        },
+        {
+          "group": "Bluewater Energy Inc.",
+          "numerator": 14,
+          "denominator": 81,
+          "rate": "17.2840",
+          "in_text": true
+        },
+        {
+          "group": "Meridian Education LLC",
+          "numerator": 15,
+          "denominator": 92,
+          "rate": "16.3043",
+          "in_text": true
+        },
+        {
+          "group": "Granite Logistics Co.",
+          "numerator": 16,
+          "denominator": 101,
+          "rate": "15.8416",
+          "in_text": true
+        }
+      ],
+      "left_out_under_20": 0,
+      "group_count": 46
+    },
+    "G13": {
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "overall": {
+        "numerator": 503,
+        "denominator": 510,
+        "rate": "0.9863"
+      },
+      "worst_first": [
+        {
+          "group": "inspection",
+          "numerator": 47,
+          "denominator": 49,
+          "rate": "0.9592",
+          "in_text": true
+        },
+        {
+          "group": "upgrade",
+          "numerator": 52,
+          "denominator": 53,
+          "rate": "0.9811",
+          "in_text": true
+        },
+        {
+          "group": "maintenance",
+          "numerator": 120,
+          "denominator": 122,
+          "rate": "0.9836",
+          "in_text": true
+        },
+        {
+          "group": "install",
+          "numerator": 99,
+          "denominator": 100,
+          "rate": "0.9900",
+          "in_text": true
+        },
+        {
+          "group": "repair",
+          "numerator": 185,
+          "denominator": 186,
+          "rate": "0.9946",
+          "in_text": true
+        }
+      ]
+    },
+    "G14": {
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "incident_count": 54,
+      "by_severity": {
+        "high": 6,
+        "medium": 12,
+        "low": 36
+      }
+    },
+    "G15": {
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "technician": "Priya Kim",
+      "numerator": 111,
+      "denominator": 127,
+      "rate": "0.8740",
+      "based_on": "127 dispatched requests",
+      "too_few": false
+    },
+    "G16": {
+      "technician_matches": [
+        "Lina Adams",
+        "Lina Olsen"
+      ]
+    },
+    "G17": {
+      "start": "2026-08-17",
+      "end": "2026-08-30",
+      "overall": {
+        "numerator": 16,
+        "denominator": 122,
+        "rate": "13.1148"
+      }
+    },
+    "G18": {
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "overall": {
+        "jobs": 4080,
+        "repeated": 70,
+        "rate": "0.0172"
+      },
+      "groups": [
+        {
+          "group": "west",
+          "jobs": 782,
+          "repeated": 17,
+          "rate": "0.0217",
+          "rest_jobs": 3298,
+          "rest_repeated": 53,
+          "rest_rate": "0.0161",
+          "compared": true,
+          "p_value": 0.2832150938662271,
+          "p_adjusted": 1.0,
+          "stands_out": false
+        },
+        {
+          "group": "central",
+          "jobs": 1043,
+          "repeated": 19,
+          "rate": "0.0182",
+          "rest_jobs": 3037,
+          "rest_repeated": 51,
+          "rest_rate": "0.0168",
+          "compared": true,
+          "p_value": 0.7824023141530947,
+          "p_adjusted": 1.0,
+          "stands_out": false
+        },
+        {
+          "group": "northeast",
+          "jobs": 1228,
+          "repeated": 20,
+          "rate": "0.0163",
+          "rest_jobs": 2852,
+          "rest_repeated": 50,
+          "rest_rate": "0.0175",
+          "compared": true,
+          "p_value": 0.8955313089420993,
+          "p_adjusted": 1.0,
+          "stands_out": false
+        },
+        {
+          "group": "southeast",
+          "jobs": 1027,
+          "repeated": 14,
+          "rate": "0.0136",
+          "rest_jobs": 3053,
+          "rest_repeated": 56,
+          "rest_rate": "0.0183",
+          "compared": true,
+          "p_value": 0.4041181722590971,
+          "p_adjusted": 1.0,
+          "stands_out": false
+        }
+      ],
+      "groups_compared": 4,
+      "any_stands_out": false
+    },
+    "G20": {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "region": "southeast",
+      "unscored_in_range": 0,
+      "comments": 177,
+      "counts": {
+        "positive": 96,
+        "neutral": 44,
+        "negative": 28,
+        "mixed": 9
+      },
+      "shares": {
+        "positive": "0.5424",
+        "neutral": "0.2486",
+        "negative": "0.1582",
+        "mixed": "0.0508"
+      },
+      "flagged": 1
+    },
+    "G21": {
+      "start": "2026-03-01",
+      "end": "2026-08-30",
+      "region": "northeast",
+      "unscored_in_range": 0,
+      "comments": 399,
+      "counts": {
+        "positive": 209,
+        "neutral": 89,
+        "negative": 69,
+        "mixed": 32
+      },
+      "shares": {
+        "positive": "0.5238",
+        "neutral": "0.2231",
+        "negative": "0.1729",
+        "mixed": "0.0802"
+      },
+      "flagged": 2,
+      "buckets": {
+        "2026-03": {
+          "comments": 56,
+          "counts": {
+            "positive": 29,
+            "neutral": 14,
+            "negative": 8,
+            "mixed": 5
+          },
+          "shares": {
+            "positive": "0.5179",
+            "neutral": "0.2500",
+            "negative": "0.1429",
+            "mixed": "0.0893"
+          },
+          "flagged": 0
+        },
+        "2026-04": {
+          "comments": 75,
+          "counts": {
+            "positive": 36,
+            "neutral": 17,
+            "negative": 18,
+            "mixed": 4
+          },
+          "shares": {
+            "positive": "0.4800",
+            "neutral": "0.2267",
+            "negative": "0.2400",
+            "mixed": "0.0533"
+          },
+          "flagged": 1
+        },
+        "2026-05": {
+          "comments": 77,
+          "counts": {
+            "positive": 38,
+            "neutral": 18,
+            "negative": 17,
+            "mixed": 4
+          },
+          "shares": {
+            "positive": "0.4935",
+            "neutral": "0.2338",
+            "negative": "0.2208",
+            "mixed": "0.0519"
+          },
+          "flagged": 0
+        },
+        "2026-06": {
+          "comments": 73,
+          "counts": {
+            "positive": 38,
+            "neutral": 16,
+            "negative": 10,
+            "mixed": 9
+          },
+          "shares": {
+            "positive": "0.5205",
+            "neutral": "0.2192",
+            "negative": "0.1370",
+            "mixed": "0.1233"
+          },
+          "flagged": 1
+        },
+        "2026-07": {
+          "comments": 63,
+          "counts": {
+            "positive": 35,
+            "neutral": 13,
+            "negative": 9,
+            "mixed": 6
+          },
+          "shares": {
+            "positive": "0.5556",
+            "neutral": "0.2063",
+            "negative": "0.1429",
+            "mixed": "0.0952"
+          },
+          "flagged": 0
+        },
+        "2026-08": {
+          "comments": 55,
+          "counts": {
+            "positive": 33,
+            "neutral": 11,
+            "negative": 7,
+            "mixed": 4
+          },
+          "shares": {
+            "positive": "0.6000",
+            "neutral": "0.2000",
+            "negative": "0.1273",
+            "mixed": "0.0727"
+          },
+          "flagged": 0
+        }
+      },
+      "latest": {
+        "month": "2026-08",
+        "comments": 55,
+        "negative": 7,
+        "share": "0.1273"
+      },
+      "earlier": {
+        "months": [
+          "2026-03",
+          "2026-07"
+        ],
+        "comments": 344,
+        "negative": 62,
+        "share": "0.1802"
+      },
+      "p_value": 0.334895628510519,
+      "verdict": "no clear change"
+    },
+    "G22": {
+      "start": "2026-06-01",
+      "end": "2026-06-30",
+      "mixed_comments": 20,
+      "examples_expected": 3,
+      "eligible_feedback_ids": [
+        6747,
+        6759,
+        6780,
+        6787,
+        6800,
+        6803,
+        6808,
+        6811,
+        6850,
+        6852,
+        6853,
+        6855,
+        6856,
+        6878,
+        6925,
+        6926,
+        6932,
+        6941,
+        6944,
+        6960
+      ]
+    },
+    "G25": {
+      "slice": "total",
+      "horizons": [
+        1,
+        6
+      ],
+      "manifest_sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+      "weeks": [
+        {
+          "week_start": "2026-08-31",
+          "horizon": 1,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 150.86834642212153,
+          "lo80": 131.27271881218553,
+          "hi80": 173.38909529793656,
+          "point_rounded": 151
+        },
+        {
+          "week_start": "2026-09-07",
+          "horizon": 2,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 155.50225491843807,
+          "lo80": 135.27665550477684,
+          "hi80": 178.75184150945415,
+          "point_rounded": 156
+        },
+        {
+          "week_start": "2026-09-14",
+          "horizon": 3,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 160.177810048846,
+          "lo80": 139.31614241039813,
+          "hi80": 184.1633739503344,
+          "point_rounded": 160
+        },
+        {
+          "week_start": "2026-09-21",
+          "horizon": 4,
+          "band": "1-4",
+          "served": true,
+          "shown_error_pct": 13.6,
+          "year_end": false,
+          "point": 164.6502757650155,
+          "lo80": 143.1795109320367,
+          "hi80": 189.3407313170937,
+          "point_rounded": 165
+        },
+        {
+          "week_start": "2026-09-28",
+          "horizon": 5,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 168.66202084016217,
+          "lo80": 146.64381552937115,
+          "hi80": 193.9862050860897,
+          "point_rounded": 169
+        },
+        {
+          "week_start": "2026-10-05",
+          "horizon": 6,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 5.5,
+          "year_end": false,
+          "point": 171.96256540810066,
+          "lo80": 149.4920974395783,
+          "hi80": 197.81061613432342,
+          "point_rounded": 172
+        }
+      ],
+      "served_weeks": 6,
+      "withheld_weeks": 0,
+      "served_total": 971.823273402684,
+      "served_total_rounded": 972,
+      "bands_shown_error_pct": {
+        "1-4": 13.6,
+        "5-13": 5.5
+      }
+    },
+    "G26": {
+      "slice": "repair",
+      "horizons": [
+        6,
+        9
+      ],
+      "manifest_sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+      "weeks": [
+        {
+          "week_start": "2026-10-05",
+          "horizon": 6,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 10.8,
+          "year_end": false,
+          "point": 62.15323664792745,
+          "lo80": 50.72781969075188,
+          "hi80": 76.15199804295028,
+          "point_rounded": 62
+        },
+        {
+          "week_start": "2026-10-12",
+          "horizon": 7,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 10.8,
+          "year_end": false,
+          "point": 62.85756257878531,
+          "lo80": 51.2926076349029,
+          "hi80": 77.03007032649549,
+          "point_rounded": 63
+        },
+        {
+          "week_start": "2026-10-19",
+          "horizon": 8,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 10.8,
+          "year_end": false,
+          "point": 63.133458610192584,
+          "lo80": 51.50924394065159,
+          "hi80": 77.38093769493759,
+          "point_rounded": 63
+        },
+        {
+          "week_start": "2026-10-26",
+          "horizon": 9,
+          "band": "5-13",
+          "served": true,
+          "shown_error_pct": 10.8,
+          "year_end": false,
+          "point": 62.96020180986606,
+          "lo80": 51.36075739033171,
+          "hi80": 77.17929433582017,
+          "point_rounded": 63
+        }
+      ],
+      "served_weeks": 4,
+      "withheld_weeks": 0,
+      "served_total": 251.1044596467714,
+      "served_total_rounded": 251,
+      "bands_shown_error_pct": {
+        "5-13": 10.8
+      }
+    },
+    "G27": {
+      "slice": "maintenance",
+      "horizons": [
+        2,
+        5
+      ],
+      "manifest_sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+      "weeks": [
+        {
+          "week_start": "2026-09-07",
+          "horizon": 2,
+          "band": "1-4",
+          "served": false,
+          "shown_error_pct": 27.4,
+          "year_end": false
+        },
+        {
+          "week_start": "2026-09-14",
+          "horizon": 3,
+          "band": "1-4",
+          "served": false,
+          "shown_error_pct": 27.4,
+          "year_end": false
+        },
+        {
+          "week_start": "2026-09-21",
+          "horizon": 4,
+          "band": "1-4",
+          "served": false,
+          "shown_error_pct": 27.4,
+          "year_end": false
+        },
+        {
+          "week_start": "2026-09-28",
+          "horizon": 5,
+          "band": "5-13",
+          "served": false,
+          "shown_error_pct": 22.9,
+          "year_end": false
+        }
+      ],
+      "served_weeks": 0,
+      "withheld_weeks": 4,
+      "served_total": null,
+      "served_total_rounded": null,
+      "bands_shown_error_pct": {
+        "1-4": 27.4,
+        "5-13": 22.9
+      }
+    }
+  }
+}
