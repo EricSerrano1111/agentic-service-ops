@@ -9,3 +9,4 @@ ml/forecast/artifacts/*.manifest.json -text
 evals/golden/golden_v1.jsonl -text
 evals/golden/golden_v1.expected.json -text
 evals/golden/golden_v1.manifest.json -text
+evals/golden/oracles.py -text
