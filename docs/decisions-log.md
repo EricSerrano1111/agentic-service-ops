@@ -86,7 +86,7 @@
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
-| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted — the route_v4/route_v5 prompts failed the pre-registered gate; `route_v3` remains the default |
+| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed (see Results); route_v3 remains the default. FR-03 open (L-58). |
 
 ---
 
@@ -2233,6 +2233,7 @@ training grants.
 
 ### ADR-075 — Ambiguous questions are not force-routed: the router returns `ambiguous`, and the orchestrator asks the user to rephrase (FR-03)
 *Date: 2026-10-03. Supersedes nothing. Corrects a gap between the routing prompt and FR-03, which no ADR decided. Found while updating the `04` reference copy.*
+*Status: Accepted; not in effect. Gate failed (see Results); route_v3 remains the default. FR-03 open (L-58).*
 
 **Decision:**
 - **Definition, written into the prompt.** A question is *ambiguous* when it could reasonably mean different measurable things to different specialists, so the answers would differ in kind. Examples: "How's the Southeast doing?" names no measure; "Are complaints going up?" could mean incident counts (reporting), negative feedback share (sentiment) or a projection (forecast).
