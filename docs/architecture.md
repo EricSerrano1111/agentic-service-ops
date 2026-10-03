@@ -286,6 +286,7 @@ Report routing accuracy across N test intents with a documented failure-case ana
 - **Sentiment:** Precision/recall/F1 against the `sentiment_labels` holdout, alongside a required TF-IDF plus logistic regression baseline (ADR-059), scored against specification-defined labels (ADR-040); neutral reported per kind (minimal, administrative, status) and hard cases per type (sarcastic, implicit) with the judge disagreement rates alongside; calibration of the confidence threshold used for human-review flagging.
 - **QA agent:** Catch rate on deliberately injected faulty outputs. Inject known-bad results and measure detection.
 - **End-to-end:** Latency and token cost per request type.
+- **Golden set (ADR-074):** `evals/golden/golden_v1.jsonl`, 36 questions (10 owner-written, 26 drafted) covering each agent's main paths, every decline type, splits, clarify and no-match replies, and four stretch items. Each records acceptable routes and outcomes, the resolved intent, and what the answer must and must not do. Expected figures come from oracles that share no code with the system (fresh SQL as `app_eval`, scipy/statsmodels), except forecasts, which use `forecast_runtime` and the `volume_v2` manifest because the set checks presentation, not model accuracy. The set is blind: built without calling the system and first run in the Sprint 5 evaluation; prompt tuning uses the routing and parse sets only.
 
 ---
 
@@ -522,6 +523,13 @@ agentic-service-ops/
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment_parse/            # parse_v1.jsonl: 14 labelled questions for the sentiment agent's parse; run.py (k runs, free key)
 │   ├── forecast_parse/             # parse_v1.jsonl: 14 labelled questions for the forecast agent's parse; run.py
+│   ├── reporting_parse/            # parse_v3.jsonl: 16 labelled questions for the reporting agent's parse; run.py
+│   ├── golden/                     # golden set v1, blind until Sprint 5 (ADR-074)
+│   │   ├── golden_v1.jsonl         # 36 items: 10 owner-written (verbatim), 26 drafted; routes, behaviour, outcomes, must/must_not
+│   │   ├── schema.py               # the item contract
+│   │   ├── oracles.py              # expected figures: fresh SQL as app_eval, scipy/statsmodels; forecast via forecast_runtime
+│   │   ├── build_expected.py       # Postgres and local files only -> golden_v1.expected.json + golden_v1.manifest.json (hashes)
+│   │   └── golden_v1.expected.json, golden_v1.manifest.json
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064); ECE and flags (ADR-066)
 │   │   ├── compare.py              # paired bootstrap + McNemar between two models on test; its own ledger line (ADR-065)

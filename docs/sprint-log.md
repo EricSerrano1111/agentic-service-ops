@@ -363,7 +363,12 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   *2026-10-02: done in 5b (not ticked then). Reporting, sentiment and forecast questions
   each route to their agent over A2A (ADR-068, ADR-072); the "not available yet" path is
   gone, and the out-of-scope decline names all three domains.*
-- [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
+- [x] Golden set (known-correct answers for `05` and the Sprint 5 evals)
+  *2026-10-02: golden set v1 (ADR-074): 36 items in `evals/golden/`, 10 owner-written
+  (verbatim) and 26 drafted, 4 stretch. Expected figures for 22 items from independent
+  oracles (fresh SQL as `app_eval`, scipy, statsmodels; forecast via `forecast_runtime`),
+  hashed in a manifest. Built without calling the system; blind until the Sprint 5
+  evaluation. Three oracle results hand-checked, one per agent.*
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
   *2026-09-30: seed_v1 (clear, ambiguous, out-of-scope, multi-domain) and routing_v1
   (ambiguous, near-miss out-of-scope, technician) together cover all categories. On
@@ -438,6 +443,7 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 - ADR-071 — Forecast serving requires passing on both fold B and the holdout (2026-10-02, pulled forward)
 - ADR-072 — Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only (2026-10-02, pulled forward)
 - ADR-073 — Reporting additions: incident counts by breakdown, a single-technician filter, repeat-visit drivers, `parse_v3` (2026-10-02, pulled forward)
+- ADR-074 — Golden set v1: blind, independently computed expected answers (2026-10-02, pulled forward)
 
 ---
 
