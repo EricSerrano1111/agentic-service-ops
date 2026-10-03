@@ -86,7 +86,7 @@
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
-| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted |
+| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted — the route_v4/route_v5 prompts failed the pre-registered gate; `route_v3` remains the default |
 
 ---
 
@@ -2260,7 +2260,22 @@ training grants.
   - (b) Non-ambiguous accuracy in every `route_v4` run is no lower than the `route_v3` run on the same items, minus 1.
   - (c) At least two-thirds of ambiguous items (4 of 5) return `ambiguous` in at least 2 of 3 runs.
 - Budget: at most 2 prompt revisions after the first `route_v4` run and at most 350 live calls in total; every run saved to `evals/results/`, failed iterations included. If the gate still fails after 2 revisions, `route_v3` is restored as the default, the code and labels stay, and the gate is not loosened. A daily-quota 429 stops the evaluation.
-- Results: *(filled in after the runs)*
+- Results (observed, 2026-10-03; 343 of the 350 calls, no errors, no 429):
+
+  | Run | Prompt | Non-ambiguous correct (of 44) | Non-ambiguous routed `ambiguous` | Ambiguous returned `ambiguous` (of 5) |
+  |---|---|---|---|---|
+  | comparison | `route_v3` | 43 | 0 | 0 |
+  | 1 | `route_v4` | 43 | 1 (r05) | 5 |
+  | 2 | `route_v4` | 44 | 0 | 5 |
+  | 3 | `route_v4` | 43 | 1 (r05) | 5 |
+  | 1 | `route_v5` (revision 1) | 44 | 0 | 5 |
+  | 2 | `route_v5` | 41 | 0 | 4 (s20 routed forecast) |
+  | 3 | `route_v5` | 43 | 0 | 5 |
+
+  - `route_v4`: (a) FAIL, r05 "Did customer satisfaction dip after the software rollout?" (labelled sentiment) routed `ambiguous` in 2 of 3 runs; (b) PASS; (c) PASS, 5 of 5 in 3 of 3 runs.
+  - Revision 1, `route_v5` = `route_v4` plus one rule: words for how customers feel point to sentiment, not star ratings, and are not ambiguous on that account. It targets r05, which is disclosed. (a) PASS, no flags; (c) PASS, 5 of 5 in at least 2 of 3 runs; (b) FAIL, run 2 scored 41 against a floor of 42 (r06 to forecast, near-misses r10 to reporting and r11 to sentiment; `route_v3` also routes r11 to sentiment).
+  - **Verdict: the gate failed.** A second revision would need 147 more calls against 7 left in the budget, so the stop rule applies: `route_v3` is the default again, the gate is not loosened, and the code, prompts (`route_v4`, `route_v5`) and labels stay. FR-03 is not yet met in the running system (L-58).
+  - Per-item results for every run are in `evals/results/routing_{seed,routing}_v2_gemini-3.5-flash-lite_route_v{3,4,5}_20261003T*.json`. In the three `route_v4` files, each row's `candidates` field holds the model's predicted candidates, not the label's (a runner field collision, fixed before the `route_v5` runs as `predicted_candidates`); the gate scores routes only, and the labels are in the jsonl sets.
 
 **Context:**
 - FR-03 is an MVP "Yes" in the submitted Requirements Analysis.

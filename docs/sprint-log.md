@@ -369,6 +369,14 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   oracles (fresh SQL as `app_eval`, scipy, statsmodels; forecast via `forecast_runtime`),
   hashed in a manifest. Built without calling the system; blind until the Sprint 5
   evaluation. Three oracle results hand-checked, one per agent.*
+- [ ] FR-03: ambiguous questions are not force-routed (ADR-075)
+  *2026-10-03: added after plan close, found during the `04` update. `route_v3`
+  best-fit routed unclear questions, against FR-03. Built: the `ambiguous` route with
+  candidates, the clarification message, `AskResponse.reason`, relabelled `seed_v2` and
+  `routing_v2`, and `golden_v2`. Evaluated against a pre-registered gate: `route_v4`
+  failed (a) on r05; revision `route_v5` failed (b), 41 vs a floor of 42 in one run.
+  The call budget (343 of 350) ruled out a second revision, so `route_v3` stays the
+  default and FR-03 stays open (L-58). Not ticked.*
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
   *2026-09-30: seed_v1 (clear, ambiguous, out-of-scope, multi-domain) and routing_v1
   (ambiguous, near-miss out-of-scope, technician) together cover all categories. On

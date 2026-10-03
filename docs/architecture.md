@@ -100,7 +100,7 @@ Three layers, following current industry practice as of late 2026:
 
 **Agents:**
 
-- **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, sends the draft to the QA agent and owns the revision loop (ADR-055), and returns the verified response to the user. Handles ambiguous and out-of-scope intents gracefully, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032).
+- **Orchestrator** — Classifies end-user intent, routes to the appropriate specialist via A2A, sends the draft to the QA agent and owns the revision loop (ADR-055), and returns the verified response to the user. Declines out-of-scope questions, and detects questions spanning more than one domain, telling the user to ask each part separately (ADR-032). An ambiguous question, one that could mean different measurable things to different specialists, is meant not to be force-routed (FR-03, ADR-075): the router can return `ambiguous` with its candidate domains, and the orchestrator then answers `needs_clarification` with reason `intent_ambiguous`, saying what each candidate answers with an example rephrasing, with no specialist call. The prompts that produce `ambiguous` (`route_v4`, `route_v5`) failed ADR-075's gate, so the default routing prompt is still `route_v3`, which best-fit routes such questions; FR-03 is not yet met (L-58). A question that clearly fits one domain but leaves out a detail is routed, and the specialist applies its stated defaults. The response's `reason` field says why an answer is `needs_clarification` (`technician_not_found`, `technician_ambiguous`, `intent_ambiguous`) and is null otherwise.
 - **Reporting/Metrics Agent** — Incident and quality metrics reporting. Figures are computed deterministically; one LLM call parses the question into a typed request (ADR-046).
 - **Sentiment Agent** — Customer feedback sentiment over a date range, for all sites or one region: counts and shares by label, the low-confidence flag count, a monthly or quarterly trend in the negative share (a two-proportion test, ADR-068), and up to 3 quoted comments. Figures come from `mcp_feedback`'s stored predictions (ADR-067); one LLM call parses the question, and answers are templated, so no customer comment reaches an LLM. Account, technician and service-type breakdowns are declined (ADR-068).
 - **Forecast Agent** — Weekly request-volume forecasts from the stored `volume_v2` model, in total or by service type, up to 26 weeks ahead (ADR-072). One LLM call parses the question; answers are templated. Every served forecast carries its 80% range and the held-out error for its horizon band; bands the manifest marks unserved (ADR-071) are named with their error and no numbers. A period total is the sum of weekly forecasts, with no range. Past periods, SLA, incident and sentiment forecasts, and region, account or technician breakdowns are declined.
@@ -274,7 +274,7 @@ Unit tests are not enough. The orchestrator's job is intent classification — t
 Build a labeled set of test intents with expected routing outcomes, deliberately including:
 
 - Clear single-agent intents
-- **Ambiguous intents** ("how are we doing on quality?")
+- **Ambiguous intents** ("how are we doing on quality?"): questions that could mean different measurable things to different specialists, so the answers would differ in kind. Expected: route `ambiguous` with candidates, answered with a clarification request (ADR-075). Not to be confused with *underspecified* questions, which clearly fit one domain but leave out a detail (period, region, which measure within the domain) and are routed to that domain
 - **Multi-domain intents** spanning more than one specialist, expected to be detected and returned with a split instruction rather than routed (ADR-032)
 - **Out-of-scope intents** that should be declined rather than force-routed
 
@@ -518,7 +518,9 @@ agentic-service-ops/
 │   │   ├── seed_v1.jsonl           # 28 hand-labelled questions (clear, ambiguous, out_of_scope, multi_domain); seeds the Sprint 3 set
 │   │   ├── routing_v1.csv          # 18 owner-written questions (ambiguous, near_miss, technician); the human-edited source
 │   │   ├── routing_v1.jsonl        # routing_v1.csv converted for run_seed.py
-│   │   ├── run_seed.py             # live: runs a set (--file, default seed_v1) through the orchestrator's Router; --model for comparisons (ADR-049)
+│   │   ├── seed_v2.jsonl           # seed_v1 relabelled under ADR-075 (ambiguous vs underspecified) plus 3 new items; 31 questions
+│   │   ├── routing_v2.jsonl        # routing_v1 relabelled under ADR-075; each relabel keeps expected_v1 and states its reason
+│   │   ├── run_seed.py             # live: runs a set (--file, default seed_v1) through the orchestrator's Router; --model, --prompt for comparisons (ADR-049, ADR-075)
 │   │   └── README.md               # composition, labelling rule and the judgement calls behind ambiguous labels
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment_parse/            # parse_v1.jsonl: 14 labelled questions for the sentiment agent's parse; run.py (k runs, free key)
@@ -526,10 +528,11 @@ agentic-service-ops/
 │   ├── reporting_parse/            # parse_v3.jsonl: 16 labelled questions for the reporting agent's parse; run.py
 │   ├── golden/                     # golden set v1, blind until Sprint 5 (ADR-074)
 │   │   ├── golden_v1.jsonl         # 36 items: 10 owner-written (verbatim), 26 drafted; routes, behaviour, outcomes, must/must_not
+│   │   ├── golden_v2.jsonl         # v1 with G35 expecting intent_ambiguous and G01/G16 scored on AskResponse.reason (ADR-075)
 │   │   ├── schema.py               # the item contract
 │   │   ├── oracles.py              # expected figures: fresh SQL as app_eval, scipy/statsmodels; forecast via forecast_runtime
 │   │   ├── build_expected.py       # Postgres and local files only -> golden_v1.expected.json + golden_v1.manifest.json (hashes)
-│   │   └── golden_v1.expected.json, golden_v1.manifest.json
+│   │   └── golden_v1/_v2 .expected.json and .manifest.json (v2's manifest states why v2 exists)
 │   ├── sentiment/                  # scored against sentiment_labels holdout
 │   │   ├── score.py                # the one scorer for every sentiment model; reads as app_eval (ADR-064); ECE and flags (ADR-066)
 │   │   ├── compare.py              # paired bootstrap + McNemar between two models on test; its own ledger line (ADR-065)
