@@ -86,6 +86,7 @@
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
+| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted |
 
 ---
 
@@ -2229,3 +2230,51 @@ training grants.
 **Consequences:**
 - Sprint 5 defines how `must_not` criteria are scored (owner review or a rubric).
 - A later data or model change means re-running `build_expected.py` and recording the new hashes.
+
+### ADR-075 — Ambiguous questions are not force-routed: the router returns `ambiguous`, and the orchestrator asks the user to rephrase (FR-03)
+*Date: 2026-10-03. Supersedes nothing. Corrects a gap between the routing prompt and FR-03, which no ADR decided. Found while updating the `04` reference copy.*
+
+**Decision:**
+- **Definition, written into the prompt.** A question is *ambiguous* when it could reasonably mean different measurable things to different specialists, so the answers would differ in kind. Examples: "How's the Southeast doing?" names no measure; "Are complaints going up?" could mean incident counts (reporting), negative feedback share (sentiment) or a projection (forecast).
+- **What is not ambiguous.** A question that clearly fits one domain but leaves out a detail, such as the period, region or bucket, is *underspecified*, not ambiguous. It is routed, and the specialist applies its stated defaults (ADR-050, ADR-068, ADR-072).
+  - Multi-domain (ADR-032) asks for two things.
+  - Ambiguous asks for one thing, but which thing is unclear.
+- **Router output.**
+  - `route_v4` = `route_v3` plus the definition and a new route value `ambiguous`, with `candidates`: the two or three domains the question could mean.
+  - `RouteDecision.candidates` only ever holds values from {reporting, sentiment, forecast}: invalid or repeated entries are dropped during validation, each drop logged with the trace ID, rather than failing the whole routing call. With fewer than two valid candidates, the message lists all three domains.
+  - `route_v3` stays in the repo.
+  - The removed `route_v3` sentence: "If the question is unclear but fits one domain best, choose that domain."
+- **Orchestrator behaviour.**
+  - `ambiguous` maps to outcome `needs_clarification`, reason `intent_ambiguous`.
+  - The answer is template text: the question could mean several things; for each candidate, what that agent answers, plus one example rephrasing.
+  - No specialist call and no QA.
+  - The turn ends and no state is kept, so this is single-shot (ADR-031), the same pattern as `technician_ambiguous` (ADR-073).
+- **`reason` on the response.** `AskResponse` gains `reason`: `technician_not_found`, `technician_ambiguous` or `intent_ambiguous` for `needs_clarification`, and null for every other outcome. Until now the technician codes were logged but never returned.
+- **No confidence threshold.** The router reports no self-assessed confidence score. That alternative is rejected because LLM self-reported confidence is not calibrated.
+
+**Evaluation (pre-registered, recorded before any `route_v4` run):**
+- Sets: `seed_v2` (31) and `routing_v2` (18), relabelled under this definition and committed before any run. 5 items are ambiguous (s15, s16, s20, s29, r02); 44 are not.
+- Runs: `route_v4` k=3 on both sets, Flash-Lite, free key, thinking `minimal`, as-of 2026-08-30; `route_v3` once on the same sets for comparison.
+- Gate:
+  - (a) Across all `route_v4` runs, at most 1 non-ambiguous item-run (clear, underspecified, out-of-scope, multi-domain, near-miss, technician) is routed `ambiguous`.
+  - (b) Non-ambiguous accuracy in every `route_v4` run is no lower than the `route_v3` run on the same items, minus 1.
+  - (c) At least two-thirds of ambiguous items (4 of 5) return `ambiguous` in at least 2 of 3 runs.
+- Budget: at most 2 prompt revisions after the first `route_v4` run and at most 350 live calls in total; every run saved to `evals/results/`, failed iterations included. If the gate still fails after 2 revisions, `route_v3` is restored as the default, the code and labels stay, and the gate is not loosened. A daily-quota 429 stops the evaluation.
+- Results: *(filled in after the runs)*
+
+**Context:**
+- FR-03 is an MVP "Yes" in the submitted Requirements Analysis.
+- `route_v3` best-fit routed unclear questions, and the golden set accepted either route for "How's the Southeast doing?". Both contradict FR-03's stated reason (not answering a question the user didn't ask).
+
+**Alternatives considered:**
+- *Keep best-fit routing and reinterpret FR-03* (rejected). It reinterprets a frozen requirement to match the code, and makes the ambiguous eval category impossible to fail.
+- *A confidence threshold* (rejected, above).
+- *Clarifying underspecified questions too* (rejected). Defaults already exist and are stated in the answer; bouncing every undated question harms usability.
+- *Rejecting a decision with an invalid candidate* (rejected). It would fail the whole routing call, which is worse than asking with all three domains listed.
+
+**Consequences:**
+- The main risk is over-flagging clear questions as ambiguous. The gate measures this.
+- Labels for ambiguous items are owner judgment (L-57).
+- Golden set v1's G01 and G16 expected error codes that the API never returned, and G35 accepted either route. `golden_v2` fixes both: G35 expects `needs_clarification` + `intent_ambiguous`, and G01/G16 are scored on `reason`.
+- `05` gains an ambiguous-question scenario.
+- `02` needs no correction.
