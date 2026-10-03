@@ -66,9 +66,14 @@ class RepeatDriversResult(BaseModel):
     truncated: bool = False
     groups_compared: int = Field(ge=0, description="Groups with at least 20 jobs.")
     #: incident_type only: jobs with any incident other than repeat_visit_required, against
-    #: jobs with none other.
+    #: jobs with none other. One comparison, so no Bonferroni: compared when both sides have
+    #: at least 20 jobs; `other_incident_higher` when Fisher's p < 0.05 and the any-other
+    #: rate is the higher (ADR-073).
     any_other_incident: JobsRepeated | None = None
     no_other_incident: JobsRepeated | None = None
+    other_incident_compared: bool | None = None
+    other_incident_p_value: float | None = Field(default=None, ge=0, le=1)
+    other_incident_higher: bool | None = None
 
     @model_validator(mode="after")
     def _consistent(self) -> RepeatDriversResult:
@@ -77,9 +82,20 @@ class RepeatDriversResult(BaseModel):
         if self.truncated != (self.group_count > len(self.groups)):
             raise ValueError("truncated must say whether groups were cut")
         typed = self.group_by == "incident_type"
-        if typed != (self.any_other_incident is not None) or typed != (
-            self.no_other_incident is not None
-        ):
+        other = (
+            self.any_other_incident,
+            self.no_other_incident,
+            self.other_incident_compared,
+            self.other_incident_higher,
+        )
+        if any(typed != (x is not None) for x in other):
+            raise ValueError("the any-other-incident comparison is for incident_type only")
+        if typed:
+            if self.other_incident_compared != (self.other_incident_p_value is not None):
+                raise ValueError("a p-value is present exactly when the comparison was made")
+            if self.other_incident_higher and not self.other_incident_compared:
+                raise ValueError("only a compared result can be higher")
+        elif self.other_incident_p_value is not None:
             raise ValueError("the any-other-incident comparison is for incident_type only")
         if any(g.group == "repeat_visit_required" for g in self.groups):
             raise ValueError("repeat_visit_required defines a repeat and is left out")

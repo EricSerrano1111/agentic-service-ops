@@ -124,6 +124,37 @@ def test_incident_type_leaves_out_the_defining_type_and_compares_any_other():
     assert r.no_other_incident.jobs == 401 and r.no_other_incident.repeated == 7
 
 
+def test_any_other_comparison_is_higher_only_when_significant_and_above():
+    # 30% of 100 jobs with another incident against 2% of 400 without: clear.
+    rows = _jobs(100, 30, types=("billing_dispute",)) + _jobs(400, 8, start=100)
+    r = compute(rows, START, END, "incident_type")
+    assert r.other_incident_compared and r.other_incident_higher
+    p = _scipy(30, 70, 8, 392)
+    assert r.other_incident_p_value == pytest.approx(p, rel=1e-9) and p < 0.05
+
+
+def test_any_other_comparison_lower_or_noise_is_not_higher():
+    # Lower (the 2026 Q3 shape: 1 of 89 against 10 of 827), and the reverse of the above.
+    lower = _jobs(89, 1, types=("missed_sla",)) + _jobs(827, 10, start=100)
+    r = compute(lower, START, END, "incident_type")
+    assert r.other_incident_compared and not r.other_incident_higher
+    reverse = _jobs(100, 0, types=("missed_sla",)) + _jobs(400, 60, start=100)
+    r = compute(reverse, START, END, "incident_type")
+    assert r.other_incident_p_value < 0.05 and not r.other_incident_higher
+
+
+def test_any_other_comparison_needs_20_jobs_on_each_side():
+    rows = _jobs(19, 19, types=("missed_sla",)) + _jobs(400, 1, start=100)
+    r = compute(rows, START, END, "incident_type")
+    assert not r.other_incident_compared and r.other_incident_p_value is None
+    assert not r.other_incident_higher
+
+
+def test_any_other_comparison_is_absent_for_other_breakdowns():
+    r = compute(_jobs(50, 2), START, END, "region")
+    assert r.other_incident_compared is None and r.other_incident_higher is None
+
+
 def test_unassigned_jobs_are_their_own_technician_group():
     rows = _jobs(30, 1, tech=None) + _jobs(30, 1, start=100, tech=4)
     r = compute(rows, START, END, "technician")

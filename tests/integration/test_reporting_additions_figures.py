@@ -317,8 +317,19 @@ async def test_repeat_drivers_match_independent_sql_and_scipy(
         for key, part in (("any_other_incident", other), ("no_other_incident", none)):
             k, kr = len(part), sum(r["repeated"] for r in part)
             assert got[key] == {"jobs": k, "repeated": kr, "rate": rate(kr, k)}
+        # One comparison: 20 jobs on each side, Fisher p < 0.05, no Bonferroni.
+        a, ar = len(other), sum(r["repeated"] for r in other)
+        b, br = len(none), sum(r["repeated"] for r in none)
+        assert got["other_incident_compared"] == (a >= 20 and b >= 20)
+        if got["other_incident_compared"]:
+            p = float(fisher_exact([[ar, a - ar], [br, b - br]]).pvalue)
+            assert got["other_incident_p_value"] == pytest.approx(p, rel=1e-9, abs=1e-12)
+            assert got["other_incident_higher"] == (ar * b > br * a and p < 0.05)
+        else:
+            assert got["other_incident_p_value"] is None and not got["other_incident_higher"]
     else:
         assert got["any_other_incident"] is None and got["no_other_incident"] is None
+        assert got["other_incident_compared"] is None and got["other_incident_higher"] is None
 
 
 async def test_every_repeat_has_a_repeat_visit_required_incident(

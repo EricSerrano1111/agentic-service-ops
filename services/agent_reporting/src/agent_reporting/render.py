@@ -3,7 +3,8 @@ figures (ADR-046). Every answer states the as-of date and the range (ADR-050); e
 rate is shown with the counts behind it (ADR-033); grouped answers rank the worst
 `TEXT_GROUPS` groups that have enough cases, with the full list in the data part.
 
-ADR-073: incident counts by breakdown list the highest counts; a single technician's
+ADR-073: incident counts by breakdown list the highest counts; incident types show as
+display labels; a single technician's
 figure says how many cases it rests on, and flags fewer than the group minimum as too
 few to compare reliably; repeat-visit drivers open with the repeat count and rate and
 the fact that every repeat is recorded through a repeat-visit-required incident, then
@@ -39,19 +40,29 @@ _DIMENSION = {
     "incident_type": "incident type",
     "severity": "severity",
 }
-ASSOCIATION_CAVEAT = (
-    "Jobs with several incidents are more likely to need a repeat visit; this shows "
-    "association, not cause."
-)
 COHERENCE = (
     "Every repeat visit is recorded through a repeat-visit-required incident on the original job."
 )
 TOO_FEW = "too few to compare reliably"
 
 
+#: Display labels for incident types; a unit test holds the keys to `db_models.IncidentType`.
+INCIDENT_TYPE_LABELS = {
+    "missed_sla": "missed SLA",
+    "wrong_dispatch_info": "wrong dispatch info",
+    "repeat_visit_required": "repeat visit required",
+    "technician_conduct": "technician conduct",
+    "equipment_damage": "equipment damage",
+    "billing_dispute": "billing dispute",
+    "other": "other",
+}
+
+
 def _label(group: str, group_by: str | None) -> str:
-    """Vocabulary values read as words ("wrong_dispatch_info" -> "wrong dispatch info")."""
-    return group.replace("_", " ") if group_by in ("incident_type", "severity") else group
+    """Vocabulary values as display labels ("missed_sla" -> "missed SLA")."""
+    if group_by == "incident_type":
+        return INCIDENT_TYPE_LABELS.get(group, group.replace("_", " "))
+    return group.replace("_", " ") if group_by == "severity" else group
 
 
 def _plural(n: int, word: str) -> str:
@@ -280,9 +291,25 @@ def render_repeat_drivers(r: RepeatDriversResult, min_denominator: int) -> str:
         a, n = r.any_other_incident, r.no_other_incident
         text += (
             f" Jobs with any other incident: {_rate_or_none(a)}; jobs with none: "
-            f"{_rate_or_none(n)}. {ASSOCIATION_CAVEAT}"
+            f"{_rate_or_none(n)}. {_other_incident_sentence(r)}"
         )
     return text
+
+
+def _other_incident_sentence(r: RepeatDriversResult) -> str:
+    """ADR-073: the association is stated only when the any-other rate is higher and
+    Fisher's p < 0.05 with at least 20 jobs on each side (a single comparison)."""
+    x = _percent(r.any_other_incident.rate) if r.any_other_incident.rate else "no jobs"
+    y = _percent(r.no_other_incident.rate) if r.no_other_incident.rate else "no jobs"
+    if r.other_incident_higher:
+        return (
+            "In this period, jobs with another incident needed a repeat visit more often "
+            f"({x} vs {y}); this shows association, not cause."
+        )
+    return (
+        "In this period, jobs with another incident and jobs without didn't differ clearly "
+        f"({x} vs {y})."
+    )
 
 
 def _rate_or_none(j) -> str:

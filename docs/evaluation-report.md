@@ -606,16 +606,3 @@ build are appended here as they are found (CLAUDE.md).
   name or the range; the answer is unaffected. The off-by-one would matter for a supported
   metric asked over "the last N weeks"; the golden set (5c-2) should include one.
 - **Recorded in:** `evals/reporting_parse/`; `evals/results/reporting_agent/2026-10-02/`.
-
-### L-54 — The fixed association caveat can contradict a short range's figures (2026-10-02)
-- **What:** ADR-073 has every `by=incident_type` answer end with "Jobs with several
-  incidents are more likely to need a repeat visit; this shows association, not cause."
-  End to end for "this quarter" (2026-07-01 to 2026-08-30), jobs with any other incident
-  repeated at 1.12% (1 of 89) and jobs with none at 1.21% (10 of 827), so the sentence
-  states the opposite of the figures printed just before it. Over the full window it holds
-  (4.24% against 1.81%).
-- **Why accepted:** Not accepted yet; raised for a decision. The sentence is ADR-073's
-  wording, and changing it changes an accepted ADR. A likely fix: state the association
-  only when the any-other rate is above the none rate, and otherwise say the two don't
-  differ in this range.
-- **Recorded in:** `evals/results/reporting_agent/2026-10-02/e2e.json`.

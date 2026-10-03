@@ -8,7 +8,8 @@ the child's date. `by`:
   `assigned_technician_id`): each group's jobs against every other job in range;
 - `incident_type`: for each type except `repeat_visit_required` (which defines a repeat),
   jobs with that type against jobs without it; plus jobs with any other incident against
-  jobs with none other.
+  jobs with none other, a single comparison (at least 20 jobs on each side, Fisher's
+  p < 0.05, no Bonferroni).
 
 A group stands out only if it has at least 20 jobs, its rate is above the rest's, and
 Fisher's exact test (two-sided) gives p < 0.05 after Bonferroni correction across the
@@ -173,9 +174,17 @@ def compute(rows: list[dict], start: dt.date, end: dt.date, by: RepeatBy) -> Rep
     if by == "incident_type":
         other = [r for r in rows if r["types"] - {DEFINING_TYPE}]
         none = [r for r in rows if not (r["types"] - {DEFINING_TYPE})]
+        a, a_rep = len(other), sum(r["repeated"] for r in other)
+        b, b_rep = len(none), sum(r["repeated"] for r in none)
+        # One comparison, so no Bonferroni; the same 20-job and p < 0.05 rule as the groups.
+        compared = a >= MIN_GROUP_JOBS and b >= MIN_GROUP_JOBS
+        p = fisher_exact(a_rep, a - a_rep, b_rep, b - b_rep) if compared else None
         extra = {
-            "any_other_incident": _jr(len(other), sum(r["repeated"] for r in other)),
-            "no_other_incident": _jr(len(none), sum(r["repeated"] for r in none)),
+            "any_other_incident": _jr(a, a_rep),
+            "no_other_incident": _jr(b, b_rep),
+            "other_incident_compared": compared,
+            "other_incident_p_value": p,
+            "other_incident_higher": bool(compared and a_rep * b > b_rep * a and p < ALPHA),
         }
     return RepeatDriversResult(
         start=start,

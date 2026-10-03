@@ -119,7 +119,13 @@ def _fake_repeats(start: dt.date, end: dt.date, by):
     jr = JobsRepeated(jobs=100, repeated=2, rate="0.0200")
     other = {}
     if by == "incident_type":
-        other = {"any_other_incident": jr, "no_other_incident": jr}
+        other = {
+            "any_other_incident": jr,
+            "no_other_incident": jr,
+            "other_incident_compared": True,
+            "other_incident_p_value": 1.0,
+            "other_incident_higher": False,
+        }
     return RepeatDriversResult(
         start=start,
         end=end,

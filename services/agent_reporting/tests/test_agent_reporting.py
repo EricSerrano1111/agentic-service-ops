@@ -121,7 +121,9 @@ def _jr(jobs: int, repeated: int) -> JobsRepeated:
     return JobsRepeated(jobs=jobs, repeated=repeated, rate=rate_string(repeated, jobs))
 
 
-def fake_repeats(start, end, by, standout: bool = False) -> RepeatDriversResult:
+def fake_repeats(
+    start, end, by, standout: bool = False, other_higher: bool = False
+) -> RepeatDriversResult:
     groups = [
         RepeatGroup(
             group="repair" if by != "incident_type" else "wrong_dispatch_info",
@@ -151,7 +153,13 @@ def fake_repeats(start, end, by, standout: bool = False) -> RepeatDriversResult:
     ]
     extra = {}
     if by == "incident_type":
-        extra = {"any_other_incident": _jr(129, 4), "no_other_incident": _jr(1471, 18)}
+        extra = {
+            "any_other_incident": _jr(129, 4),
+            "no_other_incident": _jr(1471, 18),
+            "other_incident_compared": True,
+            "other_incident_p_value": 0.01 if other_higher else 0.2,
+            "other_incident_higher": other_higher,
+        }
     return RepeatDriversResult(
         start=start,
         end=end,
@@ -710,8 +718,8 @@ async def test_repeat_drivers_call_their_tool_with_by(mcp_calls, group_by, by):
     assert answer.figures.group_by == by
 
 
-def _repeat_text(by: str, standout: bool = False) -> str:
-    figures = fake_repeats(*JULY, by, standout=standout)
+def _repeat_text(by: str, standout: bool = False, other_higher: bool = False) -> str:
+    figures = fake_repeats(*JULY, by, standout=standout, other_higher=other_higher)
     group_by = None if by == "incident_type" else by
     return render_answer(
         _metric_answer(figures, req("repeat_visit_drivers", group_by=group_by, **_JULY))
@@ -744,15 +752,50 @@ def test_repeat_template_names_a_group_that_stands_out():
     assert "stands out" not in text
 
 
-def test_repeat_template_by_incident_type_adds_any_other_and_the_caveat():
-    text = _repeat_text("incident_type")
+def test_repeat_template_by_incident_type_states_association_only_when_significant():
+    text = _repeat_text("incident_type", other_higher=True)
     assert "No other incident type stands out" in text
     assert "wrong dispatch info 2.80%" in text
     assert text.endswith(
         "Jobs with any other incident: 3.10% (4 of 129 jobs); jobs with none: 1.22% "
-        "(18 of 1,471 jobs). Jobs with several incidents are more likely to need a repeat "
-        "visit; this shows association, not cause."
+        "(18 of 1,471 jobs). In this period, jobs with another incident needed a repeat "
+        "visit more often (3.10% vs 1.22%); this shows association, not cause."
     )
+
+
+def test_repeat_template_by_incident_type_says_no_clear_difference_otherwise():
+    text = _repeat_text("incident_type", other_higher=False)
+    assert text.endswith(
+        "In this period, jobs with another incident and jobs without didn't differ clearly "
+        "(3.10% vs 1.22%)."
+    )
+    assert "association" not in text
+
+
+def test_incident_types_show_display_labels_for_every_type():
+    """Display labels, not enum values, and one for every `IncidentType` value."""
+    from agent_reporting.render import INCIDENT_TYPE_LABELS
+    from db_models import IncidentType
+
+    assert set(INCIDENT_TYPE_LABELS) == {t.value for t in IncidentType}
+    assert all("_" not in label for label in INCIDENT_TYPE_LABELS.values())
+    assert INCIDENT_TYPE_LABELS["missed_sla"] == "missed SLA"
+    figures = IncidentSummary(
+        start=JULY[0],
+        end=JULY[1],
+        incident_count=5,
+        by_severity=SeverityCounts(low=5, medium=0, high=0),
+        group_by="incident_type",
+        groups=[
+            GroupCount(group="missed_sla", count=3),
+            GroupCount(group="wrong_dispatch_info", count=2),
+        ],
+        group_count=2,
+    )
+    text = render_answer(
+        _metric_answer(figures, req("incident_count", group_by="incident_type", **_JULY))
+    )
+    assert "highest first: missed SLA 3; wrong dispatch info 2." in text
 
 
 def test_repeat_template_with_no_completed_jobs():
