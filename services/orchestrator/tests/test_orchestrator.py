@@ -45,6 +45,7 @@ ANSWER = {
         "group_by": None,
         "start": "2026-07-01",
         "end": "2026-07-31",
+        "technician_name": None,
     },
     "start": "2026-07-01",
     "end": "2026-07-31",
@@ -56,6 +57,12 @@ ANSWER = {
         "end": "2026-07-31",
         "incident_count": 172,
         "by_severity": {"low": 93, "medium": 54, "high": 25},
+        "group_by": None,
+        "groups": None,
+        "group_count": None,
+        "truncated": False,
+        "technician_id": None,
+        "technician_name": None,
     },
 }
 QUESTION = "How many incidents were reported last month?"
@@ -491,6 +498,27 @@ def test_not_supported_metric_is_a_normal_not_available_answer(monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert (body["outcome"], body["answer"], body["task_id"]) == ("not_available", text, "task-1")
+    assert body["reporting"] is None
+
+
+@pytest.mark.parametrize(
+    ("code", "text"),
+    [
+        ("technician_not_found", "No technician matches Dave."),
+        (
+            "technician_ambiguous",
+            "2 technicians match Priya: Priya Castillo and Priya Kim. "
+            "Please ask again with the full name.",
+        ),
+    ],
+)
+def test_unresolved_technician_name_is_a_normal_clarification_answer(monkeypatch, code, text):
+    """ADR-073: no figures, no error status; the user asks again (ADR-031)."""
+    failed = Sent(lambda: _task(TaskState.TASK_STATE_FAILED, reason=text, code=code))
+    response = _ask(monkeypatch, FakeLLM(decision("reporting")), failed)
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["outcome"], body["answer"]) == ("needs_clarification", text)
     assert body["reporting"] is None
 
 

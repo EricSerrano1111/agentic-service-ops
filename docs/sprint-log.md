@@ -359,7 +359,10 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   (p = 0.0002): BERT better overall under ADR-065's rule. Sarcastic (1 vs 2), implicit
   (9 vs 4) and mixed (7 vs 2) are not distinguishable. Ledger lines 4 and 5; caveats beside
   the result: L-26 (TF-IDF at grid edge), L-30 (BERT at epoch cap), L-31.*
-- [ ] Orchestrator routes across all three
+- [x] Orchestrator routes across all three
+  *2026-10-02: done in 5b (not ticked then). Reporting, sentiment and forecast questions
+  each route to their agent over A2A (ADR-068, ADR-072); the "not available yet" path is
+  gone, and the out-of-scope decline names all three domains.*
 - [ ] Golden set (known-correct answers for `05` and the Sprint 5 evals)
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
   *2026-09-30: seed_v1 (clear, ambiguous, out-of-scope, multi-domain) and routing_v1
@@ -370,8 +373,19 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   each on Flash-Lite: seed_v1 27-28/28, routing_v1 16-17/18; flips s16, r02 (L-18).*
   - Includes harder ambiguous items and near-miss out-of-scope items, written by Eric in dispatch phrasing; the seed set was too easy to separate the models (ADR-049).
   - Re-run both `gemini-3.5-flash-lite` and `gemini-3.7-flash` on it (`evals/routing/run_seed.py --model`); a clear Flash advantage reopens ADR-049 in a new ADR.
-- [ ] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
-- [ ] Repeat-visit drivers (deferred from Sprint 2).
+- [x] Decide whether to add a single-technician filter (routing_v1 r15, r17 need it).
+  *2026-10-02: added (ADR-073). `find_technician` (at most 5 matches, whole-word, no
+  patterns) and a `technician_id` filter on every reporting tool. One match gives the
+  filtered figure "based on n" cases, flagged under 20; none or several end the turn with
+  no figures (orchestrator outcome `needs_clarification`). End to end, r15 answers "No
+  technician matches Dave." and "Priya" lists both Priyas.*
+- [x] Repeat-visit drivers (deferred from Sprint 2).
+  *2026-10-02: `get_repeat_visit_drivers(start, end, by)` (ADR-073): repeat rate by
+  incident type, service type, region, account or technician; Fisher's exact test with
+  Bonferroni, 20-job minimum, worst first. The investigation found every repeat runs
+  through a repeat-visit-required incident and the generator ties repeats only to SLA misses
+  and incident count, so most answers say no group stands out (L-52 records the 1-in-20
+  false standout). parse_v3 k=3: 15/16 x3 after the L-51 fix.*
 - [x] `ml/` structure (`ml/sentiment/`, `ml/forecast/`) and the training-role decision (ADR-062).
   *2026-10-01: training-role decision made: `app_train` reads `sentiment_labels` plus exactly
   the columns the runtime models read, no `rating` and no `generation_parameters` (ADR-063).
@@ -383,7 +397,11 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 - [x] Evaluation/training read role (with ADR-062's training-role decision); then revoke `sentiment_labels` and `generation_parameters` from `app_qa`. **Required before the QA agent is built in Sprint 4**, so the runtime QA role never ships holding gold labels (ADR-055).
   *2026-10-01: pulled forward from Sprint 3; `app_eval` and `app_train` created, `app_qa`
   revoked (ADR-063). `validate.py` now reads as `app_eval`.*
-- [ ] Incident counts by breakdown (deferred from Sprint 2; L-06).
+- [x] Incident counts by breakdown (deferred from Sprint 2; L-06).
+  *2026-10-02: `get_incidents_by_date_range` gains `group_by` (account, region, service
+  type, technician with an "unattributed" group, incident type, severity), highest first,
+  cap 25 (ADR-073; data dictionary §6). Figures match `app_eval` SQL in the integration
+  suite. L-06 resolved.*
 - [ ] Fill `docs/security-model.md` while drafting `04`
   *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
@@ -419,6 +437,7 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 - ADR-070 — Forecast gate correction and `volume_v2` with a year-end indicator, decided after fold results and before the holdout (2026-10-02, pulled forward)
 - ADR-071 — Forecast serving requires passing on both fold B and the holdout (2026-10-02, pulled forward)
 - ADR-072 — Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only (2026-10-02, pulled forward)
+- ADR-073 — Reporting additions: incident counts by breakdown, a single-technician filter, repeat-visit drivers, `parse_v3` (2026-10-02, pulled forward)
 
 ---
 

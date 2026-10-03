@@ -84,6 +84,7 @@
 | 070 | Forecast gate correction (26-week eligibility, 20% band ceiling) and `volume_v2` with a year-end indicator; decided after fold results, before the holdout | Accepted — superseded in part by ADR-071 |
 | 071 | Forecast serving requires passing on both fold B (ADR-070 gate) and the holdout (MAPE ≤ 20%); shown error is the larger of the two | Accepted |
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
+| 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 
 ---
 
@@ -2169,3 +2170,39 @@ training grants.
 **Consequences:**
 - Most service-type questions get partial or refused answers, with the reason shown. That is the honest result of ADR-071.
 - Sprint 4 QA verifies forecast answers against the manifest (served flags and shown errors), the history against its own SQL, and the arithmetic (intervals contain the point; the total equals the sum).
+
+### ADR-073 — Reporting additions: incident counts by breakdown, a single-technician filter, repeat-visit drivers, `parse_v3`
+*Date: 2026-10-02. Extends ADR-033 (technician-level reporting), ADR-046 (one parse call, template answers) and ADR-050 (dates are resolved as before). Resolves L-06. Supersedes nothing.*
+
+**Decision:**
+- **Incident counts by breakdown.** `get_incidents_by_date_range` gains an optional `group_by`: `account`, `region`, `service_type`, `technician`, `incident_type` or `severity`. Incidents are dated by `reported_at`, as for the ungrouped count. `technician` means `incidents.attributed_technician_id`; incidents with none are reported as their own "unattributed" group. Groups are ranked highest count first and capped at 25, like the other metrics; the answer text names the top groups and the data part keeps every group the tool returns.
+- **Single-technician filter.** A new tool, `find_technician(name)`, matches a name against technicians' display names, case-insensitively: the whole name, or every word of the query against whole words of the name (so "Priya" finds every Priya). It returns at most 5 matches (`technician_id`, display name) and the total match count. It rejects wildcard and pattern characters and never builds SQL from the name; the matching runs over the fixed list of technicians. The four metric tools and the incident-count tool gain an optional `technician_id` filter, applied to the same column each uses for `group_by=technician`: incident count, `attributed_technician_id`; incident rate, `attributed_technician_id` for incidents over `archived_requests.technician_id` for completed requests; SLA compliance and first-time fix, `archived_requests.technician_id`.
+  - No match: the answer is "No technician matches {name}", with no figures.
+  - More than one match: the answer lists them and asks the user to ask again with the full name, with no figures. The turn ends there and no state is kept, so this is a single-shot answer (ADR-031), not a clarification turn.
+  - One match: the filtered answer, stating "based on {n} completed requests" (incident rate, first-time fix) or "{n} dispatched requests" (SLA compliance), and adding "too few to compare reliably" when n is under 20, the existing group rule. An incident count has no denominator, so it states only the count attributed to the technician.
+  - A technician filter combined with a breakdown is declined.
+- **Repeat-visit drivers.** One tool, `get_repeat_visit_drivers(start, end, by)`, with `by` one of `incident_type`, `service_type`, `region`, `account` or `technician` (the original job's assigned technician). Original jobs are requests completed in the range; a repeat visit is a non-cancelled child, counted whatever its own date (the §6 first-time-fix rule).
+  1. Every answer opens with the repeat count and rate, and states that every repeat visit is recorded through a repeat-visit-required incident on the original job.
+  2. A group is called out as higher only if it has at least 20 jobs and Fisher's exact test (two-sided) of its jobs against all other jobs gives p < 0.05 after Bonferroni correction across the groups compared (those with at least 20 jobs), and its repeat rate is above the rest's. Otherwise the answer says no group stands out. Figures are always listed worst first.
+  3. `by=incident_type` excludes `repeat_visit_required`, which defines a repeat. Each type's jobs are compared with jobs without it. The answer also states the repeat rate on jobs with any other incident against jobs with no incident other than `repeat_visit_required`. That comparison uses rule 2's test as a single comparison, so without Bonferroni: at least 20 jobs on each side and Fisher's exact p < 0.05. If it is significant and the any-other rate is higher, the answer says: "In this period, jobs with another incident needed a repeat visit more often ({x}% vs {y}%); this shows association, not cause." Otherwise: "In this period, jobs with another incident and jobs without didn't differ clearly ({x}% vs {y}%)."
+- **Parse prompt `parse_v3`.** Adds the incident-count breakdowns, a technician name (`technician_name`), and the `repeat_visit_drivers` metric with its `by`. `parse_v2` stays in the repo. Date rules are unchanged (ADR-050; L-38 still applies to bare month names).
+
+**Context:**
+- L-06 left incident counts without breakdowns, repeat-visit drivers deferred, and no way to ask about one technician. routing_v1 r15 and r17 ask about a single technician by first name.
+- 32 technicians; no two share a full name, but six first names are shared by two people, so a first-name question can be ambiguous.
+- 1,103 of 2,067 incidents have no attributed technician (dispatch errors and site issues), so a technician breakdown of incident counts needs an explicit "unattributed" group, or about half the incidents would vanish from it.
+- The repeat-visit investigation (2026-10-02, as `app_eval`) found that every repeat visit's original job has a `repeat_visit_required` incident and every such incident produced a child, so the literal question "which incident types drive repeat visits" has one answer by construction. In the generator, `repeat_visit_required` depends only on whether the job missed its SLA (which depends on priority) and on how many incidents the job drew, with timing exclusions near the window end; it doesn't depend on service type, region, account, technician or any other incident type. No type or group is therefore expected to stand out, and the observed spreads (service type 1.8–2.3% over the full window; 2026 Q2 rests on 22 repeats) are what chance produces. The significance rule keeps the answers from reporting that noise as drivers; the incident-type comparison does show every other type elevated (about 5–7% against 2%), because jobs with several incidents are more likely to include a repeat-visit-required one, which is why that answer states the association, as association, when its own test finds it. Over a short range the comparison can go the other way: for 2026-07-01 to 2026-08-30, jobs with another incident repeated at 1.12% (1 of 89) against 1.21% (10 of 827), so a fixed sentence asserting the association would contradict the figures beside it.
+- Fisher's exact test runs in plain Python in `mcp_incidents`, which doesn't depend on scipy; a unit test checks it against scipy.
+
+**Alternatives considered:**
+- *Repeat drivers as co-occurring types only, or as attributes only* (rejected). Questions ask both "which types" and "where"; one tool with `by` serves both without two near-copies.
+- *Ranking groups by raw rate with no significance rule* (rejected). At these counts it names a "driver" every time, from noise.
+- *Substring or pattern matching for technician names* (rejected). Patterns invite enumeration and injection; whole-word matching finds first and last names, which is how people ask.
+- *A clarification dialogue for ambiguous names* (rejected). Out of scope under ADR-031; listing the matches and ending the turn gives the user what they need.
+- *Dropping unattributed incidents from the technician breakdown* (rejected). It would hide half the incidents.
+
+**Consequences:**
+- Most repeat-driver answers will say no group stands out. That is the honest finding in this data.
+- The incident-type breakdown of repeat drivers will flag every common type over long ranges, and the any-other comparison will usually be significant there; the answer then states it is association, not cause. Over short ranges it usually says the two didn't differ clearly.
+- QA (Sprint 4) recomputes the counts, rates and Fisher p-values from its own SQL.
+- Technician-name questions that name nobody in the data ("Dave", "Sarah") get "No technician matches", with no guessed person.

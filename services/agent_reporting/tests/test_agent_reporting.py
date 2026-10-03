@@ -39,13 +39,19 @@ from llm import (
 )
 from schemas import (
     FirstTimeFixResult,
+    GroupCount,
     GroupRate,
     IncidentRateResult,
     IncidentSummary,
+    JobsRepeated,
+    RepeatDriversResult,
+    RepeatGroup,
     ReportingAnswer,
     ReportingRequest,
     SeverityCounts,
     SlaComplianceResult,
+    TechnicianMatch,
+    TechnicianMatches,
     rate_string,
 )
 
@@ -53,6 +59,7 @@ BASE = "http://agent.test"
 AS_OF = dt.date(2026, 8, 30)
 SETTINGS = Settings(public_url=f"{BASE}/")
 JULY = (dt.date(2026, 7, 1), dt.date(2026, 7, 31))
+_JULY = {"start": JULY[0], "end": JULY[1]}
 
 
 def req(metric: str = "incident_count", **fields) -> ReportingRequest:
@@ -98,9 +105,93 @@ def anyio_backend():
     return "asyncio"
 
 
-def fake_result(tool: str, result_model, start, end, group_by):
+TECHNICIANS = [(7, "Priya Kim"), (8, "Priya Castillo"), (9, "Ben Okafor")]
+
+
+def fake_matches(name: str) -> TechnicianMatches:
+    found = [
+        TechnicianMatch(technician_id=i, full_name=n)
+        for i, n in TECHNICIANS
+        if all(w in n.lower().split() for w in name.lower().split())
+    ]
+    return TechnicianMatches(name=name, matches=found, total_matches=len(found))
+
+
+def _jr(jobs: int, repeated: int) -> JobsRepeated:
+    return JobsRepeated(jobs=jobs, repeated=repeated, rate=rate_string(repeated, jobs))
+
+
+def fake_repeats(
+    start, end, by, standout: bool = False, other_higher: bool = False
+) -> RepeatDriversResult:
+    groups = [
+        RepeatGroup(
+            group="repair" if by != "incident_type" else "wrong_dispatch_info",
+            this=_jr(500, 14),
+            rest=_jr(1100, 8),
+            compared=True,
+            p_value=0.005,
+            p_adjusted=0.025 if standout else 0.5,
+            stands_out=standout,
+        ),
+        RepeatGroup(
+            group="tiny",
+            this=_jr(10, 3),
+            rest=_jr(1590, 19),
+            compared=False,
+            stands_out=False,
+        ),
+        RepeatGroup(
+            group="install",
+            this=_jr(1090, 5),
+            rest=_jr(510, 17),
+            compared=True,
+            p_value=0.01,
+            p_adjusted=0.02,
+            stands_out=False,
+        ),
+    ]
+    extra = {}
+    if by == "incident_type":
+        extra = {
+            "any_other_incident": _jr(129, 4),
+            "no_other_incident": _jr(1471, 18),
+            "other_incident_compared": True,
+            "other_incident_p_value": 0.01 if other_higher else 0.2,
+            "other_incident_higher": other_higher,
+        }
+    return RepeatDriversResult(
+        start=start,
+        end=end,
+        group_by=by,
+        overall=_jr(1600, 22),
+        groups=groups,
+        group_count=3,
+        groups_compared=2,
+        **extra,
+    )
+
+
+def fake_result(tool: str, result_model, start, end, group_by, technician_id=None):
+    technician = {}
+    if technician_id is not None:
+        name = dict(TECHNICIANS)[technician_id]
+        technician = {"technician_id": technician_id, "technician_name": name}
+    if result_model is RepeatDriversResult:
+        return fake_repeats(start, end, group_by)
     if result_model is IncidentSummary:
-        return summary(start, end)
+        if group_by is None:
+            return summary(start, end).model_copy(update=technician)
+        groups = [GroupCount(group="unattributed", count=100), GroupCount(group="x", count=72)]
+        return IncidentSummary(
+            start=start,
+            end=end,
+            incident_count=172,
+            by_severity=SeverityCounts(low=93, medium=54, high=25),
+            group_by=group_by,
+            groups=groups,
+            group_count=2,
+        )
     groups = None
     if group_by is not None:
         # 7 groups of 40 cases, in the tool's worst-first order for a lower-is-worse
@@ -118,6 +209,7 @@ def fake_result(tool: str, result_model, start, end, group_by):
         rate=rate_string(45, 50),
         groups=groups,
         group_count=None if groups is None else 7,
+        **technician,
     )
 
 
@@ -127,13 +219,23 @@ def mcp_calls(monkeypatch):
     calls: list[dict] = []
 
     async def fake(url, tool, arguments, result_model, *, trace_id, timeout_s):
+        if tool == "find_technician":
+            calls.append({"tool": tool, "name": arguments["name"]})
+            return fake_matches(arguments["name"])
         start = dt.date.fromisoformat(arguments["start"])
         end = dt.date.fromisoformat(arguments["end"])
-        group_by = arguments.get("group_by")
-        calls.append(
-            {"tool": tool, "start": start, "end": end, "group_by": group_by, "trace_id": trace_id}
-        )
-        return fake_result(tool, result_model, start, end, group_by)
+        group_by = arguments.get("group_by", arguments.get("by"))
+        call = {
+            "tool": tool,
+            "start": start,
+            "end": end,
+            "group_by": group_by,
+            "trace_id": trace_id,
+        }
+        if "technician_id" in arguments:
+            call["technician_id"] = arguments["technician_id"]
+        calls.append(call)
+        return fake_result(tool, result_model, start, end, group_by, arguments.get("technician_id"))
 
     monkeypatch.setattr(executor_mod, "call_tool", fake)
     return calls
@@ -394,7 +496,7 @@ async def test_prompt_version_is_logged_with_the_parse(mcp_calls):
         logger.removeHandler(handler)
         logger.disabled = was_disabled
     [line] = [json.loads(x) for x in stream.getvalue().splitlines() if "question parsed" in x]
-    assert line["prompt_version"] == "parse_v2" and len(line["prompt_sha"]) == 12
+    assert line["prompt_version"] == "parse_v3" and len(line["prompt_sha"]) == 12
     assert line["trace_id"] == "t-log" and line["range_assumed"] is True
 
 
@@ -441,8 +543,24 @@ async def test_each_breakdown_reaches_the_tool(mcp_calls, group_by):
             "breakdown isn't supported yet",
         ),
         (
-            req("incident_count", group_by="region", start=JULY[0], end=JULY[1]),
-            "Incident counts can't be broken down yet",
+            req("incident_rate", group_by="severity", start=JULY[0], end=JULY[1]),
+            "can't be broken down by severity",
+        ),
+        (
+            req("sla_compliance", group_by="incident_type", start=JULY[0], end=JULY[1]),
+            "can't be broken down by incident type",
+        ),
+        (
+            req("repeat_visit_drivers", group_by="severity", start=JULY[0], end=JULY[1]),
+            "can't be broken down by severity",
+        ),
+        (
+            req("sla_compliance", group_by="region", technician_name="Priya", **_JULY),
+            "can't also be broken down",
+        ),
+        (
+            req("repeat_visit_drivers", technician_name="Priya Kim", **_JULY),
+            "can't be filtered to one technician",
         ),
     ],
 )
@@ -454,6 +572,246 @@ async def test_unsupported_requests_fail_clearly_and_never_query(mcp_calls, requ
     assert code == "not_supported" and phrase in text
     assert "SLA compliance" in text  # says what is supported
     assert mcp_calls == []
+
+
+# --------------------------------------------------------------------------- ADR-073
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    "group_by", ["account", "region", "service_type", "technician", "incident_type", "severity"]
+)
+async def test_incident_count_breakdowns_reach_the_tool_and_the_text(mcp_calls, group_by):
+    llm = FakeLLM(req("incident_count", group_by=group_by, **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[0]["group_by"] == group_by
+    text = task.artifacts[0].parts[0].text
+    assert "highest first: unattributed 100; x 72." in text
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("metric", "tool"),
+    [
+        ("incident_count", "get_incidents_by_date_range"),
+        ("incident_rate", "get_incident_rate"),
+        ("sla_compliance", "get_sla_compliance"),
+        ("first_time_fix_rate", "get_first_time_fix_rate"),
+    ],
+)
+async def test_one_matching_technician_filters_every_tool(mcp_calls, metric, tool):
+    llm = FakeLLM(req(metric, technician_name="ben", **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[0] == {"tool": "find_technician", "name": "ben"}
+    assert mcp_calls[1]["tool"] == tool and mcp_calls[1]["technician_id"] == 9
+    answer = ReportingAnswer.model_validate(MessageToDict(task.artifacts[0].parts[1].data))
+    assert answer.figures.technician_name == "Ben Okafor"
+    assert "Ben Okafor" in task.artifacts[0].parts[0].text
+
+
+@pytest.mark.anyio
+async def test_no_matching_technician_answers_with_no_figures(mcp_calls):
+    task = await _send(create_app(SETTINGS, FakeLLM(req("sla_compliance", technician_name="Dave"))))
+    assert task.status.state == TaskState.TASK_STATE_FAILED
+    assert _failure(task) == ("technician_not_found", "No technician matches Dave.")
+    assert [c["tool"] for c in mcp_calls] == ["find_technician"]
+    assert not task.artifacts
+
+
+@pytest.mark.anyio
+async def test_several_matching_technicians_are_listed_with_no_figures(mcp_calls):
+    task = await _send(
+        create_app(SETTINGS, FakeLLM(req("sla_compliance", technician_name="Priya")))
+    )
+    assert task.status.state == TaskState.TASK_STATE_FAILED
+    code, text = _failure(task)
+    assert code == "technician_ambiguous"
+    assert text == (
+        "2 technicians match Priya: Priya Kim and Priya Castillo. "
+        "Please ask again with the full name."
+    )
+    assert [c["tool"] for c in mcp_calls] == ["find_technician"]
+    assert not task.artifacts
+
+
+@pytest.mark.anyio
+async def test_a_rejected_name_reads_as_no_match(monkeypatch):
+    async def rejects(url, tool, arguments, result_model, **kwargs):
+        raise McpToolError("name must be ... wildcards and patterns are not accepted")
+
+    monkeypatch.setattr(executor_mod, "call_tool", rejects)
+    task = await _send(create_app(SETTINGS, FakeLLM(req("sla_compliance", technician_name="P%"))))
+    assert _failure(task) == ("technician_not_found", "No technician matches P%.")
+
+
+def test_more_than_five_matches_say_how_many_more():
+    from agent_reporting.executor import technician_reply
+
+    matches = TechnicianMatches(
+        name="Sam",
+        matches=[
+            TechnicianMatch(technician_id=i, full_name=f"Sam {c}") for i, c in enumerate("ABCDE")
+        ],
+        total_matches=7,
+    )
+    code, text = technician_reply(matches)
+    assert code == "technician_ambiguous"
+    assert "7 technicians match Sam: Sam A, Sam B, Sam C, Sam D, Sam E and 2 more." in text
+
+
+def _technician_figures(model, numerator, denominator):
+    return model(
+        start=JULY[0],
+        end=JULY[1],
+        numerator=numerator,
+        denominator=denominator,
+        rate=rate_string(numerator, denominator, 100 if model is IncidentRateResult else 1),
+        technician_id=7,
+        technician_name="Priya Kim",
+    )
+
+
+@pytest.mark.parametrize(
+    ("model", "noun"),
+    [
+        (IncidentRateResult, "based on 52 completed requests"),
+        (SlaComplianceResult, "based on 52 dispatched requests"),
+        (FirstTimeFixResult, "based on 52 completed requests"),
+    ],
+)
+def test_single_technician_answer_states_its_denominator(model, noun):
+    figures = _technician_figures(model, 2 if model is IncidentRateResult else 49, 52)
+    answer = _metric_answer(figures, req(figures.metric, technician_name="Priya Kim", **_JULY))
+    text = render_answer(answer)
+    assert "For Priya Kim" in text and noun in text
+    assert "too few to compare reliably" not in text
+
+
+@pytest.mark.parametrize("model", [IncidentRateResult, SlaComplianceResult, FirstTimeFixResult])
+def test_single_technician_under_20_cases_is_flagged(model):
+    figures = _technician_figures(model, 1, 19)
+    answer = _metric_answer(figures, req(figures.metric, technician_name="Priya Kim", **_JULY))
+    assert render_answer(answer).endswith("That is too few to compare reliably.")
+
+
+def test_single_technician_incident_count_states_only_the_count():
+    figures = summary(*JULY).model_copy(update={"technician_id": 7, "technician_name": "Priya Kim"})
+    answer = _metric_answer(figures, req("incident_count", technician_name="Priya Kim", **_JULY))
+    text = render_answer(answer)
+    assert "172 incidents attributed to Priya Kim reported from 2026-07-01" in text
+    assert "based on" not in text
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("group_by", "by"),
+    [(None, "incident_type"), ("incident_type", "incident_type"), ("region", "region")],
+)
+async def test_repeat_drivers_call_their_tool_with_by(mcp_calls, group_by, by):
+    llm = FakeLLM(req("repeat_visit_drivers", group_by=group_by, **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[0]["tool"] == "get_repeat_visit_drivers" and mcp_calls[0]["group_by"] == by
+    answer = ReportingAnswer.model_validate(MessageToDict(task.artifacts[0].parts[1].data))
+    assert answer.figures.group_by == by
+
+
+def _repeat_text(by: str, standout: bool = False, other_higher: bool = False) -> str:
+    figures = fake_repeats(*JULY, by, standout=standout, other_higher=other_higher)
+    group_by = None if by == "incident_type" else by
+    return render_answer(
+        _metric_answer(figures, req("repeat_visit_drivers", group_by=group_by, **_JULY))
+    )
+
+
+def test_repeat_template_opens_with_count_rate_and_coherence():
+    text = _repeat_text("service_type")
+    assert text.startswith(
+        "As of 2026-08-30: 22 of 1,600 jobs completed from 2026-07-01 to 2026-07-31 "
+        "(inclusive, UTC) needed a repeat visit (1.38%). Every repeat visit is recorded "
+        "through a repeat-visit-required incident on the original job."
+    )
+
+
+def test_repeat_template_says_no_group_stands_out_and_lists_worst_first():
+    text = _repeat_text("service_type")
+    assert "No service type stands out" in text
+    assert "worst first: repair 2.80% (14 of 500 jobs); install 0.46% (5 of 1,090 jobs)." in text
+    assert "1 with fewer than 20 jobs left out of the list" in text
+    assert "association" not in text
+
+
+def test_repeat_template_names_a_group_that_stands_out():
+    text = _repeat_text("service_type", standout=True)
+    assert (
+        "Higher than the rest, beyond what chance explains: repair 2.80% (14 of 500 jobs), "
+        "against 0.73% for the rest." in text
+    )
+    assert "stands out" not in text
+
+
+def test_repeat_template_by_incident_type_states_association_only_when_significant():
+    text = _repeat_text("incident_type", other_higher=True)
+    assert "No other incident type stands out" in text
+    assert "wrong dispatch info 2.80%" in text
+    assert text.endswith(
+        "Jobs with any other incident: 3.10% (4 of 129 jobs); jobs with none: 1.22% "
+        "(18 of 1,471 jobs). In this period, jobs with another incident needed a repeat "
+        "visit more often (3.10% vs 1.22%); this shows association, not cause."
+    )
+
+
+def test_repeat_template_by_incident_type_says_no_clear_difference_otherwise():
+    text = _repeat_text("incident_type", other_higher=False)
+    assert text.endswith(
+        "In this period, jobs with another incident and jobs without didn't differ clearly "
+        "(3.10% vs 1.22%)."
+    )
+    assert "association" not in text
+
+
+def test_incident_types_show_display_labels_for_every_type():
+    """Display labels, not enum values, and one for every `IncidentType` value."""
+    from agent_reporting.render import INCIDENT_TYPE_LABELS
+    from db_models import IncidentType
+
+    assert set(INCIDENT_TYPE_LABELS) == {t.value for t in IncidentType}
+    assert all("_" not in label for label in INCIDENT_TYPE_LABELS.values())
+    assert INCIDENT_TYPE_LABELS["missed_sla"] == "missed SLA"
+    figures = IncidentSummary(
+        start=JULY[0],
+        end=JULY[1],
+        incident_count=5,
+        by_severity=SeverityCounts(low=5, medium=0, high=0),
+        group_by="incident_type",
+        groups=[
+            GroupCount(group="missed_sla", count=3),
+            GroupCount(group="wrong_dispatch_info", count=2),
+        ],
+        group_count=2,
+    )
+    text = render_answer(
+        _metric_answer(figures, req("incident_count", group_by="incident_type", **_JULY))
+    )
+    assert "highest first: missed SLA 3; wrong dispatch info 2." in text
+
+
+def test_repeat_template_with_no_completed_jobs():
+    figures = RepeatDriversResult(
+        start=JULY[0],
+        end=JULY[1],
+        group_by="region",
+        overall=_jr(0, 0),
+        groups=[],
+        group_count=0,
+        groups_compared=0,
+    )
+    text = render_answer(
+        _metric_answer(figures, req("repeat_visit_drivers", group_by="region", **_JULY))
+    )
+    assert "No jobs were completed" in text
 
 
 def _metric_answer(figures, request_=None) -> ReportingAnswer:
@@ -591,3 +949,19 @@ def test_answer_rejects_figures_for_another_metric_or_breakdown():
         _metric_answer(figures, req("incident_rate", group_by="region", start=JULY[0], end=JULY[1]))
     with pytest.raises(ValueError, match="breakdown"):
         _metric_answer(figures, req("sla_compliance", start=JULY[0], end=JULY[1]))
+
+
+def test_prompt_json_template_keys_follow_the_schema_property_order():
+    """Gemini's structured output writes keys in the schema's property order. If the
+    prompt's template orders them differently, the model can write a later key first and
+    then has no way back to the ones it skipped: parse_v3 lost every date this way while
+    `technician_name` sat after `end` in the model (L-51)."""
+    import re
+
+    from agent_reporting.parsing import load_parse_prompt
+
+    template = next(
+        line for line in load_parse_prompt().text.splitlines() if line.startswith('{"metric"')
+    )
+    keys = re.findall(r'"(\w+)":', template)
+    assert keys == list(ReportingRequest.model_json_schema()["properties"])

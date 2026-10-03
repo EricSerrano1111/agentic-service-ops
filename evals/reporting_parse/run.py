@@ -1,13 +1,14 @@
-"""Run the forecast parse set through the agent's own parser, k times. Live: calls Gemini.
+"""Run the reporting parse set through the agent's own parser, k times. Live: calls Gemini.
 
-    .venv\\Scripts\\python evals/forecast_parse/run.py --k 3 --budget 42
+    .venv\\Scripts\\python evals/reporting_parse/run.py --k 3 --budget 48
 
-Uses `agent_forecast.parsing.Parser` and its prompt, on the specialist model and the
+Uses `agent_reporting.parsing.Parser` and its prompt, on the specialist model and the
 free key, so it measures what the agent runs. It scores the model's reading *before*
-code applies a default range (`parse_request`), field by field and as a whole request.
+code applies a default range (`Resolved.request`), field by field and as a whole
+request; `technician_name` is compared case-insensitively (see README).
 A failed parse scores as wrong on every field. Paces under the free-tier per-minute
 limit (as `evals/routing/run_seed.py`), stops at `--budget` requests, and stops on a
-daily-quota 429. Writes evals/results/forecast_agent/<date>/parse_<prompt>_k<k>.json.
+daily-quota 429. Writes evals/results/reporting_agent/<date>/parse_<prompt>_k<k>.json.
 Not a test; never in CI.
 """
 
@@ -23,14 +24,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SET = Path(__file__).resolve().parent
-FIELDS = (
-    "slice",
-    "horizon_weeks",
-    "period_start",
-    "period_end",
-    "want_history",
-    "unsupported",
-)
+FIELDS = ("metric", "group_by", "technician_name", "start", "end")
+
+
+def same(field: str, got, expected) -> bool:
+    if field == "technician_name" and got is not None and expected is not None:
+        return " ".join(got.split()).casefold() == " ".join(expected.split()).casefold()
+    return got == expected
 
 
 def default_rpm(model: str) -> float:
@@ -42,9 +42,11 @@ async def run(args: argparse.Namespace) -> int:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", override=False)
-    from agent_forecast.config import Settings
-    from agent_forecast.parsing import Parser, load_parse_prompt
+    import agent_reporting.parsing as parsing_mod
+    from agent_reporting.config import Settings
+    from agent_reporting.parsing import Parser
     from llm import LLMClient, LLMDailyQuotaExhausted, LLMError
+    from llm.prompts import load_prompt
     from llm.redact import redact
 
     items = [
@@ -56,7 +58,8 @@ async def run(args: argparse.Namespace) -> int:
     if client.settings.mode != "free":
         raise SystemExit("this eval runs on the free key only (LLM_MODE=free)")
     model = client.settings.default_model
-    parser = Parser(client, Settings.from_env().as_of, load_parse_prompt(args.prompt))
+    prompt = load_prompt("agent_reporting", args.prompt, parsing_mod.__file__)
+    parser = Parser(client, Settings.from_env().as_of, prompt)
     gap = 60.0 / default_rpm(model)
     print(
         f"{args.file}: {len(items)} questions x k={args.k}, model {model} (free key), prompt "
@@ -79,17 +82,16 @@ async def run(args: argparse.Namespace) -> int:
             last = time.monotonic()
             row = {"id": item["id"], "category": item["category"], "got": None, "error": None}
             try:
-                got = await parser.parse_request(
-                    item["question"], trace_id=f"parse-{item['id']}-k{k}"
-                )
-                row["got"] = got.model_dump(mode="json")
+                resolved = await parser.parse(item["question"], trace_id=f"parse-{item['id']}-k{k}")
+                row["got"] = resolved.request.model_dump(mode="json")
             except LLMDailyQuotaExhausted as exc:
                 stopped = f"daily quota exhausted ({exc})"
                 break
             except LLMError as exc:
                 row["error"] = f"{type(exc).__name__}: {redact(str(exc), ())[:200]}"
             row["fields"] = {
-                f: row["got"] is not None and row["got"][f] == item["expected"][f] for f in FIELDS
+                f: row["got"] is not None and same(f, row["got"][f], item["expected"][f])
+                for f in FIELDS
             }
             row["exact"] = all(row["fields"].values())
             rows.append(row)
@@ -103,7 +105,7 @@ async def run(args: argparse.Namespace) -> int:
             break
 
     summary = summarise(items, runs)
-    out = ROOT / "evals" / "results" / "forecast_agent" / args.date
+    out = ROOT / "evals" / "results" / "reporting_agent" / args.date
     out.mkdir(parents=True, exist_ok=True)
     path = out / f"parse_{parser.prompt.version}_k{args.k}.json"
     path.write_text(
@@ -170,10 +172,10 @@ def main(argv: list[str] | None = None) -> int:
     # results file is written before the summary is printed either way.
     sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--file", default="parse_v1")
-    ap.add_argument("--prompt", default="parse_v1")
+    ap.add_argument("--file", default="parse_v3")
+    ap.add_argument("--prompt", default="parse_v3")
     ap.add_argument("--k", type=int, default=3)
-    ap.add_argument("--budget", type=int, default=42, help="stop at this many requests")
+    ap.add_argument("--budget", type=int, default=48, help="stop at this many requests")
     ap.add_argument("--date", default=dt.date.today().isoformat())
     return asyncio.run(run(ap.parse_args(argv)))
 

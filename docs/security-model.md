@@ -14,7 +14,8 @@ grants exactly that, reads and writes, in CI. The Postgres `PUBLIC` defaults are
 (ADR-025).
 
 Eight guarantees follow from the matrix and hold at the database level, whatever a prompt
-or a model does, and two more follow from how the sentiment and forecast agents are built:
+or a model does, and three more follow from how the sentiment, forecast and reporting
+agents are built:
 
 1. **No agent reads `contacts`, so customer PII never enters a prompt.** No agent role
    (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) holds any grant on
@@ -78,6 +79,14 @@ or a model does, and two more follow from how the sentiment and forecast agents 
     (`request_id`, `scheduled_datetime`, `service_type`; ADR-035) and the stored model:
     no comment, note or name reaches it, so its one LLM call (the parse) sees only the
     user's question.
+11. **`find_technician` returns at most 5 names and accepts no patterns.** A name from the
+    user's question is matched in code against the fixed technician list, case-insensitively
+    and by whole word; it never reaches SQL. The tool rejects any character other than
+    letters, spaces, apostrophes, hyphens and periods, so `%`, `_`, `*`, `?` and brackets
+    can't be used to enumerate staff; it returns at most 5 matches (id and display name)
+    and the total count, and logs only the count, not the name typed. The reporting agent
+    resolves the name before any metric call: no match or several matches ends the turn
+    with no figures, and names reach only the answer template, never a model (ADR-073).
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).

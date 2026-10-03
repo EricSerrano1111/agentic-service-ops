@@ -1,0 +1,1141 @@
+{
+  "evidence": "observed",
+  "set": "parse_v3",
+  "model": "gemini-3.5-flash-lite",
+  "key": "free",
+  "prompt": "parse_v3",
+  "prompt_sha": "d239cc36ba15",
+  "as_of": "2026-08-30",
+  "k": 3,
+  "stopped": null,
+  "calls": 48,
+  "requests": 48,
+  "per_run": [
+    {
+      "run": 1,
+      "n": 16,
+      "exact": 15,
+      "fields": {
+        "metric": 16,
+        "group_by": 16,
+        "technician_name": 15,
+        "start": 15,
+        "end": 16
+      },
+      "errors": 0
+    },
+    {
+      "run": 2,
+      "n": 16,
+      "exact": 15,
+      "fields": {
+        "metric": 16,
+        "group_by": 16,
+        "technician_name": 15,
+        "start": 15,
+        "end": 16
+      },
+      "errors": 0
+    },
+    {
+      "run": 3,
+      "n": 16,
+      "exact": 15,
+      "fields": {
+        "metric": 16,
+        "group_by": 16,
+        "technician_name": 15,
+        "start": 15,
+        "end": 16
+      },
+      "errors": 0
+    }
+  ],
+  "exact_range": [
+    15,
+    15
+  ],
+  "flips": {},
+  "runs": [
+    [
+      {
+        "id": "m01",
+        "category": "metric",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m02",
+        "category": "metric",
+        "got": {
+          "metric": "incident_rate",
+          "group_by": "region",
+          "technician_name": null,
+          "start": "2026-04-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m03",
+        "category": "metric",
+        "got": {
+          "metric": "first_time_fix_rate",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2025-01-01",
+          "end": "2025-12-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m04",
+        "category": "metric",
+        "got": {
+          "metric": "incident_count",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-01-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c01",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "account",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c02",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "severity",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c03",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "incident_type",
+          "technician_name": null,
+          "start": "2026-08-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t01",
+        "category": "technician",
+        "got": {
+          "metric": "first_time_fix_rate",
+          "group_by": null,
+          "technician_name": "Ben Okafor",
+          "start": "2026-01-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t02",
+        "category": "technician",
+        "got": {
+          "metric": "incident_count",
+          "group_by": null,
+          "technician_name": "Priya",
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t03",
+        "category": "technician",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": "Marcus",
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "d01",
+        "category": "repeat_drivers",
+        "got": {
+          "metric": "repeat_visit_drivers",
+          "group_by": "incident_type",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "d02",
+        "category": "repeat_drivers",
+        "got": {
+          "metric": "repeat_visit_drivers",
+          "group_by": "region",
+          "technician_name": null,
+          "start": "2026-01-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "q01",
+        "category": "dates",
+        "got": {
+          "metric": "incident_rate",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-04-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "q02",
+        "category": "dates",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": "service_type",
+          "technician_name": null,
+          "start": "2026-03-01",
+          "end": "2026-03-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "r15",
+        "category": "routing_v1",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": "Dave",
+          "start": null,
+          "end": null
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "r17",
+        "category": "routing_v1",
+        "got": {
+          "metric": "unsupported",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-08-16",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": false,
+          "start": false,
+          "end": true
+        },
+        "exact": false
+      }
+    ],
+    [
+      {
+        "id": "m01",
+        "category": "metric",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m02",
+        "category": "metric",
+        "got": {
+          "metric": "incident_rate",
+          "group_by": "region",
+          "technician_name": null,
+          "start": "2026-04-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m03",
+        "category": "metric",
+        "got": {
+          "metric": "first_time_fix_rate",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2025-01-01",
+          "end": "2025-12-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m04",
+        "category": "metric",
+        "got": {
+          "metric": "incident_count",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-01-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c01",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "account",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c02",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "severity",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c03",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "incident_type",
+          "technician_name": null,
+          "start": "2026-08-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t01",
+        "category": "technician",
+        "got": {
+          "metric": "first_time_fix_rate",
+          "group_by": null,
+          "technician_name": "Ben Okafor",
+          "start": "2026-01-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t02",
+        "category": "technician",
+        "got": {
+          "metric": "incident_count",
+          "group_by": null,
+          "technician_name": "Priya",
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t03",
+        "category": "technician",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": "Marcus",
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "d01",
+        "category": "repeat_drivers",
+        "got": {
+          "metric": "repeat_visit_drivers",
+          "group_by": "incident_type",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "d02",
+        "category": "repeat_drivers",
+        "got": {
+          "metric": "repeat_visit_drivers",
+          "group_by": "region",
+          "technician_name": null,
+          "start": "2026-01-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "q01",
+        "category": "dates",
+        "got": {
+          "metric": "incident_rate",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-04-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "q02",
+        "category": "dates",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": "service_type",
+          "technician_name": null,
+          "start": "2026-03-01",
+          "end": "2026-03-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "r15",
+        "category": "routing_v1",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": "Dave",
+          "start": null,
+          "end": null
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "r17",
+        "category": "routing_v1",
+        "got": {
+          "metric": "unsupported",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-08-16",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": false,
+          "start": false,
+          "end": true
+        },
+        "exact": false
+      }
+    ],
+    [
+      {
+        "id": "m01",
+        "category": "metric",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m02",
+        "category": "metric",
+        "got": {
+          "metric": "incident_rate",
+          "group_by": "region",
+          "technician_name": null,
+          "start": "2026-04-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m03",
+        "category": "metric",
+        "got": {
+          "metric": "first_time_fix_rate",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2025-01-01",
+          "end": "2025-12-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "m04",
+        "category": "metric",
+        "got": {
+          "metric": "incident_count",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-01-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c01",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "account",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c02",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "severity",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "c03",
+        "category": "count_breakdown",
+        "got": {
+          "metric": "incident_count",
+          "group_by": "incident_type",
+          "technician_name": null,
+          "start": "2026-08-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t01",
+        "category": "technician",
+        "got": {
+          "metric": "first_time_fix_rate",
+          "group_by": null,
+          "technician_name": "Ben Okafor",
+          "start": "2026-01-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t02",
+        "category": "technician",
+        "got": {
+          "metric": "incident_count",
+          "group_by": null,
+          "technician_name": "Priya",
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "t03",
+        "category": "technician",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": "Marcus",
+          "start": "2026-07-01",
+          "end": "2026-07-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "d01",
+        "category": "repeat_drivers",
+        "got": {
+          "metric": "repeat_visit_drivers",
+          "group_by": "incident_type",
+          "technician_name": null,
+          "start": "2026-07-01",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "d02",
+        "category": "repeat_drivers",
+        "got": {
+          "metric": "repeat_visit_drivers",
+          "group_by": "region",
+          "technician_name": null,
+          "start": "2026-01-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "q01",
+        "category": "dates",
+        "got": {
+          "metric": "incident_rate",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-04-01",
+          "end": "2026-06-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "q02",
+        "category": "dates",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": "service_type",
+          "technician_name": null,
+          "start": "2026-03-01",
+          "end": "2026-03-31"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "r15",
+        "category": "routing_v1",
+        "got": {
+          "metric": "sla_compliance",
+          "group_by": null,
+          "technician_name": "Dave",
+          "start": null,
+          "end": null
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": true,
+          "start": true,
+          "end": true
+        },
+        "exact": true
+      },
+      {
+        "id": "r17",
+        "category": "routing_v1",
+        "got": {
+          "metric": "unsupported",
+          "group_by": null,
+          "technician_name": null,
+          "start": "2026-08-16",
+          "end": "2026-08-30"
+        },
+        "error": null,
+        "fields": {
+          "metric": true,
+          "group_by": true,
+          "technician_name": false,
+          "start": false,
+          "end": true
+        },
+        "exact": false
+      }
+    ]
+  ],
+  "expected": {
+    "m01": {
+      "metric": "sla_compliance",
+      "group_by": null,
+      "technician_name": null,
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+    },
+    "m02": {
+      "metric": "incident_rate",
+      "group_by": "region",
+      "technician_name": null,
+      "start": "2026-04-01",
+      "end": "2026-06-30"
+    },
+    "m03": {
+      "metric": "first_time_fix_rate",
+      "group_by": null,
+      "technician_name": null,
+      "start": "2025-01-01",
+      "end": "2025-12-31"
+    },
+    "m04": {
+      "metric": "incident_count",
+      "group_by": null,
+      "technician_name": null,
+      "start": "2026-01-01",
+      "end": "2026-08-30"
+    },
+    "c01": {
+      "metric": "incident_count",
+      "group_by": "account",
+      "technician_name": null,
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+    },
+    "c02": {
+      "metric": "incident_count",
+      "group_by": "severity",
+      "technician_name": null,
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+    },
+    "c03": {
+      "metric": "incident_count",
+      "group_by": "incident_type",
+      "technician_name": null,
+      "start": "2026-08-01",
+      "end": "2026-08-30"
+    },
+    "t01": {
+      "metric": "first_time_fix_rate",
+      "group_by": null,
+      "technician_name": "Ben Okafor",
+      "start": "2026-01-01",
+      "end": "2026-08-30"
+    },
+    "t02": {
+      "metric": "incident_count",
+      "group_by": null,
+      "technician_name": "Priya",
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+    },
+    "t03": {
+      "metric": "sla_compliance",
+      "group_by": null,
+      "technician_name": "Marcus",
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+    },
+    "d01": {
+      "metric": "repeat_visit_drivers",
+      "group_by": "incident_type",
+      "technician_name": null,
+      "start": "2026-07-01",
+      "end": "2026-08-30"
+    },
+    "d02": {
+      "metric": "repeat_visit_drivers",
+      "group_by": "region",
+      "technician_name": null,
+      "start": "2026-01-01",
+      "end": "2026-06-30"
+    },
+    "q01": {
+      "metric": "incident_rate",
+      "group_by": null,
+      "technician_name": null,
+      "start": "2026-04-01",
+      "end": "2026-06-30"
+    },
+    "q02": {
+      "metric": "sla_compliance",
+      "group_by": "service_type",
+      "technician_name": null,
+      "start": "2026-03-01",
+      "end": "2026-03-31"
+    },
+    "r15": {
+      "metric": "sla_compliance",
+      "group_by": null,
+      "technician_name": "Dave",
+      "start": null,
+      "end": null
+    },
+    "r17": {
+      "metric": "unsupported",
+      "group_by": null,
+      "technician_name": "Sarah",
+      "start": "2026-08-17",
+      "end": "2026-08-30"
+    }
+  }
+}

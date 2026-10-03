@@ -186,7 +186,11 @@ Security is a first-class design requirement, not a section in the writeup. MCP'
 
 **Layer 1 — No raw SQL as an MCP tool.** Never expose a generic `run_query` tool, even read-only. Prompt injection via a malicious string in customer feedback text could craft a query reaching into the billing archive. Expose narrow, purpose-built functions only:
 
-- `get_incidents_by_date_range(start, end, filters)` — reads `incidents` + `service_requests`
+- `get_incidents_by_date_range(start, end, group_by?, technician_id?)` — incident counts by severity; optional breakdown by account, region, service type, technician (attributed, with an "unattributed" group), incident type or severity, top 25 (ADR-073)
+- `get_incident_rate`, `get_sla_compliance`, `get_first_time_fix_rate(start, end, group_by?, technician_id?)` — the §6 metrics, counts with Decimal-string rates, optional breakdown by account, region, service type or technician, worst first (ADR-033, ADR-073)
+- `find_technician(name)` — at most 5 matching technicians (id and display name) and the total; whole-word, case-insensitive matching in code, no patterns accepted (ADR-073)
+- `get_repeat_visit_drivers(start, end, by)` — repeat-visit rate by incident type, service type, region, account or technician, with Fisher's exact test and Bonferroni correction deciding what stands out (ADR-073)
+  - All five read `incidents`, `service_requests`, `archived_requests` and the reference tables as `app_reporting`; counts and rates only, no free-text column, no row identifiers beyond account and technician ids
 - `get_sentiment_summary(start, end, region?, bucket)` — counts, shares, monthly or quarterly buckets and the human-review flag count, from stored predictions (`sentiment_predictions`); no comment text (ADR-067)
 - `get_feedback_examples(start, end, region?, label?, flagged_only, limit ≤ 5)` — at most 5 comments with text, for citation (ADR-067)
   - Both read four columns of `service_feedback` (`rating` withheld, ADR-027) and a comment's region, with no grant on `incidents` or `sentiment_labels`. Neither writes nor accepts free-form query input; storing predictions for unscored comments is internal, at most 250 per call
@@ -494,7 +498,8 @@ agentic-service-ops/
 │   │
 │   ├── mcp_incidents/ # scoped tools + own DB role (app_reporting). Tools: get_incidents_by_date_range,
 │   │                  # get_incident_rate, get_sla_compliance, get_first_time_fix_rate (§6 metrics;
-│   │                  # group_by account | region | service_type | technician; rates as Decimal strings)
+│   │                  # group_by account | region | service_type | technician; rates as Decimal strings;
+│   │                  # optional technician_id), find_technician, get_repeat_visit_drivers (ADR-073)
 │   ├── mcp_feedback/ # sentiment from stored bert_v1 predictions, own DB role (app_sentiment; ADR-062, ADR-067).
 │   │                 # Tools: get_sentiment_summary, get_feedback_examples. Unscored comments are
 │   │                 # scored on demand (cap 250, newest first); backfill.py scores the rest.

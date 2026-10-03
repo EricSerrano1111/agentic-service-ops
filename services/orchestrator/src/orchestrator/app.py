@@ -45,7 +45,10 @@ log = logging.getLogger("orchestrator")
 
 RATE_LIMIT_RETRY_AFTER_S = 60
 
-Outcome = Literal["answered", "not_available", "split_required", "declined"]
+Outcome = Literal["answered", "not_available", "split_required", "declined", "needs_clarification"]
+#: Reporting-agent codes for a technician name that picks out no one, or several
+#: (ADR-073). The agent's text says which and asks again; no figures, no error.
+_CLARIFY = ("technician_not_found", "technician_ambiguous")
 
 
 class AskRequest(BaseModel):
@@ -230,6 +233,8 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                     # A metric or breakdown the agent doesn't offer yet: a normal answer,
                     # like an unbuilt domain, not an error. The agent's text says so.
                     return respond(exc.reason, "not_available", task_id=exc.task_id)
+                if exc.error_code in _CLARIFY:
+                    return respond(exc.reason, "needs_clarification", task_id=exc.task_id)
                 log.warning(
                     "agent task failed",
                     extra={"task_id": exc.task_id, "reason": exc.reason, "code": exc.error_code},

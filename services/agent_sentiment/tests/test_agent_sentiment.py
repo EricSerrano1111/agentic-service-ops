@@ -599,3 +599,16 @@ def test_mcp_client_raises_on_a_tool_error():
 
     body = inspect.getsource(sentiment_client).split("\n", 1)[1]
     assert body == inspect.getsource(reporting_client).split("\n", 1)[1]
+
+
+def test_prompt_json_template_keys_follow_the_schema_property_order():
+    """Gemini's structured output writes keys in the schema's property order. If the
+    prompt's template orders them differently, the model can write a later key first and
+    then has no way back to the ones it skipped (L-51, found in the reporting agent)."""
+    import re
+
+    from agent_sentiment.parsing import load_parse_prompt
+
+    template = next(line for line in load_parse_prompt().text.splitlines() if line.startswith('{"'))
+    keys = re.findall(r'"(\w+)":', template)
+    assert keys == list(SentimentRequest.model_json_schema()["properties"])

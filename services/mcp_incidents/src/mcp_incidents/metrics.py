@@ -14,6 +14,10 @@ Breakdowns: `account`, `region` (the site's, ADR-051), `service_type`, and `tech
 who is the technician who did the work (`archived_requests.technician_id`). For incident
 rate by technician, the numerator is incidents attributed to that technician
 (`attributed_technician_id`); unattributed incidents are left out (ADR-033).
+
+Single-technician filter (ADR-073): `technician_id` restricts each metric to the same
+columns its `group_by=technician` uses, so a filtered figure equals that technician's
+group. It cannot be combined with a breakdown.
 """
 
 from __future__ import annotations
@@ -35,6 +39,8 @@ from schemas import (
 )
 from sqlalchemy import Engine, and_, exists, func, select
 from sqlalchemy.sql import ColumnElement, Select
+
+from .queries import InvalidArgument, technician_name
 
 sr = ServiceRequest.__table__
 ar = ArchivedRequest.__table__
@@ -127,8 +133,24 @@ def _rank(
     return groups[:MAX_GROUPS], len(groups)
 
 
-def _result(model: Callable, start, end, group_by, num, den, scale, groups_fn):
-    fields = {
+def _technician(
+    engine: Engine, group_by: GroupBy | None, technician_id: int | None
+) -> dict[str, object]:
+    """Validate a technician filter; the fields it adds to the result."""
+    if technician_id is None:
+        return {}
+    if group_by is not None:
+        raise InvalidArgument("a technician filter cannot be combined with a breakdown")
+    name = technician_name(engine, technician_id)
+    return {"technician_id": technician_id, "technician_name": name}
+
+
+def _only(query: Select, column: ColumnElement, technician_id: int | None) -> Select:
+    return query if technician_id is None else query.where(column == technician_id)
+
+
+def _result(model: Callable, start, end, group_by, num, den, scale, groups_fn, extra):
+    fields = extra | {
         "start": start,
         "end": end,
         "group_by": group_by,
@@ -146,18 +168,27 @@ def _result(model: Callable, start, end, group_by, num, den, scale, groups_fn):
 
 
 def incident_rate(
-    engine: Engine, start: dt.date, end: dt.date, group_by: GroupBy | None = None
+    engine: Engine,
+    start: dt.date,
+    end: dt.date,
+    group_by: GroupBy | None = None,
+    technician_id: int | None = None,
 ) -> IncidentRateResult:
+    extra = _technician(engine, group_by, technician_id)
     lo, hi = _bounds(start, end)
-    incidents = (
+    incidents = _only(
         select(sr.c.request_id)
         .select_from(inc.join(sr, sr.c.request_id == inc.c.request_id))
-        .where(_in_range(inc.c.reported_at, lo, hi))
+        .where(_in_range(inc.c.reported_at, lo, hi)),
+        inc.c.attributed_technician_id,
+        technician_id,
     )
-    completed = (
+    completed = _only(
         select(sr.c.request_id)
         .select_from(ar.join(sr, sr.c.request_id == ar.c.request_id))
-        .where(_in_range(ar.c.completed_at, lo, hi))
+        .where(_in_range(ar.c.completed_at, lo, hi)),
+        ar.c.technician_id,
+        technician_id,
     )
     with engine.connect() as conn:
         num = conn.execute(incidents.with_only_columns(func.count())).scalar_one()
@@ -170,25 +201,32 @@ def incident_rate(
         denominators = _grouped(engine, completed, group_by, ar.c.technician_id, func.count())
         return _rank(numerators, denominators, group_by, 100, higher_is_worse=True)
 
-    return _result(IncidentRateResult, start, end, group_by, num, den, 100, groups)
+    return _result(IncidentRateResult, start, end, group_by, num, den, 100, groups, extra)
 
 
 # --------------------------------------------------------------------------- SLA compliance
 
 
 def sla_compliance(
-    engine: Engine, start: dt.date, end: dt.date, group_by: GroupBy | None = None
+    engine: Engine,
+    start: dt.date,
+    end: dt.date,
+    group_by: GroupBy | None = None,
+    technician_id: int | None = None,
 ) -> SlaComplianceResult:
+    extra = _technician(engine, group_by, technician_id)
     lo, hi = _bounds(start, end)
     # §6: sla_met = completed_at <= dispatched_at + sla_window_minutes. The inner join to
     # archived_requests and the dispatched_at filter leave out every null sla_met.
     sla_met = ar.c.completed_at <= sr.c.dispatched_at + func.make_interval(
         0, 0, 0, 0, 0, sr.c.sla_window_minutes
     )
-    dispatched = (
+    dispatched = _only(
         select(sr.c.request_id)
         .select_from(sr.join(ar, ar.c.request_id == sr.c.request_id))
-        .where(_in_range(sr.c.dispatched_at, lo, hi))
+        .where(_in_range(sr.c.dispatched_at, lo, hi)),
+        ar.c.technician_id,
+        technician_id,
     )
     with engine.connect() as conn:
         num, den = conn.execute(
@@ -202,24 +240,31 @@ def sla_compliance(
         total = _grouped(engine, dispatched, group_by, ar.c.technician_id, func.count())
         return _rank(met, total, group_by, 1, higher_is_worse=False)
 
-    return _result(SlaComplianceResult, start, end, group_by, int(num), int(den), 1, groups)
+    return _result(SlaComplianceResult, start, end, group_by, int(num), int(den), 1, groups, extra)
 
 
 # --------------------------------------------------------------------------- first-time fix
 
 
 def first_time_fix_rate(
-    engine: Engine, start: dt.date, end: dt.date, group_by: GroupBy | None = None
+    engine: Engine,
+    start: dt.date,
+    end: dt.date,
+    group_by: GroupBy | None = None,
+    technician_id: int | None = None,
 ) -> FirstTimeFixResult:
+    extra = _technician(engine, group_by, technician_id)
     lo, hi = _bounds(start, end)
     # A non-cancelled child, of any date, means a return visit happened.
     fixed = ~exists().where(
         child.c.parent_request_id == sr.c.request_id, child.c.request_status != "cancelled"
     )
-    completed = (
+    completed = _only(
         select(sr.c.request_id)
         .select_from(ar.join(sr, sr.c.request_id == ar.c.request_id))
-        .where(_in_range(ar.c.completed_at, lo, hi))
+        .where(_in_range(ar.c.completed_at, lo, hi)),
+        ar.c.technician_id,
+        technician_id,
     )
     with engine.connect() as conn:
         num, den = conn.execute(
@@ -233,4 +278,4 @@ def first_time_fix_rate(
         total = _grouped(engine, completed, group_by, ar.c.technician_id, func.count())
         return _rank(fixes, total, group_by, 1, higher_is_worse=False)
 
-    return _result(FirstTimeFixResult, start, end, group_by, int(num), int(den), 1, groups)
+    return _result(FirstTimeFixResult, start, end, group_by, int(num), int(den), 1, groups, extra)

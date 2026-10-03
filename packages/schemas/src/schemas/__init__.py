@@ -24,7 +24,14 @@ from .forecast import (
     VolumeHistory,
     band_of,
 )
-from .incidents import IncidentSummary, SeverityCounts
+from .incidents import (
+    MAX_COUNT_GROUPS,
+    UNATTRIBUTED,
+    GroupCount,
+    IncidentGroupBy,
+    IncidentSummary,
+    SeverityCounts,
+)
 from .metrics import (
     MAX_GROUPS,
     FirstTimeFixResult,
@@ -33,6 +40,17 @@ from .metrics import (
     IncidentRateResult,
     SlaComplianceResult,
     rate_string,
+)
+from .repeats import (
+    MAX_REPEAT_GROUPS,
+    MAX_TECHNICIAN_MATCHES,
+    MIN_GROUP_JOBS,
+    JobsRepeated,
+    RepeatBy,
+    RepeatDriversResult,
+    RepeatGroup,
+    TechnicianMatch,
+    TechnicianMatches,
 )
 from .reporting import (
     DATASET_WINDOW_END,
@@ -65,6 +83,19 @@ from .sentiment import (
 )
 
 __all__ = [
+    "MAX_COUNT_GROUPS",
+    "UNATTRIBUTED",
+    "GroupCount",
+    "IncidentGroupBy",
+    "MAX_REPEAT_GROUPS",
+    "MAX_TECHNICIAN_MATCHES",
+    "MIN_GROUP_JOBS",
+    "JobsRepeated",
+    "RepeatBy",
+    "RepeatDriversResult",
+    "RepeatGroup",
+    "TechnicianMatch",
+    "TechnicianMatches",
     "FORECAST_SLICES",
     "HORIZON_BANDS",
     "MAX_HISTORY_WEEKS",
