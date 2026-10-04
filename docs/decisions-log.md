@@ -2316,4 +2316,15 @@ training grants.
 
 **If the gate passes:** ADR-075 takes effect with `route_v5` as the default, and L-58 is closed with a reference to this ADR.
 
-**Results:** *(filled in after the runs)*
+**Results** (observed, 2026-10-04; 188 calls, 196 requests with retries, of a 200 budget; no daily-quota 429; one `LLMUnavailable` on `route_v3` run 3, f15, scored as wrong):
+
+| Criterion | `route_v3` (3 runs) | `route_v5` (3 runs) | Rule | Verdict |
+|---|---|---|---|---|
+| (a) fresh non-ambiguous routed `ambiguous` | — | 0 item-runs | at most 1 | PASS |
+| (b1) v2 non-ambiguous correct, of 44 | 43, 43, 43 (mean 43.00) | 44, 41, 43 (mean 42.67) | `route_v5` mean ≥ 42.00 | PASS |
+| (b2) fresh non-ambiguous correct, of 10 | 10, 10, 9 (mean 9.67) | 10, 10, 10 (mean 10.00) | `route_v5` mean ≥ 8.67 | PASS |
+| (c) fresh ambiguous items `ambiguous` in ≥2 of 3 runs | — | 3 of 5 | at least 4 of 5 | FAIL |
+
+- **Verdict: the gate failed on (c).** f01, f02 and f04 returned `ambiguous` in 3 of 3 runs. f03 ("Are we on track going into Q4?", candidates forecast and reporting) was routed to forecast in all three runs, and f05 ("Where are we losing customer goodwill?", candidates sentiment and reporting) to sentiment in all three. On the v2 sets `route_v5` recognised all 5 ambiguous items; on fresh questions it missed two of five, both times choosing one plausible reading, which is the best-fit behaviour FR-03 rules out.
+- Per this ADR, there are no revisions: `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5. ADR-075 remains not in effect.
+- The route_v3 v2 runs are the ADR-075 comparison run (20261003T175314Z / T175445Z) plus two new runs; the route_v5 v2 runs are the three recorded under ADR-075. Per-item results for every run are in `evals/results/routing_{seed_v2,routing_v2,fr03_fresh_v1}_gemini-3.5-flash-lite_route_v{3,5}_*.json`; expected candidates are intact in every new file (the `predicted_candidates` fix holds).

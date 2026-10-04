@@ -674,3 +674,15 @@ build are appended here as they are found (CLAUDE.md).
   `route_v5`'s three misses are near-miss items that `route_v3` gets wrong or nearly wrong
   as well. A fresh budget and a decision on the next revision are needed.
 - **Recorded in:** ADR-075 (results); `evals/results/routing_*_v2_*route_v{3,4,5}_20261003T*.json`.
+
+### L-58 update — the corrected FR-03 gate also failed (2026-10-04)
+- **What:** ADR-076 corrected ADR-075's comparison (3 `route_v3` runs, as ADR-054 requires)
+  and confirmed on `fr03_fresh_v1`, 15 owner-written questions no prompt was tuned on.
+  `route_v5` passed (a), (b1) and (b2): it flagged no clear or underspecified question as
+  ambiguous and matched `route_v3` on non-ambiguous accuracy. It failed (c): of 5 fresh
+  ambiguous questions it recognised 3, routing f03 ("Are we on track going into Q4?") to
+  forecast and f05 ("Where are we losing customer goodwill?") to sentiment in all three
+  runs. Its 5 of 5 on the v2 ambiguous items did not carry over to fresh questions.
+- **Status:** FR-03 stays open. `route_v3` remains the default, and under ADR-076 there
+  are no further attempts before Sprint 5. L-58 above stands as written.
+- **Recorded in:** ADR-076 (results).
