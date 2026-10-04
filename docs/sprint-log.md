@@ -532,6 +532,10 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
+- [ ] FR-03 (ambiguous questions not force-routed) is open (L-58, ADR-075, ADR-076). Any
+  reattempt needs a new owner-written fresh set: `fr03_fresh_v1` has now been used to
+  judge `route_v5` and can't confirm a revision made after seeing its results.
+  *Added 2026-10-04.*
 - [ ] Rating cross-check sensitivity: flip a few percent of ratings to mimic real-world rating/text disagreement; report the QA catch rate with and without (L-24).
 - [ ] QA model comparison (Flash-Lite vs `gemini-3.1-pro-preview`): optional, buffer only (ADR-056).
 - [ ] FastAPI gateway + thin React UI

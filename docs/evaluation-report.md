@@ -685,4 +685,12 @@ build are appended here as they are found (CLAUDE.md).
   runs. Its 5 of 5 on the v2 ambiguous items did not carry over to fresh questions.
 - **Status:** FR-03 stays open. `route_v3` remains the default, and under ADR-076 there
   are no further attempts before Sprint 5. L-58 above stands as written.
+- **`route_v3` emits `ambiguous` occasionally:** it doesn't define the route, but the
+  `RouteDecision` schema accepts it (ADR-075), so the model can choose it. Across the 9
+  `route_v3` runs made since the schema gained it (192 routing calls, 2026-10-03 and
+  2026-10-04), it did so 2 times (1.0%), both on f02 ("Is the repair side of the
+  business in trouble?", labelled ambiguous), both with valid candidates. Its 6 earlier
+  runs could not emit it. When it happens, the orchestrator answers with the
+  clarification, falling back to all three domains if candidates are missing (unit-
+  tested). This is measured behaviour and is kept; it is not FR-03 compliance.
 - **Recorded in:** ADR-076 (results).
