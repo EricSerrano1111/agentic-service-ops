@@ -645,3 +645,52 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** They record behaviour a correct system should show. Their failures
   will be reported in Sprint 5 as known limitations, not hidden (ADR-074).
 - **Recorded in:** `evals/golden/golden_v1.jsonl` (`stretch: true`).
+
+### L-57 — Ambiguity labels are owner judgement, and the v2 routing sets are not blind (2026-10-03)
+- **What:** Whether a question is *ambiguous* (it could mean different measurable things to
+  different specialists) or only *underspecified* (one domain clearly fits, a detail is
+  missing) is a judgement, made by the owner under ADR-075's definition. Reasonable
+  people could label several items the other way: r03 ("Why are escalations up in district
+  4?") is kept as reporting, s19 ("Are customers happy with the technicians?") as
+  sentiment, and r06 ("Is the field team falling behind today?") as reporting. The
+  relabelled `seed_v2` and `routing_v2` were written knowing how `route_v3` behaves on
+  these questions, so they are not blind, and the ambiguous category holds only 5 items.
+- **Why accepted:** Every relabel records its reason (`relabel_v2`), and the labels were
+  committed before any `route_v4` run. The golden set, still blind, is the independent
+  check in Sprint 5.
+- **Recorded in:** ADR-075; `evals/routing/README.md`; commit 660d88d.
+
+### L-58 — FR-03 is not met: ambiguous questions are still best-fit routed (2026-10-03)
+- **What:** ADR-075's `ambiguous` route is built and tested, but neither prompt that
+  produces it passed the pre-registered gate. `route_v4` flagged a clear sentiment question
+  (r05) as ambiguous in 2 of 3 runs; `route_v5` fixed that but dropped to 41 of 44
+  non-ambiguous items in one run, against a floor of 42. The default is still `route_v3`,
+  which best-fit routes an ambiguous question such as "How's the Southeast doing?" to one
+  specialist, which answers a question the user may not have asked. `golden_v2`'s G35
+  expects the clarification, so it will fail in Sprint 5 unless this is resolved first.
+- **Why accepted:** For now, because the alternative was loosening a pre-registered gate
+  or exceeding the call budget. Both `route_v4` and `route_v5` recognised every ambiguous
+  item in at least 2 of 3 runs; the failures are on the non-ambiguous side, and two of
+  `route_v5`'s three misses are near-miss items that `route_v3` gets wrong or nearly wrong
+  as well. A fresh budget and a decision on the next revision are needed.
+- **Recorded in:** ADR-075 (results); `evals/results/routing_*_v2_*route_v{3,4,5}_20261003T*.json`.
+
+### L-58 update — the corrected FR-03 gate also failed (2026-10-04)
+- **What:** ADR-076 corrected ADR-075's comparison (3 `route_v3` runs, as ADR-054 requires)
+  and confirmed on `fr03_fresh_v1`, 15 owner-written questions no prompt was tuned on.
+  `route_v5` passed (a), (b1) and (b2): it flagged no clear or underspecified question as
+  ambiguous and matched `route_v3` on non-ambiguous accuracy. It failed (c): of 5 fresh
+  ambiguous questions it recognised 3, routing f03 ("Are we on track going into Q4?") to
+  forecast and f05 ("Where are we losing customer goodwill?") to sentiment in all three
+  runs. Its 5 of 5 on the v2 ambiguous items did not carry over to fresh questions.
+- **Status:** FR-03 stays open. `route_v3` remains the default, and under ADR-076 there
+  are no further attempts before Sprint 5. L-58 above stands as written.
+- **`route_v3` emits `ambiguous` occasionally:** it doesn't define the route, but the
+  `RouteDecision` schema accepts it (ADR-075), so the model can choose it. Across the 9
+  `route_v3` runs made since the schema gained it (192 routing calls, 2026-10-03 and
+  2026-10-04), it did so 2 times (1.0%), both on f02 ("Is the repair side of the
+  business in trouble?", labelled ambiguous), both with valid candidates. Its 6 earlier
+  runs could not emit it. When it happens, the orchestrator answers with the
+  clarification, falling back to all three domains if candidates are missing (unit-
+  tested). This is measured behaviour and is kept; it is not FR-03 compliance.
+- **Recorded in:** ADR-076 (results).

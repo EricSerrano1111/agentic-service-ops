@@ -86,6 +86,8 @@
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
+| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed; corrected gate (ADR-076) also failed. FR-03 open until Sprint 5 (L-58). |
+| 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
 
 ---
 
@@ -2229,3 +2231,100 @@ training grants.
 **Consequences:**
 - Sprint 5 defines how `must_not` criteria are scored (owner review or a rubric).
 - A later data or model change means re-running `build_expected.py` and recording the new hashes.
+
+### ADR-075 — Ambiguous questions are not force-routed: the router returns `ambiguous`, and the orchestrator asks the user to rephrase (FR-03)
+*Date: 2026-10-03. Supersedes nothing. Corrects a gap between the routing prompt and FR-03, which no ADR decided. Found while updating the `04` reference copy.*
+*Status: Accepted; not in effect. Gate failed (see Results); route_v3 remains the default. FR-03 open (L-58).*
+
+**Decision:**
+- **Definition, written into the prompt.** A question is *ambiguous* when it could reasonably mean different measurable things to different specialists, so the answers would differ in kind. Examples: "How's the Southeast doing?" names no measure; "Are complaints going up?" could mean incident counts (reporting), negative feedback share (sentiment) or a projection (forecast).
+- **What is not ambiguous.** A question that clearly fits one domain but leaves out a detail, such as the period, region or bucket, is *underspecified*, not ambiguous. It is routed, and the specialist applies its stated defaults (ADR-050, ADR-068, ADR-072).
+  - Multi-domain (ADR-032) asks for two things.
+  - Ambiguous asks for one thing, but which thing is unclear.
+- **Router output.**
+  - `route_v4` = `route_v3` plus the definition and a new route value `ambiguous`, with `candidates`: the two or three domains the question could mean.
+  - `RouteDecision.candidates` only ever holds values from {reporting, sentiment, forecast}: invalid or repeated entries are dropped during validation, each drop logged with the trace ID, rather than failing the whole routing call. With fewer than two valid candidates, the message lists all three domains.
+  - `route_v3` stays in the repo.
+  - The removed `route_v3` sentence: "If the question is unclear but fits one domain best, choose that domain."
+- **Orchestrator behaviour.**
+  - `ambiguous` maps to outcome `needs_clarification`, reason `intent_ambiguous`.
+  - The answer is template text: the question could mean several things; for each candidate, what that agent answers, plus one example rephrasing.
+  - No specialist call and no QA.
+  - The turn ends and no state is kept, so this is single-shot (ADR-031), the same pattern as `technician_ambiguous` (ADR-073).
+- **`reason` on the response.** `AskResponse` gains `reason`: `technician_not_found`, `technician_ambiguous` or `intent_ambiguous` for `needs_clarification`, and null for every other outcome. Until now the technician codes were logged but never returned.
+- **No confidence threshold.** The router reports no self-assessed confidence score. That alternative is rejected because LLM self-reported confidence is not calibrated.
+
+**Evaluation (pre-registered, recorded before any `route_v4` run):**
+- Sets: `seed_v2` (31) and `routing_v2` (18), relabelled under this definition and committed before any run. 5 items are ambiguous (s15, s16, s20, s29, r02); 44 are not.
+- Runs: `route_v4` k=3 on both sets, Flash-Lite, free key, thinking `minimal`, as-of 2026-08-30; `route_v3` once on the same sets for comparison.
+- Gate:
+  - (a) Across all `route_v4` runs, at most 1 non-ambiguous item-run (clear, underspecified, out-of-scope, multi-domain, near-miss, technician) is routed `ambiguous`.
+  - (b) Non-ambiguous accuracy in every `route_v4` run is no lower than the `route_v3` run on the same items, minus 1.
+  - (c) At least two-thirds of ambiguous items (4 of 5) return `ambiguous` in at least 2 of 3 runs.
+- Budget: at most 2 prompt revisions after the first `route_v4` run and at most 350 live calls in total; every run saved to `evals/results/`, failed iterations included. If the gate still fails after 2 revisions, `route_v3` is restored as the default, the code and labels stay, and the gate is not loosened. A daily-quota 429 stops the evaluation.
+- Results (observed, 2026-10-03; 343 of the 350 calls, no errors, no 429):
+
+  | Run | Prompt | Non-ambiguous correct (of 44) | Non-ambiguous routed `ambiguous` | Ambiguous returned `ambiguous` (of 5) |
+  |---|---|---|---|---|
+  | comparison | `route_v3` | 43 | 0 | 0 |
+  | 1 | `route_v4` | 43 | 1 (r05) | 5 |
+  | 2 | `route_v4` | 44 | 0 | 5 |
+  | 3 | `route_v4` | 43 | 1 (r05) | 5 |
+  | 1 | `route_v5` (revision 1) | 44 | 0 | 5 |
+  | 2 | `route_v5` | 41 | 0 | 4 (s20 routed forecast) |
+  | 3 | `route_v5` | 43 | 0 | 5 |
+
+  - `route_v4`: (a) FAIL, r05 "Did customer satisfaction dip after the software rollout?" (labelled sentiment) routed `ambiguous` in 2 of 3 runs; (b) PASS; (c) PASS, 5 of 5 in 3 of 3 runs.
+  - Revision 1, `route_v5` = `route_v4` plus one rule: words for how customers feel point to sentiment, not star ratings, and are not ambiguous on that account. It targets r05, which is disclosed. (a) PASS, no flags; (c) PASS, 5 of 5 in at least 2 of 3 runs; (b) FAIL, run 2 scored 41 against a floor of 42 (r06 to forecast, near-misses r10 to reporting and r11 to sentiment; `route_v3` also routes r11 to sentiment).
+  - **Verdict: the gate failed.** A second revision would need 147 more calls against 7 left in the budget, so the stop rule applies: `route_v3` is the default again, the gate is not loosened, and the code, prompts (`route_v4`, `route_v5`) and labels stay. FR-03 is not yet met in the running system (L-58).
+  - Per-item results for every run are in `evals/results/routing_{seed,routing}_v2_gemini-3.5-flash-lite_route_v{3,4,5}_20261003T*.json`. In the three `route_v4` files, each row's `candidates` field holds the model's predicted candidates, not the label's (a runner field collision, fixed before the `route_v5` runs as `predicted_candidates`); the gate scores routes only, and the labels are in the jsonl sets.
+
+**Context:**
+- FR-03 is an MVP "Yes" in the submitted Requirements Analysis.
+- `route_v3` best-fit routed unclear questions, and the golden set accepted either route for "How's the Southeast doing?". Both contradict FR-03's stated reason (not answering a question the user didn't ask).
+
+**Alternatives considered:**
+- *Keep best-fit routing and reinterpret FR-03* (rejected). It reinterprets a frozen requirement to match the code, and makes the ambiguous eval category impossible to fail.
+- *A confidence threshold* (rejected, above).
+- *Clarifying underspecified questions too* (rejected). Defaults already exist and are stated in the answer; bouncing every undated question harms usability.
+- *Rejecting a decision with an invalid candidate* (rejected). It would fail the whole routing call, which is worse than asking with all three domains listed.
+
+**Consequences:**
+- The main risk is over-flagging clear questions as ambiguous. The gate measures this.
+- Labels for ambiguous items are owner judgment (L-57).
+- Golden set v1's G01 and G16 expected error codes that the API never returned, and G35 accepted either route. `golden_v2` fixes both: G35 expects `needs_clarification` + `intent_ambiguous`, and G01/G16 are scored on `reason`.
+- `05` gains an ambiguous-question scenario.
+- `02` needs no correction.
+
+### ADR-076 — Corrected FR-03 routing gate (supersedes ADR-075's gate only)
+*Date: 2026-10-04. Supersedes ADR-075, §Gate only. ADR-075's decision and its recorded results stand.*
+
+**The flaw, disclosed:**
+- ADR-075's criterion (b) compared each candidate run with a single `route_v3` run, contrary to ADR-054, which requires every routing eval to report k=3 runs.
+- With known run-to-run variance of 1–2 items, a single baseline run with a 1-item tolerance can fail on noise.
+- The flaw was identified after the results were seen. The original verdict (fail) is preserved.
+
+**Why confirmation needs fresh data:** `route_v5` was revised against r05 in the v2 sets, so the v2 sets cannot confirm it. `fr03_fresh_v1` (15 items, owner-written on 2026-10-03 without viewing the v2 sets or any route prompt, committed before any run) is the confirmation set.
+
+**Corrected gate:** `route_v5` frozen, k=3 for each prompt, Flash-Lite, free key, thinking `minimal`, as-of 2026-08-30.
+- (a) On the fresh set, at most 1 non-ambiguous item is routed `ambiguous` across all 3 `route_v5` runs.
+- (b1) On the v2 sets, `route_v5`'s mean non-ambiguous correct count is at least `route_v3`'s 3-run mean minus 1. The 3 `route_v3` runs are the existing comparison run plus 2 new runs; the `route_v5` runs are the 3 already recorded under ADR-075.
+- (b2) The same rule holds on the fresh set's 10 non-ambiguous items (3 `route_v3` runs and 3 `route_v5` runs).
+- (c) On the fresh set, at least 4 of 5 ambiguous items return `ambiguous` in at least 2 of 3 runs.
+
+**No revisions.** If any criterion fails, `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5.
+
+**If the gate passes:** ADR-075 takes effect with `route_v5` as the default, and L-58 is closed with a reference to this ADR.
+
+**Results** (observed, 2026-10-04; 188 calls, 196 requests with retries, of a 200 budget; no daily-quota 429; one `LLMUnavailable` on `route_v3` run 3, f15, scored as wrong):
+
+| Criterion | `route_v3` (3 runs) | `route_v5` (3 runs) | Rule | Verdict |
+|---|---|---|---|---|
+| (a) fresh non-ambiguous routed `ambiguous` | — | 0 item-runs | at most 1 | PASS |
+| (b1) v2 non-ambiguous correct, of 44 | 43, 43, 43 (mean 43.00) | 44, 41, 43 (mean 42.67) | `route_v5` mean ≥ 42.00 | PASS |
+| (b2) fresh non-ambiguous correct, of 10 | 10, 10, 9 (mean 9.67) | 10, 10, 10 (mean 10.00) | `route_v5` mean ≥ 8.67 | PASS |
+| (c) fresh ambiguous items `ambiguous` in ≥2 of 3 runs | — | 3 of 5 | at least 4 of 5 | FAIL |
+
+- **Verdict: the gate failed on (c).** f01, f02 and f04 returned `ambiguous` in 3 of 3 runs. f03 ("Are we on track going into Q4?", candidates forecast and reporting) was routed to forecast in all three runs, and f05 ("Where are we losing customer goodwill?", candidates sentiment and reporting) to sentiment in all three. On the v2 sets `route_v5` recognised all 5 ambiguous items; on fresh questions it missed two of five, both times choosing one plausible reading, which is the best-fit behaviour FR-03 rules out.
+- Per this ADR, there are no revisions: `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5. ADR-075 remains not in effect.
+- The route_v3 v2 runs are the ADR-075 comparison run (20261003T175314Z / T175445Z) plus two new runs; the route_v5 v2 runs are the three recorded under ADR-075. Per-item results for every run are in `evals/results/routing_{seed_v2,routing_v2,fr03_fresh_v1}_gemini-3.5-flash-lite_route_v{3,5}_*.json`; expected candidates are intact in every new file (the `predicted_candidates` fix holds).

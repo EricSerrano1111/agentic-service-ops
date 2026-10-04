@@ -3,6 +3,7 @@
     .venv\\Scripts\\python evals/routing/run_seed.py        # GEMINI_MODEL_ORCHESTRATOR
     .venv\\Scripts\\python evals/routing/run_seed.py --model gemini-3.5-flash-lite
     .venv\\Scripts\\python evals/routing/run_seed.py --file routing_v1
+    .venv\\Scripts\\python evals/routing/run_seed.py --file seed_v2 --prompt route_v3
 
 Uses the service's own `Router` and prompt (`services/orchestrator/prompts/`), so it
 measures what the orchestrator runs. Prints accuracy overall and per tag, a confusion
@@ -30,7 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SETS = ROOT / "evals" / "routing"
 RESULTS = ROOT / "evals" / "results"
-ROUTES = ("reporting", "sentiment", "forecast", "multi_domain", "out_of_scope")
+ROUTES = ("reporting", "sentiment", "forecast", "multi_domain", "out_of_scope", "ambiguous")
 
 
 def default_rpm(model: str) -> float:
@@ -42,7 +43,9 @@ async def run(args: argparse.Namespace) -> int:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", override=False)
+    import orchestrator.routing as routing_mod
     from llm import LLMClient, LLMDailyQuotaExhausted, LLMError
+    from llm.prompts import load_prompt
     from llm.redact import redact
     from orchestrator.config import Settings
     from orchestrator.routing import Router
@@ -56,7 +59,8 @@ async def run(args: argparse.Namespace) -> int:
     client = LLMClient.from_env("orchestrator")
     model = args.model or client.settings.default_model
     as_of = Settings.from_env().as_of  # REPORTING_AS_OF_DATE, as the service reads it
-    router = Router(client, model=model, as_of=as_of)
+    prompt = load_prompt("orchestrator", args.prompt, routing_mod.__file__) if args.prompt else None
+    router = Router(client, prompt=prompt, model=model, as_of=as_of)
     thinking = client.thinking_level_for(model)
     rpm = args.rpm or default_rpm(model)
     gap = 60.0 / rpm
@@ -75,11 +79,18 @@ async def run(args: argparse.Namespace) -> int:
         if wait > 0:
             await asyncio.sleep(wait)
         last = time.monotonic()
-        row = {**item, "predicted": None, "domains": None, "reason": None}
+        row = {**item, "predicted": None, "domains": None, "predicted_candidates": None}
+        row["reason"] = None
         row |= {"error": None, "error_message": None}
         try:
             decision = await router.classify(item["question"], trace_id=f"seed-{item['id']}")
-            row.update(predicted=decision.route, domains=decision.domains, reason=decision.reason)
+            row.update(
+                predicted=decision.route,
+                domains=decision.domains,
+                predicted_candidates=decision.candidates,
+                dropped_candidates=decision.dropped_candidates,
+                reason=decision.reason,
+            )
         except LLMDailyQuotaExhausted as exc:
             stopped = f"daily quota exhausted at question {n} ({exc})"
             print(f"  {item['id']}: {stopped}; stopping")
@@ -179,6 +190,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", help="override GEMINI_MODEL_ORCHESTRATOR for this run")
     parser.add_argument(
         "--file", default="seed_v1", help="set in evals/routing/, by stem (default: seed_v1)"
+    )
+    parser.add_argument(
+        "--prompt", help="routing prompt by stem, e.g. route_v3 (default: the service's)"
     )
     parser.add_argument("--rpm", type=float, help="requests per minute (default: per model)")
     parser.add_argument("--skip", type=int, default=0, help="skip the first N questions")

@@ -1,0 +1,297 @@
+{
+  "seed_set": "fr03_fresh_v1.jsonl",
+  "model": "gemini-3.5-flash-lite",
+  "mode": "free",
+  "thinking_level": "minimal",
+  "prompt_version": "route_v3",
+  "prompt_sha": "1201bc648069",
+  "as_of": "2026-08-30",
+  "run_at": "20261004T173631Z",
+  "answered": 15,
+  "correct": 10,
+  "accuracy_by_tag": {
+    "ambiguous": "1/5 (20%)",
+    "clear": "4/5 (80%)",
+    "underspecified": "5/5 (100%)"
+  },
+  "stopped_early": null,
+  "calls": 15,
+  "requests": 17,
+  "input_tokens": 8387,
+  "output_tokens": 625,
+  "list_price_cost_usd": 0.004079,
+  "rows": [
+    {
+      "id": "f01",
+      "question": "Are our bigger accounts getting a worse deal from us lately?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "note": "\"Worse deal\" could mean worse service outcomes (SLA compliance, incident rate, repeat visits for those accounts, a reporting question) or customers saying they're less happy (feedback sentiment trend, a sentiment question). It also doesn't say what \"bigger\" or \"lately\" means. The two readings return different kinds of answer.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a performance and service review of accounts over a recent period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f02",
+      "question": "Is the repair side of the business in trouble?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "forecast",
+        "reporting",
+        "sentiment"
+      ],
+      "note": "\"Trouble\" could mean demand about to fall (future weekly repair volume, forecast), execution problems (repair incident rate, first-time fix, SLA misses, reporting), or unhappy customers (repair feedback sentiment). No reading is favoured.",
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment",
+        "forecast"
+      ],
+      "reason": "The question is vague and could refer to repair volume metrics, customer sentiment, or future outlook.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f03",
+      "question": "Are we on track going into Q4?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "forecast",
+        "reporting"
+      ],
+      "note": "\"On track\" could mean the volume we should expect (future weekly request volume, forecast) or whether current performance holds up (SLA compliance, incident rate to date, reporting). The question doesn't say which target it is measured against.",
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about future outlook going into Q4.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f04",
+      "question": "Is quality slipping in the central region?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "note": "\"Quality\" could be operational (incident rate, repeat-visit rate, first-time fix, SLA compliance, reporting) or perceived (share of negative feedback, sentiment). Both are plausible, and \"central\" is the only constraint.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about operational metrics and performance trends over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f05",
+      "question": "Where are we losing customer goodwill?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "sentiment",
+        "reporting"
+      ],
+      "note": "\"Goodwill\" could mean where feedback is turning negative (sentiment by region or period) or where things go wrong operationally (incident counts by region, account, type or severity, reporting). The \"where\" could be region, account, service type or technician.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks what customers are complaining about, which is evaluated through customer sentiment feedback.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f06",
+      "question": "How's first-time fix looking for the Northeast?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "candidates": [],
+      "note": "Clearly the first-time fix rate. Region is given, period is missing.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "First-time fix rate for a region is a current operational performance metric.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f07",
+      "question": "Do our customers generally speak well of us?",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "candidates": [],
+      "note": "Clearly a question about customer feedback tone. Region and period are both missing.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks how customers feel about the service based on their feedback.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f08",
+      "question": "What's the outlook for weekly request volume heading into year-end?",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "candidates": [],
+      "note": "Clearly a future weekly volume question. Horizon is implied, but total versus service type is not stated.",
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a future-looking outlook on weekly request volume heading into year-end.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f09",
+      "question": "Roughly how many repair requests should we expect each week?",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "candidates": [],
+      "note": "\"Should we expect\" makes it a forecast of repair volume. The horizon (how many weeks ahead) is missing.",
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about expected future repair request volumes per week.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f10",
+      "question": "Is feedback from the West getting better or worse?",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "candidates": [],
+      "note": "A sentiment trend question with region given. The period to compare over is missing.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks whether customer feedback is improving or worsening, which evaluates sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f11",
+      "question": "Forecast total weekly service request volume for the 13 weeks starting September 7, 2026.",
+      "expected": "forecast",
+      "tag": "clear",
+      "candidates": [],
+      "note": "Future weekly volume, total, with an explicit horizon. Nothing missing.",
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for projected future service request volumes over the coming weeks.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f12",
+      "question": "What share of customer feedback in the central region during Q2 2025 was negative?",
+      "expected": "sentiment",
+      "tag": "clear",
+      "candidates": [],
+      "note": "Negative-sentiment share with region and period stated.",
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for the proportion of negative customer feedback in a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f13",
+      "question": "What was our SLA compliance rate for requests dispatched in January 2026?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "note": "SLA compliance for a defined period, using the canonical dispatched_at date filter. Nothing missing.",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past SLA compliance data from January 2026.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f14",
+      "question": "The dispatch team is dreading the quarter-end review. What was our incident rate per 100 completed requests in Q4 2025?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "note": "The feeling words (\"dreading\") describe staff, not customers, and carry no sentiment question. The ask is the incident rate with a defined period, which is reporting.",
+      "label_note": "feeling words, not sentiment",
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for the incident rate over a past period, which falls under reporting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "f15",
+      "question": "How do our technicians feel about the new dispatch process?",
+      "expected": "out_of_scope",
+      "tag": "clear",
+      "candidates": [],
+      "note": "This asks about employee attitudes. The sentiment agent reads only customer feedback_text, and no table holds technician survey or opinion data. It is a deliberate trap for sentiment routing.",
+      "label_note": "feeling words, not sentiment",
+      "predicted": null,
+      "domains": null,
+      "predicted_candidates": null,
+      "reason": null,
+      "error": "LLMUnavailable",
+      "error_message": "gemini-3.5-flash-lite: 503 persisted through 2 retries: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+    }
+  ]
+}

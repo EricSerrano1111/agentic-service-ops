@@ -12,6 +12,7 @@ import datetime as dt
 import io
 import json
 import logging
+import re
 
 import httpx
 import pytest
@@ -92,10 +93,10 @@ class FakeLLM:
         )
 
 
-def decision(route: str, domains=None, reason: str = "because") -> RouteDecision:
+def decision(route: str, domains=None, reason: str = "because", candidates=None) -> RouteDecision:
     if domains is None:
-        domains = [] if route in ("multi_domain", "out_of_scope") else [route]
-    return RouteDecision(route=route, domains=domains, reason=reason)
+        domains = [] if route in ("multi_domain", "out_of_scope", "ambiguous") else [route]
+    return RouteDecision(route=route, domains=domains, candidates=candidates or [], reason=reason)
 
 
 @pytest.fixture
@@ -153,7 +154,12 @@ def test_reporting_route_calls_the_agent_with_the_question(monkeypatch):
     body = response.json()
     assert sent.calls == [QUESTION]  # the question text, unparsed (ADR-046)
     assert body["outcome"] == "answered"
-    assert body["route"] == {"route": "reporting", "domains": ["reporting"], "reason": "because"}
+    assert body["route"] == {
+        "route": "reporting",
+        "domains": ["reporting"],
+        "candidates": [],
+        "reason": "because",
+    }
     assert body["prompt_version"] == "route_v3"
     assert body["reporting"] == ANSWER
     assert isinstance(body["reporting"]["figures"]["incident_count"], int)
@@ -519,7 +525,200 @@ def test_unresolved_technician_name_is_a_normal_clarification_answer(monkeypatch
     assert response.status_code == 200
     body = response.json()
     assert (body["outcome"], body["answer"]) == ("needs_clarification", text)
+    assert body["reason"] == code  # ADR-075: returned, not only logged
     assert body["reporting"] is None
+
+
+# --------------------------------------------------------------------------- ambiguous (ADR-075)
+
+
+def test_ambiguous_route_asks_to_rephrase_without_calling_a_specialist(monkeypatch):
+    sent = Sent()
+    llm = FakeLLM(decision("ambiguous", candidates=["reporting", "sentiment"]))
+    response = _ask(monkeypatch, llm, sent, question="How's the Southeast doing?")
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["outcome"], body["reason"]) == ("needs_clarification", "intent_ambiguous")
+    assert sent.calls == []  # no specialist call, so no QA either (ADR-075)
+    assert body["reporting"] is None and body["sentiment"] is None and body["forecast"] is None
+    assert body["task_id"] is None
+
+
+def test_clarification_message_names_each_candidate_with_an_example():
+    text = routing.clarification_message(
+        decision("ambiguous", candidates=["reporting", "forecast"])
+    )
+    assert text.startswith("Your question could mean different things")
+    assert "Incident and quality reporting" in text and "Request-volume forecasts" in text
+    assert "Customer feedback sentiment" not in text
+    assert text.count("For example:") == 2
+
+
+@pytest.mark.parametrize("candidates", [[], ["sentiment"], ["weather", "budget"]])
+def test_clarification_lists_all_three_when_candidates_are_missing_or_invalid(candidates):
+    d = RouteDecision(route="ambiguous", candidates=candidates, reason="x")
+    text = routing.clarification_message(d)
+    for label in (
+        "Incident and quality reporting",
+        "Customer feedback sentiment",
+        "Request-volume forecasts",
+    ):
+        assert label in text
+    assert text.count("For example:") == 3
+
+
+def test_route_v3_emitting_ambiguous_without_candidates_falls_back_to_all_three(monkeypatch):
+    """route_v3 doesn't define `ambiguous`, but the schema accepts it and route_v3 has
+    emitted it (L-58 update). Its template has no `candidates` key, so the decision can
+    arrive with none: the user still gets the clarification, listing all three domains."""
+    parsed = RouteDecision.model_validate_json(
+        '{"route": "ambiguous", "domains": [], "reason": "could mean several things"}'
+    )
+    assert parsed.candidates == []
+    sent = Sent()
+    response = _ask(monkeypatch, FakeLLM(parsed), sent, question="Is the repair side in trouble?")
+    body = response.json()
+    assert response.status_code == 200 and body["prompt_version"] == "route_v3"
+    assert (body["outcome"], body["reason"]) == ("needs_clarification", "intent_ambiguous")
+    assert sent.calls == []
+    for label in (
+        "Incident and quality reporting",
+        "Customer feedback sentiment",
+        "Request-volume forecasts",
+    ):
+        assert label in body["answer"]
+    assert body["answer"].count("For example:") == 3
+
+
+def test_route_decision_drops_invalid_candidates_instead_of_failing():
+    d = RouteDecision.model_validate_json(
+        '{"route": "ambiguous", "domains": [], "candidates": '
+        '["reporting", "weather", "reporting", "forecast"], "reason": "x"}'
+    )
+    assert d.candidates == ["reporting", "forecast"]
+    assert d.dropped_candidates == ["weather", "reporting"]
+    other = RouteDecision(
+        route="reporting", domains=["reporting"], candidates=["sentiment"], reason="x"
+    )
+    assert other.candidates == [] and other.dropped_candidates == ["sentiment"]
+    # Domains given on an ambiguous route are read as candidates, not rejected.
+    moved = RouteDecision(route="ambiguous", domains=["sentiment", "forecast"], reason="x")
+    assert (moved.domains, moved.candidates) == ([], ["sentiment", "forecast"])
+
+
+@pytest.mark.anyio
+async def test_dropped_candidates_are_logged_with_the_trace_id():
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(JsonFormatter("orchestrator"))
+    logger = logging.getLogger("orchestrator")
+    was_disabled, logger.disabled = logger.disabled, False
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    d = RouteDecision(route="ambiguous", candidates=["reporting", "weather"], reason="x")
+    try:
+        await routing.Router(FakeLLM(d)).classify("q", trace_id="t-drop")
+    finally:
+        logger.removeHandler(handler)
+        logger.disabled = was_disabled
+    lines = [json.loads(x) for x in stream.getvalue().splitlines()]
+    [drop] = [x for x in lines if x["msg"] == "route candidate dropped"]
+    assert (drop["candidate"], drop["trace_id"]) == ("weather", "t-drop")
+
+
+@pytest.mark.parametrize(
+    ("route", "outcome"),
+    [("out_of_scope", "declined"), ("multi_domain", "split_required"), ("reporting", "answered")],
+)
+def test_reason_is_null_for_every_outcome_but_needs_clarification(monkeypatch, route, outcome):
+    domains = ["reporting", "sentiment"] if route == "multi_domain" else None
+    body = _ask(monkeypatch, FakeLLM(decision(route, domains))).json()
+    assert body["outcome"] == outcome and body["reason"] is None
+
+
+def test_reason_is_null_when_an_agent_declines(monkeypatch):
+    text = "That metric isn't supported yet."
+    failed = Sent(lambda: _task(TaskState.TASK_STATE_FAILED, reason=text, code="not_supported"))
+    body = _ask(monkeypatch, FakeLLM(decision("reporting")), failed).json()
+    assert (body["outcome"], body["reason"]) == ("not_available", None)
+
+
+def test_response_model_ties_reason_to_needs_clarification():
+    base = {"answer": "a", "route": {}, "prompt_version": "route_v5", "trace_id": "t"}
+    with pytest.raises(ValueError):
+        app_mod.AskResponse(**base, outcome="needs_clarification")
+    with pytest.raises(ValueError):
+        app_mod.AskResponse(**base, outcome="answered", reason="intent_ambiguous")
+    assert app_mod.AskResponse(**base, outcome="needs_clarification", reason="intent_ambiguous")
+
+
+def defines_ambiguous(text: str) -> bool:
+    """Whether a route prompt can return `ambiguous`: its route list defines it."""
+    return re.search(r'^- "ambiguous":', text, re.MULTILINE) is not None
+
+
+def check_template_keys(text: str) -> None:
+    """Gemini writes keys in schema order (L-51). A prompt that defines `ambiguous` must
+    list every RouteDecision key, in schema order: without `candidates` the model can't
+    name what an ambiguous question could mean. Any other prompt's keys must appear in
+    schema order, and it may omit keys it never needs (route_v1-v3 have no `candidates`;
+    the model then skips them)."""
+    template = next(line for line in text.splitlines() if line.startswith('{"route"'))
+    keys = re.findall(r'"(\w+)":', template)
+    schema = list(RouteDecision.model_json_schema()["properties"])
+    if defines_ambiguous(text):
+        assert keys == schema, f"template keys {keys} != RouteDecision keys {schema}"
+    else:
+        assert keys == [k for k in schema if k in keys], f"template keys {keys} out of order"
+
+
+@pytest.mark.parametrize(
+    ("name", "exact"),
+    [
+        ("route_v1", False),
+        ("route_v2", False),
+        ("route_v3", False),
+        ("route_v4", True),
+        ("route_v5", True),
+    ],
+)
+def test_route_prompt_json_template_keys_follow_the_schema_property_order(name, exact):
+    text = load_prompt("orchestrator", name, routing.__file__).text
+    assert defines_ambiguous(text) is exact  # which check applies, by what the prompt can do
+    check_template_keys(text)
+
+
+def test_default_route_prompt_passes_its_key_check():
+    check_template_keys(routing.load_route_prompt().text)
+
+
+AMBIGUOUS_WITHOUT_CANDIDATES = """Routes:
+- "reporting": counts and rates.
+- "ambiguous": the question could mean different things to different specialists.
+
+Respond with JSON only:
+{"route": "<route>", "domains": ["<domain>", ...], "reason": "<one short sentence>"}
+"""
+
+
+def test_a_prompt_defining_ambiguous_without_candidates_fails_the_key_check():
+    assert defines_ambiguous(AMBIGUOUS_WITHOUT_CANDIDATES)
+    with pytest.raises(AssertionError, match="candidates"):
+        check_template_keys(AMBIGUOUS_WITHOUT_CANDIDATES)
+    # The same template is fine for a prompt that can't return `ambiguous`.
+    check_template_keys(AMBIGUOUS_WITHOUT_CANDIDATES.replace('- "ambiguous"', '- "other"'))
+
+
+def test_route_v3_is_the_default_after_the_adr_075_gate_failed():
+    """ADR-075: route_v4 and route_v5 failed the pre-registered gate within the call
+    budget, so route_v3 stays the default; the ambiguous route stays in the code."""
+    assert routing.PROMPT_NAME == "route_v3"
+
+
+def test_route_v5_defines_ambiguous_and_drops_the_best_fit_rule():
+    text = load_prompt("orchestrator", "route_v5", routing.__file__).text
+    assert '"ambiguous"' in text and "Underspecified" in text
+    assert "fits one domain best, choose that domain" not in text
 
 
 # --------------------------------------------------------------------------- sentiment (ADR-068)

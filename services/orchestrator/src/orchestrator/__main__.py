@@ -38,8 +38,10 @@ def _ask(question: str, url: str) -> int:
         print(f"route={route['route']} ({route['reason']}) prompt={body['prompt_version']}")
         if body.get("reporting"):
             print(json.dumps(body["reporting"], indent=2))
+        reason = f" reason={body['reason']}" if body.get("reason") else ""
         print(
-            f"outcome={body['outcome']} task_id={body.get('task_id')} trace_id={body['trace_id']}"
+            f"outcome={body['outcome']}{reason} task_id={body.get('task_id')} "
+            f"trace_id={body['trace_id']}"
         )
         return 0
     print(f"error {response.status_code}: {json.dumps(body, indent=2)}", file=sys.stderr)
