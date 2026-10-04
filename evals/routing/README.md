@@ -62,3 +62,16 @@ written knowing the `route_v3` behaviour they correct.
 |---|---|---|---|
 | seed_v2 (31) | s15, s16, s20, s29 (new) | s17, s19, s30 (new), s31 (new) | s18 moved to multi_domain; 14 clear, 4 out_of_scope, 4 multi_domain unchanged |
 | routing_v2 (18) | r02 | r01, r03, r04, r05, r06, r07, r08 | 5 near_miss, 5 technician unchanged |
+
+## fr03_fresh_v1 (ADR-076)
+
+15 questions written by the owner, Eric Serrano, on 2026-10-03, without viewing
+`seed_v2`, `routing_v2` or any route prompt: 5 ambiguous, 5 underspecified, 5 clear (f14
+and f15 are clear questions with feeling words, as a trap for sentiment routing). No
+prompt has been tuned on this set; `route_v5` was frozen before it was written, and the
+assistant saw the items only after `route_v5` was frozen.
+
+`fr03_fresh_v1.source.md` is the owner's text, verbatim. `fr03_fresh_v1.jsonl` is a
+mechanical conversion for `run_seed.py`: `category` to `tag`, `reason` to `note` (verbatim),
+`candidates` as a list (empty for `-`), and the f14/f15 parenthetical "(feeling words, not
+sentiment)" to `label_note`, with their tag kept as `clear`.
