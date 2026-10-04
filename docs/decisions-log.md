@@ -87,6 +87,7 @@
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
 | 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed (see Results); route_v3 remains the default. FR-03 open (L-58). |
+| 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
 
 ---
 
@@ -2294,3 +2295,25 @@ training grants.
 - Golden set v1's G01 and G16 expected error codes that the API never returned, and G35 accepted either route. `golden_v2` fixes both: G35 expects `needs_clarification` + `intent_ambiguous`, and G01/G16 are scored on `reason`.
 - `05` gains an ambiguous-question scenario.
 - `02` needs no correction.
+
+### ADR-076 — Corrected FR-03 routing gate (supersedes ADR-075's gate only)
+*Date: 2026-10-04. Supersedes ADR-075, §Gate only. ADR-075's decision and its recorded results stand.*
+
+**The flaw, disclosed:**
+- ADR-075's criterion (b) compared each candidate run with a single `route_v3` run, contrary to ADR-054, which requires every routing eval to report k=3 runs.
+- With known run-to-run variance of 1–2 items, a single baseline run with a 1-item tolerance can fail on noise.
+- The flaw was identified after the results were seen. The original verdict (fail) is preserved.
+
+**Why confirmation needs fresh data:** `route_v5` was revised against r05 in the v2 sets, so the v2 sets cannot confirm it. `fr03_fresh_v1` (15 items, owner-written on 2026-10-03 without viewing the v2 sets or any route prompt, committed before any run) is the confirmation set.
+
+**Corrected gate:** `route_v5` frozen, k=3 for each prompt, Flash-Lite, free key, thinking `minimal`, as-of 2026-08-30.
+- (a) On the fresh set, at most 1 non-ambiguous item is routed `ambiguous` across all 3 `route_v5` runs.
+- (b1) On the v2 sets, `route_v5`'s mean non-ambiguous correct count is at least `route_v3`'s 3-run mean minus 1. The 3 `route_v3` runs are the existing comparison run plus 2 new runs; the `route_v5` runs are the 3 already recorded under ADR-075.
+- (b2) The same rule holds on the fresh set's 10 non-ambiguous items (3 `route_v3` runs and 3 `route_v5` runs).
+- (c) On the fresh set, at least 4 of 5 ambiguous items return `ambiguous` in at least 2 of 3 runs.
+
+**No revisions.** If any criterion fails, `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5.
+
+**If the gate passes:** ADR-075 takes effect with `route_v5` as the default, and L-58 is closed with a reference to this ADR.
+
+**Results:** *(filled in after the runs)*
