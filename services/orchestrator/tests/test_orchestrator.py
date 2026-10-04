@@ -567,6 +567,29 @@ def test_clarification_lists_all_three_when_candidates_are_missing_or_invalid(ca
     assert text.count("For example:") == 3
 
 
+def test_route_v3_emitting_ambiguous_without_candidates_falls_back_to_all_three(monkeypatch):
+    """route_v3 doesn't define `ambiguous`, but the schema accepts it and route_v3 has
+    emitted it (L-58 update). Its template has no `candidates` key, so the decision can
+    arrive with none: the user still gets the clarification, listing all three domains."""
+    parsed = RouteDecision.model_validate_json(
+        '{"route": "ambiguous", "domains": [], "reason": "could mean several things"}'
+    )
+    assert parsed.candidates == []
+    sent = Sent()
+    response = _ask(monkeypatch, FakeLLM(parsed), sent, question="Is the repair side in trouble?")
+    body = response.json()
+    assert response.status_code == 200 and body["prompt_version"] == "route_v3"
+    assert (body["outcome"], body["reason"]) == ("needs_clarification", "intent_ambiguous")
+    assert sent.calls == []
+    for label in (
+        "Incident and quality reporting",
+        "Customer feedback sentiment",
+        "Request-volume forecasts",
+    ):
+        assert label in body["answer"]
+    assert body["answer"].count("For example:") == 3
+
+
 def test_route_decision_drops_invalid_candidates_instead_of_failing():
     d = RouteDecision.model_validate_json(
         '{"route": "ambiguous", "domains": [], "candidates": '

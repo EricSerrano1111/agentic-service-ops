@@ -86,7 +86,8 @@
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
-| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed (see Results); route_v3 remains the default. FR-03 open (L-58). |
+| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed; corrected gate (ADR-076) also failed. FR-03 open until Sprint 5 (L-58). |
+| 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
 
 ---
 
@@ -2294,3 +2295,36 @@ training grants.
 - Golden set v1's G01 and G16 expected error codes that the API never returned, and G35 accepted either route. `golden_v2` fixes both: G35 expects `needs_clarification` + `intent_ambiguous`, and G01/G16 are scored on `reason`.
 - `05` gains an ambiguous-question scenario.
 - `02` needs no correction.
+
+### ADR-076 — Corrected FR-03 routing gate (supersedes ADR-075's gate only)
+*Date: 2026-10-04. Supersedes ADR-075, §Gate only. ADR-075's decision and its recorded results stand.*
+
+**The flaw, disclosed:**
+- ADR-075's criterion (b) compared each candidate run with a single `route_v3` run, contrary to ADR-054, which requires every routing eval to report k=3 runs.
+- With known run-to-run variance of 1–2 items, a single baseline run with a 1-item tolerance can fail on noise.
+- The flaw was identified after the results were seen. The original verdict (fail) is preserved.
+
+**Why confirmation needs fresh data:** `route_v5` was revised against r05 in the v2 sets, so the v2 sets cannot confirm it. `fr03_fresh_v1` (15 items, owner-written on 2026-10-03 without viewing the v2 sets or any route prompt, committed before any run) is the confirmation set.
+
+**Corrected gate:** `route_v5` frozen, k=3 for each prompt, Flash-Lite, free key, thinking `minimal`, as-of 2026-08-30.
+- (a) On the fresh set, at most 1 non-ambiguous item is routed `ambiguous` across all 3 `route_v5` runs.
+- (b1) On the v2 sets, `route_v5`'s mean non-ambiguous correct count is at least `route_v3`'s 3-run mean minus 1. The 3 `route_v3` runs are the existing comparison run plus 2 new runs; the `route_v5` runs are the 3 already recorded under ADR-075.
+- (b2) The same rule holds on the fresh set's 10 non-ambiguous items (3 `route_v3` runs and 3 `route_v5` runs).
+- (c) On the fresh set, at least 4 of 5 ambiguous items return `ambiguous` in at least 2 of 3 runs.
+
+**No revisions.** If any criterion fails, `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5.
+
+**If the gate passes:** ADR-075 takes effect with `route_v5` as the default, and L-58 is closed with a reference to this ADR.
+
+**Results** (observed, 2026-10-04; 188 calls, 196 requests with retries, of a 200 budget; no daily-quota 429; one `LLMUnavailable` on `route_v3` run 3, f15, scored as wrong):
+
+| Criterion | `route_v3` (3 runs) | `route_v5` (3 runs) | Rule | Verdict |
+|---|---|---|---|---|
+| (a) fresh non-ambiguous routed `ambiguous` | — | 0 item-runs | at most 1 | PASS |
+| (b1) v2 non-ambiguous correct, of 44 | 43, 43, 43 (mean 43.00) | 44, 41, 43 (mean 42.67) | `route_v5` mean ≥ 42.00 | PASS |
+| (b2) fresh non-ambiguous correct, of 10 | 10, 10, 9 (mean 9.67) | 10, 10, 10 (mean 10.00) | `route_v5` mean ≥ 8.67 | PASS |
+| (c) fresh ambiguous items `ambiguous` in ≥2 of 3 runs | — | 3 of 5 | at least 4 of 5 | FAIL |
+
+- **Verdict: the gate failed on (c).** f01, f02 and f04 returned `ambiguous` in 3 of 3 runs. f03 ("Are we on track going into Q4?", candidates forecast and reporting) was routed to forecast in all three runs, and f05 ("Where are we losing customer goodwill?", candidates sentiment and reporting) to sentiment in all three. On the v2 sets `route_v5` recognised all 5 ambiguous items; on fresh questions it missed two of five, both times choosing one plausible reading, which is the best-fit behaviour FR-03 rules out.
+- Per this ADR, there are no revisions: `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5. ADR-075 remains not in effect.
+- The route_v3 v2 runs are the ADR-075 comparison run (20261003T175314Z / T175445Z) plus two new runs; the route_v5 v2 runs are the three recorded under ADR-075. Per-item results for every run are in `evals/results/routing_{seed_v2,routing_v2,fr03_fresh_v1}_gemini-3.5-flash-lite_route_v{3,5}_*.json`; expected candidates are intact in every new file (the `predicted_candidates` fix holds).

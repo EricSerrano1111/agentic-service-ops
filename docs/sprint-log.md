@@ -377,6 +377,11 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   failed (a) on r05; revision `route_v5` failed (b), 41 vs a floor of 42 in one run.
   The call budget (343 of 350) ruled out a second revision, so `route_v3` stays the
   default and FR-03 stays open (L-58). Not ticked.*
+  *2026-10-04: corrected gate (ADR-076: 3 `route_v3` runs, confirmation on the fresh
+  owner-written set `fr03_fresh_v1`). `route_v5` passed (a), (b1) and (b2) but failed
+  (c): 3 of 5 fresh ambiguous questions recognised (f03 and f05 missed in all three
+  runs). `route_v3` stays the default; FR-03 stays open, with no further attempts
+  before Sprint 5. 188 calls. Not ticked.*
 - [x] Labelled routing set: ambiguous, multi-domain, out-of-scope and technician-level intents
   *2026-09-30: seed_v1 (clear, ambiguous, out-of-scope, multi-domain) and routing_v1
   (ambiguous, near-miss out-of-scope, technician) together cover all categories. On
@@ -527,6 +532,10 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
+- [ ] FR-03 (ambiguous questions not force-routed) is open (L-58, ADR-075, ADR-076). Any
+  reattempt needs a new owner-written fresh set: `fr03_fresh_v1` has now been used to
+  judge `route_v5` and can't confirm a revision made after seeing its results.
+  *Added 2026-10-04.*
 - [ ] Rating cross-check sensitivity: flip a few percent of ratings to mimic real-world rating/text disagreement; report the QA catch rate with and without (L-24).
 - [ ] QA model comparison (Flash-Lite vs `gemini-3.1-pro-preview`): optional, buffer only (ADR-056).
 - [ ] FastAPI gateway + thin React UI

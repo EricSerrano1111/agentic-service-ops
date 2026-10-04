@@ -674,3 +674,23 @@ build are appended here as they are found (CLAUDE.md).
   `route_v5`'s three misses are near-miss items that `route_v3` gets wrong or nearly wrong
   as well. A fresh budget and a decision on the next revision are needed.
 - **Recorded in:** ADR-075 (results); `evals/results/routing_*_v2_*route_v{3,4,5}_20261003T*.json`.
+
+### L-58 update — the corrected FR-03 gate also failed (2026-10-04)
+- **What:** ADR-076 corrected ADR-075's comparison (3 `route_v3` runs, as ADR-054 requires)
+  and confirmed on `fr03_fresh_v1`, 15 owner-written questions no prompt was tuned on.
+  `route_v5` passed (a), (b1) and (b2): it flagged no clear or underspecified question as
+  ambiguous and matched `route_v3` on non-ambiguous accuracy. It failed (c): of 5 fresh
+  ambiguous questions it recognised 3, routing f03 ("Are we on track going into Q4?") to
+  forecast and f05 ("Where are we losing customer goodwill?") to sentiment in all three
+  runs. Its 5 of 5 on the v2 ambiguous items did not carry over to fresh questions.
+- **Status:** FR-03 stays open. `route_v3` remains the default, and under ADR-076 there
+  are no further attempts before Sprint 5. L-58 above stands as written.
+- **`route_v3` emits `ambiguous` occasionally:** it doesn't define the route, but the
+  `RouteDecision` schema accepts it (ADR-075), so the model can choose it. Across the 9
+  `route_v3` runs made since the schema gained it (192 routing calls, 2026-10-03 and
+  2026-10-04), it did so 2 times (1.0%), both on f02 ("Is the repair side of the
+  business in trouble?", labelled ambiguous), both with valid candidates. Its 6 earlier
+  runs could not emit it. When it happens, the orchestrator answers with the
+  clarification, falling back to all three domains if candidates are missing (unit-
+  tested). This is measured behaviour and is kept; it is not FR-03 compliance.
+- **Recorded in:** ADR-076 (results).
