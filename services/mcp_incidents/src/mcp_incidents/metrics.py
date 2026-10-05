@@ -140,7 +140,11 @@ def _technician(
     if technician_id is None:
         return {}
     if group_by is not None:
-        raise InvalidArgument("a technician filter cannot be combined with a breakdown")
+        raise InvalidArgument(
+            "a technician filter cannot be combined with a breakdown",
+            argument="technician_id,group_by",
+            kind="conflicting_arguments",
+        )
     name = technician_name(engine, technician_id)
     return {"technician_id": technician_id, "technician_name": name}
 

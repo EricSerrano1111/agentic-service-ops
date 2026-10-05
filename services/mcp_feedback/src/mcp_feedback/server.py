@@ -60,16 +60,31 @@ RegionArg = Annotated[SiteRegion | None, Field(description="Optional: the custom
 
 
 class InvalidInput(ValueError):
-    """A caller error: the message is safe to return to the client verbatim."""
+    """A caller error: the message is safe to return to the client verbatim. `argument` and
+    `kind` say which argument was rejected and why, with no value: they are what the log
+    records, since a rejected value may be text from a user's question."""
+
+    def __init__(self, message: str, *, argument: str, kind: str) -> None:
+        super().__init__(message)
+        self.argument = argument
+        self.kind = kind
 
 
 def _parse_date(name: str, raw: str) -> dt.date:
     if not isinstance(raw, str) or len(raw) != 10:
-        raise InvalidInput(f"{name} must be an ISO date (YYYY-MM-DD), got {raw!r}")
+        raise InvalidInput(
+            f"{name} must be an ISO date (YYYY-MM-DD)",
+            argument=name,
+            kind="not_iso_date",
+        )
     try:
         return dt.date.fromisoformat(raw)
     except ValueError:
-        raise InvalidInput(f"{name} must be an ISO date (YYYY-MM-DD), got {raw!r}") from None
+        raise InvalidInput(
+            f"{name} must be an ISO date (YYYY-MM-DD)",
+            argument=name,
+            kind="not_iso_date",
+        ) from None
 
 
 def parse_scope(
@@ -78,22 +93,38 @@ def parse_scope(
     """Strict `YYYY-MM-DD`, start <= end, at most 731 days, inside the dataset window."""
     s, e = _parse_date("start", start), _parse_date("end", end)
     if s > e:
-        raise InvalidInput(f"start ({s}) is after end ({e})")
+        raise InvalidInput(
+            f"start ({s}) is after end ({e})", argument="start,end", kind="start_after_end"
+        )
     if (e - s).days + 1 > MAX_SPAN_DAYS:
-        raise InvalidInput(f"range {s} to {e} spans more than {MAX_SPAN_DAYS} days")
+        raise InvalidInput(
+            f"range {s} to {e} spans more than {MAX_SPAN_DAYS} days",
+            argument="start,end",
+            kind="span_too_long",
+        )
     if s < window_start or e > window_end:
         raise InvalidInput(
             f"range {s} to {e} is outside the dataset window "
-            f"{window_start} to {window_end} (inclusive)"
+            f"{window_start} to {window_end} (inclusive)",
+            argument="start,end",
+            kind="outside_window",
         )
     if region is not None and region not in _REGIONS:
-        raise InvalidInput(f"region must be one of {', '.join(_REGIONS)}, got {region!r}")
+        raise InvalidInput(
+            f"region must be one of {', '.join(_REGIONS)}",
+            argument="region",
+            kind="not_in_vocabulary",
+        )
     return Scope(s, e, region)
 
 
 def check_limit(limit: int) -> int:
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= MAX_EXAMPLES:
-        raise InvalidInput(f"limit must be an integer from 1 to {MAX_EXAMPLES}, got {limit!r}")
+        raise InvalidInput(
+            f"limit must be an integer from 1 to {MAX_EXAMPLES}",
+            argument="limit",
+            kind="out_of_range",
+        )
     return limit
 
 
@@ -123,7 +154,10 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
             try:
                 args = validate()
             except InvalidInput as exc:
-                log.info("tool rejected input", extra={"tool": tool, "error": str(exc)})
+                log.info(
+                    "tool rejected input",
+                    extra={"tool": tool, "argument": exc.argument, "error_type": exc.kind},
+                )
                 raise ToolError(str(exc)) from None
             began = time.perf_counter()
             try:
@@ -209,7 +243,11 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
 
         def validate():
             if bucket not in ("month", "quarter"):
-                raise InvalidInput(f"bucket must be month or quarter, got {bucket!r}")
+                raise InvalidInput(
+                    "bucket must be month or quarter",
+                    argument="bucket",
+                    kind="not_in_vocabulary",
+                )
             return scope_of(start, end, region), bucket
 
         return await run(SUMMARY, ctx, validate, summary)
@@ -236,9 +274,17 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
 
         def validate():
             if label is not None and label not in SENTIMENT_LABELS:
-                raise InvalidInput(f"label must be one of {', '.join(SENTIMENT_LABELS)}")
+                raise InvalidInput(
+                    f"label must be one of {', '.join(SENTIMENT_LABELS)}",
+                    argument="label",
+                    kind="not_in_vocabulary",
+                )
             if not isinstance(flagged_only, bool):
-                raise InvalidInput("flagged_only must be true or false")
+                raise InvalidInput(
+                    "flagged_only must be true or false",
+                    argument="flagged_only",
+                    kind="wrong_type",
+                )
             return scope_of(start, end, region), label, flagged_only, check_limit(limit)
 
         return await run(EXAMPLES, ctx, validate, examples)

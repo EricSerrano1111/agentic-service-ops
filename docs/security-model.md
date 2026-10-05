@@ -248,28 +248,32 @@ root logger, so SDK loggers use it too (`packages/common/src/common/logging.py`)
 | Trace id on web-server access-log lines. | Planned, Sprint 4 | Sprint 4 item in `sprint-log.md`. Access lines are written through the same formatter today, without a trace id. |
 
 **What the code logs about user text** (read from all 54 log calls in `services/` and
-`packages/`, 2026-10-04):
+`packages/` on 2026-10-04, and changed the same day where noted):
 
 - **Never logged:** the question text; any prompt; any model reply other than the router's
   `reason`; any customer comment (`feedback_text`); any contact data (no code path reads
   `contacts`); the model key; database passwords.
-- **Logged, derived from the question:**
+- **Fixed 2026-10-04.** A technician lookup that finds no one, or several, logs the match count
+  and the technician ids, not the name as typed or the matching display names (the answer text
+  is unchanged). A rejected tool argument logs its name and the kind of error (for example
+  `start` and `not_iso_date`), not its value, and the tool's error message no longer echoes the
+  value either, because the MCP SDK logs that message itself. Evidence:
+  `test_technician_lookup_failures_log_counts_and_ids_not_names`,
+  `test_a_name_the_lookup_rejects_is_logged_without_the_name` (reporting agent) and
+  `test_rejected_arguments_are_logged_by_name_and_kind_never_by_value` (each MCP server), which
+  search every log line, SDK loggers included, for the rejected value.
+- **Still logged, derived from the question:**
   1. The router's `reason`: model-written, up to 300 characters, and it may paraphrase the
      question (`"route decision"`).
-  2. Failure reasons. Each specialist's `"task failed"` line and the orchestrator's
-     `"agent task failed"` line carry the user-facing text. In the reporting agent, a technician
-     name that matches no one is logged as typed (`No technician matches <name>.`), and an
-     ambiguous name logs the matching staff display names. The orchestrator returns before
-     logging those two codes, so only the reporting agent's log has them. The parse step logs
-     only whether a technician was named, not the name.
-  3. `"tool rejected input"` lines echo the offending argument (for example a malformed date
-     string), whatever its length.
-  4. Tracebacks from `log.exception` go into the `exc` field in full. The formatter does no
-     redaction of its own (redaction exists only for model-provider error bodies). The queries
-     bind ids, dates, labels and numbers, never comment text or contact data, so a database error
-     does not carry them; other exceptions were not audited for what their messages contain.
-- **Staff names are logged** in items 2 above. They are synthetic here; in a real deployment
-  they would be personal data, and the logging would need review.
+  2. Failure texts for other codes (`"task failed"`, `"agent task failed"`). They are fixed text,
+     except `invalid_range`, which carries the dates the model read from the question.
+  3. Tracebacks from `log.exception` go into the `exc` field in full and are **unredacted**:
+     the formatter does no redaction of its own (redaction exists only for model-provider error
+     bodies). The queries bind ids, dates, labels and numbers, never comment text or contact
+     data, so a database error does not carry them; other exceptions were not audited for what
+     their messages contain.
+- **Staff names:** no longer logged. They are synthetic here; in a real deployment they would be
+  personal data, and any logging of them would need review.
 
 ### Earlier to-do list, closed
 

@@ -7,13 +7,17 @@ run against the real artifact when it is present locally.
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import hashlib
+import io
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
 import pytest
+from common import JsonFormatter
 from forecast_runtime import N_WEEKS, forecast_record
 from mcp import Client
 from mcp_volume.artifact import ArtifactIntegrityError, load_verified
@@ -241,3 +245,45 @@ def test_real_artifact_matches_the_committed_production_forecast():
         for w, row in zip(f.weeks, rows, strict=True):
             if w.served:
                 assert round(w.point, 4) == row["median"] and round(w.hi80, 4) == row["hi80"]
+
+
+@contextlib.contextmanager
+def captured_logs(*service_loggers: str):
+    """Every log line written inside the block, from any logger (SDK loggers included), as
+    parsed JSON. Re-enables the service loggers an earlier Alembic `fileConfig` may have
+    disabled."""
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(JsonFormatter("test"))
+    root = logging.getLogger()
+    loggers = [logging.getLogger(n) for n in service_loggers]
+    was_disabled = [lg.disabled for lg in loggers]
+    for lg in loggers:
+        lg.disabled = False
+    level = root.level
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    try:
+        yield lambda: [json.loads(line) for line in stream.getvalue().splitlines()]
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(level)
+        for lg, flag in zip(loggers, was_disabled, strict=True):
+            lg.disabled = flag
+
+
+async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value(artifact):
+    marker = "MARKER-d41d8c"
+    with captured_logs("mcp_volume") as lines:
+        async with Client(create_server(SETTINGS, backend(artifact))) as client:
+            bad_slice = await client.call_tool(FORECAST, {"slice": marker, "horizon_weeks": 4})
+            bad_weeks = await client.call_tool(HISTORY, {"slice": "total", "weeks": 99})
+        logged = lines()
+    assert bad_slice.is_error and bad_weeks.is_error
+    rejected = [line for line in logged if line["msg"] == "tool rejected input"]
+    # `slice` is an enumerated type, so the SDK rejects the marker before our check runs.
+    assert {(r["tool"], r["argument"], r["error_type"]) for r in rejected} == {
+        (HISTORY, "weeks", "out_of_range"),
+    }
+    assert all("error" not in r for r in rejected)
+    assert marker not in json.dumps(logged)

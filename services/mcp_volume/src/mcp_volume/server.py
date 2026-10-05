@@ -55,18 +55,33 @@ SliceArg = Annotated[
 
 
 class InvalidInput(ValueError):
-    """A caller error: the message is safe to return to the client verbatim."""
+    """A caller error: the message is safe to return to the client verbatim. `argument` and
+    `kind` say which argument was rejected and why, with no value: they are what the log
+    records, since a rejected value may be text from a user's question."""
+
+    def __init__(self, message: str, *, argument: str, kind: str) -> None:
+        super().__init__(message)
+        self.argument = argument
+        self.kind = kind
 
 
 def check_int(name: str, value: Any, low: int, high: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
-        raise InvalidInput(f"{name} must be an integer from {low} to {high}, got {value!r}")
+        raise InvalidInput(
+            f"{name} must be an integer from {low} to {high}",
+            argument=name,
+            kind="out_of_range",
+        )
     return value
 
 
 def check_slice(value: Any) -> str:
     if value not in FORECAST_SLICES:
-        raise InvalidInput(f"slice must be one of {', '.join(FORECAST_SLICES)}, got {value!r}")
+        raise InvalidInput(
+            f"slice must be one of {', '.join(FORECAST_SLICES)}",
+            argument="slice",
+            kind="not_in_vocabulary",
+        )
     return value
 
 
@@ -93,7 +108,10 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
             try:
                 args = validate()
             except InvalidInput as exc:
-                log.info("tool rejected input", extra={"tool": tool, "error": str(exc)})
+                log.info(
+                    "tool rejected input",
+                    extra={"tool": tool, "argument": exc.argument, "error_type": exc.kind},
+                )
                 raise ToolError(str(exc)) from None
             began = time.perf_counter()
             try:
