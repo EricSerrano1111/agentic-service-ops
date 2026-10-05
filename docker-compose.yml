@@ -239,7 +239,9 @@ services:
       ORCHESTRATOR_PORT: "8000"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
-      - "${ORCHESTRATOR_PORT:-8000}:8000"
+      # Loopback only: /ask is unauthenticated until the gateway and IAM tokens arrive, and
+      # it spends the model quota (security-model.md, L-59).
+      - "127.0.0.1:${ORCHESTRATOR_PORT:-8000}:8000"
     depends_on:
       agent_reporting:
         condition: service_healthy
