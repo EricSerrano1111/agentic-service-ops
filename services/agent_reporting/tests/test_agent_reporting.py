@@ -965,3 +965,25 @@ def test_prompt_json_template_keys_follow_the_schema_property_order():
     )
     keys = re.findall(r'"(\w+)":', template)
     assert keys == list(ReportingRequest.model_json_schema()["properties"])
+
+
+#: Questions that look like template syntax. The question is data: it renders without
+#: error and reaches the model client unchanged (security-model.md, section 3).
+TEMPLATE_SYNTAX_QUESTIONS = [
+    "what is {{x}}?",
+    "show {0} incidents",
+    "odd }}{{ braces",
+    "{{as_of}} and {{question}} and {1} and {name}",
+]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("question", TEMPLATE_SYNTAX_QUESTIONS)
+async def test_parse_sends_template_syntax_in_a_question_unchanged(question):
+    from agent_reporting.parsing import Parser
+
+    llm = FakeLLM(req(start=JULY[0], end=JULY[1]))
+    await Parser(llm, AS_OF).parse(question, trace_id="t-syntax")
+    [prompt] = llm.prompts
+    assert f"<question>\n{question}\n</question>" in prompt
+    assert prompt.count(question) == 1

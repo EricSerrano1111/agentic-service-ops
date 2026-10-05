@@ -968,3 +968,37 @@ def test_numbers_for_an_unserved_week_are_rejected(monkeypatch):
 def test_forecast_timeouts_fit_inside_the_120s_ceiling():
     s = Settings()
     assert s.route_timeout_s + s.forecast_a2a_timeout_s < 120  # ADR-034
+
+
+#: Questions that look like template syntax. The question is data: it renders without
+#: error and reaches the model client unchanged (security-model.md, section 3).
+TEMPLATE_SYNTAX_QUESTIONS = [
+    "what is {{x}}?",
+    "show {0} incidents",
+    "odd }}{{ braces",
+    "{{as_of}} and {{question}} and {1} and {name}",
+]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("question", TEMPLATE_SYNTAX_QUESTIONS)
+async def test_router_sends_template_syntax_in_a_question_unchanged(question):
+    llm = FakeLLM(decision("reporting"))
+    await Router(llm).classify(question, trace_id="t-syntax")
+    [prompt] = llm.prompts
+    assert f"<question>\n{question}\n</question>" in prompt
+    assert prompt.count(question) == 1  # inserted once, never rescanned or expanded
+
+
+@pytest.mark.parametrize("question", TEMPLATE_SYNTAX_QUESTIONS)
+def test_template_syntax_in_a_question_is_a_normal_response_not_a_500(monkeypatch, question):
+    """Observed 2026-10-04 before the fix: `{{secret}}` raised in prompt rendering and the
+    orchestrator returned HTTP 500."""
+    sent = Sent()
+    llm = FakeLLM(decision("reporting"))
+    response = _ask(monkeypatch, llm, sent, question=question)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["outcome"] == "answered"
+    assert sent.calls == [question]  # the specialist gets the same text
+    assert f"<question>\n{question}\n</question>" in llm.prompts[0]

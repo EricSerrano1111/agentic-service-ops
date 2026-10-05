@@ -187,6 +187,7 @@ on them (guarantee 2).
 |---|---|---|
 | Customer comments are untrusted and are never sent to a language model. They reach only the fine-tuned classifier, whose output is one of four labels, and answers are rendered from templates (guarantee 9; ADR-046, ADR-068). | Built | `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`; `test_examples_are_quoted_verbatim_with_label_and_confidence`; compose gives `mcp_feedback` no model key (`test_mcp_feedback_holds_no_model_key_or_setting`). |
 | QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Planned, Sprint 4 | Sprint 4 planning note and guarantee 9 above. The QA agent (`services/agent_qa`) is not built. |
+| The question is rendered into the prompt as data: one pass, values inserted literally, so template-looking text can't raise or be rewritten. | Built (2026-10-04) | `tests/unit/test_prompt_rendering.py`; the per-service `test_*template_syntax*` tests named below. |
 | The question is delimited in every routing and parsing prompt and declared data, not instructions; it is limited to 2,000 characters. | Built | All ten prompt files (`route_v1` to `route_v5`, `parse_v1` to `parse_v3`, and the sentiment and forecast `parse_v1`) carry the line; `AskRequest` (`max_length=2000`). No test asserts the prompt line. |
 | Model output is structured and validated: the call sets the response schema from the typed model, the reply is parsed against it, and an invalid reply fails with no repair and no default route or range. | Built | `packages/llm` `transport.py` and `client.py`; `test_invalid_parse_output_fails_and_never_guesses_a_range`, `test_unclear_question_asks_to_rephrase`. |
 | No tools are exposed to a model, and automatic function calling is disabled. The agent's code picks the tool from the parsed metric (ADR-046). | Built | `packages/llm` `transport.py` (`automatic_function_calling` disabled); `test_each_metric_calls_its_own_tool`. |
@@ -205,11 +206,18 @@ text (React escapes text by default; the interface is not built, so this is a re
 not a control). Until the QA agent exists (Sprint 4), nothing checks that a wrong route or
 parameter was caught.
 
-**Known gap: a question containing `{{...}}` fails.** Prompt rendering raises when a question
-brings text that looks like an unfilled placeholder (for example `{{secret}}`). Observed
-2026-10-04: the orchestrator returns HTTP 500 with a generic message, before any model call.
-It fails closed and reveals nothing, but the exception is unhandled and no test covers it. The
-specialists render their parse prompts through the same code and were not tested.
+**A question is data, not template syntax.** Until 2026-10-04 a question containing text
+such as `{{secret}}` made prompt rendering raise, and the orchestrator returned an unhandled
+HTTP 500 before any model call; a question containing `{{as_of}}` was silently rewritten. It
+failed closed and revealed nothing, but it was an unhandled error on user input. Fixed: the
+shared renderer fills the template in one pass and inserts values literally, never rescanning
+them, so `{{x}}`, `{0}` and `}}{{` reach the model unchanged. Every ordinary render is
+unchanged (1,128 renders across 141 evaluation questions, identical before and after).
+Evidence: `tests/unit/test_prompt_rendering.py` (the legacy algorithm kept as a reference),
+`test_router_sends_template_syntax_in_a_question_unchanged` and
+`test_template_syntax_in_a_question_is_a_normal_response_not_a_500` (orchestrator), and
+`test_parse_sends_template_syntax_in_a_question_unchanged` (reporting, sentiment and forecast
+agents).
 
 ### 4. Secrets
 
