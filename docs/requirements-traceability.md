@@ -1,6 +1,6 @@
 # Requirements Traceability — Agentic Service Operations Intelligence Platform
 
-*As of 2026-10-04 (Sprint 3 close), updated the same day after the pre-Sprint-4 fixes. Re-checked at every sprint close.*
+*As of 2026-10-04 (Sprint 3 close), updated the same day after the pre-Sprint-4 fixes, and again on 2026-10-05 (L-60 recorded). Re-checked at every sprint close.*
 
 One row per functional requirement (FR-01 to FR-22) and non-functional requirement (NFR-1 to NFR-5)
 in `docs/academic/02-requirements-analysis.md`. Requirements are paraphrased.
@@ -25,14 +25,13 @@ not scheduled.
 Requirements that are partly met or open, where this gap has no ADR or limitation recording it.
 Listed, not fixed.
 
-1. **NFR-2, the logs still carry the router's model-written `reason` and unredacted tracebacks.**
-   The `reason` is up to 300 characters and may paraphrase the question. Recorded only in
-   `docs/security-model.md`, section 5, which is not an ADR or a limitation.
+None open.
 
 Resolved since the 2026-10-04 review: circuit breaking is decided in ADR-077 (Sprint 4); the
 unauthenticated hops are accepted locally in L-59, with every published port now bound to
 `127.0.0.1`; the `{{...}}` failure and the logged technician names and rejected argument values
-are fixed in the `fix/pre-sprint4-hardening` change set.
+are fixed in the `fix/pre-sprint4-hardening` change set; the router's model-written `reason` and
+unredacted tracebacks in the logs are recorded in L-60 (2026-10-05).
 
 ## Matrix
 
@@ -61,7 +60,7 @@ are fixed in the `fix/pre-sprint4-hardening` change set.
 | FR-21 | Route one question to several specialists and merge their answers. | No | optional, not planned (MVP: No) | ADR-032 (detect and split instead; FR-04). | MVP: No. Optional; not planned in any sprint. |
 | FR-22 | Research agent that pulls external web data. | No | optional, not planned (MVP: No) | ADR-002 (research agent cut). | MVP: No. Optional; not planned in any sprint. |
 | NFR-1 | Performance: no request exceeds 120 seconds; degrade with warning and flag. | Yes | partly met | Per-hop timeouts: `test_timeouts_fit_inside_the_120s_ceiling`, `test_sentiment_timeouts_fit_inside_the_120s_ceiling`, `test_forecast_timeouts_fit_inside_the_120s_ceiling`; observed wall times of 1.5 to 3.6 s in the three e2e records. | No single per-request deadline yet and no degraded result (Sprint 4; ADR-034, planning note in `sprint-log.md`). Response time and token cost per request type are measured in Sprint 6. |
-| NFR-2 | Security in layers: narrow tools, roles, secrets, injection defences, logging, access control. | Yes | partly met | `docs/security-model.md` (every control marked built or planned, with evidence); `tests/unit/test_compose_isolation.py` (`test_every_published_port_binds_loopback_only`); `tests/integration/test_access_matrix_grants.py`; `tests/unit/test_prompt_rendering.py`; `test_technician_lookup_failures_log_counts_and_ids_not_names`. | Built: tools, roles, local secrets handling, structural injection defences, trace-id logging. Planned: Secret Manager and IAM tokens (Sprint 4, ADR-045), gateway and access control (Sprint 5), QA's injection-safe interpretation call (Sprint 4). The 2026-10-04 review findings were fixed in the `fix/pre-sprint4-hardening` change set (loopback-only ports with L-59, template rendering, log contents); one remains (see Unrecorded gaps). |
+| NFR-2 | Security in layers: narrow tools, roles, secrets, injection defences, logging, access control. | Yes | partly met | `docs/security-model.md` (every control marked built or planned, with evidence); `tests/unit/test_compose_isolation.py` (`test_every_published_port_binds_loopback_only`); `tests/integration/test_access_matrix_grants.py`; `tests/unit/test_prompt_rendering.py`; `test_technician_lookup_failures_log_counts_and_ids_not_names`. | Built: tools, roles, local secrets handling, structural injection defences, trace-id logging. Planned: Secret Manager and IAM tokens (Sprint 4, ADR-045), gateway and access control (Sprint 5), QA's injection-safe interpretation call (Sprint 4). The 2026-10-04 review findings were fixed in the `fix/pre-sprint4-hardening` change set (loopback-only ports with L-59, template rendering, log contents); one remains, accepted and recorded in L-60 (the router's `reason` and tracebacks in the logs). |
 | NFR-3 | Scalability: each service scales independently; back off and say 'try again later'. | Yes | partly met | `test_llm_failures_end_in_coded_failed_task`, `test_rate_limited_carries_retry_guidance`; `tests/unit/test_llm_client.py`; the full 20,230-request dataset loads in CI and is queried by the integration suite. | Rate-limit handling is built. Independent Cloud Run services are not deployed yet (Sprint 4 for the reporting slice, Sprint 5 for the rest; ADR-045). |
 | NFR-4 | Availability: health and readiness checks, timeouts, circuit breakers, degrade by domain. | Yes | partly met | `/healthz` on every service; `test_agent_transport_errors`, `test_unreachable_sentiment_agent_gets_the_existing_failure_handling`, `test_unreachable_forecast_agent_gets_the_existing_failure_handling` (an unavailable agent is named in the error). Circuit breaking: ADR-077 (Sprint 4). | No circuit breaking in the code yet: decided in ADR-077, built in Sprint 4 with the per-request deadline. Readiness probes are a Sprint 4 item; graceful degradation tested by stopping each specialist is a Sprint 6 item. |
 | NFR-5 | Ethics: synthetic data, no PII to agents, QA status shown, limits stated. | Yes | partly met | Synthetic data (FR-18); no PII to agents (FR-15); review flags in sentiment answers (`test_answer_figures_match_independent_sql`); `docs/evaluation-report.md` limitations log. | 'Every answer shows its QA status' and escalation of verification failures need the QA agent (Sprint 4) and the interface (Sprint 5). |
