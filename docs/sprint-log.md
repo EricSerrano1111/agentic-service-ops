@@ -463,6 +463,8 @@ FR-03 attempt (failed; `route_v3` remains the default):
 Academic:
 - PR #21 (2026-10-04), `04` design document updated to the Sprint 3 state, with the open FR-03 gap disclosed (no ADR).
 
+Closing PR (2026-10-04): Sprint 3 closed in `sprint-log.md`; `docs/security-model.md` completed, with each control marked built or planned; `docs/requirements-traceability.md` added (27 requirements: 12 met, 5 partly met, 6 not yet built, 4 open; unrecorded gaps listed at the top).
+
 **Carried over:**
 - FR-03 (ambiguous questions not force-routed) to Sprint 5: open, with a Sprint 5 item (L-58, ADR-075, ADR-076). Any reattempt needs a new owner-written fresh set, because `fr03_fresh_v1` has been used.
 - The `05` draft to Sprint 4. Sprint 3 closed early, so it is not late: `05` is due 2026-11-01. Its scenarios include the FR-03 known-failing scenario.
