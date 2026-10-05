@@ -286,6 +286,7 @@ shipped below was merged 2026-10-01 to 10-04. Open: FR-03 (carried to Sprint 5) 
 *2026-10-05: Close-out provisional. Sprint 3 is final once the `05` test-scenarios draft is
 complete (owner drafting week of 2026-10-05; due 2026-11-01). Sprint 4 planning proceeds in
 parallel; Sprint 4 development does not start until Sprint 3 is final.*
+*2026-10-05: Sprint 3 final. The `05` draft is complete; the close-out is no longer provisional.*
 
 **Planned:**
 - [x] MCP servers #2 and #3 (feedback, volume)
@@ -429,11 +430,13 @@ parallel; Sprint 4 development does not start until Sprint 3 is final.*
 - [x] Fill `docs/security-model.md` while drafting `04`
   *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
   *2026-10-04: completed at the Sprint 3 close: MCP controls, A2A and service-to-service, prompt injection, secrets and logging, each control marked built (with its test or file) or planned (with its sprint). The code review found gaps that are recorded in the file rather than fixed: no authentication between services today and the orchestrator published on all host interfaces, a question containing `{{...}}` returning HTTP 500, and the logs carrying the router's `reason`, typed technician names and echoed rejected arguments.*
-- [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
+- [x] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
   *2026-10-04: carried to Sprint 4. Sprint 3 closed early, so this is not late: `05` is due
   2026-11-01.*
   *2026-10-05: stays in Sprint 3 and is not carried to Sprint 4; Sprint 3 is provisional until
   this draft is complete.*
+  *2026-10-05: draft complete (owner-authored, committed unchanged). Its claims check against
+  the built system was reported to the owner, who decides on edits before submission.*
 
 **Shipped:**
 
@@ -474,6 +477,7 @@ Closing PR (2026-10-04): Sprint 3 closed in `sprint-log.md`; `docs/security-mode
 - FR-03 (ambiguous questions not force-routed) to Sprint 5: open, with a Sprint 5 item (L-58, ADR-075, ADR-076). Any reattempt needs a new owner-written fresh set, because `fr03_fresh_v1` has been used.
 - The `05` draft to Sprint 4. Sprint 3 closed early, so it is not late: `05` is due 2026-11-01. Its scenarios include the FR-03 known-failing scenario.
 *2026-10-05: the `05` draft is no longer carried to Sprint 4; it stays in Sprint 3, which is provisional until the draft is complete. FR-03, carried to Sprint 5, is unchanged.*
+*2026-10-05: the `05` draft is complete and nothing from Sprint 3 is carried to Sprint 4. FR-03, carried to Sprint 5, is unchanged.*
 
 **Blockers encountered:**
 Factual; each is recorded elsewhere in the logs.
@@ -510,6 +514,21 @@ Factual; each is recorded elsewhere in the logs.
      expected outputs were written without checking the response contract.
   4. *(Assistant-observed, 2026-10-05)* None of those defects had a test. The suites covered
      intended behaviour but not hostile or malformed input at the service edges.
+  - **Final review (owner, 2026-10-05):**
+    1. *(Owner)* Drift from creating an academic deliverable before actual development. The
+       `04` design was written ahead of the build and strayed from it as problems and needed
+       changes arose.
+    2. *(Owner)* Repeated memory exhaustion in the local environment (WSL/Docker), which forced
+       freeing memory and restarting the machine several times.
+       - *(Assistant-observed, from the logs)* The logs record one related event: the first
+         container start after a Windows restart took 29.4 s, against 14.9 s otherwise, with a
+         cold file cache (L-36; `evals/results/sentiment/2026-10-01_mcp_feedback_live/`). The
+         host is an Intel i7-6700HQ (4 cores / 8 threads) running Docker Desktop on WSL2. The
+         latency proxy saw no out-of-memory kill inside its containers, peak under 0.5 GiB
+         (`evals/results/sentiment/2026-10-01_latency_proxy/summary.md`); that is container
+         memory, not the host's.
+       - *(Assistant-observed)* The logs record no count or dates of the exhaustion incidents
+         or restarts, and none is stated here.
 
 - What changes next sprint:
   1. The requirements traceability matrix (`docs/requirements-traceability.md`) is re-checked
@@ -522,8 +541,15 @@ Factual; each is recorded elsewhere in the logs.
   4. *(Assistant-observed, 2026-10-05)* Every new service edge in Sprint 4 (the QA agent, the
      gateway, deployed ingress) gets malformed-input and exposure tests written with it, not
      afterwards.
+  5. *(Owner-derived, 2026-10-05)* Academic deliverables describe the built system or say
+     plainly what is planned. The claims check before submission (item 2 above) is the control;
+     it is not repeated here.
+  6. *(Owner-derived, 2026-10-05)* A short local-environment recovery note (in `README.md`,
+     "Local environment recovery"), and a memory headroom check before long runs or full-stack
+     rebuilds, because Sprint 4 adds the QA agent and the deploy tooling to the local
+     footprint. Tracked as R-17.
 
-*Retro provisional. Final review after the `05` draft, when the owner may add points.*
+Retro final.
 
 **Academic deliverable status:**
 - `03-planning-management.md` (due 2026-10-18) — submitted before the due date (owner).
@@ -536,6 +562,20 @@ Factual; each is recorded elsewhere in the logs.
   - *`02`, FR-10 says a model that fails the threshold on held-out weeks is not deployed. The
     built system deploys `volume_v2` and withholds each failing slice-band, with its error
     shown (ADR-071).*
+  *2026-10-05, further post-submission divergences from ADR-078 to ADR-080 (carry to the
+  evaluation report):*
+  - *`04`, TA-16 quotes the stop date 2026-11-04. ADR-078 moves the deploy window to
+    2026-10-12 to 10-14, with the stop rule at the end of 10-14.*
+  - *`04`, "each component deploys as its own Cloud Run service". ADR-079 runs each MCP server
+    as a sidecar of its agent, so the deploy is two services at first and six in the target
+    topology, not one per component.*
+  - *`04`, the interface "on Node.js LTS". ADR-080 serves a static export from the gateway, so
+    no Node.js runs in production (Node is a build tool only).*
+  - *`04`, Table 3 says the orchestrator routes on Agent Card skills. In fact `route_v3`
+    hard-codes the domain descriptions, and the card supplies only the agent's URL.*
+  - *`03`, the critical path, the task-16 schedule row and the stop rules quote the deploy
+    window 11-02 to 11-04. ADR-078 moves it. `03` is Eric's to edit; nothing was changed.*
+- `05-test-scenarios.md` (due 2026-11-01) — drafted 2026-10-05, submission pending (owner).
 - Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
@@ -585,8 +625,14 @@ Factual; each is recorded elsewhere in the logs.
 - *Still to plan: the rest of the Sprint 4 sequence, and L-60 (the router's model-written
   `reason` and unredacted tracebacks in the logs), the last unrecorded gap from the
   traceability matrix; it is recorded with the ADRs.*
+*2026-10-05: Sprint 4 starts on 2026-10-06, the day after Sprint 3's final date, pulled forward
+from 2026-10-26. The sequence is the deploy first (ADR-078, window 2026-10-12 to 10-14), then
+QA. The rest of the sequence is planned separately. ADR-078 to ADR-080 and L-60 and L-61 are
+now written; they record the planning decisions above.*
 
 **Planned:**
+- [ ] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
+  *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
   - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
 - [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
@@ -596,12 +642,13 @@ Factual; each is recorded elsewhere in the logs.
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
   budget alongside the ~$20-30 Pro-for-QA test (ADR-029; optional, buffer only, ADR-056). ADR-041 already decided the runs
   use the paid, spend-capped project.
-- [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045): orchestrator,
-  `agent_reporting` and `mcp_incidents` with the smallest Cloud SQL instance (stopped when
-  idle), 2026-11-02 to 11-04, timeboxed to 3 days. Cloud Build trigger with an explicit deploy
+- [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045, dates moved by ADR-078):
+  orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar (ADR-079), with the
+  smallest Cloud SQL instance (stopped when idle), 2026-10-12 to 10-14 (was 11-02 to 11-04),
+  timeboxed to 3 days. Cloud Build trigger with an explicit deploy
   step; post-deploy check that the serving revision is the one just built at 100% traffic;
   Secret Manager; IAM ID tokens between services; `alembic upgrade head` and the grants suite
-  against Cloud SQL. Stop rule: not verified serving by end of 11-04 → stop, record R-03 as
+  against Cloud SQL. Stop rule: not verified serving by end of 10-14 → stop, record R-03 as
   realised, write it up as the first incident in `06`, leave Sprint 5 unchanged. Carry order
   if Sprint 4 overflows: the fault-injection harness moves to Sprint 5 first.
   - [ ] Agent Card cached with a TTL (currently fetched on every request).
@@ -609,9 +656,11 @@ Factual; each is recorded elsewhere in the logs.
   - [ ] A readiness probe alongside `/healthz`.
   - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
-- [ ] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
+- [x] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
+  *2026-10-05: decided. Each MCP server is a sidecar of its agent (ADR-079); the UI is a Next.js static export served by the gateway (ADR-080).*
 - [ ] Draft `05-test-scenarios.md` (carried over from Sprint 3; due 2026-11-01). Includes the FR-03 known-failing scenario.
   *2026-10-05: no longer carried over; the `05` draft stays in Sprint 3.*
+  *2026-10-05: drafted and ticked under Sprint 3; nothing remains here.*
 - [ ] Re-check `docs/requirements-traceability.md` at sprint close.
 
 *Planning note, 2026-10-01 (from 4b):*
@@ -732,7 +781,7 @@ Factual; each is recorded elsewhere in the logs.
 |---|---|---|---|
 | 1 | Yes, 2026-09-25, two days inside the sprint | Iteration with pass bars but no stop rule consumed most of the sprint; it ended by redefining the criterion (ADR-040), an option available from the start | Yes: corpus design reshaped (ADR-036 to 041); paid, spend-capped project added (~$1.40); human review cut from 200 to 30; deliverable plan rebuilt from the course calendar |
 | 2 | Yes; checkpoint 2 met 2026-09-26 (deadline 10-07); engineering complete 2026-09-30 | Tests built from the author's assumptions passed while the code was wrong; real error captures and production-config runs found both bugs | Yes: all agents on Flash-Lite after comparison (ADR-049); site region stored (ADR-051); routing prompt revised twice (ADR-053, ADR-054); repeat-visit drivers and incident-count breakdowns deferred to Sprint 3 |
-| 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 (provisional until the `05` draft) | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
+| 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 (final 2026-10-05) | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
 | 4 | | | |
 | 5 | | | |
 | 6 | | | |

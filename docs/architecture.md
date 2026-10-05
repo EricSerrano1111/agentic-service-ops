@@ -232,13 +232,15 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | CI | GitHub Actions | Lint (ruff), offline unit tests, and integration against a Postgres 16 service container (live since 2026-09-25) |
 | Sentiment | Fine-tuned transformer classifier (BERT, artifact `bert_v1`), trained on `sentiment_labels` (ADR-024, ADR-066) | Predictions stored in `sentiment_predictions` and scored on arrival: at most 250 per request on demand, a backfill for existing data (ADR-067). Calibrated confidence and the τ flag drive human review (ADR-066) |
 | API layer | FastAPI | |
-| UI | Thin React/Next.js front end | See note below |
+| UI | Thin React/Next.js front end, built as a static export and served by the FastAPI gateway (ADR-080) | See note below |
 | Containers | Docker + docker-compose (local), Cloud Run (deployed) | |
 | Cloud | GCP — Cloud Run, Cloud SQL, Secret Manager, Artifact Registry, Cloud Build, Cloud Storage | Cloud Storage holds versioned model artifacts (ADR-062) |
 
-**Topology (locked):** Monorepo, separate service processes per agent, orchestrated locally by docker-compose and deployed as distinct Cloud Run services. A2A implies separate processes with their own endpoints and Agent Cards — honor that. Switching topology mid-project is painful; decide once.
+**Topology (locked):** Monorepo, separate service processes per agent, orchestrated locally by docker-compose and deployed as Cloud Run services (ADR-079 below). A2A implies separate processes with their own endpoints and Agent Cards — honor that. Switching topology mid-project is painful; decide once.
 
-**UI note:** Streamlit is faster to build but reads as a prototype. A thin React/Next.js front end over the FastAPI layer better supports the production-grade claim and the Solutions Architect narrative. Keep it deliberately minimal — intent input, response display, QA status indicator, escalation flag. The UI is a window into the architecture, not the project.
+**Deployed topology (ADR-079, ADR-080).** Six Cloud Run services: the gateway (FastAPI and the static UI; the only public ingress), the orchestrator, and the reporting, sentiment, forecast and QA services. All but the gateway are internal, with IAM. Each MCP server runs as a sidecar container of its agent in the same service and talks to it over localhost, so the reporting service is `agent_reporting` plus `mcp_incidents`, and likewise for sentiment (`mcp_feedback`) and forecast (`mcp_volume`). Database credentials are mounted only into the MCP container. The agent declares a startup dependency on its sidecar's health. docker-compose keeps separate containers; the MCP URL is configuration (`localhost` on Cloud Run, the service name in compose). The first deploy (2026-10-12 to 10-14, ADR-078) is two services: the orchestrator and the reporting service. The agent-and-sidecar shared service account is L-61.
+
+**UI note:** Streamlit is faster to build but reads as a prototype. A thin React/Next.js front end over the FastAPI layer better supports the production-grade claim and the Solutions Architect narrative. Keep it deliberately minimal — intent input, response display, QA status indicator, escalation flag. The UI is a window into the architecture, not the project. It is a client-only single screen built with `output: 'export'` and served by the gateway on the same origin as the API (ADR-080): no server rendering, API routes or middleware, and no Node runtime in production. A static export needs nothing beyond React; Next.js is kept for portfolio value, not because this scale requires it.
 
 **GCP vs Azure — decided: GCP.** Azure has a larger enterprise footprint and its agent tooling is well-aligned to Microsoft-stack shops, so the question was fair. But: the existing account and credits are worth real money against a $100 budget, prior Cloud Run experience is worth real weeks against a 12-week timeline, and the Microsoft-aligned agent framework is .NET-oriented, which conflicts with the locked Python choice anyway. The concern about "industry standard" is better neutralized architecturally than by cloud selection — containers, standard protocols (A2A, MCP) and Postgres, with the deploy scripted in Cloud Build and versioned in the repo (ADR-061; Terraform is a buffer-only Sprint 6 stretch goal), then the honest claim is *"deployed on GCP, portable by design,"* which is a stronger Solutions Architect answer than having picked whichever cloud the interviewer happens to use. Revisit only if targeting a specifically Microsoft-stack employer.
 
@@ -251,14 +253,14 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 "Production-grade" is the phrase most likely to be hand-waved at submission. It is pinned here to a concrete artifact checklist. Deliver these, or explicitly scope one out with a documented reason — a defensible "deferred because X" reads better than a vague claim.
 
 - [ ] Containerized services, reproducible builds *(in progress: the three skeleton services have Dockerfiles and run in docker-compose; every dependency is pinned by `uv.lock`, and CI and the images install from it, ADR-047)*
-- [ ] Config and secrets management — no hardcoded credentials
+- [ ] Config and secrets management — no hardcoded credentials *(on Cloud Run, database credentials are mounted only into the MCP container, ADR-079)*
 - [ ] Structured logging with trace IDs correlated across agent hops *(in progress: JSON lines with one trace id across orchestrator → A2A → agent → MCP, `packages/common`; asserted by the e2e test)*
-- [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on the skeleton services, used by compose; no readiness probe yet)*
+- [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on the skeleton services, used by compose; no readiness probe yet; on Cloud Run each agent also waits on its MCP sidecar's health, ADR-079)*
 - [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-077)
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)
-- [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD first for the reporting slice in Sprint 4 (ADR-045), completed in Sprints 5–6)*
+- [ ] CI pipeline *(CI skeleton live 2026-09-25: lint, unit, integration; CD first for the reporting slice in Sprint 4 (ADR-045, dates ADR-078), completed in Sprints 5–6)*
 - [x] Least-privilege database roles per agent *(Sprint 1: five roles, grants asserted by the integration suite in CI — ADR-023, ADR-027, ADR-035. 2026-10-01: seven roles, four runtime roles (`app_reporting`, `app_sentiment`, `app_forecast`, `app_qa`) and three offline roles (`app_generator`, `app_eval`, `app_train`) — ADR-063)*
 - [ ] API cost guardrails and per-run caps
 - [ ] README with architecture diagram and local setup that actually works from clean
@@ -313,8 +315,8 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 | Item | Approach | Est. |
 |---|---|---|
-| Postgres | **Local Docker through Sprint 3.** Cloud SQL from Sprint 4 for the reporting slice, smallest instance, stopped when idle; all services from Sprint 5 (ADR-045) | ~$10–15 total |
-| Cloud Run (7 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic. Service count and UI hosting decided at Sprint 4 planning | ~$0–5 |
+| Postgres | **Local Docker through Sprint 3.** Cloud SQL from Sprint 4 for the reporting slice (2026-10-12 to 10-14, ADR-078), smallest shared-core instance, stopped when idle; all services from Sprint 5 (ADR-045) | ~$10–15 total |
+| Cloud Run (6 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic. Six services with each MCP server a sidecar of its agent (ADR-079); the UI is a static export served by the gateway, so no Node service (ADR-080) | ~$0–5 |
 | Artifact Registry / Cloud Build / Secret Manager | Free tier | ~$0–3 |
 | Runtime LLM | Gemini API free tier; separate spend-capped paid project (ADR-041) for corpus generation (done, ~$1.40), the Sprint 5 Pro-for-QA test and paid eval runs | ~$1.40 spent; Pro test ~$20–30 incl. thinking tokens, drawn from buffer |
 | Buffer | Overruns, a stronger QA model, demo-day headroom | ~$40 |
@@ -380,13 +382,13 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 **Increment:** QA agent operational with all three verification strategies; measurable catch rate.
 - QA agent, bounded retry loop, escalation path
 - Fault injection harness for QA catch-rate measurement
-- Minimal Cloud Run deploy of the reporting slice (orchestrator, `agent_reporting`, `mcp_incidents`) with Cloud SQL, 2026-11-02 to 11-04, timeboxed to 3 days; revision-serving check; stop rule per ADR-045
+- Minimal Cloud Run deploy of the reporting slice (orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar) with Cloud SQL, pulled forward to 2026-10-12 to 10-14 and timeboxed to 3 days; revision-serving check; stop rule at the end of 10-14 per ADR-045 and ADR-078. The deploy comes first in Sprint 4, then the QA build
 - **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
 
 ### Sprint 5 (weeks 9–10, 2026-11-09 to 11-22) — Interface & evaluation
 **Increment:** Deployed system with a working UI; routing accuracy reported with failure analysis.
 - Routing eval harness + failure-case analysis
-- FastAPI gateway + thin React UI
+- FastAPI gateway + thin React UI (a static export served by the gateway, ADR-080)
 - Extend deployment to all services; complete Cloud SQL migration; **verify revision promotion on every deploy**
 - **Academic:** weekly status reports (last one covers the week ending 11-22)
 

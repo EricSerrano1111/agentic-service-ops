@@ -56,7 +56,7 @@
 | 042 | Generator: explicit deterministic IDs, per-state timezones, committed name lists, loads as app_generator | Accepted |
 | 043 | Generator world rules: SLA-conditioned incidents, snapshot semantics, age-dependent statuses, templated incident notes | Accepted |
 | 044 | No final paper: limitations and results go in the evaluation report | Accepted |
-| 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part |
+| 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part; superseded in part by ADR-078 and ADR-079 |
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
 | 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
@@ -89,6 +89,9 @@
 | 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed; corrected gate (ADR-076) also failed. FR-03 open until Sprint 5 (L-58). |
 | 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
 | 077 | Minimal circuit breaking for NFR-4, built in Sprint 4 | Accepted |
+| 078 | The reporting-slice deploy is pulled forward to 2026-10-12 (supersedes ADR-045's dates and stop date only) | Accepted |
+| 079 | Each MCP server runs as a Cloud Run sidecar of its agent; the first deploy is two services (supersedes ADR-045 in part) | Accepted |
+| 080 | The UI is a Next.js static export served by the FastAPI gateway (builds on ADR-009) | Accepted |
 
 ---
 
@@ -2353,3 +2356,94 @@ training grants.
 - Sprint 4 plans the breaker alongside the deadline; tests cover opening after N failures, failing fast while open, the single trial call, and one dependency's breaker not affecting another.
 - NFR-4's evidence in the traceability matrix points here until the breaker exists.
 - The degraded result it fails fast to is FR-13, also Sprint 4.
+
+### ADR-078 — The reporting-slice deploy is pulled forward to 2026-10-12
+*Date: 2026-10-05. Supersedes ADR-045's dates and stop date only. Its scope, checks, stop-rule consequences and the rest of its decision stand.*
+
+**Decision:**
+- The minimal Cloud Run deploy of the reporting slice (ADR-045) runs from 2026-10-12 to 2026-10-14, timeboxed to 3 days. ADR-045 had it at 2026-11-02 to 11-04.
+- The stop rule falls at the end of 2026-10-14. If the revision is not verified serving by then, stop. The consequences are ADR-045's, unchanged: record R-03 as realised, write it up as the first incident in `06-production-support.md`, and leave the Sprint 5 plan unchanged.
+- Provisioning: the smallest shared-core Cloud SQL instance, with the Enterprise edition selected explicitly (shared-core is not offered on Enterprise Plus), and automatic storage increase off. Cloud SQL major version 16 stays, to match local Postgres (R-14).
+- The deployed services are the two in ADR-079, not the three in ADR-045.
+
+**Context:**
+- The build is about three weeks ahead of the calendar: Sprint 3 closed on 2026-10-04, 8 days before its formal start, and Sprint 4 starts on 2026-10-06.
+- R-03 (build/deploy decoupling) and R-14 (everything verified only on local Postgres with a true superuser) are the largest known risks. Finding them early is worth more than the extra storage cost.
+- The `06` incident write-up benefits too: it can describe a real deployed system, or a real stop, earlier.
+
+**Cost:**
+- Storage bills while the instance is stopped. Automatic storage increase is off, so storage cannot grow unattended.
+- The added cost over the extra weeks is roughly $2 if the instance is stopped when idle and about $7 if it is left running. These are estimates from the Sprint 4 planning note. Confirm the rate in the console estimate for the chosen region at provisioning, and record it.
+
+**Alternatives considered:**
+- *Keep 2026-11-02 to 11-04* (rejected). It leaves R-03 and R-14 unexamined for three more weeks while the QA agent, the circuit breakers and the deadline are built on top of an unverified deploy path.
+- *Deploy after the QA agent* (rejected). The QA agent would then be the first thing to meet Cloud SQL's role model.
+
+**Consequences:**
+- The window runs Monday to Wednesday (2026-10-12 to 10-14).
+- Dated entries in the risk register and the sprint log that quote 11-02 to 11-04 stay as written. R-03 and R-14 each gain a dated update.
+- Submitted-document divergence, recorded in the sprint log's post-submission list: `04` quotes the old stop date in TA-16 (2026-11-04). `03` also quotes the old window (critical path, the task-16 schedule row and the stop rules).
+- If Sprint 4 overflows, the fault-injection harness still carries to Sprint 5 first (ADR-045).
+
+### ADR-079 — Each MCP server runs as a Cloud Run sidecar of its agent
+*Date: 2026-10-05. Supersedes ADR-045 in part: the deploy is two services, the orchestrator and the reporting agent with `mcp_incidents` as a sidecar, not three. ADR-045's other decisions stand.*
+
+**Decision:**
+- An agent and its MCP server deploy as one Cloud Run service with two containers: the agent as the ingress container and the MCP server as a sidecar. They talk over localhost.
+- Target topology, six services:
+  - gateway (FastAPI and the static UI, ADR-080): the only public ingress;
+  - orchestrator;
+  - reporting (`agent_reporting` with `mcp_incidents`);
+  - sentiment (`agent_sentiment` with `mcp_feedback`);
+  - forecast (`agent_forecast` with `mcp_volume`);
+  - QA.
+
+  All but the gateway are internal, with IAM.
+- The first deploy (ADR-078) needs only the orchestrator and the reporting service.
+- Local parity: docker-compose keeps separate containers. The MCP URL is configuration: `localhost` on Cloud Run, the service name in compose.
+- Startup: the agent declares a startup dependency on its sidecar's health, so it does not take traffic before the MCP server is ready.
+- Database credentials are mounted only into the MCP container. The agent container holds none, so database least privilege holds.
+
+**Rationale:**
+- One fewer cold-start hop per domain against the 120-second ceiling (ADR-034).
+- No service-to-service authentication between an agent and its MCP server, since they talk over localhost.
+- MCP still crosses an HTTP boundary between separately built containers, so the protocol boundary the design demonstrates is kept.
+
+**Trade-off:**
+- An agent and its MCP server share one service account, including the Cloud SQL network permission. Recorded as L-61.
+- They scale together, as one service.
+
+**Alternatives considered:**
+- *Separate Cloud Run services for each MCP server* (rejected). It adds a cold start and an IAM hop per domain, with no need for independent scaling at this scale.
+- *In-process MCP* (rejected). It removes the protocol boundary the design demonstrates.
+
+**Required versus portfolio value:** sidecars are the right size for this system. MCP over HTTP at all, rather than plain function calls, remains a deliberate portfolio choice, as recorded in earlier ADRs.
+
+**Consequences:**
+- The Cloud Run service count in `architecture.md` becomes 6 (it was 7), with this decision recorded.
+- IAM ID tokens apply between services. An agent's call to its own MCP sidecar is localhost and carries none; L-61 records the shared identity.
+- The submitted `04` says each component deploys as its own Cloud Run service. That is a post-submission divergence, recorded in the sprint log.
+
+### ADR-080 — The UI is a Next.js static export served by the FastAPI gateway
+*Date: 2026-10-05. Builds on ADR-009 (React/Next.js over Streamlit). Supersedes nothing.*
+
+**Decision:**
+- The UI is built with `output: 'export'`. The gateway serves the built files on the same origin as the API. There is no Node runtime in production.
+
+**Rationale:**
+- One fewer service.
+- No CORS.
+- Sign-in, to be decided in Sprint 5, sits in one place in front of both the UI and the API.
+- Next.js's server-side security exposure does not apply to a static export. The patch pin stays anyway.
+
+**Alternatives considered:**
+- *A Next.js server on Cloud Run* (rejected). An extra service, a cold start and a Node runtime to patch.
+- *Cloud Storage hosting* (rejected). HTTPS on a custom domain needs a load balancer that costs more than the database, and the UI would sit on a separate origin from the API.
+- *Vite with React* (rejected by owner preference).
+
+**Required versus portfolio value:** a static export needs nothing beyond React. Next.js is kept for the owner's experience and portfolio value, not because this scale requires it.
+
+**Consequences:**
+- No server rendering, API routes or middleware. The UI must remain a client-only single screen.
+- The UI and the API are one deploy unit, since the gateway serves the static files.
+- The submitted `04` names Node.js LTS for the interface. Node remains a build tool only. Recorded as a post-submission divergence in the sprint log.

@@ -706,3 +706,19 @@ build are appended here as they are found (CLAUDE.md).
   localhost. IAM ID tokens arrive with the Sprint 4 deploy of the reporting slice (ADR-045), and
   the rest in Sprint 5 with the gateway, which replaces `/ask` as the entry point.
 - **Recorded in:** `docs/security-model.md`, section 2.
+
+### L-60 — The router's model-written `reason` and unredacted tracebacks appear in the logs (2026-10-05)
+- **What:** The orchestrator logs the router's `reason` on every routing decision (up to 300 characters, written by the model), and services log unredacted exception tracebacks. Both can carry text paraphrased or quoted from what the user typed, such as a technician's name or a phrase from the question. The pre-Sprint-4 hardening removed typed technician names and rejected argument values from the logs, but not these two.
+- **Why accepted:** For now. The data is synthetic and the logs are local. The `reason` is also what makes a routing result traceable to a decision. Redaction is revisited with the Sprint 6 hardening.
+- **Recorded in:** `docs/security-model.md`, section 5; `docs/requirements-traceability.md` (NFR-2). This clears the last unrecorded traceability gap.
+
+### L-61 — Each agent and its MCP sidecar share one service account (2026-10-05)
+- **What:** On Cloud Run an agent and its MCP server run as containers of one service (ADR-079), so they share one service account, including its Cloud SQL network permission. The agent container holds no database credentials: they are mounted only into the MCP container, and the database role still limits what that container can read.
+- **Why accepted:** Separate identities would need separate services, with an extra cold start and an IAM hop per domain (ADR-079). The control that matters here, the database role, is unchanged.
+- **Recorded in:** ADR-079.
+
+### L-62 — Reporting has no single-region or single-account filter (2026-10-05)
+- **What:** The reporting tools filter only by technician. A question scoped to one region or account ("SLA compliance in the west region") either gets a full breakdown across all regions or accounts, or, if the parser reads it as one overall figure, an unscoped figure presented as scoped. QA's recompute would not catch the second case, because it would recompute the same unscoped figure. No eval covers a single-region reporting question.
+- **Affects:** 05 TS-01-A, TS-02-C and TS-05-B.
+- **Why accepted:** For now. Region and account filters, a `parse_v3` update and a parse eval re-run are a Sprint 4 item, built before QA.
+- **Recorded in:** the Sprint 4 planned items in `docs/sprint-log.md`.
