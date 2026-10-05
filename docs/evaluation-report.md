@@ -716,3 +716,9 @@ build are appended here as they are found (CLAUDE.md).
 - **What:** On Cloud Run an agent and its MCP server run as containers of one service (ADR-079), so they share one service account, including its Cloud SQL network permission. The agent container holds no database credentials: they are mounted only into the MCP container, and the database role still limits what that container can read.
 - **Why accepted:** Separate identities would need separate services, with an extra cold start and an IAM hop per domain (ADR-079). The control that matters here, the database role, is unchanged.
 - **Recorded in:** ADR-079.
+
+### L-62 — Reporting has no single-region or single-account filter (2026-10-05)
+- **What:** The reporting tools filter only by technician. A question scoped to one region or account ("SLA compliance in the west region") either gets a full breakdown across all regions or accounts, or, if the parser reads it as one overall figure, an unscoped figure presented as scoped. QA's recompute would not catch the second case, because it would recompute the same unscoped figure. No eval covers a single-region reporting question.
+- **Affects:** 05 TS-01-A, TS-02-C and TS-05-B.
+- **Why accepted:** For now. Region and account filters, a `parse_v3` update and a parse eval re-run are a Sprint 4 item, built before QA.
+- **Recorded in:** the Sprint 4 planned items in `docs/sprint-log.md`.

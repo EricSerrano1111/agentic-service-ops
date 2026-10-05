@@ -70,7 +70,7 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Builds are now reproducible: CI and the service images install exactly what `uv.lock` pins (ADR-047). The trigger is still the Sprint 4 slice deploy (ADR-045). Status stays Open.
 
-**Update 2026-10-05 (ADR-078):** The slice deploy is pulled forward to 2026-10-08 to 10-10, with the stop rule at the end of 10-10. The 2026-11-02 to 11-04 dates above are superseded; the post-deploy check and the consequence of the stop rule are unchanged. Status stays Open.
+**Update 2026-10-05 (ADR-078):** The slice deploy is pulled forward to 2026-10-12 to 10-14, with the stop rule at the end of 10-14. The 2026-11-02 to 11-04 dates above are superseded; the post-deploy check and the consequence of the stop rule are unchanged. Status stays Open.
 
 ### R-04 — Sentiment task has weak natural verifiability
 **Description:** Unlike reporting (deterministic) or forecasting (standard backtest metrics), sentiment has no natural ground truth. A QA check that just re-runs the same model is circular and proves nothing.
@@ -208,7 +208,7 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** No change. The trigger is the Sprint 4 deploy.
 
-**Update 2026-10-05 (ADR-078):** The deploy that triggers the review moves to 2026-10-08 to 10-10 (was 2026-11-02 to 11-04). Status stays Open.
+**Update 2026-10-05 (ADR-078):** The deploy that triggers the review moves to 2026-10-12 to 10-14 (was 2026-11-02 to 11-04). Status stays Open.
 
 ### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
 *Added 2026-09-26.*

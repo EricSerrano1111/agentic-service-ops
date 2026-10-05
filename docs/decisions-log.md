@@ -89,7 +89,7 @@
 | 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed; corrected gate (ADR-076) also failed. FR-03 open until Sprint 5 (L-58). |
 | 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
 | 077 | Minimal circuit breaking for NFR-4, built in Sprint 4 | Accepted |
-| 078 | The reporting-slice deploy is pulled forward to 2026-10-08 (supersedes ADR-045's dates and stop date only) | Accepted |
+| 078 | The reporting-slice deploy is pulled forward to 2026-10-12 (supersedes ADR-045's dates and stop date only) | Accepted |
 | 079 | Each MCP server runs as a Cloud Run sidecar of its agent; the first deploy is two services (supersedes ADR-045 in part) | Accepted |
 | 080 | The UI is a Next.js static export served by the FastAPI gateway (builds on ADR-009) | Accepted |
 
@@ -2357,12 +2357,12 @@ training grants.
 - NFR-4's evidence in the traceability matrix points here until the breaker exists.
 - The degraded result it fails fast to is FR-13, also Sprint 4.
 
-### ADR-078 — The reporting-slice deploy is pulled forward to 2026-10-08
+### ADR-078 — The reporting-slice deploy is pulled forward to 2026-10-12
 *Date: 2026-10-05. Supersedes ADR-045's dates and stop date only. Its scope, checks, stop-rule consequences and the rest of its decision stand.*
 
 **Decision:**
-- The minimal Cloud Run deploy of the reporting slice (ADR-045) runs from 2026-10-08 to 2026-10-10, timeboxed to 3 days. ADR-045 had it at 2026-11-02 to 11-04.
-- The stop rule falls at the end of 2026-10-10. If the revision is not verified serving by then, stop. The consequences are ADR-045's, unchanged: record R-03 as realised, write it up as the first incident in `06-production-support.md`, and leave the Sprint 5 plan unchanged.
+- The minimal Cloud Run deploy of the reporting slice (ADR-045) runs from 2026-10-12 to 2026-10-14, timeboxed to 3 days. ADR-045 had it at 2026-11-02 to 11-04.
+- The stop rule falls at the end of 2026-10-14. If the revision is not verified serving by then, stop. The consequences are ADR-045's, unchanged: record R-03 as realised, write it up as the first incident in `06-production-support.md`, and leave the Sprint 5 plan unchanged.
 - Provisioning: the smallest shared-core Cloud SQL instance, with the Enterprise edition selected explicitly (shared-core is not offered on Enterprise Plus), and automatic storage increase off. Cloud SQL major version 16 stays, to match local Postgres (R-14).
 - The deployed services are the two in ADR-079, not the three in ADR-045.
 
@@ -2380,7 +2380,7 @@ training grants.
 - *Deploy after the QA agent* (rejected). The QA agent would then be the first thing to meet Cloud SQL's role model.
 
 **Consequences:**
-- The window runs Thursday to Saturday (2026-10-08 to 10-10).
+- The window runs Monday to Wednesday (2026-10-12 to 10-14).
 - Dated entries in the risk register and the sprint log that quote 11-02 to 11-04 stay as written. R-03 and R-14 each gain a dated update.
 - Submitted-document divergence, recorded in the sprint log's post-submission list: `04` quotes the old stop date in TA-16 (2026-11-04). `03` also quotes the old window (critical path, the task-16 schedule row and the stop rules).
 - If Sprint 4 overflows, the fault-injection harness still carries to Sprint 5 first (ADR-045).

@@ -238,7 +238,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 
 **Topology (locked):** Monorepo, separate service processes per agent, orchestrated locally by docker-compose and deployed as Cloud Run services (ADR-079 below). A2A implies separate processes with their own endpoints and Agent Cards — honor that. Switching topology mid-project is painful; decide once.
 
-**Deployed topology (ADR-079, ADR-080).** Six Cloud Run services: the gateway (FastAPI and the static UI; the only public ingress), the orchestrator, and the reporting, sentiment, forecast and QA services. All but the gateway are internal, with IAM. Each MCP server runs as a sidecar container of its agent in the same service and talks to it over localhost, so the reporting service is `agent_reporting` plus `mcp_incidents`, and likewise for sentiment (`mcp_feedback`) and forecast (`mcp_volume`). Database credentials are mounted only into the MCP container. The agent declares a startup dependency on its sidecar's health. docker-compose keeps separate containers; the MCP URL is configuration (`localhost` on Cloud Run, the service name in compose). The first deploy (2026-10-08 to 10-10, ADR-078) is two services: the orchestrator and the reporting service. The agent-and-sidecar shared service account is L-61.
+**Deployed topology (ADR-079, ADR-080).** Six Cloud Run services: the gateway (FastAPI and the static UI; the only public ingress), the orchestrator, and the reporting, sentiment, forecast and QA services. All but the gateway are internal, with IAM. Each MCP server runs as a sidecar container of its agent in the same service and talks to it over localhost, so the reporting service is `agent_reporting` plus `mcp_incidents`, and likewise for sentiment (`mcp_feedback`) and forecast (`mcp_volume`). Database credentials are mounted only into the MCP container. The agent declares a startup dependency on its sidecar's health. docker-compose keeps separate containers; the MCP URL is configuration (`localhost` on Cloud Run, the service name in compose). The first deploy (2026-10-12 to 10-14, ADR-078) is two services: the orchestrator and the reporting service. The agent-and-sidecar shared service account is L-61.
 
 **UI note:** Streamlit is faster to build but reads as a prototype. A thin React/Next.js front end over the FastAPI layer better supports the production-grade claim and the Solutions Architect narrative. Keep it deliberately minimal — intent input, response display, QA status indicator, escalation flag. The UI is a window into the architecture, not the project. It is a client-only single screen built with `output: 'export'` and served by the gateway on the same origin as the API (ADR-080): no server rendering, API routes or middleware, and no Node runtime in production. A static export needs nothing beyond React; Next.js is kept for portfolio value, not because this scale requires it.
 
@@ -315,7 +315,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 | Item | Approach | Est. |
 |---|---|---|
-| Postgres | **Local Docker through Sprint 3.** Cloud SQL from Sprint 4 for the reporting slice (2026-10-08 to 10-10, ADR-078), smallest shared-core instance, stopped when idle; all services from Sprint 5 (ADR-045) | ~$10–15 total |
+| Postgres | **Local Docker through Sprint 3.** Cloud SQL from Sprint 4 for the reporting slice (2026-10-12 to 10-14, ADR-078), smallest shared-core instance, stopped when idle; all services from Sprint 5 (ADR-045) | ~$10–15 total |
 | Cloud Run (6 services) | Scale-to-zero, min-instances=0; free tier absorbs demo traffic. Six services with each MCP server a sidecar of its agent (ADR-079); the UI is a static export served by the gateway, so no Node service (ADR-080) | ~$0–5 |
 | Artifact Registry / Cloud Build / Secret Manager | Free tier | ~$0–3 |
 | Runtime LLM | Gemini API free tier; separate spend-capped paid project (ADR-041) for corpus generation (done, ~$1.40), the Sprint 5 Pro-for-QA test and paid eval runs | ~$1.40 spent; Pro test ~$20–30 incl. thinking tokens, drawn from buffer |
@@ -382,7 +382,7 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 **Increment:** QA agent operational with all three verification strategies; measurable catch rate.
 - QA agent, bounded retry loop, escalation path
 - Fault injection harness for QA catch-rate measurement
-- Minimal Cloud Run deploy of the reporting slice (orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar) with Cloud SQL, pulled forward to 2026-10-08 to 10-10 and timeboxed to 3 days; revision-serving check; stop rule at the end of 10-10 per ADR-045 and ADR-078. The deploy comes first in Sprint 4, then the QA build
+- Minimal Cloud Run deploy of the reporting slice (orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar) with Cloud SQL, pulled forward to 2026-10-12 to 10-14 and timeboxed to 3 days; revision-serving check; stop rule at the end of 10-14 per ADR-045 and ADR-078. The deploy comes first in Sprint 4, then the QA build
 - **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
 
 ### Sprint 5 (weeks 9–10, 2026-11-09 to 11-22) — Interface & evaluation

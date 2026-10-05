@@ -565,12 +565,14 @@ Retro final.
   *2026-10-05, further post-submission divergences from ADR-078 to ADR-080 (carry to the
   evaluation report):*
   - *`04`, TA-16 quotes the stop date 2026-11-04. ADR-078 moves the deploy window to
-    2026-10-08 to 10-10, with the stop rule at the end of 10-10.*
+    2026-10-12 to 10-14, with the stop rule at the end of 10-14.*
   - *`04`, "each component deploys as its own Cloud Run service". ADR-079 runs each MCP server
     as a sidecar of its agent, so the deploy is two services at first and six in the target
     topology, not one per component.*
   - *`04`, the interface "on Node.js LTS". ADR-080 serves a static export from the gateway, so
     no Node.js runs in production (Node is a build tool only).*
+  - *`04`, Table 3 says the orchestrator routes on Agent Card skills. In fact `route_v3`
+    hard-codes the domain descriptions, and the card supplies only the agent's URL.*
   - *`03`, the critical path, the task-16 schedule row and the stop rules quote the deploy
     window 11-02 to 11-04. ADR-078 moves it. `03` is Eric's to edit; nothing was changed.*
 - `05-test-scenarios.md` (due 2026-11-01) — drafted 2026-10-05, submission pending (owner).
@@ -624,11 +626,13 @@ Retro final.
   `reason` and unredacted tracebacks in the logs), the last unrecorded gap from the
   traceability matrix; it is recorded with the ADRs.*
 *2026-10-05: Sprint 4 starts on 2026-10-06, the day after Sprint 3's final date, pulled forward
-from 2026-10-26. The sequence is the deploy first (ADR-078, window 2026-10-08 to 10-10), then
+from 2026-10-26. The sequence is the deploy first (ADR-078, window 2026-10-12 to 10-14), then
 QA. The rest of the sequence is planned separately. ADR-078 to ADR-080 and L-60 and L-61 are
 now written; they record the planning decisions above.*
 
 **Planned:**
+- [ ] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
+  *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
   - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
 - [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
@@ -640,11 +644,11 @@ now written; they record the planning decisions above.*
   use the paid, spend-capped project.
 - [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045, dates moved by ADR-078):
   orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar (ADR-079), with the
-  smallest Cloud SQL instance (stopped when idle), 2026-10-08 to 10-10 (was 11-02 to 11-04),
+  smallest Cloud SQL instance (stopped when idle), 2026-10-12 to 10-14 (was 11-02 to 11-04),
   timeboxed to 3 days. Cloud Build trigger with an explicit deploy
   step; post-deploy check that the serving revision is the one just built at 100% traffic;
   Secret Manager; IAM ID tokens between services; `alembic upgrade head` and the grants suite
-  against Cloud SQL. Stop rule: not verified serving by end of 10-10 → stop, record R-03 as
+  against Cloud SQL. Stop rule: not verified serving by end of 10-14 → stop, record R-03 as
   realised, write it up as the first incident in `06`, leave Sprint 5 unchanged. Carry order
   if Sprint 4 overflows: the fault-injection harness moves to Sprint 5 first.
   - [ ] Agent Card cached with a TTL (currently fetched on every request).
