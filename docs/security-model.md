@@ -1,7 +1,7 @@
 # Security Model — Agentic Service Operations Intelligence Platform
 
 *Seeded 2026-09-30 from `data-dictionary.md` §7 (the access matrix) and `architecture.md` §5.
-Completed while drafting `04` in Sprint 3. Where this file and §7 disagree, §7 and
+Completed 2026-10-04, at the Sprint 3 close. Where this file and §7 disagree, §7 and
 `packages/db_models/src/db_models/access_matrix.py` are the authority.*
 
 ## Database access: what the grants guarantee
@@ -114,19 +114,160 @@ MCP servers receive database credentials in docker-compose, each its own role's:
 runtime role with a write (guarantee 7), and `mcp_volume` holds `app_forecast`'s. CI uses ephemeral generator credentials that never
 leave the workflow.
 
-## Still to write (Sprint 3, with `04`)
+The controls that implement these defences, and what is still planned, are set out in the
+sections below, each marked built or planned.
 
-- MCP and A2A controls: tool scoping per server, Agent Card exposure, authentication
-  between services (IAM ID tokens in the Sprint 4 deploy, ADR-045).
-- Prompt-injection handling on the paths that ingest free text (feedback comments,
-  questions).
-- Secrets management in deployment (Secret Manager) and how each service's credentials are
-  scoped.
-- Logging: what is logged with each tool call and trace id, and what is redacted.
-- The QA prompt as a prompt-injection surface: its one LLM call (ADR-056) ingests
-  specialist output, which may carry text from customer comments.
-- ~~The evaluation/training read role (ADR-055, ADR-062): `sentiment_labels` and
-  `generation_parameters` move off `app_qa` before the QA agent is built in Sprint 4, so
-  the runtime QA role never holds gold labels. Guarantee 4 changes when that lands.~~
-  *Done 2026-10-01 (ADR-063): the offline `app_eval` and `app_train` roles hold them now;
-  guarantee 4 changed and guarantees 5 and 6 were added.*
+## Controls: as built and planned
+
+Every control below is marked **Built** (the code or a test shows it today, and the evidence
+is named) or **Planned** (not built, with the sprint). A built control with no test says so.
+Checked against the code on 2026-10-04; "by search" means a repository search, not a test.
+Test names are in `services/*/tests/` and `tests/`. The guarantees above and the threat model
+are unchanged; the rows cross-reference them.
+
+### 1. MCP controls
+
+| Control | Status | Evidence |
+|---|---|---|
+| Narrow, purpose-built tools; no raw-SQL or generic query tool (ADR-023). | Built | `test_only_the_narrow_tools_are_exposed` (`mcp_incidents`, six tools), `test_only_the_two_read_tools_are_exposed` (`mcp_feedback`, `mcp_volume`). By search, no raw `text()` SQL construct exists in `services/` or `packages/`. |
+| One MCP server per specialist; each holds one database role's credentials and nothing else (guarantees 1 to 3). | Built | `tests/unit/test_compose_isolation.py`: `test_mcp_incidents_holds_only_app_reporting_credentials`, `test_mcp_feedback_holds_only_app_sentiment_credentials`, `test_mcp_volume_holds_only_app_forecast_credentials_and_no_model_key`, `test_agents_hold_no_database_variables`. Grants: `tests/integration/test_access_matrix_grants.py`. |
+| No tool writes; the one write (predictions) happens inside `mcp_feedback`, not through a tool (guarantee 7). | Built | The same tool-list tests; `store.py` `insert` is reached only from `ensure_scored`. |
+| Typed input validation before any query: enumerated values (`group_by`, `by`, `region`, `bucket`, `slice`, `label`), strict ISO dates inside the dataset window, strict integers. | Built | `test_metric_tool_rejects_an_unknown_breakdown`, `test_invalid_ranges_are_rejected`, `test_invalid_scopes_are_rejected` (which includes a date string carrying `'; DROP TABLE x;--`, rejected as not an ISO date), `test_unknown_slice_is_rejected`, `test_technician_id_must_be_a_positive_integer`. |
+| Result caps. Tools return aggregates (counts and rates); the only row-like results are comment examples and technician matches, each capped at 5. | Built | Each row below. |
+| Grouped results at most 25 groups, worst or highest first; the full count is reported. | Built | `test_truncation_keeps_the_worst_groups`, `test_more_than_25_groups_are_cut_after_ranking`; the shared result models reject more than 25 groups. |
+| Comment examples at most 5 per call (the sentiment agent asks for 3), and never sent to a model (guarantees 8, 9). | Built | `test_limit_outside_1_to_5_is_rejected`, `test_examples_reject_a_limit_above_5`, `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`. |
+| On-demand scoring at most 250 comments per request, newest first, with coverage reported. | Built | `test_above_the_cap_the_newest_are_scored_and_coverage_is_partial`, `test_the_cap_and_batch_follow_the_real_container_measurement`. |
+| Technician lookup returns at most 5 names plus the total, matches by whole word in code, and rejects wildcards and pattern characters (guarantee 11). | Built | `test_find_technician_rejects_wildcards_and_patterns`, `test_patterns_and_non_name_characters_are_rejected`, `test_at_most_five_matches_are_returned_with_the_total`; the name is never logged. |
+| Date span at most 731 days (feedback); forecast horizon 1 to 26 weeks and history 1 to 52 weeks. | Built | `test_span_of_exactly_731_days_is_allowed` and the "more than 731 days" case in `test_invalid_scopes_are_rejected`, `test_horizon_outside_1_to_26_is_rejected`, `test_history_weeks_outside_1_to_52_is_rejected`. |
+| Database statement timeout of 10 seconds on every server that connects (`MCP_DB_STATEMENT_TIMEOUT_MS`). | Built (configuration; no test of the timeout firing) | `config.py` and the engine options in each server. |
+| Forecast numbers only for slice-bands the model manifest marks served (guarantee 10). | Built | `test_no_numbers_ever_for_an_unserved_slice_band`, `test_real_artifact_serves_numbers_only_where_the_manifest_says`; the shared result contract rejects an unserved week carrying numbers (`test_numbers_for_an_unserved_week_are_rejected`, orchestrator). |
+| Model artifacts are hash-checked at start-up; a changed or missing file stops the server. | Built | `test_refuses_to_start_on_an_altered_file` (`mcp_feedback`, `mcp_volume`), `test_refuses_to_start_on_a_missing_file` (`mcp_feedback`), `test_refuses_to_start_on_a_missing_file_or_no_serving_table` (`mcp_volume`). |
+| Internal errors return a generic message; SQL detail stays in the log. | Built for two servers | `test_query_failure_does_not_leak_detail` (`mcp_incidents`), `test_store_failure_does_not_leak_detail` (`mcp_feedback`). `mcp_volume` follows the same pattern in code (`"volume query failed"`) with no test. |
+| Host-header (DNS-rebinding) protection on the MCP endpoints, allowing only localhost and the service's own name. | Built (configuration; no test of a rejected host) | `server.py` `TransportSecuritySettings` and `config.py` `allowed_hosts` in each MCP server. |
+
+**Where user text meets SQL.** A user's words never become SQL. They reach the models only as
+the question inside a prompt; what comes back is parsed into a typed request (section 3), and
+the agent's code, not the model, chooses the tool. From there each value is one of the
+following.
+
+| Value (from the parsed request) | Validated as | Reaches the database as |
+|---|---|---|
+| `metric` | enumerated type (`Metric`) | picks which fixed tool function runs (`TOOLS` in the agent's executor); never a query fragment |
+| `group_by`, `by`, `region`, `bucket`, `slice`, `label` | enumerated types, checked again by the MCP server's input schema | picks among fixed column and join sets in code (`metrics.py`, `queries.py`, `repeats.py`); never interpolated |
+| start and end dates | `date` values, sent as `YYYY-MM-DD`, parsed strictly again and range-checked by each server | `datetime` objects compared as bound parameters (SQLAlchemy Core, `bindparam` and column comparisons) |
+| `technician_name` | text of 1 to 100 characters in the request; the lookup accepts only letters, spaces, apostrophes, hyphens and periods | never SQL: matched in Python against the technician list read whole |
+| `technician_id` | integer of at least 1, taken from the lookup result, not typed by the model | bound parameter in `column == technician_id` (`_only` in `metrics.py`; `count_by_severity`) |
+| `limit`, `flagged_only`, `weeks`, `horizon_weeks` | strict integers and booleans within the caps above | integer bounds, `LIMIT` and bound comparisons |
+
+The only f-string in a connection setting is the statement timeout, which comes from
+configuration, not from a question.
+
+### 2. A2A and service-to-service
+
+| Control | Status | Evidence |
+|---|---|---|
+| A2A v1.0 over JSON-RPC with the Agent Card at the well-known path and blocking `SendMessage` only; streaming and push declared off (ADR-047). | Built | `test_card_advertises_only_the_minimal_subset` (reporting), `test_card_advertises_one_skill_and_the_minimal_subset` (sentiment), `test_card_served_at_well_known_path` (all three agents). |
+| The Agent Card advertises names, descriptions and example questions only: no tool schemas, credentials or internal addresses beyond the agent's own URL. | Built | `card.py` in each agent. |
+| The orchestrator calls agents at fixed addresses from configuration (`AGENT_*_URL`), never discovered from input. | Built | `docker-compose.yml`, `config.py`; by search, no address is taken from a question or a model output. |
+| Specialist answers are validated against shared typed contracts on receipt, with numbers as typed values. | Built | `test_answer_that_breaks_the_contract_is_rejected`, `test_metric_answer_with_a_float_rate_is_rejected`, `test_numbers_for_an_unserved_week_are_rejected`. |
+| Network exposure under compose: only the orchestrator publishes a port; the agents and MCP servers are reachable only on the compose network; Postgres is published on loopback only. | Built | `test_only_orchestrator_publishes_a_port`; `docker-compose.yml` (`127.0.0.1:5432:5432`). |
+| Per-hop timeouts that fit inside the 120-second ceiling. | Built | `test_timeouts_fit_inside_the_120s_ceiling`, `test_sentiment_timeouts_fit_inside_the_120s_ceiling`, `test_forecast_timeouts_fit_inside_the_120s_ceiling` (orchestrator tests). |
+| A single per-request deadline passed through every hop. | Planned, Sprint 4 | Sprint 4 planning note in `sprint-log.md`. |
+| **Authentication between services: none today.** No token, key or certificate is checked on any hop, and the compose network is the only boundary. The orchestrator's `/ask` is unauthenticated and is published as `8000:8000`, which binds every host interface by default, not only loopback. Whether another machine can reach it depends on the host firewall, which was not checked. Local development only. | Not built | Absence confirmed by search of `services/` and `packages/` for tokens, keys and auth dependencies (2026-10-04). |
+| IAM ID tokens between services; per-peer agent identity. | Planned, Sprint 4 for the reporting slice (ADR-045), the rest in Sprint 5 | ADR-045; Sprint 4 and Sprint 5 items in `sprint-log.md`. |
+| Only the gateway reachable from the internet; requests without valid credentials rejected before any model call (NFR-2). | Planned, Sprint 5 | The gateway (`services/api_gateway`) is not built; the access mechanism is chosen in Sprint 5. |
+
+### 3. Prompt injection
+
+The free text that enters the system is customer comments and the user's question. Staff
+incident notes never leave the database through any tool and the sentiment role has no grant
+on them (guarantee 2).
+
+| Control | Status | Evidence |
+|---|---|---|
+| Customer comments are untrusted and are never sent to a language model. They reach only the fine-tuned classifier, whose output is one of four labels, and answers are rendered from templates (guarantee 9; ADR-046, ADR-068). | Built | `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`; `test_examples_are_quoted_verbatim_with_label_and_confidence`; compose gives `mcp_feedback` no model key (`test_mcp_feedback_holds_no_model_key_or_setting`). |
+| QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Planned, Sprint 4 | Sprint 4 planning note and guarantee 9 above. The QA agent (`services/agent_qa`) is not built. |
+| The question is delimited in every routing and parsing prompt and declared data, not instructions; it is limited to 2,000 characters. | Built | All ten prompt files (`route_v1` to `route_v5`, `parse_v1` to `parse_v3`, and the sentiment and forecast `parse_v1`) carry the line; `AskRequest` (`max_length=2000`). No test asserts the prompt line. |
+| Model output is structured and validated: the call sets the response schema from the typed model, the reply is parsed against it, and an invalid reply fails with no repair and no default route or range. | Built | `packages/llm` `transport.py` and `client.py`; `test_invalid_parse_output_fails_and_never_guesses_a_range`, `test_unclear_question_asks_to_rephrase`. |
+| No tools are exposed to a model, and automatic function calling is disabled. The agent's code picks the tool from the parsed metric (ADR-046). | Built | `packages/llm` `transport.py` (`automatic_function_calling` disabled); `test_each_metric_calls_its_own_tool`. |
+| Model output is never executed: parsed values only select among fixed code paths. | Built | By search, no `eval`, `exec` or subprocess call in `services/` or `packages/`. |
+| QA checks that the parsed request matches the question. | Planned, Sprint 4 | ADR-056; until it exists, nothing downstream checks the parse. |
+
+**What an injected question could still achieve.** A wrong route or wrong parameters: another
+specialist, another period, region, metric or technician, or a decline. The data returned stays
+inside the chosen specialist's grants, from fixed queries, and the answer states the range it
+used (and, for an assumed range, says so), so the user can see what was asked. It cannot make
+the system run SQL, call a tool the model was not offered, or read a table outside the role's
+grants. Two smaller effects remain: the router's one-sentence `reason` is model-written text
+derived from the question, and it is returned in the response and logged; and quoted comments
+(at most 3) appear verbatim in an answer, so the Sprint 5 interface must render them as plain
+text (React escapes text by default; the interface is not built, so this is a requirement on it,
+not a control). Until the QA agent exists (Sprint 4), nothing checks that a wrong route or
+parameter was caught.
+
+**Known gap: a question containing `{{...}}` fails.** Prompt rendering raises when a question
+brings text that looks like an unfilled placeholder (for example `{{secret}}`). Observed
+2026-10-04: the orchestrator returns HTTP 500 with a generic message, before any model call.
+It fails closed and reveals nothing, but the exception is unhandled and no test covers it. The
+specialists render their parse prompts through the same code and were not tested.
+
+### 4. Secrets
+
+| Control | Status | Evidence |
+|---|---|---|
+| `.env` and `.env.*` are ignored by git; `.env.example` lists names with blank values. | Built | `.gitignore`; `.env.example`; by search of git history, `.env` was never committed. |
+| No secret literals in the compose file; values come from `.env` at start-up, and a missing model key stops the start. | Built | `test_no_secret_literals_in_compose`; `${GOOGLE_AI_API_KEY:?...}` in `docker-compose.yml`. |
+| Each service receives only the credentials it needs: agents get no database variables; each MCP server gets one role; LLM callers get only the free key; no service gets the paid key. | Built | `tests/unit/test_compose_isolation.py` (`test_agents_hold_no_database_variables`, `test_llm_callers_get_only_the_free_key`, `test_no_service_gets_the_paid_key`, and the per-server tests). |
+| The generator, training, evaluation and admin credentials are never present in a deployed file or service. | Built | `tests/unit/test_offline_roles_isolation.py` (`test_no_deployed_file_references_offline_role_credentials`). |
+| No credentials in images: the build context is an allowlist that excludes `.env`, `pgdata/`, `data/` and `docs/`. | Built (file; no test) | `.dockerignore`. |
+| The model key appears in no log line, exception or repr; error bodies are redacted before logging. | Built | `test_key_appears_in_no_log_line_exception_or_repr`, `test_real_transport_repr_hides_the_key`, `test_first_429_capture_redacts_key_and_project_identifiers`. |
+| Database passwords stay out of settings reprs. | Built (code; no test) | `Settings.__repr__` in each MCP server omits the password. |
+| CI uses its own ephemeral role credentials and never `.env`. | Built | `.github/workflows/ci.yml`; the database is a service container destroyed at the end of the job. |
+| Secret scanning of commits. | Built as a GitHub check, not in this repository | A "GitGuardian Security Checks" check passes on pull requests (observed on PR #23). It is not defined in `ci.yml`, so whether it scans pushes to `main` is not visible from the repository. |
+| Secrets in GCP Secret Manager, never in code or images. | Planned, Sprint 4 for the reporting slice (ADR-045), the rest in Sprint 5 | Sprint 4 and Sprint 5 items in `sprint-log.md`. |
+
+### 5. Logging
+
+Logs are JSON lines on stdout from every service, written by one formatter installed on the
+root logger, so SDK loggers use it too (`packages/common/src/common/logging.py`).
+
+| Control | Status | Evidence |
+|---|---|---|
+| One trace id per request, minted by the orchestrator and carried in the A2A message metadata and the MCP request metadata; every line written while handling the request carries it. | Built | `test_trace_id_from_meta_reaches_the_log` (`mcp_incidents`), `test_route_decision_is_logged_with_prompt_version`, `test_parsed_range_becomes_the_tool_arguments`. |
+| Every MCP tool call logs one line: tool, range, breakdown or filter ids, counts, duration; a rejected input logs its tool and reason. | Built | `"tool call"` and `"tool rejected input"` lines in each MCP server. |
+| Routing and parsing log the decision, prompt version and prompt hash, not the prompt text. | Built | `test_prompt_version_is_logged_with_the_parse`. |
+| The question's length is logged, not its text. | Built | `"ask received"` and `"task received"` log `question_chars` only. |
+| Trace id on web-server access-log lines. | Planned, Sprint 4 | Sprint 4 item in `sprint-log.md`. Access lines are written through the same formatter today, without a trace id. |
+
+**What the code logs about user text** (read from all 54 log calls in `services/` and
+`packages/`, 2026-10-04):
+
+- **Never logged:** the question text; any prompt; any model reply other than the router's
+  `reason`; any customer comment (`feedback_text`); any contact data (no code path reads
+  `contacts`); the model key; database passwords.
+- **Logged, derived from the question:**
+  1. The router's `reason`: model-written, up to 300 characters, and it may paraphrase the
+     question (`"route decision"`).
+  2. Failure reasons. Each specialist's `"task failed"` line and the orchestrator's
+     `"agent task failed"` line carry the user-facing text. In the reporting agent, a technician
+     name that matches no one is logged as typed (`No technician matches <name>.`), and an
+     ambiguous name logs the matching staff display names. The orchestrator returns before
+     logging those two codes, so only the reporting agent's log has them. The parse step logs
+     only whether a technician was named, not the name.
+  3. `"tool rejected input"` lines echo the offending argument (for example a malformed date
+     string), whatever its length.
+  4. Tracebacks from `log.exception` go into the `exc` field in full. The formatter does no
+     redaction of its own (redaction exists only for model-provider error bodies). The queries
+     bind ids, dates, labels and numbers, never comment text or contact data, so a database error
+     does not carry them; other exceptions were not audited for what their messages contain.
+- **Staff names are logged** in items 2 above. They are synthetic here; in a real deployment
+  they would be personal data, and the logging would need review.
+
+### Earlier to-do list, closed
+
+The list headed "Still to write (Sprint 3, with `04`)" is closed as of 2026-10-04: the MCP and
+A2A controls are in sections 1 and 2, prompt-injection handling (including the QA prompt as an
+injection surface) in section 3, secrets in section 4, and logging in section 5. Its
+evaluation/training read role item was done 2026-10-01 (ADR-063): the offline `app_eval` and
+`app_train` roles hold `sentiment_labels` and `generation_parameters`; guarantee 4 changed and
+guarantees 5 and 6 were added.

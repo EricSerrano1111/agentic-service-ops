@@ -423,8 +423,9 @@ shipped below was merged 2026-10-01 to 10-04. Open: FR-03 (carried to Sprint 5) 
   type, technician with an "unattributed" group, incident type, severity), highest first,
   cap 25 (ADR-073; data dictionary §6). Figures match `app_eval` SQL in the integration
   suite. L-06 resolved.*
-- [ ] Fill `docs/security-model.md` while drafting `04`
+- [x] Fill `docs/security-model.md` while drafting `04`
   *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
+  *2026-10-04: completed at the Sprint 3 close: MCP controls, A2A and service-to-service, prompt injection, secrets and logging, each control marked built (with its test or file) or planned (with its sprint). The code review found gaps that are recorded in the file rather than fixed: no authentication between services today and the orchestrator published on all host interfaces, a question containing `{{...}}` returning HTTP 500, and the logs carrying the router's `reason`, typed technician names and echoed rejected arguments.*
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
   *2026-10-04: carried to Sprint 4. Sprint 3 closed early, so this is not late: `05` is due
   2026-11-01.*
