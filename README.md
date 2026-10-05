@@ -82,6 +82,24 @@ orchestrator`. The e2e test checks all of this against the running stack:
 $env:RUN_E2E=1; .venv\Scripts\python -m pytest tests/e2e -q -rs
 ```
 
+## Local environment recovery
+
+The local stack (Docker Desktop on WSL2) has run out of memory more than once (R-17). The
+setup below is the owner's, recorded 2026-10-05; `.wslconfig` is machine configuration and
+is not in this repo.
+
+**Symptoms:** Docker or WSL fails, or the machine becomes unresponsive.
+
+**Prevention:**
+- Keep the WSL memory cap and `autoMemoryReclaim=dropcache` set in `.wslconfig` (the cap's value
+  is not recorded here), and keep Docker's data on `D:`.
+- Stop the stack (`docker compose down`) before heavy jobs: BERT training or scoring,
+  full-stack rebuilds, eval runs. Check free memory before a long run or a full-stack rebuild.
+
+**Recovery:** restart Windows. Do not use `wsl --shutdown`. After the restart, bring the
+stack back with `docker compose up -d --build`; the first start is slower on a cold file
+cache (29.4 s against 14.9 s for `mcp_feedback`, L-36).
+
 ## Verifying the database layer
 
 ```

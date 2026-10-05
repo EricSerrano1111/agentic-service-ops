@@ -30,6 +30,7 @@
 | R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Open |
 | R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Mitigating |
 | R-16 | Evaluation | Evaluation validity: small, partly non-blind development sets and run-to-run variance make measured differences possibly noise | High | Medium | Open |
+| R-17 | Technical / Environment | Local environment memory exhaustion (WSL/Docker) | High | Medium | Open |
 
 ---
 
@@ -68,6 +69,8 @@
 **Update 2026-09-25 (Sprint 1 boundary review):** Mitigation adds the Sprint 4 reporting-slice deploy (ADR-045, 2026-11-02 to 11-04) with a post-deploy check that the serving revision is the one just built and holds 100% of traffic. Review trigger moves to that deploy; its stop rule records R-03 as realised if the revision is not verified serving by end of 11-04. Likelihood normalised Medium-High → High. Status stays Open.
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Builds are now reproducible: CI and the service images install exactly what `uv.lock` pins (ADR-047). The trigger is still the Sprint 4 slice deploy (ADR-045). Status stays Open.
+
+**Update 2026-10-05 (ADR-078):** The slice deploy is pulled forward to 2026-10-08 to 10-10, with the stop rule at the end of 10-10. The 2026-11-02 to 11-04 dates above are superseded; the post-deploy check and the consequence of the stop rule are unchanged. Status stays Open.
 
 ### R-04 — Sentiment task has weak natural verifiability
 **Description:** Unlike reporting (deterministic) or forecasting (standard backtest metrics), sentiment has no natural ground truth. A QA check that just re-runs the same model is circular and proves nothing.
@@ -205,6 +208,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** No change. The trigger is the Sprint 4 deploy.
 
+**Update 2026-10-05 (ADR-078):** The deploy that triggers the review moves to 2026-10-08 to 10-10 (was 2026-11-02 to 11-04). Status stays Open.
+
 ### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
 *Added 2026-09-26.*
 **Description:** The 2026-09-26 capture run got a free-tier "This model is currently experiencing high demand" 503 from `gemini-3.7-flash` on its second request. That model is now the orchestrator's (ADR-049), so it is the first hop of every request: when it is overloaded, nothing is answered, even questions a specialist could handle. Its free-tier limits (5 RPM, 20 RPD, ADR-029) compound this.
@@ -225,6 +230,19 @@
 **Likelihood / Impact:** High / Medium. **Status:** Open.
 **Mitigation:** A held-out routing set never used to revise a prompt (Sprint 5); three runs per evaluation with the range and the flipping questions reported (ADR-054); limitations logged in `docs/evaluation-report.md`.
 **Review trigger:** The Sprint 5 evaluation runs.
+
+### R-17 — Local environment memory exhaustion (WSL/Docker)
+*Added 2026-10-05, from the owner's Sprint 3 final retro review.*
+**Description:** The local environment (Windows 10, Docker Desktop on WSL2, an Intel i7-6700HQ with 4 cores / 8 threads) has repeatedly run out of memory, which forced freeing memory and restarting the machine several times. The logs record no count or dates for these incidents (the only related record is a 29.4 s first container start after a Windows restart, L-36). Sprint 4 adds the QA agent and the deploy tooling to the local footprint.
+**Likelihood / Impact:** High / Medium. **Status:** Open. The register's scale is Low / Medium / High; "likely" is High. The impact is lost time and interrupted runs.
+**Trigger:** Docker or WSL fails, or the machine becomes unresponsive.
+**Mitigation (owner-stated 2026-10-05; none of these is recorded elsewhere in the repo or logs, and none was verified):**
+- A WSL memory cap, and `autoMemoryReclaim=dropcache`, set in `.wslconfig`. The cap's value is not recorded here.
+- Docker's data kept on `D:`.
+- Stop the stack before heavy jobs: BERT training or scoring, full-stack rebuilds, eval runs.
+- Recover by restarting Windows, not with `wsl --shutdown`.
+The same steps are in the README's "Local environment recovery". Check the memory headroom before any long run or full-stack rebuild.
+**Review trigger:** The Sprint 4 close.
 
 ---
 
