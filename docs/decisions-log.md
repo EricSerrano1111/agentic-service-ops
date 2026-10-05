@@ -88,6 +88,7 @@
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
 | 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed; corrected gate (ADR-076) also failed. FR-03 open until Sprint 5 (L-58). |
 | 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
+| 077 | Minimal circuit breaking for NFR-4, built in Sprint 4 | Accepted |
 
 ---
 
@@ -2328,3 +2329,27 @@ training grants.
 - **Verdict: the gate failed on (c).** f01, f02 and f04 returned `ambiguous` in 3 of 3 runs. f03 ("Are we on track going into Q4?", candidates forecast and reporting) was routed to forecast in all three runs, and f05 ("Where are we losing customer goodwill?", candidates sentiment and reporting) to sentiment in all three. On the v2 sets `route_v5` recognised all 5 ambiguous items; on fresh questions it missed two of five, both times choosing one plausible reading, which is the best-fit behaviour FR-03 rules out.
 - Per this ADR, there are no revisions: `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts before Sprint 5. ADR-075 remains not in effect.
 - The route_v3 v2 runs are the ADR-075 comparison run (20261003T175314Z / T175445Z) plus two new runs; the route_v5 v2 runs are the three recorded under ADR-075. Per-item results for every run are in `evals/results/routing_{seed_v2,routing_v2,fr03_fresh_v1}_gemini-3.5-flash-lite_route_v{3,5}_*.json`; expected candidates are intact in every new file (the `predicted_candidates` fix holds).
+
+### ADR-077 — Minimal circuit breaking for NFR-4, built in Sprint 4
+*Date: 2026-10-04. Supersedes nothing. Closes a gap the requirements traceability matrix found on 2026-10-04.*
+
+**Decision:**
+- One circuit breaker per outbound dependency: the Gemini provider interface (`packages/llm`, the one place every model call goes) and each A2A client (the orchestrator's calls to the reporting, sentiment and forecast agents).
+- A breaker opens after N consecutive failures. While it is open, calls to that dependency fail fast to the degraded result (FR-13), naming the capability that is unavailable (NFR-4), for a cool-down period; after the cool-down one trial call decides whether it closes.
+- N, the cool-down, and which failures count are set in Sprint 4 and recorded in a dated note below this entry. It is built in Sprint 4 together with the single per-request deadline.
+- Required versus portfolio value: at this scale it is not load-driven. The per-request deadline (ADR-034, enforced as one deadline in Sprint 4) and the bounded retries already prevent a failing dependency from cascading. The breaker is built because NFR-4 is a submitted requirement, and it is labelled as portfolio value, not as a response to a measured need.
+
+**Context:**
+- NFR-4 in `02` requires calls between agents to have timeouts and circuit breakers, and the system to name the capability that is down while still answering the other domains.
+- The production-readiness checklist in `architecture.md` listed circuit breaking and cited ADR-034. ADR-034 decides the 120-second ceiling and does not mention circuit breaking, so nothing decided it and no sprint planned it.
+- The requirements traceability matrix recorded the gap on 2026-10-04: no breaker exists in `services/` or `packages/`.
+
+**Alternatives considered:**
+- *Formally descope circuit breaking* (rejected). It would reinterpret a submitted requirement after the fact.
+- *A library such as `pybreaker`* (decide in Sprint 4). A small in-house class is the other option; the choice depends on how well a library fits async calls.
+- *Rely on the per-request deadline and the retry cap alone* (rejected as a reading of NFR-4). They prevent cascades here, but NFR-4 names circuit breakers.
+
+**Consequences:**
+- Sprint 4 plans the breaker alongside the deadline; tests cover opening after N failures, failing fast while open, the single trial call, and one dependency's breaker not affecting another.
+- NFR-4's evidence in the traceability matrix points here until the breaker exists.
+- The degraded result it fails fast to is FR-13, also Sprint 4.

@@ -694,3 +694,15 @@ build are appended here as they are found (CLAUDE.md).
   clarification, falling back to all three domains if candidates are missing (unit-
   tested). This is measured behaviour and is kept; it is not FR-03 compliance.
 - **Recorded in:** ADR-076 (results).
+
+### L-59 — Service-to-service hops are unauthenticated in local compose (2026-10-04)
+- **What:** No token, key or certificate is checked on any hop between the orchestrator, the
+  agents and the MCP servers, and the orchestrator's `/ask` has no authentication. The compose
+  network is the only boundary. Until 2026-10-04 `/ask` was also published on every host
+  interface; every published port is now bound to `127.0.0.1`
+  (`test_every_published_port_binds_loopback_only`), so the unauthenticated entry point is
+  reachable from the developer's machine only.
+- **Why accepted:** It is local development against synthetic data, and the ports are bound to
+  localhost. IAM ID tokens arrive with the Sprint 4 deploy of the reporting slice (ADR-045), and
+  the rest in Sprint 5 with the gateway, which replaces `/ask` as the entry point.
+- **Recorded in:** `docs/security-model.md`, section 2.
