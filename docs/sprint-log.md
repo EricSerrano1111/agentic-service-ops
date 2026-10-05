@@ -283,6 +283,9 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 *2026-10-04: Sprint 3 closed, 8 days before its formal start (2026-10-12). Everything
 shipped below was merged 2026-10-01 to 10-04. Open: FR-03 (carried to Sprint 5) and the
 `05` draft (carried to Sprint 4).*
+*2026-10-05: Close-out provisional. Sprint 3 is final once the `05` test-scenarios draft is
+complete (owner drafting week of 2026-10-05; due 2026-11-01). Sprint 4 planning proceeds in
+parallel; Sprint 4 development does not start until Sprint 3 is final.*
 
 **Planned:**
 - [x] MCP servers #2 and #3 (feedback, volume)
@@ -429,6 +432,8 @@ shipped below was merged 2026-10-01 to 10-04. Open: FR-03 (carried to Sprint 5) 
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
   *2026-10-04: carried to Sprint 4. Sprint 3 closed early, so this is not late: `05` is due
   2026-11-01.*
+  *2026-10-05: stays in Sprint 3 and is not carried to Sprint 4; Sprint 3 is provisional until
+  this draft is complete.*
 
 **Shipped:**
 
@@ -468,6 +473,7 @@ Closing PR (2026-10-04): Sprint 3 closed in `sprint-log.md`; `docs/security-mode
 **Carried over:**
 - FR-03 (ambiguous questions not force-routed) to Sprint 5: open, with a Sprint 5 item (L-58, ADR-075, ADR-076). Any reattempt needs a new owner-written fresh set, because `fr03_fresh_v1` has been used.
 - The `05` draft to Sprint 4. Sprint 3 closed early, so it is not late: `05` is due 2026-11-01. Its scenarios include the FR-03 known-failing scenario.
+*2026-10-05: the `05` draft is no longer carried to Sprint 4; it stays in Sprint 3, which is provisional until the draft is complete. FR-03, carried to Sprint 5, is unchanged.*
 
 **Blockers encountered:**
 Factual; each is recorded elsewhere in the logs.
@@ -487,6 +493,13 @@ Factual; each is recorded elsewhere in the logs.
     52% over) surfaced from the fold results before the holdout was scored. `route_v5` passed
     on the v2 sets it had been revised against, then recognised only 3 of 5 on questions it
     had never seen: it had learned the examples, not the concept.
+  - *(Assistant-observed, 2026-10-05)* The close-out's security-model completion and
+    traceability check found defects before any deploy: an orchestrator port open on all
+    interfaces with no authentication; user text treated as template syntax (a `{{...}}`
+    question returned HTTP 500); typed names and rejected values in the logs; and an
+    unrecorded NFR-4 gap (circuit breaking). All of them were fixed or recorded (PR #25,
+    ADR-077, L-59), and render equality (1,128 renders identical before and after) showed the
+    routing results still stand.
 
 - What didn't:
   1. *(Owner)* "The 04 design document drifted from actual development as problems and needed changes arose."
@@ -495,6 +508,8 @@ Factual; each is recorded elsewhere in the logs.
      the system accurately.
   3. *(Assistant-observed)* ADR-075's gate broke ADR-054's k=3 rule, and the golden set's
      expected outputs were written without checking the response contract.
+  4. *(Assistant-observed, 2026-10-05)* None of those defects had a test. The suites covered
+     intended behaviour but not hostile or malformed input at the service edges.
 
 - What changes next sprint:
   1. The requirements traceability matrix (`docs/requirements-traceability.md`) is re-checked
@@ -504,6 +519,11 @@ Factual; each is recorded elsewhere in the logs.
      and carried to the evaluation report, never silently.
   3. Every gate cites the evaluation rules it must satisfy, and a reviewer checks it against
      them before any run.
+  4. *(Assistant-observed, 2026-10-05)* Every new service edge in Sprint 4 (the QA agent, the
+     gateway, deployed ingress) gets malformed-input and exposure tests written with it, not
+     afterwards.
+
+*Retro provisional. Final review after the `05` draft, when the owner may add points.*
 
 **Academic deliverable status:**
 - `03-planning-management.md` (due 2026-10-18) — submitted before the due date (owner).
@@ -539,6 +559,32 @@ Factual; each is recorded elsewhere in the logs.
 ## Sprint 4 (Weeks 7–8, 2026-10-26 to 2026-11-08) — Verification
 **Goal (increment):** QA agent operational with all three verification strategies; measurable catch rate.
 *2026-10-04: Sprint 4 pulled forward; planning to follow.*
+*2026-10-05, planning decisions taken; the ADRs follow and are not written yet:*
+- *ADR-078 (to write): the reporting-slice deploy is pulled forward from its 2026-11-02 to
+  11-04 window, superseding ADR-045's dates only. The new dates are fixed in the ADR. The
+  3-day timebox and the stop rule stay, and the stop date moves with the window. Cost note:
+  about $2 extra if the instance is stopped when idle, about $7 if left running.
+  Provisioning: the smallest shared-core instance, the Enterprise edition chosen explicitly,
+  automatic storage increase off.*
+  - *Post-submission divergence (carry to the evaluation report): the submitted `04` quotes
+    the 2026-11-04 stop date (TA-16); ADR-078 moves it.*
+- *ADR-079 (to write): service topology. Each MCP server runs as a Cloud Run sidecar of its
+  agent. The services are the gateway (the only public one), the orchestrator, and the
+  reporting, sentiment, forecast and QA agents, all internal with IAM. Rationale: one fewer
+  cold-start hop per domain against the 120-second ceiling, and no service-to-service
+  authentication between an agent and its MCP server. Trade-off: an agent and its MCP server
+  share one service account; database credentials are mounted only into the MCP container.
+  That needs a new limitation, written with the ADR. The early deploy needs only the
+  orchestrator and the reporting agent.*
+- *ADR-080 (to write): the UI is a Next.js static export served by the FastAPI gateway (same
+  origin, no Node runtime in production). Cloud Storage hosting is rejected: it needs a load
+  balancer and a separate origin. Next.js is kept over Vite for experience and portfolio
+  value; the ADR will say so explicitly, because it is not a requirement at this scale (the
+  UI needs nothing beyond React).*
+- *Sequencing: the deploy comes first in Sprint 4, then the QA build.*
+- *Still to plan: the rest of the Sprint 4 sequence, and L-60 (the router's model-written
+  `reason` and unredacted tracebacks in the logs), the last unrecorded gap from the
+  traceability matrix; it is recorded with the ADRs.*
 
 **Planned:**
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
@@ -565,6 +611,7 @@ Factual; each is recorded elsewhere in the logs.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 - [ ] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
 - [ ] Draft `05-test-scenarios.md` (carried over from Sprint 3; due 2026-11-01). Includes the FR-03 known-failing scenario.
+  *2026-10-05: no longer carried over; the `05` draft stays in Sprint 3.*
 - [ ] Re-check `docs/requirements-traceability.md` at sprint close.
 
 *Planning note, 2026-10-01 (from 4b):*
@@ -685,7 +732,7 @@ Factual; each is recorded elsewhere in the logs.
 |---|---|---|---|
 | 1 | Yes, 2026-09-25, two days inside the sprint | Iteration with pass bars but no stop rule consumed most of the sprint; it ended by redefining the criterion (ADR-040), an option available from the start | Yes: corpus design reshaped (ADR-036 to 041); paid, spend-capped project added (~$1.40); human review cut from 200 to 30; deliverable plan rebuilt from the course calendar |
 | 2 | Yes; checkpoint 2 met 2026-09-26 (deadline 10-07); engineering complete 2026-09-30 | Tests built from the author's assumptions passed while the code was wrong; real error captures and production-config runs found both bugs | Yes: all agents on Flash-Lite after comparison (ADR-049); site region stored (ADR-051); routing prompt revised twice (ADR-053, ADR-054); repeat-visit drivers and incident-count breakdowns deferred to Sprint 3 |
-| 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
+| 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 (provisional until the `05` draft) | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
 | 4 | | | |
 | 5 | | | |
 | 6 | | | |
