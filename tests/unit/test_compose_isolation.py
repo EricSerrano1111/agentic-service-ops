@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -100,6 +101,37 @@ def test_no_secret_literals_in_compose(compose):
 def test_only_orchestrator_publishes_a_port(compose):
     published = {name for name in APP_SERVICES if compose[name].get("ports")}
     assert published == {"orchestrator"}
+
+
+def _bind_address(port) -> str:
+    """The host address a published port binds to. With `--no-interpolate`, a port whose
+    mapping holds a `${...}` variable stays a string; the others come back as mappings."""
+    if isinstance(port, dict):
+        return port.get("host_ip", "0.0.0.0")
+    # `${VAR:-default}` holds a colon of its own: collapse it before splitting.
+    parts = re.sub(r"\$\{[^}]*\}", "VAR", str(port)).split(":")
+    return parts[0] if len(parts) == 3 else "0.0.0.0"
+
+
+def test_every_published_port_binds_loopback_only(compose):
+    """/ask is unauthenticated and spends the model quota, and Postgres holds dev
+    passwords, so nothing is published on every host interface (security-model.md)."""
+    published = [
+        (name, _bind_address(port))
+        for name, service in compose.items()
+        for port in service.get("ports") or []
+    ]
+    assert {n for n, _ in published} == {"orchestrator", "postgres"}
+    assert [(n, a) for n, a in published if a != "127.0.0.1"] == []
+
+
+def test_bind_address_reads_both_port_forms():
+    assert _bind_address("8000:8000") == "0.0.0.0"
+    assert _bind_address("127.0.0.1:${PORT:-8000}:8000") == "127.0.0.1"
+    assert (
+        _bind_address({"host_ip": "127.0.0.1", "published": "5432", "target": 5432}) == "127.0.0.1"
+    )
+    assert _bind_address({"published": "5432", "target": 5432}) == "0.0.0.0"
 
 
 def test_mcp_incidents_holds_no_model_key_or_setting(compose):

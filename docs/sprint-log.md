@@ -481,6 +481,7 @@ Factual; each is recorded elsewhere in the logs.
 *Written 2026-10-04, at close.*
 
 - What went well:
+  - *(Owner)* All else was mostly fine.
   - *(Assistant-observed)* Pre-registered gates on held-out data caught problems that
     development data hid. The forecast gate and the year-end miss (the 2025 Christmas week,
     52% over) surfaced from the fold results before the holdout was scored. `route_v5` passed
@@ -510,6 +511,11 @@ Factual; each is recorded elsewhere in the logs.
   *2026-09-30: drafted with Appendix A (security and data-access summary); rubric checked; not submitted.*
   *2026-10-04: the copy in this repo is the Markdown before the Word port. The submitted
   Word version may differ in figures and formatting.*
+  *2026-10-04, post-submission divergences between a submitted document and the built system
+  (carry to the evaluation report):*
+  - *`02`, FR-10 says a model that fails the threshold on held-out weeks is not deployed. The
+    built system deploys `volume_v2` and withholds each failing slice-band, with its error
+    shown (ADR-071).*
 - Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
@@ -538,6 +544,7 @@ Factual; each is recorded elsewhere in the logs.
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
   - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
 - [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
+- [ ] Circuit breaker, one per outbound dependency (the Gemini provider interface; each A2A client), built with the per-request deadline (ADR-077; NFR-4)
 - [ ] Fault-injection harness for QA catch-rate measurement
 - [ ] Price a full routing eval run (~300-700 requests, two LLM calls per request per
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the

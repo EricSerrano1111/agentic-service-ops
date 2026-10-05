@@ -39,7 +39,14 @@ _tech = Technician.__table__
 
 
 class InvalidArgument(ValueError):
-    """A caller error: the message is safe to return to the client verbatim."""
+    """A caller error: the message is safe to return to the client verbatim. `argument` and
+    `kind` say which argument was rejected and why, with no value: they are what the log
+    records, since a rejected value may be text from a user's question."""
+
+    def __init__(self, message: str, *, argument: str, kind: str) -> None:
+        super().__init__(message)
+        self.argument = argument
+        self.kind = kind
 
 
 class InvalidRange(InvalidArgument):
@@ -48,11 +55,19 @@ class InvalidRange(InvalidArgument):
 
 def _parse(name: str, raw: str) -> dt.date:
     if not isinstance(raw, str) or len(raw) != 10:
-        raise InvalidRange(f"{name} must be an ISO date (YYYY-MM-DD), got {raw!r}")
+        raise InvalidRange(
+            f"{name} must be an ISO date (YYYY-MM-DD)",
+            argument=name,
+            kind="not_iso_date",
+        )
     try:
         return dt.date.fromisoformat(raw)
     except ValueError:
-        raise InvalidRange(f"{name} must be an ISO date (YYYY-MM-DD), got {raw!r}") from None
+        raise InvalidRange(
+            f"{name} must be an ISO date (YYYY-MM-DD)",
+            argument=name,
+            kind="not_iso_date",
+        ) from None
 
 
 def parse_date_range(
@@ -65,11 +80,15 @@ def parse_date_range(
     """
     s, e = _parse("start", start), _parse("end", end)
     if s > e:
-        raise InvalidRange(f"start ({s}) is after end ({e})")
+        raise InvalidRange(
+            f"start ({s}) is after end ({e})", argument="start,end", kind="start_after_end"
+        )
     if s < window_start or e > window_end:
         raise InvalidRange(
             f"range {s} to {e} is outside the dataset window "
-            f"{window_start} to {window_end} (inclusive)"
+            f"{window_start} to {window_end} (inclusive)",
+            argument="start,end",
+            kind="outside_window",
         )
     return s, e
 
@@ -117,7 +136,11 @@ def count_by_severity(
     """Incidents with `reported_at` on `start`..`end` inclusive, in UTC days; optionally
     broken down, or only those attributed to one technician (not both)."""
     if group_by is not None and technician_id is not None:
-        raise InvalidArgument("a technician filter cannot be combined with a breakdown")
+        raise InvalidArgument(
+            "a technician filter cannot be combined with a breakdown",
+            argument="technician_id,group_by",
+            kind="conflicting_arguments",
+        )
     lo = dt.datetime.combine(start, dt.time.min, dt.UTC)
     hi = dt.datetime.combine(end + dt.timedelta(days=1), dt.time.min, dt.UTC)
     name = technician_name(engine, technician_id) if technician_id is not None else None
@@ -220,7 +243,9 @@ def match_technicians(name: str, technicians: list[tuple[int, str]]) -> Technici
     if not cleaned or len(cleaned) > MAX_NAME_LENGTH or not _NAME.match(cleaned):
         raise InvalidArgument(
             "name must be 1 to 100 characters of letters, spaces, apostrophes, hyphens "
-            "or periods; wildcards and patterns are not accepted"
+            "or periods; wildcards and patterns are not accepted",
+            argument="name",
+            kind="invalid_characters",
         )
     query = _words(cleaned)
     found = []
@@ -249,5 +274,7 @@ def technician_name(engine: Engine, technician_id: int) -> str:
             select(_tech.c.full_name).where(_tech.c.technician_id == technician_id)
         ).scalar_one_or_none()
     if name is None:
-        raise InvalidArgument(f"no technician has id {technician_id}")
+        raise InvalidArgument(
+            f"no technician has id {technician_id}", argument="technician_id", kind="unknown_id"
+        )
     return name

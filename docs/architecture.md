@@ -254,7 +254,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Config and secrets management — no hardcoded credentials
 - [ ] Structured logging with trace IDs correlated across agent hops *(in progress: JSON lines with one trace id across orchestrator → A2A → agent → MCP, `packages/common`; asserted by the e2e test)*
 - [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on the skeleton services, used by compose; no readiness probe yet)*
-- [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-034)
+- [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-077)
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)

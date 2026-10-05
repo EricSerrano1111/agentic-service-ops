@@ -7,6 +7,7 @@ tests/integration/test_mcp_incidents_figures.py.
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import io
 import json
@@ -335,7 +336,9 @@ async def test_an_unknown_technician_id_is_a_caller_error_returned_verbatim():
     from mcp_incidents.queries import InvalidArgument
 
     def unknown(start, end, group_by=None, technician_id=None):
-        raise InvalidArgument(f"no technician has id {technician_id}")
+        raise InvalidArgument(
+            f"no technician has id {technician_id}", argument="technician_id", kind="unknown_id"
+        )
 
     async with Client(create_server(SETTINGS, backend(unknown))) as client:
         result = await client.call_tool(
@@ -549,3 +552,57 @@ def test_truncation_keeps_the_worst_groups(higher_is_worse):
     worst = range(40, 15, -1) if higher_is_worse else range(1, 26)
     assert {g.group_id for g in groups} == set(worst)
     assert groups[0].group_id == (40 if higher_is_worse else 1)
+
+
+@contextlib.contextmanager
+def captured_logs(*service_loggers: str):
+    """Every log line written inside the block, from any logger (SDK loggers included), as
+    parsed JSON. Re-enables the service loggers an earlier Alembic `fileConfig` may have
+    disabled."""
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(JsonFormatter("test"))
+    root = logging.getLogger()
+    loggers = [logging.getLogger(n) for n in service_loggers]
+    was_disabled = [lg.disabled for lg in loggers]
+    for lg in loggers:
+        lg.disabled = False
+    level = root.level
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    try:
+        yield lambda: [json.loads(line) for line in stream.getvalue().splitlines()]
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(level)
+        for lg, flag in zip(loggers, was_disabled, strict=True):
+            lg.disabled = flag
+
+
+async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value():
+    marker = "MARKER-d41d8c"
+    with captured_logs("mcp_incidents") as lines:
+        async with Client(create_server(SETTINGS, backend())) as client:
+            bad_date = await client.call_tool(TOOL_NAME, {"start": marker, "end": "2024-01-31"})
+            bad_name = await client.call_tool(FIND_TECHNICIAN, {"name": f"{marker}%"})
+            both = await client.call_tool(
+                TOOL_NAME,
+                {
+                    "start": "2024-01-01",
+                    "end": "2024-01-31",
+                    "technician_id": 7,
+                    "group_by": "region",
+                },
+            )
+        logged = lines()
+    # The message names the rule, not the value: the MCP SDK logs it verbatim at INFO.
+    assert bad_date.is_error and "ISO date" in bad_date.content[0].text
+    assert bad_name.is_error and both.is_error
+    rejected = [line for line in logged if line["msg"] == "tool rejected input"]
+    assert {(r["tool"], r["argument"], r["error_type"]) for r in rejected} == {
+        (TOOL_NAME, "start", "not_iso_date"),
+        (FIND_TECHNICIAN, "name", "invalid_characters"),
+        (TOOL_NAME, "technician_id,group_by", "conflicting_arguments"),
+    }
+    assert all("error" not in r for r in rejected)
+    assert marker not in json.dumps(logged)

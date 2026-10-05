@@ -170,10 +170,10 @@ configuration, not from a question.
 | The Agent Card advertises names, descriptions and example questions only: no tool schemas, credentials or internal addresses beyond the agent's own URL. | Built | `card.py` in each agent. |
 | The orchestrator calls agents at fixed addresses from configuration (`AGENT_*_URL`), never discovered from input. | Built | `docker-compose.yml`, `config.py`; by search, no address is taken from a question or a model output. |
 | Specialist answers are validated against shared typed contracts on receipt, with numbers as typed values. | Built | `test_answer_that_breaks_the_contract_is_rejected`, `test_metric_answer_with_a_float_rate_is_rejected`, `test_numbers_for_an_unserved_week_are_rejected`. |
-| Network exposure under compose: only the orchestrator publishes a port; the agents and MCP servers are reachable only on the compose network; Postgres is published on loopback only. | Built | `test_only_orchestrator_publishes_a_port`; `docker-compose.yml` (`127.0.0.1:5432:5432`). |
+| Network exposure under compose: only the orchestrator and Postgres publish a port, and both bind `127.0.0.1` only (the orchestrator since 2026-10-04); the agents and MCP servers are reachable only on the compose network. | Built | `test_only_orchestrator_publishes_a_port`, `test_every_published_port_binds_loopback_only` (`tests/unit/test_compose_isolation.py`); `docker-compose.yml`. |
 | Per-hop timeouts that fit inside the 120-second ceiling. | Built | `test_timeouts_fit_inside_the_120s_ceiling`, `test_sentiment_timeouts_fit_inside_the_120s_ceiling`, `test_forecast_timeouts_fit_inside_the_120s_ceiling` (orchestrator tests). |
 | A single per-request deadline passed through every hop. | Planned, Sprint 4 | Sprint 4 planning note in `sprint-log.md`. |
-| **Authentication between services: none today.** No token, key or certificate is checked on any hop, and the compose network is the only boundary. The orchestrator's `/ask` is unauthenticated and is published as `8000:8000`, which binds every host interface by default, not only loopback. Whether another machine can reach it depends on the host firewall, which was not checked. Local development only. | Not built | Absence confirmed by search of `services/` and `packages/` for tokens, keys and auth dependencies (2026-10-04). |
+| **Authentication between services: none today.** No token, key or certificate is checked on any hop, and the compose network is the only boundary. The orchestrator's `/ask` is unauthenticated and spends the model quota, so it is published on loopback only (`127.0.0.1:8000`), reachable from the developer's machine and nothing else. Accepted for local development (L-59); IAM ID tokens and the gateway replace it in the deploy. | Not built; accepted locally | Absence confirmed by search of `services/` and `packages/` for tokens, keys and auth dependencies (2026-10-04). L-59. |
 | IAM ID tokens between services; per-peer agent identity. | Planned, Sprint 4 for the reporting slice (ADR-045), the rest in Sprint 5 | ADR-045; Sprint 4 and Sprint 5 items in `sprint-log.md`. |
 | Only the gateway reachable from the internet; requests without valid credentials rejected before any model call (NFR-2). | Planned, Sprint 5 | The gateway (`services/api_gateway`) is not built; the access mechanism is chosen in Sprint 5. |
 
@@ -187,6 +187,7 @@ on them (guarantee 2).
 |---|---|---|
 | Customer comments are untrusted and are never sent to a language model. They reach only the fine-tuned classifier, whose output is one of four labels, and answers are rendered from templates (guarantee 9; ADR-046, ADR-068). | Built | `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`; `test_examples_are_quoted_verbatim_with_label_and_confidence`; compose gives `mcp_feedback` no model key (`test_mcp_feedback_holds_no_model_key_or_setting`). |
 | QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Planned, Sprint 4 | Sprint 4 planning note and guarantee 9 above. The QA agent (`services/agent_qa`) is not built. |
+| The question is rendered into the prompt as data: one pass, values inserted literally, so template-looking text can't raise or be rewritten. | Built (2026-10-04) | `tests/unit/test_prompt_rendering.py`; the per-service `test_*template_syntax*` tests named below. |
 | The question is delimited in every routing and parsing prompt and declared data, not instructions; it is limited to 2,000 characters. | Built | All ten prompt files (`route_v1` to `route_v5`, `parse_v1` to `parse_v3`, and the sentiment and forecast `parse_v1`) carry the line; `AskRequest` (`max_length=2000`). No test asserts the prompt line. |
 | Model output is structured and validated: the call sets the response schema from the typed model, the reply is parsed against it, and an invalid reply fails with no repair and no default route or range. | Built | `packages/llm` `transport.py` and `client.py`; `test_invalid_parse_output_fails_and_never_guesses_a_range`, `test_unclear_question_asks_to_rephrase`. |
 | No tools are exposed to a model, and automatic function calling is disabled. The agent's code picks the tool from the parsed metric (ADR-046). | Built | `packages/llm` `transport.py` (`automatic_function_calling` disabled); `test_each_metric_calls_its_own_tool`. |
@@ -205,11 +206,18 @@ text (React escapes text by default; the interface is not built, so this is a re
 not a control). Until the QA agent exists (Sprint 4), nothing checks that a wrong route or
 parameter was caught.
 
-**Known gap: a question containing `{{...}}` fails.** Prompt rendering raises when a question
-brings text that looks like an unfilled placeholder (for example `{{secret}}`). Observed
-2026-10-04: the orchestrator returns HTTP 500 with a generic message, before any model call.
-It fails closed and reveals nothing, but the exception is unhandled and no test covers it. The
-specialists render their parse prompts through the same code and were not tested.
+**A question is data, not template syntax.** Until 2026-10-04 a question containing text
+such as `{{secret}}` made prompt rendering raise, and the orchestrator returned an unhandled
+HTTP 500 before any model call; a question containing `{{as_of}}` was silently rewritten. It
+failed closed and revealed nothing, but it was an unhandled error on user input. Fixed: the
+shared renderer fills the template in one pass and inserts values literally, never rescanning
+them, so `{{x}}`, `{0}` and `}}{{` reach the model unchanged. Every ordinary render is
+unchanged (1,128 renders across 141 evaluation questions, identical before and after).
+Evidence: `tests/unit/test_prompt_rendering.py` (the legacy algorithm kept as a reference),
+`test_router_sends_template_syntax_in_a_question_unchanged` and
+`test_template_syntax_in_a_question_is_a_normal_response_not_a_500` (orchestrator), and
+`test_parse_sends_template_syntax_in_a_question_unchanged` (reporting, sentiment and forecast
+agents).
 
 ### 4. Secrets
 
@@ -240,28 +248,32 @@ root logger, so SDK loggers use it too (`packages/common/src/common/logging.py`)
 | Trace id on web-server access-log lines. | Planned, Sprint 4 | Sprint 4 item in `sprint-log.md`. Access lines are written through the same formatter today, without a trace id. |
 
 **What the code logs about user text** (read from all 54 log calls in `services/` and
-`packages/`, 2026-10-04):
+`packages/` on 2026-10-04, and changed the same day where noted):
 
 - **Never logged:** the question text; any prompt; any model reply other than the router's
   `reason`; any customer comment (`feedback_text`); any contact data (no code path reads
   `contacts`); the model key; database passwords.
-- **Logged, derived from the question:**
+- **Fixed 2026-10-04.** A technician lookup that finds no one, or several, logs the match count
+  and the technician ids, not the name as typed or the matching display names (the answer text
+  is unchanged). A rejected tool argument logs its name and the kind of error (for example
+  `start` and `not_iso_date`), not its value, and the tool's error message no longer echoes the
+  value either, because the MCP SDK logs that message itself. Evidence:
+  `test_technician_lookup_failures_log_counts_and_ids_not_names`,
+  `test_a_name_the_lookup_rejects_is_logged_without_the_name` (reporting agent) and
+  `test_rejected_arguments_are_logged_by_name_and_kind_never_by_value` (each MCP server), which
+  search every log line, SDK loggers included, for the rejected value.
+- **Still logged, derived from the question:**
   1. The router's `reason`: model-written, up to 300 characters, and it may paraphrase the
      question (`"route decision"`).
-  2. Failure reasons. Each specialist's `"task failed"` line and the orchestrator's
-     `"agent task failed"` line carry the user-facing text. In the reporting agent, a technician
-     name that matches no one is logged as typed (`No technician matches <name>.`), and an
-     ambiguous name logs the matching staff display names. The orchestrator returns before
-     logging those two codes, so only the reporting agent's log has them. The parse step logs
-     only whether a technician was named, not the name.
-  3. `"tool rejected input"` lines echo the offending argument (for example a malformed date
-     string), whatever its length.
-  4. Tracebacks from `log.exception` go into the `exc` field in full. The formatter does no
-     redaction of its own (redaction exists only for model-provider error bodies). The queries
-     bind ids, dates, labels and numbers, never comment text or contact data, so a database error
-     does not carry them; other exceptions were not audited for what their messages contain.
-- **Staff names are logged** in items 2 above. They are synthetic here; in a real deployment
-  they would be personal data, and the logging would need review.
+  2. Failure texts for other codes (`"task failed"`, `"agent task failed"`). They are fixed text,
+     except `invalid_range`, which carries the dates the model read from the question.
+  3. Tracebacks from `log.exception` go into the `exc` field in full and are **unredacted**:
+     the formatter does no redaction of its own (redaction exists only for model-provider error
+     bodies). The queries bind ids, dates, labels and numbers, never comment text or contact
+     data, so a database error does not carry them; other exceptions were not audited for what
+     their messages contain.
+- **Staff names:** no longer logged. They are synthetic here; in a real deployment they would be
+  personal data, and any logging of them would need review.
 
 ### Earlier to-do list, closed
 

@@ -222,7 +222,18 @@ class ReportingExecutor(AgentExecutor):
                     return
                 reply = technician_reply(matches)
                 if reply is not None:
-                    await self._fail(updater, task.id, *reply)
+                    # The log gets the count and the ids, never the typed name or a display
+                    # name; the answer text, which holds them, is unchanged.
+                    await self._fail(
+                        updater,
+                        task.id,
+                        *reply,
+                        log_reason=False,
+                        log_extra={
+                            "total_matches": matches.total_matches,
+                            "technician_ids": [m.technician_id for m in matches.matches],
+                        },
+                    )
                     return
                 arguments["technician_id"] = matches.matches[0].technician_id
 
@@ -280,7 +291,12 @@ class ReportingExecutor(AgentExecutor):
                 # The name has characters no display name has (the tool rejects patterns).
                 name = arguments["name"]
                 await self._fail(
-                    updater, task_id, "technician_not_found", f"No technician matches {name}."
+                    updater,
+                    task_id,
+                    "technician_not_found",
+                    f"No technician matches {name}.",
+                    log_reason=False,
+                    log_extra={"total_matches": 0, "technician_ids": [], "name_rejected": True},
                 )
             else:  # the tool rejected the range: its message is written for users
                 await self._fail(
@@ -297,8 +313,22 @@ class ReportingExecutor(AgentExecutor):
             )
         return None
 
-    async def _fail(self, updater: TaskUpdater, task_id: str, code: str, reason: str) -> None:
-        log.warning("task failed", extra={"task_id": task_id, "code": code, "reason": reason})
+    async def _fail(
+        self,
+        updater: TaskUpdater,
+        task_id: str,
+        code: str,
+        reason: str,
+        *,
+        log_reason: bool = True,
+        log_extra: dict | None = None,
+    ) -> None:
+        """End the task failed. `reason` is the user-facing text; it is logged only when it
+        holds nothing from the question (`log_reason`), with `log_extra` standing in."""
+        fields = {"task_id": task_id, "code": code} | (log_extra or {})
+        if log_reason:
+            fields["reason"] = reason
+        log.warning("task failed", extra=fields)
         await updater.failed(
             updater.new_agent_message([new_text_part(reason)], metadata={"error_code": code})
         )

@@ -146,8 +146,11 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         version="0.2.0",
     )
 
-    def reject(tool: str, message: str) -> ToolError:
-        log.info("tool rejected input", extra={"tool": tool, "error": message})
+    def reject(tool: str, message: str, argument: str, kind: str) -> ToolError:
+        # The log records which argument was rejected and why, never its value.
+        log.info(
+            "tool rejected input", extra={"tool": tool, "argument": argument, "error_type": kind}
+        )
         return ToolError(message)
 
     async def call_backend(tool: str, call: Callable, *args) -> Any:
@@ -157,7 +160,7 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         try:
             return await anyio.to_thread.run_sync(call, *args)
         except InvalidArgument as exc:
-            raise reject(tool, str(exc)) from None
+            raise reject(tool, str(exc), exc.argument, exc.kind) from None
         except Exception:
             log.exception("tool query failed", extra={"tool": tool})
             raise ToolError("incident query failed") from None
@@ -179,9 +182,14 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
             try:
                 s, e = parse_date_range(start, end, settings.window_start, settings.window_end)
             except InvalidRange as exc:
-                raise reject(tool, str(exc)) from None
+                raise reject(tool, str(exc), exc.argument, exc.kind) from None
             if group_by is not None and technician_id is not None:
-                raise reject(tool, "a technician filter cannot be combined with group_by")
+                raise reject(
+                    tool,
+                    "a technician filter cannot be combined with group_by",
+                    "technician_id,group_by",
+                    "conflicting_arguments",
+                )
             began = time.perf_counter()
             args = (group_by, technician_id) if filtered else (group_by,)
             result = await call_backend(tool, call, s, e, *args)

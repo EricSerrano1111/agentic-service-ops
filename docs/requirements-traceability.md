@@ -1,21 +1,23 @@
 # Requirements Traceability — Agentic Service Operations Intelligence Platform
 
-*As of 2026-10-04 (Sprint 3 close). Re-checked at every sprint close.*
+*As of 2026-10-04 (Sprint 3 close), updated the same day after the pre-Sprint-4 fixes. Re-checked at every sprint close.*
 
 One row per functional requirement (FR-01 to FR-22) and non-functional requirement (NFR-1 to NFR-5)
 in `docs/academic/02-requirements-analysis.md`. Requirements are paraphrased.
 
 **Status.** *Met*: evidence that exists today (a passing test, an evaluation result or an
 end-to-end record); a design document alone is not evidence. *Partly met*: some of it is built.
-*Not yet built (Sprint N)*: the plan puts it in that sprint. *Open*: not met, and no sprint
-covers it, or it was attempted and failed.
+*Not yet built (Sprint N)*: the plan puts it in that sprint. *Open*: attempted and failed, or
+not met and covered by no sprint. *Optional, not planned (MVP: No)*: deliberately excluded and
+not scheduled.
 
 | Status | Count |
 |---|---|
 | met | 12 |
 | partly met | 5 |
 | not yet built | 6 |
-| open | 4 |
+| open | 1 |
+| optional, not planned (MVP: No) | 3 |
 | Total | 27 (22 FR, 5 NFR) |
 
 ## Unrecorded gaps
@@ -23,24 +25,14 @@ covers it, or it was attempted and failed.
 Requirements that are partly met or open, where this gap has no ADR or limitation recording it.
 Listed, not fixed.
 
-1. **NFR-4, circuit breaking.** `02` requires circuit breakers on calls between agents, and the
-   production-readiness checklist in `docs/architecture.md` lists them unticked, citing ADR-034, which
-   decides only the 120-second ceiling and does not mention circuit breaking. No circuit breaker
-   exists in `services/` or `packages/` (a search for "circuit" finds nothing), no sprint item builds
-   it, and no ADR or limitation records it. Sprint 6 audits the checklist and has a
-   graceful-degradation item, which is not the same thing.
-2. **NFR-2, three findings from the 2026-10-04 code review of the security model.** Each is recorded
-   only in `docs/security-model.md`, which is not an ADR or a limitation:
-   - No authentication between services, and the orchestrator's `/ask` is published on every host
-     interface unauthenticated (compose `8000:8000`). ADR-045 plans IAM tokens for the Sprint 4
-     deploy; the present local exposure is not recorded as a limitation. Evidence: security-model
-     section 2.
-   - A question containing `{{...}}` makes prompt rendering raise, and the orchestrator returns an
-     unhandled HTTP 500 before any model call. Evidence: security-model section 3 (observed
-     2026-10-04); no test covers it.
-   - The logs carry user-derived text: the router's model-written `reason`, technician names as
-     typed, matching staff display names, and echoed rejected arguments. Evidence: security-model
-     section 5, from reading all 54 logging calls.
+1. **NFR-2, the logs still carry the router's model-written `reason` and unredacted tracebacks.**
+   The `reason` is up to 300 characters and may paraphrase the question. Recorded only in
+   `docs/security-model.md`, section 5, which is not an ADR or a limitation.
+
+Resolved since the 2026-10-04 review: circuit breaking is decided in ADR-077 (Sprint 4); the
+unauthenticated hops are accepted locally in L-59, with every published port now bound to
+`127.0.0.1`; the `{{...}}` failure and the logged technician names and rejected argument values
+are fixed in the `fix/pre-sprint4-hardening` change set.
 
 ## Matrix
 
@@ -65,11 +57,11 @@ Listed, not fixed.
 | FR-17 | The sentiment agent cannot read the star rating. | Yes | met | `test_sentiment_cannot_read_rating` (`test_access_matrix_grants.py`); ADR-027. |  |
 | FR-18 | Generate a synthetic dataset from documented, reproducible parameters. | Yes | met | `test_full_scale_is_deterministic`, `test_reduced_scale_is_deterministic` (`tests/unit/test_generate.py`); the `integration` job in `.github/workflows/ci.yml` generates and loads it on every run; `data/generator/validation/`. | 20,230 service requests and 7,521 feedback responses. |
 | FR-19 | Web interface: enter a question; see the answer, QA status, escalation flag. | Yes | not yet built (Sprint 5) | `web/` and `services/api_gateway` hold only `.gitkeep`; Sprint 5 item in `sprint-log.md`. | Needs QA status (Sprint 4) to show. |
-| FR-20 | Multi-turn conversational follow-up. | No | open | ADR-031 (single-shot is the committed scope). | MVP: No. No sprint plans it. |
-| FR-21 | Route one question to several specialists and merge their answers. | No | open | ADR-032 (detect and split instead; FR-04). | MVP: No. No sprint plans it. |
-| FR-22 | Research agent that pulls external web data. | No | open | ADR-002 (research agent cut). | MVP: No. No sprint plans it. |
+| FR-20 | Multi-turn conversational follow-up. | No | optional, not planned (MVP: No) | ADR-031 (single-shot is the committed scope). | MVP: No. Optional; not planned in any sprint. |
+| FR-21 | Route one question to several specialists and merge their answers. | No | optional, not planned (MVP: No) | ADR-032 (detect and split instead; FR-04). | MVP: No. Optional; not planned in any sprint. |
+| FR-22 | Research agent that pulls external web data. | No | optional, not planned (MVP: No) | ADR-002 (research agent cut). | MVP: No. Optional; not planned in any sprint. |
 | NFR-1 | Performance: no request exceeds 120 seconds; degrade with warning and flag. | Yes | partly met | Per-hop timeouts: `test_timeouts_fit_inside_the_120s_ceiling`, `test_sentiment_timeouts_fit_inside_the_120s_ceiling`, `test_forecast_timeouts_fit_inside_the_120s_ceiling`; observed wall times of 1.5 to 3.6 s in the three e2e records. | No single per-request deadline yet and no degraded result (Sprint 4; ADR-034, planning note in `sprint-log.md`). Response time and token cost per request type are measured in Sprint 6. |
-| NFR-2 | Security in layers: narrow tools, roles, secrets, injection defences, logging, access control. | Yes | partly met | `docs/security-model.md` (every control marked built or planned, with evidence); `tests/unit/test_compose_isolation.py`; `tests/integration/test_access_matrix_grants.py`. | Built: tools, roles, local secrets handling, structural injection defences, trace-id logging. Planned: Secret Manager and IAM tokens (Sprint 4, ADR-045), gateway and access control (Sprint 5), QA's injection-safe interpretation call (Sprint 4). See Unrecorded gaps. |
+| NFR-2 | Security in layers: narrow tools, roles, secrets, injection defences, logging, access control. | Yes | partly met | `docs/security-model.md` (every control marked built or planned, with evidence); `tests/unit/test_compose_isolation.py` (`test_every_published_port_binds_loopback_only`); `tests/integration/test_access_matrix_grants.py`; `tests/unit/test_prompt_rendering.py`; `test_technician_lookup_failures_log_counts_and_ids_not_names`. | Built: tools, roles, local secrets handling, structural injection defences, trace-id logging. Planned: Secret Manager and IAM tokens (Sprint 4, ADR-045), gateway and access control (Sprint 5), QA's injection-safe interpretation call (Sprint 4). The 2026-10-04 review findings were fixed in the `fix/pre-sprint4-hardening` change set (loopback-only ports with L-59, template rendering, log contents); one remains (see Unrecorded gaps). |
 | NFR-3 | Scalability: each service scales independently; back off and say 'try again later'. | Yes | partly met | `test_llm_failures_end_in_coded_failed_task`, `test_rate_limited_carries_retry_guidance`; `tests/unit/test_llm_client.py`; the full 20,230-request dataset loads in CI and is queried by the integration suite. | Rate-limit handling is built. Independent Cloud Run services are not deployed yet (Sprint 4 for the reporting slice, Sprint 5 for the rest; ADR-045). |
-| NFR-4 | Availability: health and readiness checks, timeouts, circuit breakers, degrade by domain. | Yes | partly met | `/healthz` on every service; `test_agent_transport_errors`, `test_unreachable_sentiment_agent_gets_the_existing_failure_handling`, `test_unreachable_forecast_agent_gets_the_existing_failure_handling` (an unavailable agent is named in the error). | No circuit breaking anywhere in the code (see Unrecorded gaps). Readiness probes are a Sprint 4 item; graceful degradation tested by stopping each specialist is a Sprint 6 item. |
+| NFR-4 | Availability: health and readiness checks, timeouts, circuit breakers, degrade by domain. | Yes | partly met | `/healthz` on every service; `test_agent_transport_errors`, `test_unreachable_sentiment_agent_gets_the_existing_failure_handling`, `test_unreachable_forecast_agent_gets_the_existing_failure_handling` (an unavailable agent is named in the error). Circuit breaking: ADR-077 (Sprint 4). | No circuit breaking in the code yet: decided in ADR-077, built in Sprint 4 with the per-request deadline. Readiness probes are a Sprint 4 item; graceful degradation tested by stopping each specialist is a Sprint 6 item. |
 | NFR-5 | Ethics: synthetic data, no PII to agents, QA status shown, limits stated. | Yes | partly met | Synthetic data (FR-18); no PII to agents (FR-15); review flags in sentiment answers (`test_answer_figures_match_independent_sql`); `docs/evaluation-report.md` limitations log. | 'Every answer shows its QA status' and escalation of verification failures need the QA agent (Sprint 4) and the interface (Sprint 5). |

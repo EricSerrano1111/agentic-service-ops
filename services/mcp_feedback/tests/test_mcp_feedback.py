@@ -7,15 +7,19 @@ The SQL store is covered against Postgres by tests/integration/test_mcp_feedback
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import hashlib
+import io
 import json
+import logging
 from collections.abc import Sequence
 from pathlib import Path
 from typing import get_args
 
 import numpy as np
 import pytest
+from common import JsonFormatter
 from db_models import Region, TrueSentiment, values
 from mcp import Client
 from mcp_feedback.artifact import ArtifactIntegrityError, load_verified
@@ -461,3 +465,53 @@ def test_threads_follow_the_cgroup_quota_not_the_host(tmp_path, cpu_max, expecte
     (tmp_path / "cpu.max").write_text(cpu_max)
     host = os.cpu_count() or 1
     assert container_cpus(tmp_path) == (min(host, expected) if expected else host)
+
+
+@contextlib.contextmanager
+def captured_logs(*service_loggers: str):
+    """Every log line written inside the block, from any logger (SDK loggers included), as
+    parsed JSON. Re-enables the service loggers an earlier Alembic `fileConfig` may have
+    disabled."""
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(JsonFormatter("test"))
+    root = logging.getLogger()
+    loggers = [logging.getLogger(n) for n in service_loggers]
+    was_disabled = [lg.disabled for lg in loggers]
+    for lg in loggers:
+        lg.disabled = False
+    level = root.level
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    try:
+        yield lambda: [json.loads(line) for line in stream.getvalue().splitlines()]
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(level)
+        for lg, flag in zip(loggers, was_disabled, strict=True):
+            lg.disabled = flag
+
+
+async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value():
+    marker = "MARKER-d41d8c"
+    with captured_logs("mcp_feedback") as lines:
+        async with Client(
+            create_server(SETTINGS, backend(MemoryStore(comments(3)), StubClassifier()))
+        ) as client:
+            bad_date = await client.call_tool(SUMMARY, {"start": marker, "end": "2026-01-31"})
+            span = await client.call_tool(SUMMARY, {"start": "2023-09-04", "end": "2026-08-30"})
+            bad_region = await client.call_tool(
+                SUMMARY, {"start": "2026-01-01", "end": "2026-01-31", "region": marker}
+            )
+        logged = lines()
+    assert bad_date.is_error and "ISO date" in bad_date.content[0].text
+    assert span.is_error and bad_region.is_error
+    rejected = [line for line in logged if line["msg"] == "tool rejected input"]
+    assert (SUMMARY, "start", "not_iso_date") in {
+        (r["tool"], r["argument"], r["error_type"]) for r in rejected
+    }
+    assert (SUMMARY, "start,end", "span_too_long") in {
+        (r["tool"], r["argument"], r["error_type"]) for r in rejected
+    }
+    assert all("error" not in r for r in rejected)
+    assert marker not in json.dumps(logged)  # including the SDK's own validation of `region`

@@ -8,6 +8,7 @@ replaced. The live hops are covered by the e2e tests.
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import io
 import json
@@ -248,6 +249,17 @@ def test_card_advertises_one_skill():
     card = build_agent_card(SETTINGS.public_url)
     assert [s.id for s in card.skills] == [SKILL_ID]
     assert "date range" in card.skills[0].name
+
+
+def test_card_describes_what_the_agent_does():
+    """Rates, breakdowns, the technician filter and repeat-visit drivers (ADR-073). The
+    card is not read into any prompt, so describing it accurately changes no routing."""
+    card = build_agent_card(SETTINGS.public_url)
+    text = (card.description + " " + card.skills[0].description).lower()
+    for phrase in ("incident rate", "sla compliance", "first-time fix", "technician", "repeat"):
+        assert phrase in text, phrase
+    assert "by severity" in text and "region" in text
+    assert len(card.skills[0].examples) >= 3
 
 
 def test_card_advertises_only_the_minimal_subset():
@@ -965,3 +977,110 @@ def test_prompt_json_template_keys_follow_the_schema_property_order():
     )
     keys = re.findall(r'"(\w+)":', template)
     assert keys == list(ReportingRequest.model_json_schema()["properties"])
+
+
+#: Questions that look like template syntax. The question is data: it renders without
+#: error and reaches the model client unchanged (security-model.md, section 3).
+TEMPLATE_SYNTAX_QUESTIONS = [
+    "what is {{x}}?",
+    "show {0} incidents",
+    "odd }}{{ braces",
+    "{{as_of}} and {{question}} and {1} and {name}",
+]
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("question", TEMPLATE_SYNTAX_QUESTIONS)
+async def test_parse_sends_template_syntax_in_a_question_unchanged(question):
+    from agent_reporting.parsing import Parser
+
+    llm = FakeLLM(req(start=JULY[0], end=JULY[1]))
+    await Parser(llm, AS_OF).parse(question, trace_id="t-syntax")
+    [prompt] = llm.prompts
+    assert f"<question>\n{question}\n</question>" in prompt
+    assert prompt.count(question) == 1
+
+
+@contextlib.contextmanager
+def captured_logs(*service_loggers: str):
+    """Every log line written inside the block, from any logger (SDK loggers included), as
+    parsed JSON. Re-enables the service loggers an earlier Alembic `fileConfig` may have
+    disabled."""
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(JsonFormatter("test"))
+    root = logging.getLogger()
+    loggers = [logging.getLogger(n) for n in service_loggers]
+    was_disabled = [lg.disabled for lg in loggers]
+    for lg in loggers:
+        lg.disabled = False
+    level = root.level
+    # As `configure_logging` does in the services: the card resolver logs the whole Agent
+    # Card (examples included) at INFO on every fetch.
+    card_logger = logging.getLogger("a2a.client.card_resolver")
+    card_level = card_logger.level
+    card_logger.setLevel(logging.WARNING)
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    try:
+        yield lambda: [json.loads(line) for line in stream.getvalue().splitlines()]
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(level)
+        card_logger.setLevel(card_level)
+        for lg, flag in zip(loggers, was_disabled, strict=True):
+            lg.disabled = flag
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("name", "code", "total", "ids", "answer"),
+    [
+        ("Dave", "technician_not_found", 0, [], "No technician matches Dave."),
+        (
+            "Priya",
+            "technician_ambiguous",
+            2,
+            [7, 8],
+            "2 technicians match Priya: Priya Kim and Priya Castillo. "
+            "Please ask again with the full name.",
+        ),
+    ],
+)
+async def test_technician_lookup_failures_log_counts_and_ids_not_names(
+    mcp_calls, name, code, total, ids, answer
+):
+    question = "how is MARKER-Q7 doing on SLA?"
+    with captured_logs("agent_reporting") as lines:
+        task = await _send(
+            create_app(SETTINGS, FakeLLM(req("sla_compliance", technician_name=name))),
+            text=question,
+            trace_id="t-names",
+        )
+        logged = lines()
+    assert _failure(task) == (code, answer)  # the answer text is unchanged
+    [failed] = [x for x in logged if x["msg"] == "task failed"]
+    assert (failed["code"], failed["total_matches"], failed["technician_ids"]) == (code, total, ids)
+    assert "reason" not in failed and failed["trace_id"] == "t-names"
+    text = json.dumps(logged)
+    for forbidden in (name, "Priya Kim", "Priya Castillo", "Kim", "Castillo", "MARKER-Q7"):
+        assert forbidden not in text, forbidden
+
+
+@pytest.mark.anyio
+async def test_a_name_the_lookup_rejects_is_logged_without_the_name(monkeypatch):
+    async def rejects(*args, **kwargs):
+        raise McpToolError(
+            "name must be 1 to 100 characters ... wildcards and patterns are not accepted"
+        )
+
+    monkeypatch.setattr(executor_mod, "call_tool", rejects)
+    with captured_logs("agent_reporting") as lines:
+        task = await _send(
+            create_app(SETTINGS, FakeLLM(req("sla_compliance", technician_name="ZedMARKER%")))
+        )
+        logged = lines()
+    assert _failure(task) == ("technician_not_found", "No technician matches ZedMARKER%.")
+    [failed] = [x for x in logged if x["msg"] == "task failed"]
+    assert failed["total_matches"] == 0 and failed["name_rejected"] is True
+    assert "ZedMARKER" not in json.dumps(logged)

@@ -9,11 +9,13 @@ always be traced to the exact prompt text that produced it.
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
 
 PLACEHOLDER_OPEN, PLACEHOLDER_CLOSE = "{{", "}}"
+_PLACEHOLDER = re.compile(r"\{\{(\w+)\}\}")
 
 
 @dataclass(frozen=True)
@@ -28,17 +30,27 @@ class Prompt:
         return cls(path.stem, hashlib.sha256(text.encode()).hexdigest()[:12], text)
 
     def render(self, **values: str) -> str:
-        """Fill `{{name}}` placeholders. Every placeholder must be given, and no other."""
-        out = self.text
-        for name, value in values.items():
-            token = f"{PLACEHOLDER_OPEN}{name}{PLACEHOLDER_CLOSE}"
-            if token not in out:
-                raise KeyError(f"{self.version} has no placeholder {token}")
-            out = out.replace(token, value)
-        if PLACEHOLDER_OPEN in out:
-            start = out.index(PLACEHOLDER_OPEN)
-            raise KeyError(f"{self.version} left unfilled: {out[start : start + 30]!r}")
-        return out
+        """Fill `{{name}}` placeholders. Every placeholder must be given, and no other.
+
+        The template alone decides what a placeholder is, and it is filled in one pass:
+        values are inserted literally and never rescanned. User text (a question holding
+        `{{x}}`, `{0}` or `}}{{`) is therefore data, not template syntax: it can't raise,
+        and it can't be changed by a later substitution. For a value without `{{` the result
+        is what the earlier fill-then-check algorithm produced.
+        """
+        names = set(_PLACEHOLDER.findall(self.text))
+        for name in values:
+            if name not in names:
+                raise KeyError(
+                    f"{self.version} has no placeholder {PLACEHOLDER_OPEN}{name}{PLACEHOLDER_CLOSE}"
+                )
+        start = self.text.find(PLACEHOLDER_OPEN)
+        while start != -1:
+            m = _PLACEHOLDER.match(self.text, start)
+            if m is None or m.group(1) not in values:  # a stray `{{`, or a name not given
+                raise KeyError(f"{self.version} left unfilled: {self.text[start : start + 30]!r}")
+            start = self.text.find(PLACEHOLDER_OPEN, m.end())
+        return _PLACEHOLDER.sub(lambda m: values[m.group(1)], self.text)
 
 
 def load_prompt(package: str, name: str, source_file: str) -> Prompt:
