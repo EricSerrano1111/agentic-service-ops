@@ -280,6 +280,9 @@ above.
 *2026-10-02: met, pulled forward. Reporting, sentiment and forecast each answer end to
 end through the orchestrator, and the forecast beats seasonal naive on the headline
 holdout (total MAPE 8.81% against 14.80%; ADR-069).*
+*2026-10-04: Sprint 3 closed, 8 days before its formal start (2026-10-12). Everything
+shipped below was merged 2026-10-01 to 10-04. Open: FR-03 (carried to Sprint 5) and the
+`05` draft (carried to Sprint 4).*
 
 **Planned:**
 - [x] MCP servers #2 and #3 (feedback, volume)
@@ -420,28 +423,93 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   type, technician with an "unattributed" group, incident type, severity), highest first,
   cap 25 (ADR-073; data dictionary §6). Figures match `app_eval` SQL in the integration
   suite. L-06 resolved.*
-- [ ] Fill `docs/security-model.md` while drafting `04`
+- [x] Fill `docs/security-model.md` while drafting `04`
   *2026-09-30: seeded from data-dictionary §7: the four access guarantees and the threat-model paragraph. MCP/A2A controls, prompt injection, secrets and logging still to write.*
+  *2026-10-04: completed at the Sprint 3 close: MCP controls, A2A and service-to-service, prompt injection, secrets and logging, each control marked built (with its test or file) or planned (with its sprint). The code review found gaps that are recorded in the file rather than fixed: no authentication between services today and the orchestrator published on all host interfaces, a question containing `{{...}}` returning HTTP 500, and the logs carrying the router's `reason`, typed technician names and echoed rejected arguments.*
 - [ ] Draft `05-test-scenarios.md` in week 2 (2026-10-19 to 10-25)
+  *2026-10-04: carried to Sprint 4. Sprint 3 closed early, so this is not late: `05` is due
+  2026-11-01.*
 
 **Shipped:**
-*(fill in at sprint end)*
+
+**Goal:** met 2026-10-02 (pulled forward); sprint closed 2026-10-04. The work ran 2026-10-01
+to 10-04, so PRs #11 to #23 all merged before the sprint's formal start on 2026-10-12.
+Dates are local (US Central).
+
+Offline roles:
+- PR #11 (2026-10-01), offline read roles `app_eval` and `app_train`; gold labels leave `app_qa` (ADR-063).
+
+Sentiment:
+- PR #12 (2026-10-01), split v1 committed before training; TF-IDF baseline, diagnostic floors and the scorer (ADR-064; L-26).
+- PR #13 (2026-10-01), BERT protocol pre-registered; CPU torch, pinned model, latency proxy (ADR-065; L-28, L-29).
+- PR #14 (2026-10-01), `bert_v1`: temperature scaling and review threshold fitted on validation; test macro-F1 0.9713 against 0.9431 for TF-IDF (ADR-066; L-30 to L-32).
+- PR #15 (2026-10-01), stored predictions: `sentiment_predictions`, `mcp_feedback` (`get_sentiment_summary`, `get_feedback_examples`), on-demand scoring capped at 250, all 7,521 comments backfilled (ADR-067; L-35, L-36).
+- PR #16 (2026-10-01), sentiment agent: one parse call, template answers, the two-proportion trend rule; parse set 13/14 in each of 3 runs (ADR-068; L-38).
+
+Forecast:
+- PR #17 (2026-10-02), forecast model: protocol pre-registered; `volume_v1` failed the first gate on the total in two bands; the gate was corrected and a year-end indicator added (`volume_v2`) after the fold results and before the holdout; holdout total MAPE 8.81% against 14.80% for seasonal naive; serving requires passing on fold B and the holdout (ADR-069, ADR-070, ADR-071; L-41, L-42, L-44).
+- PR #18 (2026-10-02), `mcp_volume` and the forecast agent: numbers only for served slice-bands, track record shown, future periods only; prediction code moved to `packages/forecast_runtime`; parse set 14/14 in each of 3 runs (ADR-072; L-48 to L-50).
+
+Reporting additions:
+- PR #19 (2026-10-02), incident counts by six breakdowns, `find_technician` and the single-technician filter, repeat-visit drivers with a significance rule, `parse_v3`; parse set 15/16 in each of 3 runs after the key-order fix (ADR-073; L-06 resolved; L-51 to L-53).
+
+Golden set:
+- PR #20 (2026-10-02), golden set v1: 36 questions (10 owner-written), independent oracles, hashed manifest; blind until Sprint 5 (ADR-074; L-54 to L-56).
+
+FR-03 attempt (failed; `route_v3` remains the default):
+- PR #22 (2026-10-03), the `ambiguous` route (`route_v4`, `route_v5`), `AskResponse.reason`, relabelled routing sets, `golden_v2`; failed its pre-registered gate (ADR-075; L-57, L-58).
+- PR #23 (2026-10-04), corrected gate (3 `route_v3` runs) confirmed on a fresh owner-written set; passed (a), (b1), (b2), failed (c) with 3 of 5 ambiguous questions recognised; FR-03 stays open (ADR-076; L-58).
+
+Academic:
+- PR #21 (2026-10-04), `04` design document updated to the Sprint 3 state, with the open FR-03 gap disclosed (no ADR).
+
+Closing PR (2026-10-04): Sprint 3 closed in `sprint-log.md`; `docs/security-model.md` completed, with each control marked built or planned; `docs/requirements-traceability.md` added (27 requirements: 12 met, 5 partly met, 6 not yet built, 4 open; unrecorded gaps listed at the top).
 
 **Carried over:**
-*(fill in at sprint end)*
+- FR-03 (ambiguous questions not force-routed) to Sprint 5: open, with a Sprint 5 item (L-58, ADR-075, ADR-076). Any reattempt needs a new owner-written fresh set, because `fr03_fresh_v1` has been used.
+- The `05` draft to Sprint 4. Sprint 3 closed early, so it is not late: `05` is due 2026-11-01. Its scenarios include the FR-03 known-failing scenario.
 
 **Blockers encountered:**
-*(fill in at sprint end)*
+Factual; each is recorded elsewhere in the logs.
+- The first forecast gate (ADR-069, pre-registered) failed `volume_v1` on the total in two bands. The flaw was in the gate (a 4-week band cannot separate two forecasters at about 10% weekly noise); it was corrected after the fold results and before the holdout, and the original verdicts are kept (ADR-070; L-41, L-42).
+- `parse_v3` lost every date to a key-order clash between the request model and the prompt template. The first k=3 parse run scored 0, 1 and 0 of 16, spent 48 calls, and its results file was lost to a console-encoding crash in the runner; found with a two-item diagnostic (L-51).
+- The response contract had no `reason` field, so the golden set's G01 and G16 expected technician codes the API never returned. Fixed in ADR-075 and `golden_v2`.
+- Two FR-03 gates failed: ADR-075's (`route_v4` flagged a clear question as ambiguous; `route_v5` dropped below the accuracy floor in one run) and ADR-076's corrected gate (3 of 5 fresh ambiguous questions recognised). ADR-075's gate also broke ADR-054's rule that routing evals report 3 runs.
+- One Claude Code session limit was hit mid-evaluation (2026-10-03); no data was lost.
 
 **Retro:**
+*Written 2026-10-04, at close.*
+
 - What went well:
+  - *(Assistant-observed)* Pre-registered gates on held-out data caught problems that
+    development data hid. The forecast gate and the year-end miss (the 2025 Christmas week,
+    52% over) surfaced from the fold results before the holdout was scored. `route_v5` passed
+    on the v2 sets it had been revised against, then recognised only 3 of 5 on questions it
+    had never seen: it had learned the examples, not the concept.
+
 - What didn't:
+  1. *(Owner)* "The 04 design document drifted from actual development as problems and needed changes arose."
+  2. *(Assistant-observed)* FR-03 diverged from a committed MVP requirement in Sprint 2.
+     Nothing traced requirements to code, so it surfaced only when the `04` update described
+     the system accurately.
+  3. *(Assistant-observed)* ADR-075's gate broke ADR-054's k=3 rule, and the golden set's
+     expected outputs were written without checking the response contract.
+
 - What changes next sprint:
+  1. The requirements traceability matrix (`docs/requirements-traceability.md`) is re-checked
+     at every sprint close.
+  2. Before any academic deliverable is submitted, check its claims against the built system
+     and record any divergence. After submission, divergences are recorded in the sprint log
+     and carried to the evaluation report, never silently.
+  3. Every gate cites the evaluation rules it must satisfy, and a reviewer checks it against
+     them before any run.
 
 **Academic deliverable status:**
-- `03-planning-management.md` (due 2026-10-18) — *(status)*
-- `04-design-solution-architecture.md` (due 2026-10-18) — *(status)*
+- `03-planning-management.md` (due 2026-10-18) — submitted before the due date (owner).
+- `04-design-solution-architecture.md` (due 2026-10-18) — submitted before the due date (owner).
   *2026-09-30: drafted with Appendix A (security and data-access summary); rubric checked; not submitted.*
+  *2026-10-04: the copy in this repo is the Markdown before the Word port. The submitted
+  Word version may differ in figures and formatting.*
 - Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
@@ -457,11 +525,14 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 - ADR-072 — Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only (2026-10-02, pulled forward)
 - ADR-073 — Reporting additions: incident counts by breakdown, a single-technician filter, repeat-visit drivers, `parse_v3` (2026-10-02, pulled forward)
 - ADR-074 — Golden set v1: blind, independently computed expected answers (2026-10-02, pulled forward)
+- ADR-075 — Ambiguous questions are not force-routed: the router returns `ambiguous`, and the orchestrator asks the user to rephrase (FR-03); accepted, not in effect, gate failed (2026-10-03, pulled forward)
+- ADR-076 — Corrected FR-03 routing gate (supersedes ADR-075's gate only); also failed (2026-10-04, pulled forward)
 
 ---
 
 ## Sprint 4 (Weeks 7–8, 2026-10-26 to 2026-11-08) — Verification
 **Goal (increment):** QA agent operational with all three verification strategies; measurable catch rate.
+*2026-10-04: Sprint 4 pulled forward; planning to follow.*
 
 **Planned:**
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
@@ -486,6 +557,8 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
   - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 - [ ] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
+- [ ] Draft `05-test-scenarios.md` (carried over from Sprint 3; due 2026-11-01). Includes the FR-03 known-failing scenario.
+- [ ] Re-check `docs/requirements-traceability.md` at sprint close.
 
 *Planning note, 2026-10-01 (from 4b):*
 - *ADR-034's 120 s ceiling is not enforced as one request deadline today. Each hop has
@@ -605,7 +678,7 @@ holdout (total MAPE 8.81% against 14.80%; ADR-069).*
 |---|---|---|---|
 | 1 | Yes, 2026-09-25, two days inside the sprint | Iteration with pass bars but no stop rule consumed most of the sprint; it ended by redefining the criterion (ADR-040), an option available from the start | Yes: corpus design reshaped (ADR-036 to 041); paid, spend-capped project added (~$1.40); human review cut from 200 to 30; deliverable plan rebuilt from the course calendar |
 | 2 | Yes; checkpoint 2 met 2026-09-26 (deadline 10-07); engineering complete 2026-09-30 | Tests built from the author's assumptions passed while the code was wrong; real error captures and production-config runs found both bugs | Yes: all agents on Flash-Lite after comparison (ADR-049); site region stored (ADR-051); routing prompt revised twice (ADR-053, ADR-054); repeat-visit drivers and incident-count breakdowns deferred to Sprint 3 |
-| 3 | | | |
+| 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
 | 4 | | | |
 | 5 | | | |
 | 6 | | | |

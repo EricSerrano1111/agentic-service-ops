@@ -417,10 +417,11 @@ agentic-service-ops/
 │
 ├── docs/
 │   ├── architecture.md
-│   ├── security-model.md           # seeded from data-dictionary §7 (2026-09-30); completed while drafting `04` in Sprint 3
+│   ├── security-model.md           # seeded from data-dictionary §7 (2026-09-30); complete as of 2026-10-04 (controls marked built or planned)
 │   ├── evaluation-report.md        # stub: append-only Limitations log kept during the build; report written in Sprint 6 (ADR-044)
 │   ├── data-dictionary.md
 │   ├── risk-register.md            # updated every sprint boundary
+│   ├── requirements-traceability.md # one row per FR and NFR in 02: status and evidence; unrecorded gaps; re-checked at every sprint close
 │   ├── sprint-log.md               # planning, review, retro per sprint
 │   ├── decisions-log.md            # ADR — single running file for architectural decisions
 │   └── academic/                   # course deliverables (numbered, due dates in §10)
