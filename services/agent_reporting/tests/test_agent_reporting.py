@@ -251,6 +251,17 @@ def test_card_advertises_one_skill():
     assert "date range" in card.skills[0].name
 
 
+def test_card_describes_what_the_agent_does():
+    """Rates, breakdowns, the technician filter and repeat-visit drivers (ADR-073). The
+    card is not read into any prompt, so describing it accurately changes no routing."""
+    card = build_agent_card(SETTINGS.public_url)
+    text = (card.description + " " + card.skills[0].description).lower()
+    for phrase in ("incident rate", "sla compliance", "first-time fix", "technician", "repeat"):
+        assert phrase in text, phrase
+    assert "by severity" in text and "region" in text
+    assert len(card.skills[0].examples) >= 3
+
+
 def test_card_advertises_only_the_minimal_subset():
     card = build_agent_card(SETTINGS.public_url)
     assert card.capabilities.streaming is False
@@ -1004,6 +1015,11 @@ def captured_logs(*service_loggers: str):
     for lg in loggers:
         lg.disabled = False
     level = root.level
+    # As `configure_logging` does in the services: the card resolver logs the whole Agent
+    # Card (examples included) at INFO on every fetch.
+    card_logger = logging.getLogger("a2a.client.card_resolver")
+    card_level = card_logger.level
+    card_logger.setLevel(logging.WARNING)
     root.addHandler(handler)
     root.setLevel(logging.INFO)
     try:
@@ -1011,6 +1027,7 @@ def captured_logs(*service_loggers: str):
     finally:
         root.removeHandler(handler)
         root.setLevel(level)
+        card_logger.setLevel(card_level)
         for lg, flag in zip(loggers, was_disabled, strict=True):
             lg.disabled = flag
 
