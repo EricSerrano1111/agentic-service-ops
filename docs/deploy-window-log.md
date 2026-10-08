@@ -107,3 +107,30 @@ the first real run; the dry-run API (`validateOnly`) would have caught it before
      invoker is exactly the orchestrator, both run as their dedicated accounts, Cloud SQL
      `authorizedNetworks` empty.
 - **Live model calls used: 3 of 8** (1 routing call in the failed check 6, 2 in the repeat).
+
+### Check 2 replaced, verify passes (2026-10-08, ~16:50)
+- PR #32 (`fix/verify-ingress-probe`, owner-approved): without a token, `POST /ask` and `GET /`
+  on the orchestrator and `GET /` on reporting must each return 401 or 403; any other status
+  fails. `/healthz` stays as an INFO line (HTTP 404: Cloud Run's front end reserves it and
+  answers before IAM). Unit tests cover the pass and fail cases.
+- `verify.py` run locally with the new check against the live services: **all checks PASS**
+  (revisions, three unauthenticated probes all 403, probe account 403, invoker exactly the
+  orchestrator, dedicated accounts, end-to-end answered, `authorizedNetworks` empty), exit 0.
+  Live calls used: 2 (5 of 8 in total).
+- The answer 54 (2026-07-01 to 07-31; 6 high, 12 medium, 36 low) equals fresh SQL as `app_eval`
+  through the Auth Proxy (6, 12, 36; total 54). No model call.
+
+### Operating notes (for `06`)
+- **The services are unavailable while `ops-db` is stopped.** By design, for cost: min-instances
+  0 means any request needs a new instance, and a new `mcp-incidents` instance fails its
+  startup probe (`/readyz`: database unreachable) until the database is up. Start the instance
+  before any test or demo, stop it at day end.
+- **A merge to `main` while `ops-db` is stopped produces a failed revision, and traffic stays on
+  the old one.** Seen at build 9f0be025: the new revision never became ready, and Cloud Run
+  kept serving the previous revision (here there was none yet, so nothing served). The
+  pipeline fails at the deploy step, which is the correct, visible outcome. A rerun on the
+  same commit does not re-roll the failed revision.
+- **IAM propagation delay.** A new `run.invoker` binding took longer than about one minute to
+  take effect: the orchestrator's Agent Card fetch got 403 from reporting about 1 minute after
+  the binding was created, and the same request succeeded a few minutes later. After adding a
+  binding, wait a few minutes before the first verify run (it cost one live call here).
