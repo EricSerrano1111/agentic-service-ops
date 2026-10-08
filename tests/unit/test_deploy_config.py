@@ -399,3 +399,38 @@ def test_cloud_build_passes_the_build_account_as_the_caller():
     cb = yaml.safe_load((DEPLOY / "cloudbuild.yaml").read_text())
     verify_step = next(s for s in cb["steps"] if s["id"] == "verify")
     assert "CALLER_SA=${_BUILD_SA}" in verify_step["env"]
+
+
+def _run_deploy_service(monkeypatch, tmp_path, existing: bool):
+    """Drive deploy_service.main with a fake API; return the (method, url, body) calls."""
+    import json
+
+    ds = _load("deploy_service")
+    path = tmp_path / "svc.json"
+    path.write_text(json.dumps(rendered("reporting")))
+    calls = []
+
+    def fake_call(method, url, token, body=None):
+        calls.append((method, url, body))
+        if method == "GET" and "/operations/" not in url:
+            return (200, {}) if existing else (404, {})
+        return 200, {"name": "operations/x", "done": True}
+
+    monkeypatch.setattr(ds, "access_token", lambda: "t")
+    monkeypatch.setattr(ds, "call", fake_call)
+    assert ds.main(["deploy_service.py", str(path)]) == 0
+    return calls
+
+
+def test_a_new_service_is_created_with_the_id_in_the_url_and_no_name_in_the_body(
+    monkeypatch, tmp_path
+):
+    _, (method, url, body) = _run_deploy_service(monkeypatch, tmp_path, existing=False)
+    assert method == "POST" and url.endswith("/services?serviceId=ops-reporting")
+    assert "name" not in body
+
+
+def test_an_existing_service_is_patched_with_its_name_in_the_body(monkeypatch, tmp_path):
+    _, (method, url, body) = _run_deploy_service(monkeypatch, tmp_path, existing=True)
+    assert method == "PATCH" and url.endswith("/services/ops-reporting")
+    assert body["name"].endswith("/services/ops-reporting")
