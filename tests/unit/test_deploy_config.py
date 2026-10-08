@@ -362,36 +362,40 @@ def test_a_missing_probe_result_fails():
     assert len(checks) == 3 and not any(c.ok for c in checks)
 
 
-class _Resp:
-    def __init__(self, text):
-        self._text = text
-
-    def read(self):
-        return self._text.encode()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
+ORCH_URL = "https://ops-orchestrator-x.a.run.app"
 
 
-def test_metadata_identity_token_asks_for_the_audience_with_the_metadata_header(monkeypatch):
-    seen = {}
-
-    def fake_urlopen(request, timeout):
-        seen["url"], seen["header"] = request.full_url, request.get_header("Metadata-flavor")
-        return _Resp("  the.token.value  ")
-
-    monkeypatch.setattr(verify.urllib.request, "urlopen", fake_urlopen)
-    assert verify.metadata_identity_token("https://svc.run.app") == "the.token.value"
-    assert seen["header"] == "Google"
-    assert "audience=https%3A%2F%2Fsvc.run.app" in seen["url"]
+def test_pipeline_caller_is_minted_by_impersonating_caller_sa():
+    sa = "b@p.iam.gserviceaccount.com"
+    args = verify.caller_token_args({"CALLER_SA": sa}, ORCH_URL, sa)
+    assert args == [
+        "--impersonate-service-account=b@p.iam.gserviceaccount.com",
+        f"--audiences={ORCH_URL}",
+    ]
 
 
-def test_metadata_identity_token_is_none_off_google_cloud(monkeypatch):
-    def unreachable(request, timeout):
-        raise verify.urllib.error.URLError("no such host")
+def test_owner_caller_uses_their_own_identity_when_caller_sa_is_unset():
+    assert verify.caller_token_args({}, ORCH_URL, "owner@gmail.com") == []
+    # A service-account login with no impersonation target still needs an audience.
+    assert verify.caller_token_args({}, ORCH_URL, "x@p.iam.gserviceaccount.com") == [
+        f"--audiences={ORCH_URL}"
+    ]
+    assert verify.caller_token_args({"CALLER_SA": ""}, ORCH_URL, "owner@gmail.com") == []
 
-    monkeypatch.setattr(verify.urllib.request, "urlopen", unreachable)
-    assert verify.metadata_identity_token("https://svc.run.app") is None
+
+def test_a_failed_mint_is_a_fail_line_naming_the_reason():
+    import subprocess
+
+    exc = subprocess.CalledProcessError(1, ["gcloud"], stderr="ERROR: no token\nmore detail\n")
+    check = verify.mint_failure(exc)
+    assert not check.ok and "end to end" in check.name
+    assert check.detail.endswith("ERROR: no token") and "more detail" not in check.detail
+    assert verify.mint_failure(subprocess.CalledProcessError(1, ["gcloud"])).detail.endswith(
+        "gcloud failed"
+    )
+
+
+def test_cloud_build_passes_the_build_account_as_the_caller():
+    cb = yaml.safe_load((DEPLOY / "cloudbuild.yaml").read_text())
+    verify_step = next(s for s in cb["steps"] if s["id"] == "verify")
+    assert "CALLER_SA=${_BUILD_SA}" in verify_step["env"]

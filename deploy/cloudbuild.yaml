@@ -106,6 +106,7 @@ steps:
       - ORCHESTRATOR_SA=${_ORCHESTRATOR_SA}
       - REPORTING_SA=${_REPORTING_SA}
       - PROBE_SA=${_PROBE_SA}
+      - CALLER_SA=${_BUILD_SA} # check 6 impersonates the build account
       - CLOUD_SQL_INSTANCE_NAME=${_INSTANCE_NAME}
     args:
       - -c

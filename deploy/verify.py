@@ -4,7 +4,9 @@
 
 Configuration (environment): PROJECT_ID, PROJECT_NUMBER, REGION, EXPECTED_IMAGE_TAG (the
 commit SHA just deployed), ORCHESTRATOR_SA, REPORTING_SA, PROBE_SA (a service account with no
-project role and no invoker binding), CLOUD_SQL_INSTANCE_NAME. Optional: QUESTION.
+project role and no invoker binding), CLOUD_SQL_INSTANCE_NAME. Optional: QUESTION, and
+CALLER_SA (the account check 6 impersonates for its token; unset on the owner's machine,
+where the owner's own identity is used).
 
 The checks themselves are pure functions of gcloud's JSON, so they are unit-tested without a
 project (tests/unit/test_deploy_config.py).
@@ -17,7 +19,6 @@ import os
 import subprocess
 import sys
 import urllib.error
-import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -136,28 +137,27 @@ def gcloud(*args: str) -> str:
     ).stdout.strip()
 
 
-METADATA_IDENTITY_URL = (
-    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity"
-)
+def caller_token_args(env: dict, orch_url: str, account: str) -> list[str]:
+    """`gcloud auth print-identity-token` arguments for the caller of check 6.
 
-
-def metadata_identity_token(audience: str) -> str | None:
-    """An identity token for `audience` from the metadata server, or None when there is none.
-
-    Inside Cloud Build the caller is the build service account, and `gcloud auth
-    print-identity-token --audiences` cannot mint a token for credentials that come from the
-    metadata server; the metadata server can. On a developer machine the host does not resolve,
-    and the caller falls back to gcloud.
+    In the pipeline, `CALLER_SA` (the build account) is set and the token is minted by
+    impersonating it: inside Cloud Build neither the metadata server nor the build account's own
+    credentials can issue an identity token. On the owner's machine `CALLER_SA` is unset and the
+    owner's own gcloud identity is used (a service-account login needs an explicit audience).
     """
-    request = urllib.request.Request(
-        f"{METADATA_IDENTITY_URL}?audience={urllib.parse.quote(audience, safe='')}&format=full",
-        headers={"Metadata-Flavor": "Google"},
+    if env.get("CALLER_SA"):
+        return [f"--impersonate-service-account={env['CALLER_SA']}", f"--audiences={orch_url}"]
+    return [f"--audiences={orch_url}"] if account.endswith("gserviceaccount.com") else []
+
+
+def mint_failure(exc: subprocess.CalledProcessError) -> Check:
+    """The FAIL line for check 6 when the caller's token cannot be minted."""
+    reason = (exc.stderr or "").strip().splitlines()[:1] or ["gcloud failed"]
+    return Check(
+        "orchestrator answers a reporting question end to end",
+        False,
+        f"could not mint an identity token for the caller: {reason[0]}",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=5) as response:  # noqa: S310
-            return response.read().decode().strip() or None
-    except (urllib.error.URLError, TimeoutError, OSError):
-        return None
 
 
 def gcloud_json(*args: str) -> dict:
@@ -211,7 +211,6 @@ def main() -> int:
         return gcloud("auth", "print-identity-token", *extra)
 
     caller = gcloud("config", "get-value", "account")
-    caller_args = [f"--audiences={orch_url}"] if caller.endswith("gserviceaccount.com") else []
 
     results = [
         serving_revision(orchestrator, tag),
@@ -246,16 +245,9 @@ def main() -> int:
         not_default_compute(reporting, env["PROJECT_NUMBER"], env["REPORTING_SA"]),
     ]
     try:
-        caller_token = metadata_identity_token(orch_url) or identity_token(*caller_args)
+        caller_token = identity_token(*caller_token_args(env, orch_url, caller))
     except subprocess.CalledProcessError as exc:
-        reason = (exc.stderr or "").strip().splitlines()[:1] or ["gcloud failed"]
-        results.append(
-            Check(
-                "orchestrator answers a reporting question end to end",
-                False,
-                f"could not mint an identity token for the caller: {reason[0]}",
-            )
-        )
+        results.append(mint_failure(exc))
     else:
         status, body = http(
             "POST",
