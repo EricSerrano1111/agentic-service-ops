@@ -722,3 +722,8 @@ build are appended here as they are found (CLAUDE.md).
 - **Affects:** 05 TS-01-A, TS-02-C and TS-05-B.
 - **Why accepted:** For now. Region and account filters, a `parse_v3` update and a parse eval re-run are a Sprint 4 item, built before QA.
 - **Recorded in:** the Sprint 4 planned items in `docs/sprint-log.md`.
+
+### L-63 — Log redaction masks bearer tokens, authorization fields and URL passwords by pattern only (2026-10-08)
+- **What:** The shared JSON formatter (`packages/common`) masks `Bearer <token>`, `authorization` header fields and the password in `scheme://user:password@host` in every log line. It is a pattern match, not a guarantee: a secret in another shape, or split across fields, is not caught. It was added because the A2A SDK logs the whole server call context, request headers included, at DEBUG, so an agent running with `LOG_LEVEL=DEBUG` on Cloud Run would otherwise log the caller's ID token. The router's `reason` and tracebacks (L-60) are not redacted by it.
+- **Why accepted:** Production runs at INFO, where the SDK does not log headers, and the application code never logs the header, the token or the database URL (asserted by tests at every level). The pattern covers the shapes this system can produce.
+- **Recorded in:** `tests/unit/test_log_exposure.py`; `services/orchestrator/tests/test_orchestrator.py` (token exposure).

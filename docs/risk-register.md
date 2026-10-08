@@ -243,6 +243,7 @@
 - Recover by restarting Windows, not with `wsl --shutdown`.
 The same steps are in the README's "Local environment recovery". Check the memory headroom before any long run or full-stack rebuild.
 **Review trigger:** The Sprint 4 close.
+**Update 2026-10-08:** 2026-10-05, owner-verified: `.wslconfig` has `memory=6GB` and `autoMemoryReclaim=dropcache`; Docker disk image at `D:\DockerData\DockerDesktopWSL`. The first two mitigations above are now verified rather than unverified, and the memory cap's value is recorded. The stop-the-stack and restart-Windows steps remain owner practice. Status stays Open.
 
 ---
 
