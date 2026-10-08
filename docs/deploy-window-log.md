@@ -149,3 +149,17 @@ the first real run; the dry-run API (`validateOnly`) would have caught it before
   is now a FAIL line instead of a crash. Awaiting the owner's merge, which re-fires the trigger.
 - Lesson for `06`: running `verify.py` on a developer machine does not exercise the pipeline's
   credential path. The pipeline run is the only real test of that path.
+
+### Step 8, second attempt: build 09af1023 (commit `ba4c2ef`, `_RUN_VERIFY=true`), FAILED at check 6 only
+- Steps 1 to 7 ran in 3 min 50 s. Deploy steps passed (revisions `ops-orchestrator-00003-phl`
+  and `ops-reporting-00003-94x`). The verify step now prints every result: **10 of 11 PASS**,
+  including the three unauthenticated probes (403) and the probe-account refusal (403).
+- **FAIL: end-to-end question: "could not mint an identity token for the caller: No identity
+  token can be obtained from the current credentials."** The metadata-server route added in
+  #33 returned nothing inside Cloud Build (its metadata server does not issue identity tokens
+  for the build account), and the gcloud route fails for the same credentials. No live call
+  was made (still 5 of 8).
+- Root cause: inside Cloud Build the only way to get an identity token for the build account
+  is to impersonate it, which needs `roles/iam.serviceAccountTokenCreator` for `build-deploy`
+  **on itself**. The probe-account impersonation in check 3 works because that binding exists.
+- This is an IAM design change (a new binding), so it is the owner's decision, not made here.
