@@ -90,7 +90,9 @@ the four account emails, each `<id>@$PROJECT_ID.iam.gserviceaccount.com`: `ORCH_
      `roles/logging.logWriter`, `roles/cloudsql.viewer` (for the verify step),
      `roles/iam.serviceAccountUser` **on each of the two runtime accounts**, and, for the
      verify step run from Cloud Build, `roles/iam.serviceAccountTokenCreator` on the probe
-     account;
+     account **and on itself** (check 6 mints the build account's identity token by
+     impersonating it; Cloud Build's metadata server issues none). Nothing else is granted on
+     the build account itself;
    - owner: `roles/iam.serviceAccountTokenCreator` on the probe account (so `verify.py` can
      impersonate it);
    - the service-level invoker bindings need the services to exist; they are created in step
