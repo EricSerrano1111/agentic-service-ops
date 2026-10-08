@@ -15,3 +15,11 @@
 !ml/sentiment/artifacts/bert_v1.manifest.json
 # The volume_v2 manifest only (ADR-072): mcp_volume verifies the mounted artifact against it.
 !ml/forecast/artifacts/volume_v2.manifest.json
+# The `!services/` and `!packages/` re-includes above pull in everything beneath them, so
+# secret-shaped files nested there are excluded explicitly.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*credentials*.json
+**/*service-account*.json
