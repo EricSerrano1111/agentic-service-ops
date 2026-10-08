@@ -91,7 +91,11 @@ Set once in your shell: `PROJECT_ID`, `PROJECT_NUMBER`, `REGION=us-central1`, `I
    `meta.rows` equal those in the committed `data/generator/validation/2026-10-01/report.json`.
 9. **Grants suite**: `REQUIRE_INTEGRATION_DB=1 python -m pytest tests/integration -q -rs`
    against the proxy.
-10. **Create the trigger** (below), then run it once (first deploy). After the services exist:
+10. **Create the trigger** (below) with `_RUN_VERIFY=false` and run it once: the first deploy.
+    **The first run must skip the pipeline's verify step.** The services-level invoker
+    bindings cannot exist before the services do, so checks 4 (reporting's invoker) and 6
+    (the end-to-end question, which needs the orchestrator to be allowed to call reporting)
+    would fail the build for a reason that is not a defect. Once the services exist, bind:
     ```
     gcloud run services add-iam-policy-binding ops-reporting --region $REGION \
       --member "serviceAccount:$ORCH_SA" --role roles/run.invoker
@@ -100,6 +104,9 @@ Set once in your shell: `PROJECT_ID`, `PROJECT_NUMBER`, `REGION=us-central1`, `I
     ```
     The second lets the Cloud Build verify step call the orchestrator. Never add `allUsers`
     or `allAuthenticatedUsers`; `verify.py` fails the build if either appears on reporting.
+    Then set the trigger's `_RUN_VERIFY` back to `true` (its default) and re-run it, so every
+    later deploy is verified. The build account's `serviceAccountTokenCreator` on the probe
+    account (step 3) is what lets check 3 mint the probe's token inside Cloud Build.
 11. **`verify.py`** from the owner's machine as well (the pipeline runs it as the build
     account): set the variables listed in its docstring and run `python deploy/verify.py`.
 12. **Stop the instance at day end**: `gcloud sql instances patch $INSTANCE --activation-policy
@@ -117,8 +124,8 @@ Push to `main`, **included files** `services/**`, `packages/**`, `deploy/**`, `p
 and `uv.lock`, so a docs-only merge does not redeploy. Runs as the dedicated build service
 account. Substitutions to set on the trigger: `_AR_REPO`, `_BUILD_SA`, `_ORCHESTRATOR_SA`,
 `_REPORTING_SA`, `_PROBE_SA`, `_CLOUD_SQL_INSTANCE` (`project:region:instance`),
-`_INSTANCE_NAME`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPECIALIST` (`_REGION` and
-`_POSTGRES_DB` default). An empty one fails the render step.
+`_INSTANCE_NAME`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPECIALIST` (`_REGION`, `_POSTGRES_DB` and
+`_RUN_VERIFY` default). An empty one fails the render step.
 
 ## What `verify.py` checks
 

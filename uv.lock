@@ -150,6 +150,9 @@ bert = [
     { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
     { name = "transformers" },
 ]
+deploy = [
+    { name = "pyyaml" },
+]
 generator = [
     { name = "datasketch" },
     { name = "google-genai" },
@@ -178,6 +181,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], marker = "extra == 'ml'", specifier = ">=3.2" },
     { name = "python-dotenv", marker = "extra == 'generator'", specifier = ">=1.0" },
     { name = "python-dotenv", marker = "extra == 'ml'", specifier = ">=1.0" },
+    { name = "pyyaml", marker = "extra == 'deploy'", specifier = "==6.0.3" },
     { name = "safetensors", marker = "extra == 'bert'", specifier = "==0.8.0" },
     { name = "scikit-learn", marker = "extra == 'ml'", specifier = "==1.9.1" },
     { name = "scipy", marker = "extra == 'generator'", specifier = "==1.18.1" },
@@ -189,7 +193,7 @@ requires-dist = [
     { name = "transformers", marker = "extra == 'bert'", specifier = "==5.18.0" },
     { name = "tzdata", marker = "extra == 'generator'", specifier = "==2026.4" },
 ]
-provides-extras = ["generator", "ml", "bert"]
+provides-extras = ["generator", "ml", "bert", "deploy"]
 
 [[package]]
 name = "aiologic"

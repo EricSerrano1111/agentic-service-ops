@@ -275,3 +275,11 @@ def test_answered_needs_an_answered_outcome_with_figures():
 def test_check_lines_say_pass_or_fail():
     assert verify.Check("n", True).line().startswith("PASS")
     assert verify.Check("n", False, "why").line() == "FAIL  n: why"
+
+
+def test_the_first_run_can_skip_verify_and_later_runs_do_not():
+    cb = yaml.safe_load((DEPLOY / "cloudbuild.yaml").read_text())
+    assert cb["substitutions"]["_RUN_VERIFY"] == "true"  # verified unless explicitly skipped
+    verify_step = next(s for s in cb["steps"] if s["id"] == "verify")
+    script = " ".join(verify_step["args"])
+    assert '"${_RUN_VERIFY}" = "true"' in script and "deploy/verify.py" in script

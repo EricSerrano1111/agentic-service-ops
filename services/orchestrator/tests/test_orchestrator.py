@@ -1298,3 +1298,43 @@ def test_card_ttl_comes_from_the_environment(monkeypatch):
     assert Settings.from_env().agent_card_ttl_s == 300
     monkeypatch.setenv("AGENT_CARD_TTL_S", "30")
     assert Settings.from_env().agent_card_ttl_s == 30
+
+
+# --------------------------------------------------------------------------- SDK logger level
+
+
+@pytest.mark.anyio
+async def test_a_debug_root_level_still_emits_no_sdk_header_lines(capsys):
+    from common import configure_logging
+
+    root = logging.getLogger()
+    saved = (list(root.handlers), root.level, logging.getLogger("a2a").level)
+    token = make_jwt(exp=4_000_000_000, marker="SDK-HEADER-CHECK")
+    try:
+        configure_logging("orchestrator", "DEBUG")
+        assert logging.getLogger().level == logging.DEBUG
+        transport, _ = recording_agent()
+        await send_question(
+            AGENT_URL,
+            "q",
+            trace_id="t",
+            timeout_s=10,
+            transport=transport,
+            token_provider=fixed_provider(token),
+        )
+        logging.getLogger("a2a.server.x").debug("context headers={'authorization': 'x'}")
+        logging.getLogger("a2a.server.x").info("kept")
+    finally:
+        for h in list(root.handlers):
+            root.removeHandler(h)
+        for h in saved[0]:
+            root.addHandler(h)
+        root.setLevel(saved[1])
+        logging.getLogger("a2a").setLevel(saved[2])
+    out = capsys.readouterr().out
+    lines = [json.loads(ln) for ln in out.splitlines() if ln.startswith("{")]
+    sdk = [ln for ln in lines if ln["logger"].startswith("a2a")]
+    assert all(ln["level"] != "DEBUG" for ln in sdk)
+    assert any(ln["msg"] == "kept" for ln in sdk)  # INFO still flows
+    assert "authorization" not in out.lower() and "SDK-HEADER-CHECK" not in out
+    assert token not in out and token.split(".")[1] not in out

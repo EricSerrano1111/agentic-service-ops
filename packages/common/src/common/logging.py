@@ -121,3 +121,7 @@ def configure_logging(service: str, level: str = "INFO") -> None:
     # every fetch, add noise without adding a trace-correlated fact.
     for noisy in ("httpx", "httpx2", "httpcore", "a2a.client.card_resolver"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
+    # The A2A SDK logs the whole server call context, request headers included, at DEBUG.
+    # Hold its loggers at INFO or above whatever LOG_LEVEL says; redaction stays as a second
+    # layer.
+    logging.getLogger("a2a").setLevel(max(logging.INFO, root.level))

@@ -244,6 +244,7 @@
 The same steps are in the README's "Local environment recovery". Check the memory headroom before any long run or full-stack rebuild.
 **Review trigger:** The Sprint 4 close.
 **Update 2026-10-08:** 2026-10-05, owner-verified: `.wslconfig` has `memory=6GB` and `autoMemoryReclaim=dropcache`; Docker disk image at `D:\DockerData\DockerDesktopWSL`. The first two mitigations above are now verified rather than unverified, and the memory cap's value is recorded. The stop-the-stack and restart-Windows steps remain owner practice. Status stays Open.
+**Update 2026-10-08 (incident):** The R-17 failure occurred during the Sprint 4 phase 1 work. A full-stack `docker compose up -d --build` left stale containers in `Dead` and `Created` states (and `removal already in progress` errors), and the compose build ran past 10 minutes. They had to be force-removed before a second `up` brought all eight containers healthy. No data was lost (Postgres stayed up). This is the first recorded dated incident; earlier ones have no dates (see the Description). Status stays Open; the Sprint 4 close review stands.
 
 ---
 

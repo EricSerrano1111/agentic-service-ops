@@ -643,6 +643,7 @@ now written; they record the planning decisions above.*
 - *Reporting filters (L-62): about 10-15 to 10-18.*
 - *QA build: about 10-19 onward.*
 - *Fault-injection harness last.*
+*2026-10-08, e2e assertion corrected after a result: the checkpoint e2e's figures check compared the whole figures object to the SQL-derived five keys and failed on the first run (2 live calls) because the answer also carries the ADR-073 fields (`group_by`, `groups`, `group_count`, `truncated`, `technician_id`, `technician_name`), which the test predated. The five keys equalled the SQL, so the answer was not wrong; the assertion was stale. It now compares the five keys and requires the six fields to be empty. The first response was not saved, so one fresh attempt was made (2 more calls; 4 of the 4 budgeted were used across the day) and passed against the corrected assertion. Because the assertion was changed after seeing a result, this note records it; it was not tuned to make a wrong answer pass.*
 
 **Planned:**
 - [ ] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.

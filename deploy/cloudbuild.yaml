@@ -23,6 +23,9 @@ substitutions:
   _POSTGRES_DB: service_ops
   _GEMINI_MODEL_ORCHESTRATOR: ""
   _GEMINI_MODEL_SPECIALIST: ""
+  # "false" on the very first run only: checks 4 and 6 cannot pass until the service-level
+  # invoker bindings exist, and those need the services (README, runbook step 10).
+  _RUN_VERIFY: "true"
 
 steps:
   # ---- build (parallel) ---------------------------------------------------------------
@@ -93,7 +96,7 @@ steps:
   # ---- post-deploy check: fails the build on any FAIL -----------------------------------
   - id: verify
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
-    entrypoint: python3
+    entrypoint: bash
     env:
       - PROJECT_ID=${PROJECT_ID}
       - PROJECT_NUMBER=${PROJECT_NUMBER}
@@ -103,5 +106,13 @@ steps:
       - REPORTING_SA=${_REPORTING_SA}
       - PROBE_SA=${_PROBE_SA}
       - CLOUD_SQL_INSTANCE_NAME=${_INSTANCE_NAME}
-    args: ["deploy/verify.py"]
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_RUN_VERIFY}" = "true" ]; then
+          python3 deploy/verify.py
+        else
+          echo "verify skipped (_RUN_VERIFY=${_RUN_VERIFY}); run deploy/verify.py after the invoker bindings"
+        fi
     waitFor: ["deploy-orchestrator"]
