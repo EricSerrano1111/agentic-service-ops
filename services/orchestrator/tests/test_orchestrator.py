@@ -132,7 +132,7 @@ class Sent:
         self.calls: list[str] = []
         self.behaviour = behaviour or (lambda: _completed())
 
-    async def __call__(self, agent_url, question, *, trace_id, timeout_s, token_provider=None):
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s, **_):
         self.calls.append(question)
         return self.behaviour()
 
@@ -775,7 +775,7 @@ class SentTo(Sent):
         super().__init__(behaviour)
         self.urls: list[str] = []
 
-    async def __call__(self, agent_url, question, *, trace_id, timeout_s, token_provider=None):
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s, **_):
         self.urls.append(agent_url)
         self.timeouts = getattr(self, "timeouts", []) + [timeout_s]
         return await super().__call__(
@@ -783,7 +783,6 @@ class SentTo(Sent):
             question,
             trace_id=trace_id,
             timeout_s=timeout_s,
-            token_provider=token_provider,
         )
 
 
@@ -1204,3 +1203,98 @@ async def test_token_and_header_never_reach_any_log_at_any_level():
     assert token not in text and token.split(".")[1] not in text
     # The A2A server's own DEBUG output prints request headers; the formatter masks them.
     assert not re.search(r"(?i)bearer\s+(?!\[REDACTED\])\S", text)
+
+
+# --------------------------------------------------------------------------- Agent Card cache
+
+from a2a.client import A2AClientError  # noqa: E402
+from orchestrator.a2a_client import AgentCardCache  # noqa: E402
+
+
+def _cards(seen):
+    return [h for m, p, h in seen if m == "GET"]
+
+
+@pytest.mark.anyio
+async def test_a_cached_card_is_not_fetched_again_until_it_expires():
+    now = [0.0]
+    cache = AgentCardCache(300, clock=lambda: now[0])
+    transport, seen = recording_agent()
+
+    async def ask():
+        await send_question(
+            AGENT_URL, "q", trace_id="t", timeout_s=10, transport=transport, card_cache=cache
+        )
+
+    await ask()
+    await ask()
+    assert len(_cards(seen)) == 1  # the second call used the cached card
+    assert sum(1 for m, *_ in seen if m == "POST") == 2
+    now[0] = 299
+    await ask()
+    assert len(_cards(seen)) == 1
+    now[0] = 300  # expired
+    await ask()
+    assert len(_cards(seen)) == 2
+
+
+@pytest.mark.anyio
+async def test_a_zero_ttl_fetches_the_card_every_time():
+    cache = AgentCardCache(0)
+    transport, seen = recording_agent()
+    for _ in range(2):
+        await send_question(
+            AGENT_URL, "q", trace_id="t", timeout_s=10, transport=transport, card_cache=cache
+        )
+    assert len(_cards(seen)) == 2
+
+
+@pytest.mark.anyio
+async def test_the_card_is_refetched_after_a_failed_call():
+    cache = AgentCardCache(300)
+    inner, seen = recording_agent()
+    failing = [False]
+
+    class Flaky(httpx.AsyncBaseTransport):
+        async def handle_async_request(self, request):
+            if failing[0] and request.method == "POST":
+                raise httpx.ConnectError("agent restarted")
+            return await inner.handle_async_request(request)
+
+    async def ask():
+        await send_question(
+            AGENT_URL, "q", trace_id="t", timeout_s=10, transport=Flaky(), card_cache=cache
+        )
+
+    await ask()
+    failing[0] = True
+    with pytest.raises(A2AClientError):
+        await ask()
+    failing[0] = False
+    await ask()
+    assert len(_cards(seen)) == 2  # fetched once, dropped by the failure, fetched again
+
+
+@pytest.mark.anyio
+async def test_the_cached_fetch_still_carries_the_token_when_auth_is_on():
+    cache = AgentCardCache(300)
+    transport, seen = recording_agent()
+    for _ in range(2):
+        await send_question(
+            AGENT_URL,
+            "q",
+            trace_id="t",
+            timeout_s=10,
+            transport=transport,
+            token_provider=fixed_provider("tok-1"),
+            card_cache=cache,
+        )
+    assert _cards(seen) == ["Bearer tok-1"]  # the one real fetch was authenticated
+    assert [h for m, _, h in seen if m == "POST"] == ["Bearer tok-1", "Bearer tok-1"]
+
+
+def test_card_ttl_comes_from_the_environment(monkeypatch):
+    monkeypatch.delenv("AGENT_CARD_TTL_S", raising=False)
+    assert Settings.from_env().agent_card_ttl_s == 300
+    monkeypatch.setenv("AGENT_CARD_TTL_S", "30")
+    assert Settings.from_env().agent_card_ttl_s == 30

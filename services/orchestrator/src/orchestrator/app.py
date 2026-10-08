@@ -31,7 +31,7 @@ from llm import (
 )
 from pydantic import BaseModel, Field, model_validator
 
-from .a2a_client import AgentProtocolError, send_question
+from .a2a_client import AgentCardCache, AgentProtocolError, send_question
 from .auth import AgentAuthError, IdTokenProvider
 from .config import Settings
 from .result import (
@@ -176,6 +176,7 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
     # None locally: no token is fetched or sent. On Cloud Run (A2A_AUTH=google_id_token) one
     # provider caches a token per specialist.
     tokens = IdTokenProvider() if settings.a2a_auth == "google_id_token" else None
+    cards = AgentCardCache(settings.agent_card_ttl_s)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
@@ -245,6 +246,7 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                     trace_id=trace_id,
                     timeout_s=settings.a2a_timeout_s,
                     token_provider=tokens,
+                    card_cache=cards,
                 )
                 answer, reporting = extract_answer(task)
             except (TimeoutError, A2AClientTimeoutError, httpx.TimeoutException):
@@ -310,6 +312,7 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                 trace_id=trace_id,
                 timeout_s=timeout_s,
                 token_provider=tokens,
+                card_cache=cards,
             )
             answer, sentiment = extract_sentiment_answer(task)
         except (TimeoutError, A2AClientTimeoutError, httpx.TimeoutException):
@@ -366,6 +369,7 @@ def create_app(settings: Settings, llm: RoutingLLM | None = None) -> FastAPI:
                 trace_id=trace_id,
                 timeout_s=timeout_s,
                 token_provider=tokens,
+                card_cache=cards,
             )
             answer, forecast = extract_forecast_answer(task)
         except (TimeoutError, A2AClientTimeoutError, httpx.TimeoutException):

@@ -48,6 +48,8 @@ class Settings:
     #: "none" (local) or "google_id_token": attach a Google ID token to every A2A request
     #: (Cloud Run IAM). Anything else is rejected at start-up.
     a2a_auth: str = "none"
+    #: Seconds an Agent Card is reused per target; 0 fetches it on every request.
+    agent_card_ttl_s: float = 300.0
     host: str = "0.0.0.0"
     port: int = 8000
 
@@ -69,5 +71,6 @@ class Settings:
             ),
             as_of=dt.date.fromisoformat(env("REPORTING_AS_OF_DATE") or d.as_of.isoformat()),
             a2a_auth=_a2a_auth(env("A2A_AUTH")),
+            agent_card_ttl_s=float(env("AGENT_CARD_TTL_S", str(d.agent_card_ttl_s))),
             port=int(env("ORCHESTRATOR_PORT", str(d.port))),
         )
