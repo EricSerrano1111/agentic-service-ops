@@ -2,7 +2,7 @@
 
 **Domain:** Network/hardware technician field service dispatch (installs, repairs, maintenance visits)
 
-**Status:** Implemented — schema and vocabularies locked (ADR-020) and implemented in `packages/db_models/` through Alembic head `ab53ceceeffe` (§10). Where this document and the models disagree, the models are right.
+**Status:** Implemented — schema and vocabularies locked (ADR-020) and implemented in `packages/db_models/` through Alembic head `3d7e1a9c5b20` (§10). Where this document and the models disagree, the models are right.
 
 **Companion to:** `architecture.md`
 

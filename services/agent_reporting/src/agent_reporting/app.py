@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Awaitable, Callable
+
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.routes import (
     add_a2a_routes_to_fastapi,
@@ -10,15 +13,23 @@ from a2a.server.routes import (
 )
 from a2a.server.tasks import InMemoryTaskStore
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from llm import LLMClient
 
 from .card import build_agent_card
 from .config import Settings
 from .executor import ReportingExecutor
+from .mcp_client import mcp_ready
 from .parsing import ParsingLLM
 
+log = logging.getLogger("agent_reporting")
 
-def create_app(settings: Settings, llm: ParsingLLM | None = None) -> FastAPI:
+
+def create_app(
+    settings: Settings,
+    llm: ParsingLLM | None = None,
+    ready: Callable[[], Awaitable[bool]] | None = None,
+) -> FastAPI:
     card = build_agent_card(settings.public_url)
     handler = DefaultRequestHandler(
         agent_executor=ReportingExecutor(
@@ -30,6 +41,10 @@ def create_app(settings: Settings, llm: ParsingLLM | None = None) -> FastAPI:
         agent_card=card,
     )
     app = FastAPI(title="agent_reporting", version="0.1.0")
+
+    async def check_mcp() -> bool:
+        return await (ready or (lambda: mcp_ready(settings.mcp_incidents_url)))()
+
     add_a2a_routes_to_fastapi(
         app,
         agent_card_routes=create_agent_card_routes(card),
@@ -39,5 +54,15 @@ def create_app(settings: Settings, llm: ParsingLLM | None = None) -> FastAPI:
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok", "service": "agent_reporting"}
+
+    @app.get("/readyz")
+    async def readyz() -> JSONResponse:
+        """Ready: the MCP server answers (and so its database). Startup probes point here."""
+        if await check_mcp():
+            return JSONResponse({"status": "ready", "service": "agent_reporting"})
+        log.warning("readiness check failed: MCP server not ready")
+        return JSONResponse(
+            {"status": "unavailable", "service": "agent_reporting"}, status_code=503
+        )
 
     return app

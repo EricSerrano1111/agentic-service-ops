@@ -573,6 +573,12 @@ Retro final.
     no Node.js runs in production (Node is a build tool only).*
   - *`04`, Table 3 says the orchestrator routes on Agent Card skills. In fact `route_v3`
     hard-codes the domain descriptions, and the card supplies only the agent's URL.*
+  *2026-10-08, further post-submission divergence from ADR-082 (carry to the evaluation
+  report):*
+  - *`03` quotes the original sprint calendar (sprint dates, the critical path, the schedule
+    rows and the stop rules' dates). ADR-082 re-baselines it: Sprint 4 is 2026-10-06 to 10-25,
+    Sprint 5 10-26 to 11-08, Sprint 6 11-09 to 11-22, buffer 11-23 to 12-05. The final date
+    is unchanged.*
   - *`03`, the critical path, the task-16 schedule row and the stop rules quote the deploy
     window 11-02 to 11-04. ADR-078 moves it. `03` is Eric's to edit; nothing was changed.*
 - `05-test-scenarios.md` (due 2026-11-01) — drafted 2026-10-05, submission pending (owner).
@@ -596,7 +602,7 @@ Retro final.
 
 ---
 
-## Sprint 4 (Weeks 7–8, 2026-10-26 to 2026-11-08) — Verification
+## Sprint 4 (2026-10-06 to 2026-10-25, three weeks; re-baselined, ADR-082) — Verification
 **Goal (increment):** QA agent operational with all three verification strategies; measurable catch rate.
 *2026-10-04: Sprint 4 pulled forward; planning to follow.*
 *2026-10-05, planning decisions taken; the ADRs follow and are not written yet:*
@@ -630,6 +636,15 @@ from 2026-10-26. The sequence is the deploy first (ADR-078, window 2026-10-12 to
 QA. The rest of the sequence is planned separately. ADR-078 to ADR-080 and L-60 and L-61 are
 now written; they record the planning decisions above.*
 
+*2026-10-08: ADR-081 (deploy configuration for the reporting slice) and ADR-082 (sprint calendar re-baselined) are written. Sprint 4 is 2026-10-06 to 10-25, Sprint 5 10-26 to 11-08, Sprint 6 11-09 to 11-22, buffer 11-23 to 12-05; the headers above carry the new dates, each marked "re-baselined, ADR-082". Phase 1 readiness gate: the readiness PR (`feat/sprint4-deploy-readiness`) must merge by the end of 2026-10-11 or the deploy window moves by a short ADR.*
+*Planned sequence (2026-10-08):*
+- *Phase 1, deploy readiness, local only: 10-08 to 10-11.*
+- *Deploy window: 10-12 to 10-14 (ADR-078).*
+- *Reporting filters (L-62): about 10-15 to 10-18.*
+- *QA build: about 10-19 onward.*
+- *Fault-injection harness last.*
+*2026-10-08, e2e assertion corrected after a result: the checkpoint e2e's figures check compared the whole figures object to the SQL-derived five keys and failed on the first run (2 live calls) because the answer also carries the ADR-073 fields (`group_by`, `groups`, `group_count`, `truncated`, `technician_id`, `technician_name`), which the test predated. The five keys equalled the SQL, so the answer was not wrong; the assertion was stale. It now compares the five keys and requires the six fields to be empty. The first response was not saved, so one fresh attempt was made (2 more calls; 4 of the 4 budgeted were used across the day) and passed against the corrected assertion. Because the assertion was changed after seeing a result, this note records it; it was not tuned to make a wrong answer pass.*
+
 **Planned:**
 - [ ] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
   *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
@@ -651,9 +666,15 @@ now written; they record the planning decisions above.*
   against Cloud SQL. Stop rule: not verified serving by end of 10-14 → stop, record R-03 as
   realised, write it up as the first incident in `06`, leave Sprint 5 unchanged. Carry order
   if Sprint 4 overflows: the fault-injection harness moves to Sprint 5 first.
-  - [ ] Agent Card cached with a TTL (currently fetched on every request).
+  - [x] Agent Card cached with a TTL (currently fetched on every request).
+    *2026-10-08: cached per target URL for `AGENT_CARD_TTL_S` (default 300 s), dropped after any failed call; the fetch carries the ID token.*
   - [ ] Trace id in web-server access logs.
-  - [ ] A readiness probe alongside `/healthz`.
+  - [x] A readiness probe alongside `/healthz`.
+    *2026-10-08: `/readyz` on every MCP server and agent; compose orders startup on it.*
+  - [x] Code for the deploy, built and unit-tested locally, not yet run on GCP: database host by env (TCP or Cloud SQL socket), MCP URL by env, IAM ID tokens on the card fetch and the message call, non-root images with nothing secret baked in.
+    *2026-10-08.*
+  - [x] Deploy config drafts in `deploy/` (v2 service definitions, `cloudbuild.yaml`, `render.py`, `verify.py`, runbook), validated locally only.
+    *2026-10-08.*
   - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 - [x] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
@@ -691,8 +712,7 @@ now written; they record the planning decisions above.*
 - What changes next sprint:
 
 **Academic deliverable status:**
-- `05-test-scenarios.md` (due 2026-11-01) — *(status)*
-- `06-production-support.md` (due 2026-11-08) — *(status)*
+- `05-test-scenarios.md` (due 2026-11-01) and `06-production-support.md` (due 2026-11-08) now fall in Sprint 5 (ADR-082) — *(status)*
 - Weekly status report due (maintained by Eric)
 
 **Decisions made this sprint:**
@@ -701,7 +721,7 @@ now written; they record the planning decisions above.*
 
 ---
 
-## Sprint 5 (Weeks 9–10, 2026-11-09 to 2026-11-22) — Interface & evaluation
+## Sprint 5 (2026-10-26 to 2026-11-08; re-baselined, ADR-082) — Interface & evaluation
 **Goal (increment):** Deployed system with a working UI; routing accuracy reported with failure analysis.
 
 **Planned:**
@@ -742,7 +762,7 @@ now written; they record the planning decisions above.*
 
 ---
 
-## Sprint 6 (Weeks 11–12, 2026-11-23 to 2026-12-05) — Hardening & delivery
+## Sprint 6 (2026-11-09 to 2026-11-22; re-baselined, ADR-082) — Hardening & delivery
 **Goal (increment):** Production-grade checklist closed out; demo rehearsed.
 
 **Planned:**
@@ -770,7 +790,7 @@ now written; they record the planning decisions above.*
 
 **Decisions made this sprint:**
 
-*Note: this sprint is protected buffer, not planned work with a buffer label. If Sprints 1–5 ran clean, use the slack for polish and rehearsal — not for starting anything new.*
+*Note (ADR-082, 2026-10-08): this sprint is planned hardening and delivery work. The buffer is 2026-11-23 to 12-05. If Sprints 1–5 ran clean, use the slack for polish and rehearsal — not for starting anything new.*
 
 ---
 

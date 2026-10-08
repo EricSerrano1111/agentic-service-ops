@@ -52,6 +52,7 @@ from .queries import (
     MAX_NAME_LENGTH,
     InvalidArgument,
     InvalidRange,
+    check_connection,
     count_by_severity,
     find_technician,
     make_engine,
@@ -123,6 +124,8 @@ class Backend:
     ]
     find_technician: Callable[[str], TechnicianMatches]
     repeat_drivers: Callable[[dt.date, dt.date, RepeatBy], RepeatDriversResult]
+    #: Raises when the database is unreachable; the `/readyz` probe calls it.
+    ready: Callable[[], None] = lambda: None
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Backend:
@@ -134,6 +137,7 @@ class Backend:
             first_time_fix_rate=lambda s, e, g, t: metrics.first_time_fix_rate(engine, s, e, g, t),
             find_technician=lambda name: find_technician(engine, name),
             repeat_drivers=lambda s, e, by: repeats.repeat_drivers(engine, s, e, by),
+            ready=lambda: check_connection(engine),
         )
 
 
@@ -317,6 +321,18 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
     @server.custom_route("/healthz", methods=["GET"])
     async def healthz(request: Request) -> JSONResponse:
         return JSONResponse({"status": "ok", "service": "mcp_incidents"})
+
+    @server.custom_route("/readyz", methods=["GET"])
+    async def readyz(request: Request) -> JSONResponse:
+        """Ready: the database answers. The Cloud Run sidecar startup probe points here."""
+        try:
+            await anyio.to_thread.run_sync(backend.ready)
+        except Exception:
+            log.warning("readiness check failed: database unreachable")
+            return JSONResponse(
+                {"status": "unavailable", "service": "mcp_incidents"}, status_code=503
+            )
+        return JSONResponse({"status": "ready", "service": "mcp_incidents"})
 
     return server
 

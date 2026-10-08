@@ -1,0 +1,58 @@
+# Cloud Run service "ops-orchestrator". Same v2 resource format as reporting.yaml.
+# It calls the reporting service with a Google ID token (A2A_AUTH=google_id_token), on the
+# Agent Card fetch and the message call alike. It holds the Gemini key and no database
+# credentials, and has no Cloud SQL mount.
+#
+# Only the reporting specialist is deployed in this slice. AGENT_SENTIMENT_URL and
+# AGENT_FORECAST_URL keep their compose defaults, which do not resolve here, so those routes
+# answer "agent unavailable" until their services exist (Sprint 5).
+name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-orchestrator
+description: Orchestrator that routes questions to specialist agents over A2A
+ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
+invokerIamDisabled: false
+template:
+  serviceAccount: ${ORCHESTRATOR_SA} # dedicated; never the default compute account
+  timeout: 300s # at least 120 s (TA-16)
+  scaling:
+    minInstanceCount: 0
+    maxInstanceCount: 2
+  maxInstanceRequestConcurrency: 8
+  containers:
+    - name: orchestrator
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/orchestrator:${IMAGE_TAG}
+      ports:
+        - containerPort: 8080
+      env:
+        - name: ORCHESTRATOR_PORT
+          value: "8080"
+        - name: A2A_AUTH
+          value: google_id_token
+        - name: AGENT_REPORTING_URL
+          value: https://ops-reporting-${PROJECT_NUMBER}.${REGION}.run.app
+        - name: A2A_TIMEOUT_S
+          value: "60"
+        - name: ROUTE_TIMEOUT_S
+          value: "30"
+        - name: LLM_MODE
+          value: free
+        - name: GEMINI_MODEL_ORCHESTRATOR
+          value: ${GEMINI_MODEL_ORCHESTRATOR}
+        - name: LOG_LEVEL
+          value: INFO
+        - name: GOOGLE_AI_API_KEY
+          valueSource:
+            secretKeyRef:
+              secret: gemini-api-key
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 20

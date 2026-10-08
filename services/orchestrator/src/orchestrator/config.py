@@ -16,6 +16,15 @@ from dataclasses import dataclass
 
 from schemas import DATASET_WINDOW_END
 
+A2A_AUTH_MODES = ("none", "google_id_token")
+
+
+def _a2a_auth(raw: str | None) -> str:
+    mode = (raw or "none").strip().lower()
+    if mode not in A2A_AUTH_MODES:
+        raise ValueError(f"A2A_AUTH must be one of {', '.join(A2A_AUTH_MODES)}, got {raw!r}")
+    return mode
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -36,6 +45,11 @@ class Settings:
     #: Given to the routing prompt as today's date. Same variable and default as the
     #: reporting agent's (ADR-050), so both read dates against one "today" (ADR-054).
     as_of: dt.date = DATASET_WINDOW_END
+    #: "none" (local) or "google_id_token": attach a Google ID token to every A2A request
+    #: (Cloud Run IAM). Anything else is rejected at start-up.
+    a2a_auth: str = "none"
+    #: Seconds an Agent Card is reused per target; 0 fetches it on every request.
+    agent_card_ttl_s: float = 300.0
     host: str = "0.0.0.0"
     port: int = 8000
 
@@ -56,5 +70,7 @@ class Settings:
                 env("FORECAST_A2A_TIMEOUT_S", str(d.forecast_a2a_timeout_s))
             ),
             as_of=dt.date.fromisoformat(env("REPORTING_AS_OF_DATE") or d.as_of.isoformat()),
+            a2a_auth=_a2a_auth(env("A2A_AUTH")),
+            agent_card_ttl_s=float(env("AGENT_CARD_TTL_S", str(d.agent_card_ttl_s))),
             port=int(env("ORCHESTRATOR_PORT", str(d.port))),
         )

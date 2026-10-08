@@ -16,6 +16,7 @@ import contextvars
 import datetime as dt
 import json
 import logging
+import re
 import sys
 import uuid
 from collections.abc import Iterator
@@ -32,6 +33,30 @@ _RESERVED = frozenset(vars(logging.LogRecord("", 0, "", 0, "", None, None))) | {
     "asctime",
     "taskName",
 }
+
+
+_REDACTED = "[REDACTED]"
+# Secrets that third-party libraries log on their own at DEBUG: the A2A server prints the
+# whole call context, request headers included, and a database error can quote the URL.
+_SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    # `Bearer <token>`, however it is quoted.
+    (re.compile(r"(?i)\b(bearer)\s+[A-Za-z0-9._~+/=-]+"), r"\1 " + _REDACTED),
+    # An `authorization` header or field of any scheme: `'authorization': 'Basic xyz'`
+    # (also inside a JSON-escaped string, hence the optional backslashes).
+    (
+        re.compile(r"""(?i)(authorization\\*['"]?\s*[:=]\s*\\*['"]?)[^'"\\,}]+"""),
+        r"\1" + _REDACTED,
+    ),
+    # The password in `scheme://user:password@host`.
+    (re.compile(r"(?i)(\b[a-z][a-z0-9+.-]*://[^\s/:@]*:)[^\s/@]+(@)"), r"\1" + _REDACTED + r"\2"),
+)
+
+
+def redact_secrets(text: str) -> str:
+    """Mask bearer tokens, authorization headers and URL passwords in a log line."""
+    for pattern, replacement in _SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
 
 
 def new_trace_id() -> str:
@@ -74,7 +99,8 @@ class JsonFormatter(logging.Formatter):
                 line[key] = value
         if record.exc_info:
             line["exc"] = self.formatException(record.exc_info)
-        return json.dumps(line, default=str)
+        # Last step, over the finished line, so no field or library message escapes it.
+        return redact_secrets(json.dumps(line, default=str))
 
 
 def configure_logging(service: str, level: str = "INFO") -> None:
@@ -95,3 +121,7 @@ def configure_logging(service: str, level: str = "INFO") -> None:
     # every fetch, add noise without adding a trace-correlated fact.
     for noisy in ("httpx", "httpx2", "httpcore", "a2a.client.card_resolver"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
+    # The A2A SDK logs the whole server call context, request headers included, at DEBUG.
+    # Hold its loggers at INFO or above whatever LOG_LEVEL says; redaction stays as a second
+    # layer.
+    logging.getLogger("a2a").setLevel(max(logging.INFO, root.level))

@@ -19,6 +19,10 @@
 # one: LLM_MODE is pinned to free and the paid key is never passed (ADR-048).
 # tests/unit/test_compose_isolation.py asserts all of this.
 #
+# Startup ordering: MCP servers and agents are "healthy" when /readyz answers, i.e. an MCP
+# server's database connection works and an agent's MCP server answers; depends_on waits on
+# that, so nothing starts against an unreachable database. /healthz stays plain liveness.
+#
 # Ports: only the orchestrator publishes a host port among the application services.
 # Postgres keeps its host port so migrations and the loader can run from the host.
 
@@ -65,7 +69,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8101/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8101/readyz', timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -99,7 +103,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8102/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8102/readyz', timeout=3)"]
       interval: 2s
       timeout: 5s
       retries: 30
@@ -127,7 +131,7 @@ services:
       mcp_incidents:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/readyz', timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -156,7 +160,7 @@ services:
       mcp_feedback:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/readyz', timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -186,7 +190,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8103/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8103/readyz', timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -214,7 +218,7 @@ services:
       mcp_volume:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/readyz', timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 10

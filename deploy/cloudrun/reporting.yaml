@@ -1,0 +1,105 @@
+# Cloud Run service "ops-reporting": the reporting agent (ingress) plus its MCP server
+# (sidecar). Written in the Cloud Run Admin API v2 resource format, NOT the Knative v1 format:
+# v1 can only attach Cloud SQL through the revision-wide annotation
+# run.googleapis.com/cloudsql-instances, which reaches every container. v2 models Cloud SQL as
+# a volume (cloudSqlInstance) that each container mounts for itself, so the socket exists
+# only inside mcp-incidents (ADR-079, L-61). See deploy/README.md, "Cloud SQL mount".
+#
+# Placeholders are ${NAME}. render.py resolves them and fails if any remain; deploy_service.py
+# sends the result to the v2 API. Nothing here is a real project id or secret.
+#
+# Not set here, by design: no allUsers / allAuthenticatedUsers binding (IAM is bound
+# separately; see README) and no default compute service account.
+name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-reporting
+description: Reporting agent with the incidents MCP server as a sidecar
+ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
+invokerIamDisabled: false # the --no-allow-unauthenticated equivalent
+template:
+  serviceAccount: ${REPORTING_SA} # dedicated; never the default compute account
+  timeout: 300s # at least 120 s (TA-16)
+  scaling:
+    minInstanceCount: 0
+    maxInstanceCount: 2
+  maxInstanceRequestConcurrency: 8
+  volumes:
+    - name: cloudsql
+      cloudSqlInstance:
+        instances:
+          - ${CLOUD_SQL_INSTANCE}
+  containers:
+    # Ingress container: the only one that exposes a port. No database credentials, no
+    # Cloud SQL mount.
+    - name: agent-reporting
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/agent-reporting:${IMAGE_TAG}
+      ports:
+        - containerPort: 8080
+      dependsOn:
+        - mcp-incidents # starts after the sidecar's startup probe passes
+      env:
+        - name: AGENT_REPORTING_PORT
+          value: "8080"
+        - name: AGENT_REPORTING_PUBLIC_URL
+          # Cloud Run's deterministic URL, so the Agent Card names the address peers call.
+          value: https://ops-reporting-${PROJECT_NUMBER}.${REGION}.run.app/
+        - name: MCP_INCIDENTS_URL
+          value: http://localhost:8101/mcp
+        - name: LLM_MODE
+          value: free
+        - name: GEMINI_MODEL_SPECIALIST
+          value: ${GEMINI_MODEL_SPECIALIST}
+        - name: LOG_LEVEL
+          value: INFO
+        - name: GOOGLE_AI_API_KEY
+          valueSource:
+            secretKeyRef:
+              secret: gemini-api-key
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+      startupProbe:
+        httpGet:
+          path: /readyz # ready when the MCP sidecar answers
+          port: 8080
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 20
+    # Sidecar: reaches Postgres through the Cloud SQL socket. The only container with the
+    # mount and the only one holding the database password.
+    - name: mcp-incidents
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/mcp-incidents:${IMAGE_TAG}
+      env:
+        - name: MCP_INCIDENTS_PORT
+          value: "8101"
+        - name: CLOUD_SQL_INSTANCE
+          value: ${CLOUD_SQL_INSTANCE}
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: ${POSTGRES_DB}
+        - name: DB_ROLE_REPORTING_USER
+          value: app_reporting
+        - name: LOG_LEVEL
+          value: INFO
+        - name: DB_ROLE_REPORTING_PASSWORD
+          valueSource:
+            secretKeyRef:
+              secret: db-role-reporting-password
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+      volumeMounts:
+        - name: cloudsql
+          mountPath: /cloudsql
+      startupProbe:
+        httpGet:
+          path: /readyz # ready only when the database connection succeeds
+          port: 8101
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 20

@@ -11,6 +11,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from common import database_host
+
 
 def _required(name: str) -> str:
     value = os.environ.get(name)
@@ -45,7 +47,7 @@ class Settings:
     def from_env(cls) -> Settings:
         env = os.environ.get
         return cls(
-            db_host=_required("POSTGRES_HOST"),
+            db_host=database_host(),
             db_port=int(env("POSTGRES_PORT", "5432")),
             db_name=_required("POSTGRES_DB"),
             db_user=_required("DB_ROLE_FORECAST_USER"),

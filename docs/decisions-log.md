@@ -92,6 +92,8 @@
 | 078 | The reporting-slice deploy is pulled forward to 2026-10-12 (supersedes ADR-045's dates and stop date only) | Accepted |
 | 079 | Each MCP server runs as a Cloud Run sidecar of its agent; the first deploy is two services (supersedes ADR-045 in part) | Accepted |
 | 080 | The UI is a Next.js static export served by the FastAPI gateway (builds on ADR-009) | Accepted |
+| 081 | Deploy configuration for the reporting slice: v2 service format for a per-container Cloud SQL mount, IAM as the boundary, dedicated service accounts (clarifies ADR-079) | Accepted |
+| 082 | Sprint calendar re-baselined: Sprint 4 is 2026-10-06 to 10-25, Sprint 6 ends 11-22, 11-23 to 12-05 is buffer | Accepted |
 
 ---
 
@@ -2447,3 +2449,55 @@ training grants.
 - No server rendering, API routes or middleware. The UI must remain a client-only single screen.
 - The UI and the API are one deploy unit, since the gateway serves the static files.
 - The submitted `04` names Node.js LTS for the interface. Node remains a build tool only. Recorded as a post-submission divergence in the sprint log.
+
+
+### ADR-081 — Deploy configuration for the reporting slice
+*Date: 2026-10-08. Clarifies ADR-079 ("internal with IAM"); builds on ADR-045 and ADR-078. Supersedes nothing.*
+
+**Decision:**
+- Region `us-central1`.
+- **Cloud SQL** has a public IP with **no authorized networks**. Services reach it only through Cloud Run's built-in connection, a Unix socket at `/cloudsql/<instance-connection-name>`, mounted **only into MCP containers**. The service definitions use the **Cloud Run Admin API v2 format** (a `cloudSqlInstance` volume that each container mounts through its own `volumeMounts`), deployed by `deploy/deploy_service.py` against the v2 REST API. The Knative v1 YAML can attach Cloud SQL only through a revision-wide annotation that reaches every container, and `gcloud run deploy` documents `--add-cloudsql-instances` as service-wide with no Cloud SQL `--add-volume` type, so neither could keep the socket out of `agent_reporting` (ADR-079, L-61). Sources are in `deploy/README.md`.
+- **Database passwords are in Secret Manager**, mounted as an environment variable only in the MCP container. The Gemini key is mounted only in containers that call the model (the orchestrator and the agent).
+- **Ingress:** both services require IAM. Neither has an `allUsers` or `allAuthenticatedUsers` invoker. **At the service level**, only the orchestrator's service account holds `roles/run.invoker` on reporting. Project Owner and Editor can also invoke through basic roles; the only principal holding either is the owner. (The build account also holds invoker on the orchestrator, so the pipeline's verify step can call it.) **No service or build runs as the default compute service account**; each service, the build and the negative-test probe have their own. The owner tests through the orchestrator with an identity token. The negative check ("reporting refuses a caller that is not the orchestrator") uses a **no-role probe service account**, impersonated by the owner.
+- The orchestrator attaches a Google ID token (audience: the target's base URL) to the Agent Card fetch and the message call alike, because on Cloud Run both sit behind the same IAM check (`A2A_AUTH=google_id_token`).
+- **The build trigger** fires on push to `main`, filtered to `services/**`, `packages/**`, `deploy/**`, `pyproject.toml` and `uv.lock`, and runs as a **dedicated build service account**.
+- **The data load** runs from the owner's machine through the Cloud SQL Auth Proxy, as the generator role. Nothing in the pipeline holds admin credentials.
+
+**Clarifies ADR-079:** "internal with IAM" means **IAM is the security boundary in this deploy**: the services have a public `run.app` URL that refuses any request without a valid identity token. Network-level internal ingress needs a VPC route for the caller and is evaluated in Sprint 5 with the gateway.
+
+**Alternatives considered:**
+- *Private IP plus a VPC* (rejected: cost and complexity for a single-user, synthetic-data deploy).
+- *IAM database authentication* (rejected for now: it changes the grant model mid-deploy; revisit later).
+- *The Python Cloud SQL Connector library* (rejected: the built-in connection needs no extra dependency).
+- *A trigger on every push* (rejected: docs merges would redeploy).
+- *Testing the negative with the owner's own token* (rejected: Owner invokes through the basic role, so the check cannot pass).
+
+**Required versus portfolio value:** all of this is required for the deploy. Nothing here is portfolio-only.
+
+**Consequences:**
+- `deploy/` holds the service definitions, `cloudbuild.yaml`, the render and deploy scripts, `verify.py` and the runbook. None has been run against GCP; the first run is in the 2026-10-12 window.
+- The v2 definitions are deployed by a script that calls the REST API, not by `gcloud`. If that proves unworkable in the window, the stop rule (ADR-078) applies, not a silent fallback to a shared mount.
+- Cloud Run injects the Authorization header into the agent container, and the A2A SDK logs request headers at DEBUG. The shared log formatter now masks bearer tokens, authorization fields and URL passwords (L-63).
+
+### ADR-082 — Sprint calendar re-baselined
+*Date: 2026-10-08. Re-baselines the sprint calendar in `architecture.md` §10. The final date, 2026-12-05, is unchanged.*
+
+**Decision:**
+- **Sprint 4** runs **2026-10-06 to 10-25**: three weeks, absorbing the deploy (ADR-078) and the reporting filters (L-62). **Sprint 5** runs **10-26 to 11-08**. **Sprint 6** runs **11-09 to 11-22**. **11-23 to 12-05 is buffer.**
+- The buffer stays buffer. Using it for scope is decided at the Sprint 4 close under the working agreement, never by default.
+- The owner continues at the current pace and may re-baseline again. Each re-baseline is recorded as an ADR.
+- **Phase 1 readiness gate:** if the deploy-readiness PR (`feat/sprint4-deploy-readiness`) is not merged by the end of 2026-10-11, the deploy window does not start on 10-12. It moves by a short ADR.
+
+**Context:**
+- Sprint 3 closed on 2026-10-04 and Sprint 4 started on 2026-10-06, so the build is about three weeks ahead of the original calendar. Sprint 4 holds more than two weeks of work: the deploy, the reporting filters, the QA agent, the circuit breakers and the fault-injection harness.
+- Sprints 5 and 6 each move two weeks earlier than the original 11-09 to 11-22 and 11-23 to 12-05. The extra week goes to Sprint 4, and the rest becomes buffer at the end.
+
+**Note:** Sprint 4 is three weeks, a deliberate departure from the fixed two-week cadence.
+
+**Required versus portfolio value:** required. The original calendar no longer matches the work.
+
+**Consequences:**
+- `architecture.md` §10 is rewritten. Its "Protect Sprint 6" paragraph no longer applies as written: Sprint 6 is planned hardening and delivery work, and the buffer is 11-23 to 12-05. The rule that scope expansion needs being genuinely ahead at the Sprint 4 boundary stays.
+- Academic deliverable due dates are fixed by the course and do not move: `05` (11-01) and `06` (11-08) now fall in Sprint 5.
+- Dated entries elsewhere that quote the old sprint dates stay as written.
+- Submitted-document divergence, recorded in the sprint log's post-submission list: `03` quotes the original calendar (sprint dates, the critical path and the schedule rows).

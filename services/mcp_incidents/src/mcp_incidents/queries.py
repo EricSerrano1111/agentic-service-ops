@@ -26,7 +26,7 @@ from schemas import (
     TechnicianMatch,
     TechnicianMatches,
 )
-from sqlalchemy import Engine, bindparam, create_engine, func, select
+from sqlalchemy import Engine, bindparam, create_engine, func, select, text
 from sqlalchemy.engine import URL
 
 from .config import Settings
@@ -113,6 +113,12 @@ def make_engine(settings: Settings) -> Engine:
             "application_name": "mcp_incidents",
         },
     )
+
+
+def check_connection(engine: Engine) -> None:
+    """Raise if the database does not answer `SELECT 1` (the readiness probe)."""
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
 
 
 # Counts by severity in a half-open UTC timestamp range [lo, hi).

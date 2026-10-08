@@ -233,6 +233,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | Sentiment | Fine-tuned transformer classifier (BERT, artifact `bert_v1`), trained on `sentiment_labels` (ADR-024, ADR-066) | Predictions stored in `sentiment_predictions` and scored on arrival: at most 250 per request on demand, a backfill for existing data (ADR-067). Calibrated confidence and the τ flag drive human review (ADR-066) |
 | API layer | FastAPI | |
 | UI | Thin React/Next.js front end, built as a static export and served by the FastAPI gateway (ADR-080) | See note below |
+| Service-to-service auth | Google ID tokens via `google-auth` (`A2A_AUTH=google_id_token`); Cloud Run IAM `run.invoker` per service | The orchestrator attaches a token, audience the target's base URL, to the Agent Card fetch and the message call; cached until shortly before expiry. Unset locally. Agent Cards are cached per target for `AGENT_CARD_TTL_S` (default 300 s) and dropped after a failed call. ADR-081 |
 | Containers | Docker + docker-compose (local), Cloud Run (deployed) | |
 | Cloud | GCP — Cloud Run, Cloud SQL, Secret Manager, Artifact Registry, Cloud Build, Cloud Storage | Cloud Storage holds versioned model artifacts (ADR-062) |
 
@@ -255,7 +256,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Containerized services, reproducible builds *(in progress: the three skeleton services have Dockerfiles and run in docker-compose; every dependency is pinned by `uv.lock`, and CI and the images install from it, ADR-047)*
 - [ ] Config and secrets management — no hardcoded credentials *(on Cloud Run, database credentials are mounted only into the MCP container, ADR-079)*
 - [ ] Structured logging with trace IDs correlated across agent hops *(in progress: JSON lines with one trace id across orchestrator → A2A → agent → MCP, `packages/common`; asserted by the e2e test)*
-- [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on the skeleton services, used by compose; no readiness probe yet; on Cloud Run each agent also waits on its MCP sidecar's health, ADR-079)*
+- [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on every service; `/readyz` readiness on every MCP server (database answers) and every agent (its MCP server answers), built 2026-10-08, used by compose startup ordering and, on Cloud Run, by the startup probes and the agent's dependency on its sidecar, ADR-079)*
 - [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-077)
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
@@ -336,20 +337,21 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 ---
 
-## 10. Sprint Plan (6 × 2-week sprints)
+## 10. Sprint Plan (six sprints; Sprint 4 is three weeks, ADR-082)
 
 Every sprint ends with a **demoable increment** and a **sprint review + retro entry** in `sprint-log.md`. Academic deliverables are interleaved, not bolted on at the end. Risk register is reviewed and updated every sprint boundary.
 
-**Calendar.** Sprint 1 started Monday 2026-09-14. **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.
+**Calendar.** Sprint 1 started Monday 2026-09-14. **Re-baselined 2026-10-08 (ADR-082): Sprint 4 runs 2026-10-06 to 10-25, Sprints 5 and 6 follow, and 2026-11-23 to 12-05 is buffer.** **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.
 
 | Sprint | Dates | Academic deliverables due |
 |---|---|---|
 | 1 | 2026-09-14 to 09-27 | `01-proposal-business-case.md` (09-27) — complete; weekly status report |
 | 2 | 2026-09-28 to 10-11 | `02-requirements-analysis.md` (10-04) — completed early, in Sprint 1; weekly status reports |
-| 3 | 2026-10-12 to 10-25 | `03-planning-management.md` (10-18); `04-design-solution-architecture.md` (10-18); weekly status reports |
-| 4 | 2026-10-26 to 11-08 | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports |
-| 5 | 2026-11-09 to 11-22 | Weekly status reports (the last covers the week ending 11-22) |
-| 6 | 2026-11-23 to 12-05 | Final submission (12-05): presentation plus the completed project (ADR-044) |
+| 3 | planned 2026-10-12 to 10-25; closed early, 2026-10-04 (final 10-05) | `03-planning-management.md` and `04-design-solution-architecture.md` (both due 10-18, submitted); `05` drafted |
+| 4 | 2026-10-06 to 10-25 (three weeks; re-baselined, ADR-082) | Weekly status reports |
+| 5 | 2026-10-26 to 11-08 (re-baselined, ADR-082) | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports |
+| 6 | 2026-11-09 to 11-22 (re-baselined, ADR-082) | Weekly status reports (the last covers the week ending 11-22) |
+| Buffer | 2026-11-23 to 12-05 | Final submission (12-05): presentation plus the completed project (ADR-044) |
 
 ### Sprint 1 (weeks 1–2, 2026-09-14 to 09-27) — Foundation
 **Increment:** Synthetic data generator producing validated, signal-bearing data; queryable locally.
@@ -378,28 +380,28 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 - Fill `security-model.md` while drafting `04`; draft `05` in week 2 (10-19 to 10-25)
 - **Academic:** `03-planning-management.md` and `04-design-solution-architecture.md` (both due 10-18); weekly status reports
 
-### Sprint 4 (weeks 7–8, 2026-10-26 to 11-08) — Verification
+### Sprint 4 (2026-10-06 to 10-25, three weeks; re-baselined, ADR-082) — Verification
 **Increment:** QA agent operational with all three verification strategies; measurable catch rate.
 - QA agent, bounded retry loop, escalation path
 - Fault injection harness for QA catch-rate measurement
 - Minimal Cloud Run deploy of the reporting slice (orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar) with Cloud SQL, pulled forward to 2026-10-12 to 10-14 and timeboxed to 3 days; revision-serving check; stop rule at the end of 10-14 per ADR-045 and ADR-078. The deploy comes first in Sprint 4, then the QA build
-- **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
+- **Academic:** weekly status reports (`05` and `06` fall in Sprint 5)
 
-### Sprint 5 (weeks 9–10, 2026-11-09 to 11-22) — Interface & evaluation
+### Sprint 5 (weeks 9–10, 2026-10-26 to 11-08; re-baselined, ADR-082) — Interface & evaluation
 **Increment:** Deployed system with a working UI; routing accuracy reported with failure analysis.
 - Routing eval harness + failure-case analysis
 - FastAPI gateway + thin React UI (a static export served by the gateway, ADR-080)
 - Extend deployment to all services; complete Cloud SQL migration; **verify revision promotion on every deploy**
-- **Academic:** weekly status reports (last one covers the week ending 11-22)
+- **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
 
-### Sprint 6 (weeks 11–12, 2026-11-23 to 12-05) — Hardening & delivery
+### Sprint 6 (2026-11-09 to 11-22; re-baselined, ADR-082) — Hardening & delivery
 **Increment:** Production-grade checklist closed out; demo rehearsed.
 - Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
 - Production-grade checklist (§7) audited item by item
 - Evaluation report (`docs/evaluation-report.md`) from the Sprint 5 eval runs, presentation, demo rehearsal (ADR-044)
-- **Academic:** final submission due 2026-12-05 (end of Module 10): presentation plus the completed project (ADR-044)
+- **Academic:** weekly status reports (the last covers the week ending 11-22). The final submission (2026-12-05) falls in the buffer.
 
-**Protect Sprint 6.** It is genuine buffer, not planned work with a buffer label. Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) requires being genuinely ahead at the Sprint 4 boundary.
+**Buffer, 2026-11-23 to 12-05 (ADR-082).** Under ADR-082 Sprint 6 is planned hardening and delivery work, and the buffer is the two weeks after it. The buffer stays buffer: using it for scope is decided at the Sprint 4 close under the working agreement, never by default. Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) still requires being genuinely ahead at the Sprint 4 boundary.
 
 ---
 
@@ -438,6 +440,10 @@ agentic-service-ops/
 ├── infra/
 │   ├── terraform/                  # stretch goal, buffer only (ADR-061): Cloud Run, Cloud SQL, IAM, Secret Manager
 │   └── cloudbuild/                 # build + deploy triggers (not just image push)
+│
+├── deploy/                         # Cloud Run deploy drafts (ADR-081): v2 service definitions, cloudbuild.yaml,
+│   │                               # render.py / deploy_service.py / verify.py, README runbook
+│   └── cloudrun/                   # orchestrator.yaml, reporting.yaml (agent + mcp_incidents sidecar)
 │
 ├── data/
 │   ├── generator/                  # synthetic data generation from known params

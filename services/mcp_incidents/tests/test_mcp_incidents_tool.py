@@ -8,6 +8,7 @@ tests/integration/test_mcp_incidents_figures.py.
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import datetime as dt
 import io
 import json
@@ -606,3 +607,32 @@ async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value():
     }
     assert all("error" not in r for r in rejected)
     assert marker not in json.dumps(logged)
+
+
+# --------------------------------------------------------------------------- readiness
+
+
+def _down():
+    raise OSError("connection refused: postgres://user:secret_pw@host")
+
+
+def test_readyz_ready_when_the_database_answers():
+    with TestClient(create_app(SETTINGS, backend())) as client:
+        r = client.get("/readyz", headers={"host": "localhost:8101"})
+    assert r.status_code == 200 and r.json()["service"] == "mcp_incidents"
+
+
+def test_readyz_not_ready_when_the_database_is_unreachable_and_leaks_nothing():
+    with TestClient(create_app(SETTINGS, dataclasses.replace(backend(), ready=_down))) as client:
+        r = client.get("/readyz", headers={"host": "localhost:8101"})
+    assert r.status_code == 503
+    assert "secret_pw" not in r.text and "postgres" not in r.text
+
+
+@pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
+def test_readyz_rejects_unexpected_methods(method):
+    with TestClient(create_app(SETTINGS, backend())) as client:
+        assert (
+            getattr(client, method)("/readyz", headers={"host": "localhost:8101"}).status_code
+            == 405
+        )
