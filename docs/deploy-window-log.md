@@ -214,7 +214,7 @@ trigger: `_CLOUD_SQL_INSTANCE`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPE
   Run's IAM refusal messages for the unauthenticated probes) and audit-log field names.
 
 ### End of day
-- 17:40: Auth Proxy stopped; `ops-db` set to `NEVER` (state STOPPED). Cloud Run services remain
+- 17:37: Auth Proxy stopped; `ops-db` set to `NEVER` (state STOPPED). Cloud Run services remain
   deployed at min-instances 0; they are unavailable while the database is stopped, by design.
 - The trigger is **not** disabled; that is decided in the records PR (ADR-083).
 - Billed resources at end of day: Cloud SQL `ops-db` (stopped; storage and reserved IP only),
