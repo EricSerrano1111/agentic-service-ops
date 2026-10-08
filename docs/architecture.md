@@ -233,7 +233,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 | Sentiment | Fine-tuned transformer classifier (BERT, artifact `bert_v1`), trained on `sentiment_labels` (ADR-024, ADR-066) | Predictions stored in `sentiment_predictions` and scored on arrival: at most 250 per request on demand, a backfill for existing data (ADR-067). Calibrated confidence and the τ flag drive human review (ADR-066) |
 | API layer | FastAPI | |
 | UI | Thin React/Next.js front end, built as a static export and served by the FastAPI gateway (ADR-080) | See note below |
-| Service-to-service auth | Google ID tokens via `google-auth` (`A2A_AUTH=google_id_token`); Cloud Run IAM `run.invoker` per service | The orchestrator attaches a token, audience the target's base URL, to the Agent Card fetch and the message call; cached until shortly before expiry. Unset locally. ADR-081 |
+| Service-to-service auth | Google ID tokens via `google-auth` (`A2A_AUTH=google_id_token`); Cloud Run IAM `run.invoker` per service | The orchestrator attaches a token, audience the target's base URL, to the Agent Card fetch and the message call; cached until shortly before expiry. Unset locally. Agent Cards are cached per target for `AGENT_CARD_TTL_S` (default 300 s) and dropped after a failed call. ADR-081 |
 | Containers | Docker + docker-compose (local), Cloud Run (deployed) | |
 | Cloud | GCP — Cloud Run, Cloud SQL, Secret Manager, Artifact Registry, Cloud Build, Cloud Storage | Cloud Storage holds versioned model artifacts (ADR-062) |
 

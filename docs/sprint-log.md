@@ -665,7 +665,8 @@ now written; they record the planning decisions above.*
   against Cloud SQL. Stop rule: not verified serving by end of 10-14 → stop, record R-03 as
   realised, write it up as the first incident in `06`, leave Sprint 5 unchanged. Carry order
   if Sprint 4 overflows: the fault-injection harness moves to Sprint 5 first.
-  - [ ] Agent Card cached with a TTL (currently fetched on every request).
+  - [x] Agent Card cached with a TTL (currently fetched on every request).
+    *2026-10-08: cached per target URL for `AGENT_CARD_TTL_S` (default 300 s), dropped after any failed call; the fetch carries the ID token.*
   - [ ] Trace id in web-server access logs.
   - [x] A readiness probe alongside `/healthz`.
     *2026-10-08: `/readyz` on every MCP server and agent; compose orders startup on it.*
