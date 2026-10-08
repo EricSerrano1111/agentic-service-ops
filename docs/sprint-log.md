@@ -645,7 +645,20 @@ now written; they record the planning decisions above.*
 - *Fault-injection harness last.*
 *2026-10-08, e2e assertion corrected after a result: the checkpoint e2e's figures check compared the whole figures object to the SQL-derived five keys and failed on the first run (2 live calls) because the answer also carries the ADR-073 fields (`group_by`, `groups`, `group_count`, `truncated`, `technician_id`, `technician_name`), which the test predated. The five keys equalled the SQL, so the answer was not wrong; the assertion was stale. It now compares the five keys and requires the six fields to be empty. The first response was not saved, so one fresh attempt was made (2 more calls; 4 of the 4 budgeted were used across the day) and passed against the corrected assertion. Because the assertion was changed after seeing a result, this note records it; it was not tuned to make a wrong answer pass.*
 
+*2026-10-08, deploy window outcome: **the reporting slice is verified serving** (ADR-084), on day one of three. Build 5a181fa1 at commit `1a3f1e3` built, deployed and verified its own revision: `ops-orchestrator-00004-c6f` and `ops-reporting-00004-5kz`, each at 100% traffic, every `verify.py` check passing. The stop rule did not fire. 7 of 8 live calls used, no 503. `ops-db` is stopped and the build trigger is disabled (ADR-083) until Sprint 5 extends the deploy. Details and timings are in `docs/deploy-window-log.md`.*
+*Provisioning record, 2026-10-08: Cloud SQL `ops-db`, PostgreSQL 16, Enterprise edition, `db-f1-micro`, 10 GB SSD, zonal, us-central1, public IP with no authorized networks, storage auto-increase off, automated backups and point-in-time recovery off (the data is synthetic and reloadable), `max_connections=60` (raised from 25; L-66), labels `app=agentic-service-ops`, `component=deploy`. Created in 9 min 42 s. **The console cost estimate was not captured** (the CLI cannot read it); the owner adds the actual Cloud SQL cost from Billing, Reports, in a dated note once the billing data settles (about 24 hours).*
+*Fix PRs from the window:*
+- *#30: the create call must not carry `name` (the v2 API rejects it); found by the first deploy.*
+- *#31: tests for both paths of `deploy_service.py` (create omits `name`, update keeps it).*
+- *#32: check 2 probes `POST /ask` and `GET /` (401 or 403 only); `/healthz` is reserved by Cloud Run and answers 404, now an INFO line.*
+- *#33: caller token from the metadata server (superseded, dead code).*
+- *#34: check 6 impersonates `CALLER_SA` in the pipeline (ADR-085); #29 earlier added the labels, account-name defaults and the secrets list.*
+*Planned sequence update (2026-10-08): the deploy window is done. The reporting filters (L-62) start next, from about 2026-10-09; then QA; the fault-injection harness last.*
+*For `06` (due 2026-11-08), not written there: the window's failures are material for its production-support write-up: a create-body field the API rejects, a reserved path (`/healthz`) that hides the IAM boundary, identity-token minting in Cloud Build, IAM propagation delay (a new invoker binding took over a minute), and a revision failing its readiness probe while the database was stopped.*
+
 **Planned:**
+- [ ] Sprint 4 backlog (2026-10-08): dispose engines in the MCP figures tests' fixtures (L-66).
+- [ ] Sprint 4 backlog (2026-10-08): the trace-ID-in-access-logs follow-up PR. It needs an access-log middleware in all seven servers and a trace-ID header on the A2A and MCP clients, because the ID only reaches agents and MCP servers in the request body.
 - [ ] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
   *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
@@ -657,7 +670,8 @@ now written; they record the planning decisions above.*
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
   budget alongside the ~$20-30 Pro-for-QA test (ADR-029; optional, buffer only, ADR-056). ADR-041 already decided the runs
   use the paid, spend-capped project.
-- [ ] Minimal Cloud Run deploy of the reporting slice (ADR-045, dates moved by ADR-078):
+- [x] Minimal Cloud Run deploy of the reporting slice (ADR-045, dates moved by ADR-078 and ADR-084):
+  *2026-10-08: verified serving, build 5a181fa1 at `1a3f1e3`, revisions 00004, every `verify.py` check passing in the pipeline. See the outcome note above.*
   orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar (ADR-079), with the
   smallest Cloud SQL instance (stopped when idle), 2026-10-12 to 10-14 (was 11-02 to 11-04),
   timeboxed to 3 days. Cloud Build trigger with an explicit deploy
@@ -675,7 +689,8 @@ now written; they record the planning decisions above.*
     *2026-10-08.*
   - [x] Deploy config drafts in `deploy/` (v2 service definitions, `cloudbuild.yaml`, `render.py`, `verify.py`, runbook), validated locally only.
     *2026-10-08.*
-  - [ ] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
+  - [x] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
+    *2026-10-08: `ops-db` is PostgreSQL 16 (see the provisioning record above).*
 - [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
 - [x] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
   *2026-10-05: decided. Each MCP server is a sidecar of its agent (ADR-079); the UI is a Next.js static export served by the gateway (ADR-080).*
@@ -738,6 +753,8 @@ now written; they record the planning decisions above.*
   - [ ] Pin Next.js to the current patched release at build time (security release scheduled 2026-09-30); verify the version then.
     *Source: https://nextjs.org/blog/tag/security. As of 2026-09-30 the patched releases are 16.3.8 (Active LTS) and 15.5.27 (Maintenance LTS).*
 - [ ] Extend deployment to all services; complete Cloud SQL migration
+- [ ] Re-enable the build trigger `deploy-reporting-slice` (disabled 2026-10-08, ADR-083) when the deploy is extended; the command is in `deploy/README.md`.
+- [ ] Backfill `sentiment_predictions` on Cloud SQL before the sentiment service deploys (`test_golden_oracles` skips without stored predictions; the load truncates them).
 - [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)
 
 **Shipped:**
@@ -768,6 +785,9 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
 - [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
+- [ ] A separate `verify-caller` service account holding the orchestrator invoker, so building and calling are separate identities (ADR-085).
+- [ ] Deploy with no traffic, verify the revision's own URL, then move traffic, so a failed verification never serves (L-64).
+- [ ] Review the default compute service account's project-level Editor role (nothing in this deploy runs as it).
 - [ ] Production-grade checklist (`architecture.md` §7) audited item by item
 - [ ] Evaluation report (`docs/evaluation-report.md`), presentation, demo rehearsal (ADR-044)
 

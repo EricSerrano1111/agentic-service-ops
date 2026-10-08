@@ -16,7 +16,7 @@
 |---|---|---|---|---|---|
 | R-01 | Process | Solo build — no peer review | High | Medium | Mitigating |
 | R-02 | Budget | Runtime budget depends on unconfirmed Google AI credit coverage (credits ruled out 2026-09-22; exposure is now free-tier limits and paid spend) | Medium | High | Mitigating |
-| R-03 | Deployment | Cloud Run build/deploy decoupling (recurred before) | High | Medium | Open |
+| R-03 | Deployment | Cloud Run build/deploy decoupling (recurred before) | High | Medium | Monitoring |
 | R-04 | ML / Verification | Sentiment task has weak natural verifiability | Medium | High | Mitigating |
 | R-05 | Cost / Technical | QA retry loop cost or latency runaway | Medium | Medium | Mitigating |
 | R-06 | Schedule / Scope | A2A overhead consumes disproportionate solo dev time | Medium | Medium | Closed |
@@ -27,7 +27,7 @@
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
-| R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Open |
+| R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Monitoring |
 | R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Mitigating |
 | R-16 | Evaluation | Evaluation validity: small, partly non-blind development sets and run-to-run variance make measured differences possibly noise | High | Medium | Open |
 | R-17 | Technical / Environment | Local environment memory exhaustion (WSL/Docker) | High | Medium | Open |
@@ -71,6 +71,8 @@
 **Update 2026-09-30 (Sprint 2 boundary review):** Builds are now reproducible: CI and the service images install exactly what `uv.lock` pins (ADR-047). The trigger is still the Sprint 4 slice deploy (ADR-045). Status stays Open.
 
 **Update 2026-10-05 (ADR-078):** The slice deploy is pulled forward to 2026-10-12 to 10-14, with the stop rule at the end of 10-14. The 2026-11-02 to 11-04 dates above are superseded; the post-deploy check and the consequence of the stop rule are unchanged. Status stays Open.
+
+**Update 2026-10-08 (deploy window, ADR-084):** **Not realised.** The pipeline built, deployed and verified its own revision on day one: build 5a181fa1 (commit `1a3f1e3`) produced `ops-orchestrator-00004-c6f` and `ops-reporting-00004-5kz`, each at 100% traffic, and its `verify.py` step passed every check. The failure mode this risk names, a successful build with no active revision, did not occur. Two nearby problems did: a merge to `main` while the database was stopped produced a revision that failed its readiness probe (no traffic moved, L-65), and the pipeline deploys before it verifies, so a revision that fails verification keeps serving (L-64). Status: Open to Monitoring; it closes after the Sprint 5 deploy of all services.
 
 ### R-04 — Sentiment task has weak natural verifiability
 **Description:** Unlike reporting (deterministic) or forecasting (standard backtest metrics), sentiment has no natural ground truth. A QA check that just re-runs the same model is circular and proves nothing.
@@ -202,13 +204,15 @@
 ### R-14 — Environment parity: verified only against local Docker Postgres
 *Added 2026-09-25.*
 **Description:** Every migration, grant and load so far has run only against local Docker Postgres, connected as a true superuser. Cloud SQL provides `cloudsqlsuperuser`, not SUPERUSER, so the roles migration (role creation, grants, the `PUBLIC` revokes of ADR-025) is unverified on the deployment target and may fail or behave differently there.
-**Likelihood / Impact:** Medium / Medium. **Status:** Open.
+**Likelihood / Impact:** Medium / Medium. **Status:** Monitoring.
 **Mitigation:** The Sprint 4 reporting-slice deploy (ADR-045) runs `alembic upgrade head` and the grants integration suite against Cloud SQL, a sprint before the full migration.
 **Review trigger:** That deploy (2026-11-02 to 11-04).
 
 **Update 2026-09-30 (Sprint 2 boundary review):** No change. The trigger is the Sprint 4 deploy.
 
 **Update 2026-10-05 (ADR-078):** The deploy that triggers the review moves to 2026-10-12 to 10-14 (was 2026-11-02 to 11-04). Status stays Open.
+
+**Update 2026-10-08 (deploy window, ADR-084):** **Not realised.** On Cloud SQL (PostgreSQL 16, Enterprise, `cloudsqlsuperuser`, not a true superuser), all nine migrations ran unchanged on the first attempt (27 s), including the roles migration, the `PUBLIC` revokes and the column grants. `alembic check` was clean, the loader and the 67 validation checks ran unchanged with the same corpus hash, seed and row counts as local, and the grants integration suite passed (882 passed, 1 skipped, the skip being `test_golden_oracles`, which needs stored predictions). The only difference was an operational one: the micro tier's `max_connections=25` default, which the test-suite pool leak exhausted (L-66); raised to 60. Status: Open to Monitoring; the full migration in Sprint 5 (all services, `sentiment_predictions`) remains the last unverified step.
 
 ### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
 *Added 2026-09-26.*
@@ -223,6 +227,8 @@
 **Update 2026-09-26 (mitigation in place):** Status: Open → Mitigating. The mitigation is in place: `packages/llm` retries 5xx errors twice with jittered backoff, then raises `LLMUnavailable`, which the services return as a clear 503 rather than hanging (ADR-048).
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Confirmed Low / Mitigating. No 503s were observed from Flash-Lite this sprint: every eval result file shows one request per call (no retries), and the checkpoint e2e runs on Flash-Lite needed no rerun.
+
+**Update 2026-10-08 (deploy window):** **Not hit.** The window made 7 live free-tier calls, all through `verify.py` check 6, and none returned a 503 or a rate-limit error. Status stays Mitigating; one window is too little to call it.
 
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
