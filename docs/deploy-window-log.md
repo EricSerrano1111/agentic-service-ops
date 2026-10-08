@@ -163,3 +163,18 @@ the first real run; the dry-run API (`validateOnly`) would have caught it before
   is to impersonate it, which needs `roles/iam.serviceAccountTokenCreator` for `build-deploy`
   **on itself**. The probe-account impersonation in check 3 works because that binding exists.
 - This is an IAM design change (a new binding), so it is the owner's decision, not made here.
+
+### IAM change approved by the owner: `build-deploy` token-creator on itself (2026-10-08, ~17:15)
+- **Binding created:** `roles/iam.serviceAccountTokenCreator` for
+  `serviceAccount:build-deploy@...` **on the `build-deploy` account itself**, and nothing else.
+  It lets the build account mint tokens only as itself.
+- **Reason:** inside Cloud Build, check 6 needs an identity token for the build account (it is
+  the orchestrator's invoker). Neither the metadata server nor the build account's own
+  credentials can issue one there; impersonation can (build 09af1023).
+- **Alternative considered:** a separate `verify-caller` service account holding the
+  orchestrator invoker, impersonated by the build account. It would keep the build account
+  out of the orchestrator's invoker list, at the cost of another account and bindings.
+  Deferred to Sprint 6.
+- **Code:** PR `fix/verify-caller-impersonation`: check 6 impersonates `CALLER_SA` (set from
+  `_BUILD_SA` in the pipeline) when set, and uses the owner's gcloud identity locally; the dead
+  metadata-server route from #33 is removed; a failed mint stays a FAIL line.
