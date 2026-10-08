@@ -20,6 +20,7 @@ from .logging import (
     configure_logging,
     current_trace_id,
     new_trace_id,
+    redact_secrets,
 )
 
 __all__ = [
@@ -34,4 +35,5 @@ __all__ = [
     "configure_logging",
     "current_trace_id",
     "new_trace_id",
+    "redact_secrets",
 ]
