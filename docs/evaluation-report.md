@@ -727,3 +727,21 @@ build are appended here as they are found (CLAUDE.md).
 - **What:** The shared JSON formatter (`packages/common`) masks `Bearer <token>`, `authorization` header fields and the password in `scheme://user:password@host` in every log line. It is a pattern match, not a guarantee: a secret in another shape, or split across fields, is not caught. It was added because the A2A SDK logs the whole server call context, request headers included, at DEBUG, so an agent running with `LOG_LEVEL=DEBUG` on Cloud Run would otherwise log the caller's ID token. The router's `reason` and tracebacks (L-60) are not redacted by it.
 - **Why accepted:** Production runs at INFO, where the SDK does not log headers, and the application code never logs the header, the token or the database URL (asserted by tests at every level). The pattern covers the shapes this system can produce.
 - **Recorded in:** `tests/unit/test_log_exposure.py`; `services/orchestrator/tests/test_orchestrator.py` (token exposure).
+
+### L-64 — A revision that fails pipeline verification keeps serving (2026-10-08)
+- **What:** The pipeline deploys at 100% traffic, then runs `verify.py`. If verification fails, the build fails but the new revision is already serving. Rollback is manual: `gcloud run services update-traffic <service> --to-revisions=<previous revision>=100 --region=us-central1 --project=a2a-agentic-service-ops-gcp`. The command is in `deploy/README.md`.
+- **Why accepted:** For the reporting slice: one user, synthetic data, a few deploys. Promoting only after verification needs a no-traffic deploy and a revision-URL check, which is more pipeline than this slice needs.
+- **Sprint 6 candidate:** deploy with no traffic, verify the revision's own URL, then move traffic.
+- **Recorded in:** ADR-085; `deploy/README.md`.
+
+### L-65 — The deployed services are unavailable while `ops-db` is stopped (2026-10-08)
+- **What:** The reporting sidecar's `/readyz` fails until the database answers, so the agent will not start, and any request needs a new instance at min-instances 0. A merge to `main` while the instance is stopped produces a revision that fails its readiness probe (seen on 2026-10-08).
+- **Why accepted:** By design, for cost: the instance is stopped at the end of every day. The readiness probe doing its job is the control.
+- **Operation:** start the instance with `--activation-policy=ALWAYS` before any demo or test, and stop it afterwards. The build trigger is disabled between deploy windows (ADR-083).
+- **Recorded in:** ADR-083; `deploy/README.md`; the window log.
+
+### L-66 — The integration suite leaks connection pools (2026-10-08)
+- **What:** The MCP figures tests build an engine per test and never dispose it. Against Cloud SQL's default `max_connections=25` on the micro tier, 66 tests failed with "remaining connection slots are reserved". The window raised the limit to 60. Production is not affected: each process holds one engine (`pool_size=2`, `max_overflow=2`, so at most 4 connections), and the reporting service runs at most 2 instances, so at most 8 connections.
+- **Why accepted:** For now. Local Postgres allows 100 connections, so the leak is invisible locally and in CI.
+- **Fix:** dispose the engines in a test fixture (Sprint 4 backlog).
+- **Recorded in:** `docs/deploy-window-log.md`; the Sprint 4 backlog in `docs/sprint-log.md`.

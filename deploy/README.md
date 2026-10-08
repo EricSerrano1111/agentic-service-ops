@@ -134,6 +134,32 @@ Stop at the **end of 2026-10-14** if the revision is not verified serving. Then:
 as realised, write it up as the first incident in `06-production-support.md`, and leave the
 Sprint 5 plan unchanged. Stop the Cloud SQL instance either way.
 
+## Operating the deployed services
+
+- **Start the database before any test or demo, stop it after.** The services are unavailable
+  while `ops-db` is stopped (L-65): the sidecar's `/readyz` fails and the agent will not start.
+  ```
+  gcloud sql instances patch ops-db --project=a2a-agentic-service-ops-gcp --activation-policy=ALWAYS
+  gcloud sql instances patch ops-db --project=a2a-agentic-service-ops-gcp --activation-policy=NEVER
+  ```
+  After adding an IAM binding, wait a few minutes before the first verify run (propagation took
+  over a minute on 2026-10-08).
+- **Roll back a revision that failed verification** (L-64). The pipeline deploys at 100% traffic
+  and then verifies, so a failed verification leaves the new revision serving:
+  ```
+  gcloud run revisions list --service=<service> --region=us-central1 --project=a2a-agentic-service-ops-gcp
+  gcloud run services update-traffic <service> --to-revisions=<previous revision>=100 \
+    --region=us-central1 --project=a2a-agentic-service-ops-gcp
+  ```
+- **The build trigger is disabled between deploy windows** (ADR-083): while `ops-db` is stopped,
+  any merge to `main` touching its paths would deploy a revision that fails readiness. gcloud
+  has no disable flag for it. **To re-enable:** start `ops-db` first, then in the console go to
+  Cloud Build, Triggers, region us-central1, `deploy-reporting-slice`, and enable it. Or call the
+  API: `GET https://cloudbuild.googleapis.com/v1/projects/a2a-agentic-service-ops-gcp/locations/us-central1/triggers/e4c3b9df-07f4-4f8b-8acb-3d7443a5fa2c`,
+  set `"disabled": false` in the returned resource, and `PATCH` the same URL with
+  `?updateMask=disabled` and the whole resource as the body (it is how it was disabled on
+  2026-10-08). Disabling is the same with `true`.
+
 ## The build trigger
 
 Push to `main`, **included files** `services/**`, `packages/**`, `deploy/**`, `pyproject.toml`

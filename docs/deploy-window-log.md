@@ -220,3 +220,11 @@ trigger: `_CLOUD_SQL_INSTANCE`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPE
 - Billed resources at end of day: Cloud SQL `ops-db` (stopped; storage and reserved IP only),
   two Cloud Run services (idle, no cost at min-instances 0), Secret Manager (nine secrets),
   Artifact Registry images, Cloud Build minutes.
+
+### Window closed
+- **2026-10-08 (day one of three): the window closed, the reporting slice verified serving**
+  (build 5a181fa1, commit `1a3f1e3`, revisions `ops-orchestrator-00004-c6f` and
+  `ops-reporting-00004-5kz`), with `ops-db` stopped (`NEVER`) and the Auth Proxy stopped. The
+  build trigger `deploy-reporting-slice` was disabled the same evening (ADR-083); re-enabling
+  is in `deploy/README.md`. Live calls used: 7 of 8. Records: ADR-083 to ADR-085, L-64 to
+  L-66, and the R-03, R-14 and R-15 updates.

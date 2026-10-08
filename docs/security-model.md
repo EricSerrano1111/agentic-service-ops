@@ -121,7 +121,7 @@ sections below, each marked built or planned.
 
 Every control below is marked **Built** (the code or a test shows it today, and the evidence
 is named) or **Planned** (not built, with the sprint). A built control with no test says so.
-Checked against the code on 2026-10-04; "by search" means a repository search, not a test.
+Checked against the code on 2026-10-04; the controls the reporting-slice deploy proved were marked Built on 2026-10-08 (evidence: the pipeline's `verify.py` run, build 5a181fa1, and `docs/deploy-window-log.md`); "by search" means a repository search, not a test.
 Test names are in `services/*/tests/` and `tests/`. The guarantees above and the threat model
 are unchanged; the rows cross-reference them.
 
@@ -174,7 +174,8 @@ configuration, not from a question.
 | Per-hop timeouts that fit inside the 120-second ceiling. | Built | `test_timeouts_fit_inside_the_120s_ceiling`, `test_sentiment_timeouts_fit_inside_the_120s_ceiling`, `test_forecast_timeouts_fit_inside_the_120s_ceiling` (orchestrator tests). |
 | A single per-request deadline passed through every hop. | Planned, Sprint 4 | Sprint 4 planning note in `sprint-log.md`. |
 | **Authentication between services: none today.** No token, key or certificate is checked on any hop, and the compose network is the only boundary. The orchestrator's `/ask` is unauthenticated and spends the model quota, so it is published on loopback only (`127.0.0.1:8000`), reachable from the developer's machine and nothing else. Accepted for local development (L-59); IAM ID tokens and the gateway replace it in the deploy. | Not built; accepted locally | Absence confirmed by search of `services/` and `packages/` for tokens, keys and auth dependencies (2026-10-04). L-59. |
-| IAM ID tokens between services; per-peer agent identity. On Cloud Run an agent's call to its own MCP server is localhost between sidecars of one service and carries no token (ADR-079); the tokens cover orchestrator to agent and agent to QA. | Planned, Sprint 4 for the reporting slice (ADR-045), the rest in Sprint 5 | ADR-045, ADR-079; Sprint 4 and Sprint 5 items in `sprint-log.md`. |
+| IAM ID tokens between services, on the Agent Card fetch and the message call alike, audience the target's base URL, attached to the target's origin only, cached until shortly before expiry. On Cloud Run an agent's call to its own MCP server is localhost between sidecars of one service and carries no token (ADR-079). | **Built for orchestrator to reporting (2026-10-08)**; the rest, and agent to QA, Planned, Sprint 5 | `test_token_is_on_both_the_card_fetch_and_the_message_call_when_auth_is_on`, `test_the_bearer_goes_only_to_the_audience_origin`, `test_a_token_fetch_failure_is_specialist_unavailable_not_a_500` (orchestrator tests); the pipeline's check 6 answered a question through the signed hop (ADR-081, ADR-085). |
+| Ingress is IAM only on both deployed services: no `allUsers` or `allAuthenticatedUsers`; reporting's only invoker is the orchestrator's service account; a caller that is not the orchestrator is refused. | **Built (2026-10-08)** | `verify.py` checks, passing in the pipeline: unauthenticated `POST /ask` and `GET /` on the orchestrator and `GET /` on reporting each 403; the probe account (no role) gets 403 from reporting; reporting's invoker is exactly the orchestrator; neither service runs as the default compute account. `test_unauthenticated_probes_pass_on_401_and_403` and the other `verify.py` unit tests. The project Owner can invoke any service through the basic role (ADR-081). |
 | Only the gateway reachable from the internet; requests without valid credentials rejected before any model call (NFR-2). | Planned, Sprint 5 | The gateway (`services/api_gateway`) is not built; the access mechanism is chosen in Sprint 5. |
 
 ### 3. Prompt injection
@@ -232,7 +233,7 @@ agents).
 | Database passwords stay out of settings reprs. | Built (code; no test) | `Settings.__repr__` in each MCP server omits the password. |
 | CI uses its own ephemeral role credentials and never `.env`. | Built | `.github/workflows/ci.yml`; the database is a service container destroyed at the end of the job. |
 | Secret scanning of commits. | Built as a GitHub check, not in this repository | A "GitGuardian Security Checks" check passes on pull requests (observed on PR #23). It is not defined in `ci.yml`, so whether it scans pushes to `main` is not visible from the repository. |
-| Secrets in GCP Secret Manager, never in code or images. | Planned, Sprint 4 for the reporting slice (ADR-045), the rest in Sprint 5 | Sprint 4 and Sprint 5 items in `sprint-log.md`. |
+| Secrets in GCP Secret Manager, never in code or images. On the reporting service the database password is mounted in `mcp-incidents` only and the Gemini key in the orchestrator and `agent-reporting`; the Cloud SQL socket is mounted in `mcp-incidents` only (Admin API v2 format, ADR-081). | **Built for the reporting slice (2026-10-08)**; the rest Planned, Sprint 5 | `test_cloud_sql_is_mounted_into_the_mcp_sidecar_only`, `test_secrets_go_only_to_the_containers_that_need_them` (`tests/unit/test_deploy_config.py`); the deployed revision runs and answers; the `gemini-api-key` secret was checked against the free key by SHA-256, not the paid key. |
 
 ### 5. Logging
 
@@ -245,6 +246,7 @@ root logger, so SDK loggers use it too (`packages/common/src/common/logging.py`)
 | Every MCP tool call logs one line: tool, range, breakdown or filter ids, counts, duration; a rejected input logs its tool and reason. | Built | `"tool call"` and `"tool rejected input"` lines in each MCP server. |
 | Routing and parsing log the decision, prompt version and prompt hash, not the prompt text. | Built | `test_prompt_version_is_logged_with_the_parse`. |
 | The question's length is logged, not its text. | Built | `"ask received"` and `"task received"` log `question_chars` only. |
+| Bearer tokens, `authorization` fields and URL passwords are masked in every log line by the shared formatter, and the A2A SDK's loggers are held at INFO or above (it prints request headers at DEBUG). Pattern-based (L-63). | **Built; proved on Cloud Run 2026-10-08** | `test_token_and_header_never_reach_any_log_at_any_level`, `test_a_debug_root_level_still_emits_no_sdk_header_lines`, `tests/unit/test_log_exposure.py`. Step 10 of the window: 281 Cloud Logging entries from both services, covering the verify traces, were scanned for five secret values and for header, bearer, JWT and URL-password patterns: 0 findings. |
 | Trace id on web-server access-log lines. | Planned, Sprint 4 | Sprint 4 item in `sprint-log.md`. Access lines are written through the same formatter today, without a trace id. |
 
 **What the code logs about user text** (read from all 54 log calls in `services/` and

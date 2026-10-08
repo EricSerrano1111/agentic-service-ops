@@ -94,6 +94,9 @@
 | 080 | The UI is a Next.js static export served by the FastAPI gateway (builds on ADR-009) | Accepted |
 | 081 | Deploy configuration for the reporting slice: v2 service format for a per-container Cloud SQL mount, IAM as the boundary, dedicated service accounts (clarifies ADR-079) | Accepted |
 | 082 | Sprint calendar re-baselined: Sprint 4 is 2026-10-06 to 10-25, Sprint 6 ends 11-22, 11-23 to 12-05 is buffer | Accepted |
+| 083 | The deploy runs in the paid project; cost-split labels; trigger disabled between windows (extends ADR-041) | Accepted |
+| 084 | The deploy window was pulled forward to 2026-10-08 to 10-10; verified serving on day one (supersedes ADR-078's dates) | Accepted |
+| 085 | Deploy verification and IAM changes found in the window: build account self-impersonation, `verify.py` checks 2 and 6, create body (supersedes ADR-081 in part) | Accepted |
 
 ---
 
@@ -2501,3 +2504,63 @@ training grants.
 - Academic deliverable due dates are fixed by the course and do not move: `05` (11-01) and `06` (11-08) now fall in Sprint 5.
 - Dated entries elsewhere that quote the old sprint dates stay as written.
 - Submitted-document divergence, recorded in the sprint log's post-submission list: `03` quotes the original calendar (sprint dates, the critical path and the schedule rows).
+
+
+### ADR-083 — The deploy runs in the paid project
+*Date: 2026-10-08. Extends ADR-041. Supersedes nothing.*
+
+**Decision:**
+- The reporting-slice deploy, and later deploys, run in `a2a-agentic-service-ops-gcp`, the project that already holds paid inference (ADR-041), at the owner's choice. Every Cloud Run service and the Cloud SQL instance carry the labels `app=agentic-service-ops` and `component=deploy`, so billing reports can separate deploy cost from paid inference.
+- The project budget stays **$10**, with alerts at 50%, 90% and 100% (owner's choice, 2026-10-08; the owner supplies any later change). Expected deploy costs exceed it, so its alerts are warnings, not a cap. The billing-account alerts at $50 and $80 are unchanged.
+- The runtime services use the **free** Gemini key only, never the paid one. The `gemini-api-key` secret was checked against the local free key by SHA-256, and differs from the paid key.
+- The build trigger is **disabled between deploy windows** and re-enabled when Sprint 5 extends the deploy. While `ops-db` is stopped, any merge to `main` touching the trigger's paths would deploy a revision that fails its readiness probe.
+
+**Alternatives considered:**
+- *A separate deploy project* (rejected by the owner: simpler tracking in one project).
+
+**Consequences:**
+- Deploy IAM and the paid key share a project, so no deploy service account is granted any role on the paid key's API key, its service account or its secrets.
+- The prepaid balance (about $3.56 of $5) is AI Studio credit for the Gemini API only. Cloud services are postpay on the owner's card ($100 payment threshold), so the deploy cannot exhaust the prepaid credit, and the AI Studio credit cannot stop the deploy. With postpay there is no hard cap: the controls are the budget alerts, stopping Cloud SQL each day, and min-instances 0.
+- The Cloud SQL console cost estimate was not captured during the window (the CLI cannot read it). The owner records the actual cost from Billing, Reports, once the billing data settles.
+
+**Required versus portfolio value:** required. A deploy needs a billed project.
+
+### ADR-084 — The deploy window was pulled forward to 2026-10-08
+*Date: 2026-10-08. Supersedes ADR-078's dates and stop date only; its timebox, stop-rule consequences and provisioning stand.*
+
+**Decision:**
+- The window runs 2026-10-08 to 2026-10-10, with the stop rule at the end of 2026-10-10 (was 2026-10-12 to 10-14).
+
+**Context:**
+- The phase 1 readiness PR (#28) and the prep fixes (#29) merged on 2026-10-08, and Phase 0 found nothing blocking. Waiting four days would add nothing.
+
+**Cost:**
+- Cloud SQL storage and running hours start four days earlier: cents to well under a dollar more, with the instance stopped each day.
+
+**Outcome:**
+- The slice was **verified serving on 2026-10-08, day one of three**: build 5a181fa1 at commit `1a3f1e3`, built, deployed and verified by the pipeline, revisions `ops-orchestrator-00004-c6f` and `ops-reporting-00004-5kz` at 100% traffic. The stop rule did not fire.
+
+**Consequences:**
+- The sprint log's planned sequence moves forward: the reporting filters (L-62) start about 2026-10-09. ADR-082's calendar is unchanged.
+- Post-submission divergence: `03` and `04` quote older windows (already listed in the sprint log); the 10-08 start is added there.
+
+### ADR-085 — Deploy verification and IAM changes found in the window
+*Date: 2026-10-08. Supersedes ADR-081 in part: the build account's roles and how `verify.py` authenticates. ADR-081's other decisions stand.*
+
+**Decision:**
+- `build-deploy` holds `roles/iam.serviceAccountTokenCreator` **on itself**, and on nothing else new (it already held it on the probe account). Inside Cloud Build, neither the metadata server nor `gcloud` will issue an identity token for the build account's own credentials. Impersonation through the IAM Credentials API does work there.
+- `verify.py` check 6 impersonates `CALLER_SA` (the build account, set from `_BUILD_SA`) in the pipeline, and uses the owner's gcloud identity when `CALLER_SA` is unset (the owner running it locally). A failed mint is a FAIL line, not a crash.
+- Check 2's unauthenticated probes are `POST /ask` and `GET /` on the orchestrator and `GET /` on reporting, each requiring 401 or 403; any other status fails. Cloud Run's front end reserves `/healthz` and answers 404 before IAM sees the request, so that probe is now an INFO line.
+- `deploy_service.py` sends no `name` on create (the v2 API rejects it; the name goes in `serviceId`) and keeps it on update.
+
+**Context:** the first real run of a pipeline that had only been unit-tested found each of these. Running `verify.py` on a developer machine does not exercise the pipeline's credential path, so the pipeline run is the only real test of that path.
+
+**Alternatives considered:**
+- *A separate `verify-caller` service account holding the orchestrator invoker, impersonated by `build-deploy`*, so building and calling are separate identities (rejected for now: another account and bindings; deferred to Sprint 6).
+- *Dropping check 6 from the pipeline* (rejected: it would lose the pipeline-verified evidence).
+
+**Required versus portfolio value:** required. A pipeline that cannot run its own verification does not produce the "verified serving" evidence.
+
+**Consequences:**
+- The build account can mint identity tokens as itself and, through its invoker binding on the orchestrator, call the orchestrator. It still cannot invoke reporting (only the orchestrator's account can) and holds no data-plane role.
+- ADR-081's description of the build account's roles gains the self-impersonation binding. Its other decisions stand.
