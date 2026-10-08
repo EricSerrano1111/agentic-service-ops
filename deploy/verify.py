@@ -68,6 +68,27 @@ def refused(name: str, status: int | None) -> Check:
     return Check(name, status in (401, 403), f"HTTP {status}")
 
 
+#: Unauthenticated requests that must be refused by IAM. Not `/healthz`: Cloud Run's front end
+#: reserves that path and answers 404 before IAM sees the request, so it cannot show anything.
+INGRESS_PROBES = (
+    ("orchestrator", "POST", "/ask"),
+    ("orchestrator", "GET", "/"),
+    ("reporting", "GET", "/"),
+)
+
+
+def unauthenticated_refused(statuses: dict[tuple[str, str, str], int | None]) -> list[Check]:
+    """One check per probe: without a token the answer must be 401 or 403. Anything else (404,
+    200, a 5xx, no answer) fails, since only an IAM refusal shows the boundary holds."""
+    return [
+        refused(
+            f"{service} refuses an unauthenticated {method} {path}",
+            statuses.get((service, method, path)),
+        )
+        for service, method, path in INGRESS_PROBES
+    ]
+
+
 def invokers(policy: dict, expected_member: str) -> Check:
     """Exactly one principal holds run.invoker, the expected one, and nothing is public."""
     name = "reporting: invoker is exactly the orchestrator's service account"
@@ -170,10 +191,18 @@ def main() -> int:
     results = [
         serving_revision(orchestrator, tag),
         serving_revision(reporting, tag),
-        refused(
-            "orchestrator refuses an unauthenticated call", http("GET", f"{orch_url}/healthz")[0]
-        ),
     ]
+    urls = {"orchestrator": orch_url, "reporting": rep_url}
+    probe_body = {"question": DEFAULT_QUESTION}  # refused by IAM before it reaches the app
+    results += unauthenticated_refused(
+        {
+            (service, method, path): http(
+                method, urls[service] + path, body=probe_body if method == "POST" else None
+            )[0]
+            for service, method, path in INGRESS_PROBES
+        }
+    )
+    healthz = http("GET", f"{orch_url}/healthz")[0]
     probe_token = identity_token(
         f"--impersonate-service-account={env['PROBE_SA']}", f"--audiences={rep_url}"
     )
@@ -206,6 +235,10 @@ def main() -> int:
 
     for r in results:
         print(r.line())
+    print(
+        f"INFO  /healthz without a token answers HTTP {healthz}: Cloud Run's front end reserves "
+        "that path and answers before IAM, so it is not used as the unauthenticated probe."
+    )
     print(
         "INFO  not tested: that the project Owner's own token is refused by reporting. Owner "
         "invokes any service through the basic role, so that check would fail by design; the "

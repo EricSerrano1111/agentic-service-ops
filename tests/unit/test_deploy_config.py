@@ -327,3 +327,36 @@ def test_create_body_has_no_name_but_the_update_body_keeps_it():
     doc = rendered("reporting")
     assert "name" in doc and "name" not in ds.create_body(doc)
     assert ds.create_body(doc) == {k: v for k, v in doc.items() if k != "name"}
+
+
+def test_ingress_probes_are_ask_and_root_on_the_orchestrator_and_root_on_reporting():
+    assert verify.INGRESS_PROBES == (
+        ("orchestrator", "POST", "/ask"),
+        ("orchestrator", "GET", "/"),
+        ("reporting", "GET", "/"),
+    )
+    assert all(path != "/healthz" for _, _, path in verify.INGRESS_PROBES)
+
+
+def test_unauthenticated_probes_pass_on_401_and_403():
+    checks = verify.unauthenticated_refused(
+        {
+            ("orchestrator", "POST", "/ask"): 403,
+            ("orchestrator", "GET", "/"): 401,
+            ("reporting", "GET", "/"): 403,
+        }
+    )
+    assert len(checks) == 3 and all(c.ok for c in checks)
+
+
+@pytest.mark.parametrize("bad", [404, 200, 204, 302, 500, 502, 503, None])
+@pytest.mark.parametrize("which", verify.INGRESS_PROBES)
+def test_any_other_status_fails_that_probe_only(which, bad):
+    checks = verify.unauthenticated_refused({p: 403 for p in verify.INGRESS_PROBES} | {which: bad})
+    failed = [c for c in checks if not c.ok]
+    assert len(failed) == 1 and which[0] in failed[0].name and which[2] in failed[0].name
+
+
+def test_a_missing_probe_result_fails():
+    checks = verify.unauthenticated_refused({})
+    assert len(checks) == 3 and not any(c.ok for c in checks)
