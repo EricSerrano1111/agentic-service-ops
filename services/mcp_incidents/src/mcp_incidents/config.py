@@ -11,6 +11,7 @@ import datetime as dt
 import os
 from dataclasses import dataclass
 
+from common import database_host
 from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
 
 # The dataset window lives in the shared contract (schemas.reporting): the reporting
@@ -51,7 +52,7 @@ class Settings:
     def from_env(cls) -> Settings:
         env = os.environ.get
         return cls(
-            db_host=_required("POSTGRES_HOST"),
+            db_host=database_host(),
             db_port=int(env("POSTGRES_PORT", "5432")),
             db_name=_required("POSTGRES_DB"),
             db_user=_required("DB_ROLE_REPORTING_USER"),
