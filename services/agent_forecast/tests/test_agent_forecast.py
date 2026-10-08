@@ -12,6 +12,7 @@ import re
 import uuid
 
 import httpx
+import httpx2
 import pytest
 from a2a.client import ClientConfig, create_client
 from a2a.types import Message, Part, Role, SendMessageRequest, TaskState
@@ -20,6 +21,7 @@ from agent_forecast import executor as executor_mod
 from agent_forecast.app import create_app
 from agent_forecast.card import SKILL_ID, build_agent_card
 from agent_forecast.config import Settings
+from agent_forecast.mcp_client import mcp_ready, readiness_url
 from agent_forecast.parsing import first_forecast_week, mondays, next_month, resolve
 from agent_forecast.render import YEAR_END, decline_message, render_answer
 from fastapi.testclient import TestClient
@@ -466,3 +468,60 @@ async def test_parse_sends_template_syntax_in_a_question_unchanged(question):
     [prompt] = llm.prompts
     assert f"<question>\n{question}\n</question>" in prompt
     assert prompt.count(question) == 1
+
+
+# --------------------------------------------------------------------------- readiness
+
+
+def _ready_app(answer: bool):
+    async def ready() -> bool:
+        return answer
+
+    return create_app(SETTINGS, FakeLLM(), ready=ready)
+
+
+def test_readyz_ready_when_the_mcp_server_answers():
+    with TestClient(_ready_app(True)) as client:
+        r = client.get("/readyz")
+    assert r.status_code == 200 and r.json() == {"status": "ready", "service": "agent_forecast"}
+
+
+def test_readyz_not_ready_when_the_mcp_server_does_not_answer():
+    with TestClient(_ready_app(False)) as client:
+        r = client.get("/readyz")
+    assert r.status_code == 503 and r.json()["status"] == "unavailable"
+
+
+@pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
+def test_readyz_rejects_unexpected_methods(method):
+    with TestClient(_ready_app(True)) as client:
+        assert getattr(client, method)("/readyz").status_code == 405
+
+
+def test_readiness_url_is_the_mcp_origin():
+    assert readiness_url(SETTINGS.mcp_volume_url) == "http://mcp_volume:8103/readyz"
+    assert readiness_url("http://localhost:9/mcp?x=1") == "http://localhost:9/readyz"
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(("status", "expected"), [(200, True), (503, False), (404, False)])
+async def test_mcp_ready_follows_the_status_code(status, expected):
+    seen = []
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen.append(str(request.url))
+        return httpx2.Response(status)
+
+    assert (
+        await mcp_ready(SETTINGS.mcp_volume_url, transport=httpx2.MockTransport(handler))
+        is expected
+    )
+    assert seen == ["http://mcp_volume:8103/readyz"]
+
+
+@pytest.mark.anyio
+async def test_mcp_ready_is_false_when_the_server_is_unreachable():
+    def refuse(request: httpx2.Request) -> httpx2.Response:
+        raise httpx2.ConnectError("connection refused")
+
+    assert await mcp_ready(SETTINGS.mcp_volume_url, transport=httpx2.MockTransport(refuse)) is False

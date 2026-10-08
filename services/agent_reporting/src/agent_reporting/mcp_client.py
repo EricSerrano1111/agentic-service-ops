@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx2
 from common import TRACE_ID_KEY
@@ -50,3 +51,25 @@ async def call_tool[R: BaseModel](
         detail = " ".join(getattr(block, "text", "") for block in result.content).strip()
         raise McpToolError(detail or "tool returned an error")
     return result_model.model_validate(result.structured_content)
+
+
+def readiness_url(mcp_url: str) -> str:
+    """The MCP server's `/readyz`, on the same origin as its `/mcp` endpoint."""
+    parts = urlsplit(mcp_url)
+    return urlunsplit((parts.scheme, parts.netloc, "/readyz", "", ""))
+
+
+async def mcp_ready(
+    mcp_url: str, *, timeout_s: float = 2.0, transport: httpx2.AsyncBaseTransport | None = None
+) -> bool:
+    """True when the MCP server's readiness endpoint answers 200 (its database is up).
+
+    Any connection error, timeout or non-200 answer is "not ready", never an exception.
+    `transport` is a test seam only.
+    """
+    try:
+        async with httpx2.AsyncClient(timeout=timeout_s, transport=transport) as http:
+            response = await http.get(readiness_url(mcp_url))
+    except httpx2.HTTPError:
+        return False
+    return response.status_code == 200

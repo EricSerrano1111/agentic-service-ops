@@ -515,3 +515,34 @@ async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value():
     }
     assert all("error" not in r for r in rejected)
     assert marker not in json.dumps(logged)  # including the SDK's own validation of `region`
+
+
+# --------------------------------------------------------------------------- readiness
+
+
+def _down():
+    raise OSError("connection refused: postgres://user:secret_pw@host")
+
+
+def test_readyz_ready_when_the_database_answers():
+    with TestClient(create_app(SETTINGS, backend(MemoryStore([])))) as client:
+        r = client.get("/readyz", headers={"host": "localhost:8102"})
+    assert r.status_code == 200 and r.json()["service"] == "mcp_feedback"
+
+
+def test_readyz_not_ready_when_the_database_is_unreachable_and_leaks_nothing():
+    with TestClient(
+        create_app(SETTINGS, Backend(MemoryStore([]), StubClassifier(), V1, 300, ready=_down))
+    ) as client:
+        r = client.get("/readyz", headers={"host": "localhost:8102"})
+    assert r.status_code == 503
+    assert "secret_pw" not in r.text and "postgres" not in r.text
+
+
+@pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
+def test_readyz_rejects_unexpected_methods(method):
+    with TestClient(create_app(SETTINGS, backend(MemoryStore([])))) as client:
+        assert (
+            getattr(client, method)("/readyz", headers={"host": "localhost:8102"}).status_code
+            == 405
+        )

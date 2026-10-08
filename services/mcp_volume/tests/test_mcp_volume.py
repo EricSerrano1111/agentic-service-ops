@@ -287,3 +287,34 @@ async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value(art
     }
     assert all("error" not in r for r in rejected)
     assert marker not in json.dumps(logged)
+
+
+# --------------------------------------------------------------------------- readiness
+
+
+def _down():
+    raise OSError("connection refused: postgres://user:secret_pw@host")
+
+
+def test_readyz_ready_when_the_database_answers(artifact):
+    with TestClient(create_app(SETTINGS, backend(artifact))) as client:
+        r = client.get("/readyz", headers={"host": "localhost:8103"})
+    assert r.status_code == 200 and r.json()["service"] == "mcp_volume"
+
+
+def test_readyz_not_ready_when_the_database_is_unreachable_and_leaks_nothing(artifact):
+    with TestClient(
+        create_app(SETTINGS, Backend(artifact=artifact, history=fake_history, ready=_down))
+    ) as client:
+        r = client.get("/readyz", headers={"host": "localhost:8103"})
+    assert r.status_code == 503
+    assert "secret_pw" not in r.text and "postgres" not in r.text
+
+
+@pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
+def test_readyz_rejects_unexpected_methods(method, artifact):
+    with TestClient(create_app(SETTINGS, backend(artifact))) as client:
+        assert (
+            getattr(client, method)("/readyz", headers={"host": "localhost:8103"}).status_code
+            == 405
+        )
