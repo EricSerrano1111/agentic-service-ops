@@ -12,6 +12,8 @@ dependencies = [
     "service-ops-schemas",
     "fastapi>=0.115.2",
     "httpx>=0.28.1",
+    # Cloud Run IAM ID tokens for outbound A2A calls (A2A_AUTH=google_id_token).
+    "google-auth[requests]>=2.40",
     "uvicorn>=0.31",
 ]
 

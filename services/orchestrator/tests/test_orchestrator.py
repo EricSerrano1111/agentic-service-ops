@@ -132,7 +132,7 @@ class Sent:
         self.calls: list[str] = []
         self.behaviour = behaviour or (lambda: _completed())
 
-    async def __call__(self, agent_url, question, *, trace_id, timeout_s):
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s, token_provider=None):
         self.calls.append(question)
         return self.behaviour()
 
@@ -775,10 +775,16 @@ class SentTo(Sent):
         super().__init__(behaviour)
         self.urls: list[str] = []
 
-    async def __call__(self, agent_url, question, *, trace_id, timeout_s):
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s, token_provider=None):
         self.urls.append(agent_url)
         self.timeouts = getattr(self, "timeouts", []) + [timeout_s]
-        return await super().__call__(agent_url, question, trace_id=trace_id, timeout_s=timeout_s)
+        return await super().__call__(
+            agent_url,
+            question,
+            trace_id=trace_id,
+            timeout_s=timeout_s,
+            token_provider=token_provider,
+        )
 
 
 def _sentiment_completed() -> Task:
@@ -1002,3 +1008,199 @@ def test_template_syntax_in_a_question_is_a_normal_response_not_a_500(monkeypatc
     assert body["outcome"] == "answered"
     assert sent.calls == [question]  # the specialist gets the same text
     assert f"<question>\n{question}\n</question>" in llm.prompts[0]
+
+
+# --------------------------------------------------------------------------- IAM ID tokens
+
+import base64  # noqa: E402
+
+from agent_reporting.app import create_app as create_reporting_app  # noqa: E402
+from agent_reporting.config import Settings as ReportingSettings  # noqa: E402
+from orchestrator import auth as auth_mod  # noqa: E402
+from orchestrator.auth import AgentAuthError, BearerForOrigin, IdTokenProvider  # noqa: E402
+
+AGENT_URL = "http://agent.test"
+SECRET_TOKEN_BODY = "SUPER-SECRET-TOKEN-VALUE"  # noqa: S105
+
+
+def make_jwt(exp: float, marker: str = SECRET_TOKEN_BODY) -> str:
+    def b64(obj) -> str:
+        return base64.urlsafe_b64encode(json.dumps(obj).encode()).decode().rstrip("=")
+
+    return f"{b64({'alg': 'RS256'})}.{b64({'exp': exp, 'm': marker})}.sig"
+
+
+class _Unclear:
+    """A reporting-agent LLM that always fails parsing: the agent still answers with a Task."""
+
+    async def generate(self, prompt, *, model=None, response_model=None, trace_id):
+        raise LLMOutputInvalid("bad", None)
+
+
+def recording_agent():
+    """The real reporting agent app behind a wrapper that records each request's
+    method, path and Authorization header."""
+    agent = create_reporting_app(ReportingSettings(public_url=AGENT_URL + "/"), _Unclear())
+    seen: list[tuple[str, str, str | None]] = []
+
+    async def wrapper(scope, receive, send):
+        if scope["type"] == "http":
+            headers = dict(scope["headers"])
+            value = headers.get(b"authorization")
+            seen.append((scope["method"], scope["path"], value.decode() if value else None))
+        await agent(scope, receive, send)
+
+    return httpx.ASGITransport(app=wrapper), seen
+
+
+def fixed_provider(token="tok-1", fetched=None):
+    def fetch(audience):
+        if fetched is not None:
+            fetched.append(audience)
+        return token
+
+    return IdTokenProvider(fetch)
+
+
+@pytest.mark.anyio
+async def test_token_is_on_both_the_card_fetch_and_the_message_call_when_auth_is_on():
+    transport, seen = recording_agent()
+    fetched: list[str] = []
+    await send_question(
+        AGENT_URL,
+        "q",
+        trace_id="t",
+        timeout_s=10,
+        transport=transport,
+        token_provider=fixed_provider("tok-1", fetched),
+    )
+    assert fetched == [AGENT_URL]  # the audience is the service's base URL
+    assert [(m, p) for m, p, _ in seen] == [
+        ("GET", "/.well-known/agent-card.json"),
+        ("POST", "/"),
+    ]
+    assert [h for *_, h in seen] == ["Bearer tok-1", "Bearer tok-1"]
+
+
+@pytest.mark.anyio
+async def test_no_token_is_fetched_or_sent_when_auth_is_off():
+    transport, seen = recording_agent()
+    await send_question(AGENT_URL, "q", trace_id="t", timeout_s=10, transport=transport)
+    assert len(seen) == 2 and [h for *_, h in seen] == [None, None]
+
+
+def test_auth_mode_comes_from_the_environment(monkeypatch):
+    monkeypatch.delenv("A2A_AUTH", raising=False)
+    assert Settings.from_env().a2a_auth == "none"
+    monkeypatch.setenv("A2A_AUTH", "google_id_token")
+    assert Settings.from_env().a2a_auth == "google_id_token"
+    monkeypatch.setenv("A2A_AUTH", "basic")
+    with pytest.raises(ValueError, match="A2A_AUTH"):
+        Settings.from_env()
+
+
+@pytest.mark.anyio
+async def test_a_token_is_reused_until_shortly_before_it_expires():
+    now = [1_000.0]
+    count = []
+
+    def fetch(audience):
+        count.append(audience)
+        return make_jwt(exp=now[0] + 3600, marker=str(len(count)))
+
+    provider = IdTokenProvider(fetch, clock=lambda: now[0])
+    first = await provider.token("https://a")
+    now[0] += 3000  # 600 s of validity left: still outside the 300 s margin
+    assert await provider.token("https://a") == first and len(count) == 1
+    now[0] += 400  # 200 s left: inside the margin, so refetch
+    assert await provider.token("https://a") != first and len(count) == 2
+    await provider.token("https://b")  # another audience is its own token
+    assert len(count) == 3
+
+
+@pytest.mark.anyio
+async def test_a_failed_token_fetch_raises_agent_auth_error_without_the_cause_text():
+    def fetch(audience):
+        raise OSError(f"metadata server said {SECRET_TOKEN_BODY}")
+
+    with pytest.raises(AgentAuthError) as caught:
+        await IdTokenProvider(fetch).token("https://a")
+    assert SECRET_TOKEN_BODY not in str(caught.value) and caught.value.__cause__ is None
+
+
+def test_a_token_fetch_failure_is_specialist_unavailable_not_a_500(monkeypatch):
+    def fail(audience):
+        raise OSError("no metadata server")
+
+    monkeypatch.setattr(auth_mod, "fetch_google_id_token", fail)
+    settings = Settings(a2a_auth="google_id_token")
+    with TestClient(create_app(settings, FakeLLM(decision("reporting")))) as client:
+        response = client.post("/ask", json={"question": QUESTION})
+    assert response.status_code == 502 and response.json()["error"] == "agent_unavailable"
+
+
+def test_the_bearer_goes_only_to_the_audience_origin():
+    auth = BearerForOrigin("tok", "https://agent.run.app")
+    same = httpx.Request("GET", "https://agent.run.app/x")
+    other = httpx.Request("POST", "https://elsewhere.example/x")
+    for request in (same, other):
+        next(auth.auth_flow(request))
+    assert same.headers["authorization"] == "Bearer tok"
+    assert "authorization" not in other.headers
+
+
+# --------------------------------------------------------------------------- exposure
+
+
+@pytest.mark.anyio
+async def test_token_and_header_never_reach_any_log_at_any_level():
+    token = make_jwt(exp=4_000_000_000)
+    records: list[logging.LogRecord] = []
+
+    class Collect(logging.Handler):
+        def emit(self, record):
+            records.append(record)
+
+    root = logging.getLogger()
+    handler, level = Collect(), root.level
+    root.addHandler(handler)
+    root.setLevel(1)  # everything, including the DEBUG chatter of every library
+    names = list(logging.root.manager.loggerDict)
+    saved = {
+        n: (logging.getLogger(n).level, logging.getLogger(n).disabled)
+        for n in names
+        if isinstance(logging.root.manager.loggerDict[n], logging.Logger)
+    }
+    for n in saved:  # other tests may have disabled loggers; this one needs them all talking
+        logging.getLogger(n).setLevel(1)
+        logging.getLogger(n).disabled = False
+    try:
+        transport, _ = recording_agent()
+        await send_question(
+            AGENT_URL,
+            "q",
+            trace_id="t",
+            timeout_s=10,
+            transport=transport,
+            token_provider=fixed_provider(token),
+        )
+
+        def fail(audience):
+            raise OSError(f"boom {token}")
+
+        with pytest.raises(AgentAuthError):
+            await IdTokenProvider(fail).token(AGENT_URL)
+    finally:
+        root.removeHandler(handler)
+        root.setLevel(level)
+        for n, (lv, off) in saved.items():
+            logging.getLogger(n).setLevel(lv)
+            logging.getLogger(n).disabled = off
+
+    assert records, "expected some log records to inspect"
+    formatter = JsonFormatter("orchestrator")
+    text = "\n".join(formatter.format(r) for r in records)
+    assert SECRET_TOKEN_BODY not in text
+    assert token not in text and token.split(".")[1] not in text
+    # The A2A server's own DEBUG output prints request headers; the formatter masks them.
+    assert not re.search(r"(?i)bearer\s+(?!\[REDACTED\])\S", text)

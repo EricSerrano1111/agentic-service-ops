@@ -1630,6 +1630,7 @@ source = { editable = "services/orchestrator" }
 dependencies = [
     { name = "a2a-sdk" },
     { name = "fastapi" },
+    { name = "google-auth", extra = ["requests"] },
     { name = "httpx" },
     { name = "service-ops-common" },
     { name = "service-ops-llm" },
@@ -1641,6 +1642,7 @@ dependencies = [
 requires-dist = [
     { name = "a2a-sdk", specifier = "==1.1.5" },
     { name = "fastapi", specifier = ">=0.115.2" },
+    { name = "google-auth", extras = ["requests"], specifier = ">=2.40" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "service-ops-common", editable = "packages/common" },
     { name = "service-ops-llm", editable = "packages/llm" },
