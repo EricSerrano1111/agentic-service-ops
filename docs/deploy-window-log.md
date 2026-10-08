@@ -134,3 +134,18 @@ the first real run; the dry-run API (`validateOnly`) would have caught it before
   take effect: the orchestrator's Agent Card fetch got 403 from reporting about 1 minute after
   the binding was created, and the same request succeeded a few minutes later. After adding a
   binding, wait a few minutes before the first verify run (it cost one live call here).
+
+### Step 8, first attempt: build a5f3e10d (commit `82bfc90`, `_RUN_VERIFY=true`), FAILED at verify
+- Merging #32 fired the trigger. Steps 1 to 6 passed: images built and pushed, rendered,
+  `ops-reporting` and `ops-orchestrator` **updated** (the first real use of the `PATCH` path),
+  3 min 14 s in total.
+- The verify step crashed before check 6 made any call (**no live model call used**; still 5
+  of 8): `gcloud auth print-identity-token --audiences=...` exits non-zero for the build
+  account's own metadata-server credentials. The probe-account impersonation (check 3) did work
+  inside Cloud Build. The crash also hid the results of the earlier checks, because results
+  print at the end.
+- Fix: PR #33 (`fix/verify-ci-identity-token`): the caller's token comes from the metadata
+  server when there is one (Cloud Build), else from gcloud (a developer machine); a failed mint
+  is now a FAIL line instead of a crash. Awaiting the owner's merge, which re-fires the trigger.
+- Lesson for `06`: running `verify.py` on a developer machine does not exercise the pipeline's
+  credential path. The pipeline run is the only real test of that path.
