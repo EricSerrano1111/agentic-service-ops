@@ -8,6 +8,9 @@
 # answer "agent unavailable" until their services exist (Sprint 5).
 name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-orchestrator
 description: Orchestrator that routes questions to specialist agents over A2A
+labels:
+  app: agentic-service-ops
+  component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
 ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
 invokerIamDisabled: false
 template:

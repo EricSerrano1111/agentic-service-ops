@@ -4,8 +4,8 @@
 # trigger and repeated here. Because a custom account is used, logs go to Cloud Logging only.
 #
 # User substitutions (start with _) come from the trigger; PROJECT_ID, PROJECT_NUMBER and
-# COMMIT_SHA are built in. Defaults below are placeholders: a run with one unset fails in the
-# render step rather than deploying a half-resolved definition.
+# COMMIT_SHA are built in. Substitutions left empty below have no default; a run with one
+# unset fails in the render step rather than deploying a half-resolved definition.
 serviceAccount: projects/${PROJECT_ID}/serviceAccounts/${_BUILD_SA}
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -13,11 +13,12 @@ timeout: 1800s
 
 substitutions:
   _REGION: us-central1
-  _AR_REPO: ""
-  _BUILD_SA: ""
-  _ORCHESTRATOR_SA: ""
-  _REPORTING_SA: ""
-  _PROBE_SA: ""
+  _AR_REPO: agentic-service-ops
+  # Service accounts (owner-decided 2026-10-08). Defaults, so the trigger can override them.
+  _BUILD_SA: build-deploy@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _ORCHESTRATOR_SA: run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _REPORTING_SA: run-reporting@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _PROBE_SA: probe-noauth@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
   _CLOUD_SQL_INSTANCE: "" # project:region:instance
   _INSTANCE_NAME: "" # the bare instance name, for the authorizedNetworks check
   _POSTGRES_DB: service_ops
