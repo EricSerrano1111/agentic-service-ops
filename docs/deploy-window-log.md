@@ -178,3 +178,45 @@ the first real run; the dry-run API (`validateOnly`) would have caught it before
 - **Code:** PR `fix/verify-caller-impersonation`: check 6 impersonates `CALLER_SA` (set from
   `_BUILD_SA` in the pipeline) when set, and uses the owner's gcloud identity locally; the dead
   metadata-server route from #33 is removed; a failed mint stays a FAIL line.
+
+### Step 8 passed: build 5a181fa1 (commit `1a3f1e3`, `_RUN_VERIFY=true`) SUCCESS (2026-10-08, 17:31 to 17:34)
+- All eight steps passed in 3 min 28 s: built, pushed, rendered, both services updated
+  (`ops-orchestrator-00004-c6f`, `ops-reporting-00004-5kz`), **verify run by the pipeline, as
+  the build account, passed every check**: serving revisions (both); three unauthenticated
+  probes 403; reporting refuses the probe account (403); invoker exactly the orchestrator; both
+  services on their dedicated accounts; the end-to-end question answered (HTTP 200,
+  `answered`); `authorizedNetworks` empty. Two INFO lines (`/healthz` 404; owner token).
+- This is the "verified serving" evidence: a revision built and deployed by the pipeline,
+  holding 100% of traffic, verified by the pipeline, inside the window (stop rule not triggered).
+- **Live model calls used: 7 of 8** (2 in the hand run, 2 in this pipeline run, 1 in the
+  check that hit IAM propagation, 2 in the repeat). No 503 or rate limit occurred (R-15 not hit).
+
+### Step 9: trigger settings
+`gcloud builds triggers describe deploy-reporting-slice` (us-central1): `filename:
+deploy/cloudbuild.yaml`; `includedFiles`: `services/**`, `packages/**`, `deploy/**`,
+`pyproject.toml`, `uv.lock`; `repositoryEventConfig.push.branch: ^main$`; `serviceAccount:
+projects/a2a-agentic-service-ops-gcp/serviceAccounts/build-deploy@...`; substitutions set on the
+trigger: `_CLOUD_SQL_INSTANCE`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPECIALIST`,
+`_INSTANCE_NAME`. **`_RUN_VERIFY` is not set on the trigger**, so it defaults to `true`.
+
+### Step 10: log scan
+- Exported the Cloud Logging entries of `ops-orchestrator` (92) and `ops-reporting` (189) for
+  the last 8 hours. They hold three `answered` traces: `c1bf1996994a4fd68d401dd5b8f38d34` (the
+  hand-run question), `a046a49713704ccaa951e29960e8e57f` and `9b69b8a0d23c4a9f9d7d4fbe739675de`
+  (the hand-run and pipeline verify runs).
+- Scan: the value of five secrets (Gemini key, reporting, admin, eval and generator
+  passwords) compared by exact match; plus patterns for an authorization header or field with a
+  value, an unmasked bearer token, a JWT-shaped string and a URL password. The authorization
+  pattern was checked with positive controls (it matches `Authorization: Bearer x`,
+  `{'authorization': 'x'}` and the JSON-escaped form, and does not match Cloud Run's own
+  "set the proper Authorization header" text or the audit-log field `authorizationInfo`).
+- **Result: 0 findings.** The first, broader pattern had 39 hits, all platform text (Cloud
+  Run's IAM refusal messages for the unauthenticated probes) and audit-log field names.
+
+### End of day
+- 17:40: Auth Proxy stopped; `ops-db` set to `NEVER` (state STOPPED). Cloud Run services remain
+  deployed at min-instances 0; they are unavailable while the database is stopped, by design.
+- The trigger is **not** disabled; that is decided in the records PR (ADR-083).
+- Billed resources at end of day: Cloud SQL `ops-db` (stopped; storage and reserved IP only),
+  two Cloud Run services (idle, no cost at min-instances 0), Secret Manager (nine secrets),
+  Artifact Registry images, Cloud Build minutes.
