@@ -58,17 +58,31 @@ data load; every deploy.
 
 ## Window runbook (in order)
 
-Set once in your shell: `PROJECT_ID`, `PROJECT_NUMBER`, `REGION=us-central1`, `INSTANCE`
-(instance name), `CONN=$PROJECT_ID:$REGION:$INSTANCE`, and the four account emails
-(`ORCH_SA`, `REPORTING_SA`, `BUILD_SA`, `PROBE_SA`).
+Set once in your shell: `PROJECT_ID=a2a-agentic-service-ops-gcp`, `PROJECT_NUMBER`,
+`REGION=us-central1`, `INSTANCE` (instance name), `CONN=$PROJECT_ID:$REGION:$INSTANCE`, and
+the four account emails, each `<id>@$PROJECT_ID.iam.gserviceaccount.com`: `ORCH_SA`
+(`run-orchestrator`), `REPORTING_SA` (`run-reporting`), `BUILD_SA` (`build-deploy`), `PROBE_SA`
+(`probe-noauth`). Pass `--project=$PROJECT_ID` on every `gcloud` command.
 
 1. **Provision Cloud SQL**: PostgreSQL **16**, edition **Enterprise** chosen explicitly,
    smallest shared-core tier, **storage auto-increase off**, public IP on, **no authorized
    networks**. Confirm the monthly estimate in the console and record it.
-2. **Secrets** (Secret Manager): `gemini-api-key` (the free key), `db-role-reporting-password`
-   (the `app_reporting` password). Grant `roles/secretmanager.secretAccessor` per secret:
-   `gemini-api-key` to the orchestrator and reporting accounts; `db-role-reporting-password`
-   to the reporting account only.
+2. **Secrets** (Secret Manager). Names only here; a value is never written down, printed or
+   passed as an echoed argument. All cloud passwords are **newly generated**, never copied from
+   the local `.env`, and piped straight into `gcloud secrets create --data-file=-`.
+   - `gemini-api-key`: the **free** Gemini key. **Mounted** in the orchestrator and in
+     `agent-reporting`. Never the paid key.
+   - `db-role-reporting-password`: the `app_reporting` password. **Mounted** in `mcp-incidents`
+     only.
+   - **Stored only so the roles can be recreated; no service account has access** to any of
+     them: `db-admin-password` (the `postgres` user) and the other six role passwords,
+     `db-role-sentiment-password`, `db-role-forecast-password`, `db-role-qa-password`,
+     `db-role-generator-password`, `db-role-eval-password` and `db-role-train-password`.
+     Alembic's roles migration needs all seven `DB_ROLE_*` passwords to create the roles on
+     Cloud SQL.
+   - Grant `roles/secretmanager.secretAccessor` per secret, never project-wide:
+     `gemini-api-key` to the orchestrator and reporting accounts; `db-role-reporting-password`
+     to the reporting account only.
 3. **IAM bindings**, in this order:
    - runtime accounts: reporting gets `roles/cloudsql.client` (project); the orchestrator gets
      nothing on Cloud SQL;
@@ -122,10 +136,12 @@ Sprint 5 plan unchanged. Stop the Cloud SQL instance either way.
 
 Push to `main`, **included files** `services/**`, `packages/**`, `deploy/**`, `pyproject.toml`
 and `uv.lock`, so a docs-only merge does not redeploy. Runs as the dedicated build service
-account. Substitutions to set on the trigger: `_AR_REPO`, `_BUILD_SA`, `_ORCHESTRATOR_SA`,
-`_REPORTING_SA`, `_PROBE_SA`, `_CLOUD_SQL_INSTANCE` (`project:region:instance`),
-`_INSTANCE_NAME`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPECIALIST` (`_REGION`, `_POSTGRES_DB` and
-`_RUN_VERIFY` default). An empty one fails the render step.
+account. The trigger lives in **us-central1**, the region of the Cloud Build 2nd gen connection
+`GitHub-CloudBuild-A2A`, not as a global trigger. Substitutions to set on it:
+`_CLOUD_SQL_INSTANCE` (`project:region:instance`), `_INSTANCE_NAME`,
+`_GEMINI_MODEL_ORCHESTRATOR` and `_GEMINI_MODEL_SPECIALIST`. The rest default in
+`cloudbuild.yaml` (`_AR_REPO`, the four service accounts, `_REGION`, `_POSTGRES_DB`,
+`_RUN_VERIFY`) and the trigger may override them. An empty one fails the render step.
 
 ## What `verify.py` checks
 

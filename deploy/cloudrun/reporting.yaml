@@ -12,6 +12,9 @@
 # separately; see README) and no default compute service account.
 name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-reporting
 description: Reporting agent with the incidents MCP server as a sidecar
+labels:
+  app: agentic-service-ops
+  component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
 ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
 invokerIamDisabled: false # the --no-allow-unauthenticated equivalent
 template:

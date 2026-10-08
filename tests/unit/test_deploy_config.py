@@ -283,3 +283,40 @@ def test_the_first_run_can_skip_verify_and_later_runs_do_not():
     verify_step = next(s for s in cb["steps"] if s["id"] == "verify")
     script = " ".join(verify_step["args"])
     assert '"${_RUN_VERIFY}" = "true"' in script and "deploy/verify.py" in script
+
+
+# ------------------------------------------------------------------ labels, accounts, secrets
+
+
+@pytest.mark.parametrize("name", ["reporting", "orchestrator"])
+def test_both_services_carry_the_cost_split_labels(name):
+    assert rendered(name)["labels"] == {"app": "agentic-service-ops", "component": "deploy"}
+
+
+def test_cloud_build_defaults_to_the_four_decided_service_accounts_and_the_repo():
+    subs = yaml.safe_load((DEPLOY / "cloudbuild.yaml").read_text())["substitutions"]
+    domain = "@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com"
+    assert subs["_BUILD_SA"] == "build-deploy" + domain
+    assert subs["_ORCHESTRATOR_SA"] == "run-orchestrator" + domain
+    assert subs["_REPORTING_SA"] == "run-reporting" + domain
+    assert subs["_PROBE_SA"] == "probe-noauth" + domain
+    assert subs["_AR_REPO"] == "agentic-service-ops"
+    # None of the four is the default compute account.
+    assert not any("compute@developer" in v for v in subs.values())
+
+
+def test_readme_names_every_secret_the_deploy_creates():
+    readme = (DEPLOY / "README.md").read_text()
+    for secret in (
+        "gemini-api-key",
+        "db-admin-password",
+        "db-role-reporting-password",
+        "db-role-sentiment-password",
+        "db-role-forecast-password",
+        "db-role-qa-password",
+        "db-role-generator-password",
+        "db-role-eval-password",
+        "db-role-train-password",
+    ):
+        assert f"`{secret}`" in readme, secret
+    assert "newly generated" in readme and "never copied from" in readme
