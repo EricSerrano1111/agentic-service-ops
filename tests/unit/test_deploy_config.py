@@ -320,3 +320,10 @@ def test_readme_names_every_secret_the_deploy_creates():
     ):
         assert f"`{secret}`" in readme, secret
     assert "newly generated" in readme and "never copied from" in readme
+
+
+def test_create_body_has_no_name_but_the_update_body_keeps_it():
+    ds = _load("deploy_service")
+    doc = rendered("reporting")
+    assert "name" in doc and "name" not in ds.create_body(doc)
+    assert ds.create_body(doc) == {k: v for k, v in doc.items() if k != "name"}

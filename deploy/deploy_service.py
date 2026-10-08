@@ -47,6 +47,12 @@ def call(method: str, url: str, token: str, body: dict | None = None) -> tuple[i
         return exc.code, json.loads(exc.read() or b"{}")
 
 
+def create_body(service: dict) -> dict:
+    """The body for a create call. The v2 API rejects a `name` in it ("service.name must be
+    empty on CreateServiceRequest"); the name is given as `serviceId` in the URL instead."""
+    return {k: v for k, v in service.items() if k != "name"}
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 2:
         print("usage: deploy_service.py RENDERED.json", file=sys.stderr)
@@ -60,7 +66,7 @@ def main(argv: list[str]) -> int:
     status, _ = call("GET", f"{API}/{name}", token)
     if status == 404:
         status, operation = call(
-            "POST", f"{API}/{parent}/services?serviceId={service_id}", token, service
+            "POST", f"{API}/{parent}/services?serviceId={service_id}", token, create_body(service)
         )
         action = "create"
     elif status == 200:
