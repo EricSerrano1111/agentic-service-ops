@@ -163,7 +163,10 @@ def test_last_month_parses_to_the_month_before_the_as_of_date(last_month):
 def test_figures_match_independent_sql_for_the_reported_range(last_month):
     reporting = last_month["reporting"]
     figures = reporting["figures"]
-    assert figures == independent_figures(reporting["start"], reporting["end"])
+    expected = independent_figures(reporting["start"], reporting["end"])
+    assert {k: figures[k] for k in expected} == expected
+    # The ungrouped, unfiltered answer carries the later fields (ADR-073) empty.
+    assert not any(v for k, v in figures.items() if k not in expected), figures
     assert figures["incident_count"] > 0
 
 
