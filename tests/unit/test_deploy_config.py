@@ -360,3 +360,38 @@ def test_any_other_status_fails_that_probe_only(which, bad):
 def test_a_missing_probe_result_fails():
     checks = verify.unauthenticated_refused({})
     assert len(checks) == 3 and not any(c.ok for c in checks)
+
+
+class _Resp:
+    def __init__(self, text):
+        self._text = text
+
+    def read(self):
+        return self._text.encode()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def test_metadata_identity_token_asks_for_the_audience_with_the_metadata_header(monkeypatch):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"], seen["header"] = request.full_url, request.get_header("Metadata-flavor")
+        return _Resp("  the.token.value  ")
+
+    monkeypatch.setattr(verify.urllib.request, "urlopen", fake_urlopen)
+    assert verify.metadata_identity_token("https://svc.run.app") == "the.token.value"
+    assert seen["header"] == "Google"
+    assert "audience=https%3A%2F%2Fsvc.run.app" in seen["url"]
+
+
+def test_metadata_identity_token_is_none_off_google_cloud(monkeypatch):
+    def unreachable(request, timeout):
+        raise verify.urllib.error.URLError("no such host")
+
+    monkeypatch.setattr(verify.urllib.request, "urlopen", unreachable)
+    assert verify.metadata_identity_token("https://svc.run.app") is None

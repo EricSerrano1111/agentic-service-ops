@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -135,6 +136,30 @@ def gcloud(*args: str) -> str:
     ).stdout.strip()
 
 
+METADATA_IDENTITY_URL = (
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity"
+)
+
+
+def metadata_identity_token(audience: str) -> str | None:
+    """An identity token for `audience` from the metadata server, or None when there is none.
+
+    Inside Cloud Build the caller is the build service account, and `gcloud auth
+    print-identity-token --audiences` cannot mint a token for credentials that come from the
+    metadata server; the metadata server can. On a developer machine the host does not resolve,
+    and the caller falls back to gcloud.
+    """
+    request = urllib.request.Request(
+        f"{METADATA_IDENTITY_URL}?audience={urllib.parse.quote(audience, safe='')}&format=full",
+        headers={"Metadata-Flavor": "Google"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=5) as response:  # noqa: S310
+            return response.read().decode().strip() or None
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return None
+
+
 def gcloud_json(*args: str) -> dict:
     return json.loads(gcloud(*args, "--format=json"))
 
@@ -220,13 +245,25 @@ def main() -> int:
         not_default_compute(orchestrator, env["PROJECT_NUMBER"], env["ORCHESTRATOR_SA"]),
         not_default_compute(reporting, env["PROJECT_NUMBER"], env["REPORTING_SA"]),
     ]
-    status, body = http(
-        "POST",
-        f"{orch_url}/ask",
-        identity_token(*caller_args),
-        {"question": env.get("QUESTION", DEFAULT_QUESTION)},
-    )
-    results.append(answered(status or 0, body))
+    try:
+        caller_token = metadata_identity_token(orch_url) or identity_token(*caller_args)
+    except subprocess.CalledProcessError as exc:
+        reason = (exc.stderr or "").strip().splitlines()[:1] or ["gcloud failed"]
+        results.append(
+            Check(
+                "orchestrator answers a reporting question end to end",
+                False,
+                f"could not mint an identity token for the caller: {reason[0]}",
+            )
+        )
+    else:
+        status, body = http(
+            "POST",
+            f"{orch_url}/ask",
+            caller_token,
+            {"question": env.get("QUESTION", DEFAULT_QUESTION)},
+        )
+        results.append(answered(status or 0, body))
     results.append(
         no_authorized_networks(
             gcloud_json("sql", "instances", "describe", env["CLOUD_SQL_INSTANCE_NAME"])
