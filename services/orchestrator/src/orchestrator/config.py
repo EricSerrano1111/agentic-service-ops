@@ -26,6 +26,19 @@ def _a2a_auth(raw: str | None) -> str:
     return mode
 
 
+def _retry_attempts(raw: str | None) -> int:
+    """`MAX_QA_RETRY_ATTEMPTS`: 0 to 5, blank meaning the default of 2 (ADR-089)."""
+    if raw is None or not raw.strip():
+        return 2
+    try:
+        value = int(raw)
+    except ValueError:
+        raise ValueError(f"MAX_QA_RETRY_ATTEMPTS must be an integer, got {raw!r}") from None
+    if not 0 <= value <= 5:
+        raise ValueError("MAX_QA_RETRY_ATTEMPTS must be between 0 and 5")
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     #: Base URL the reporting agent's Agent Card is fetched from (well-known path).
@@ -42,6 +55,12 @@ class Settings:
     sentiment_a2a_timeout_s: float = 85.0
     #: The forecast agent's whole A2A exchange: parse (30 s) plus MCP (20 s), with margin.
     forecast_a2a_timeout_s: float = 60.0
+    #: Base URL the QA agent's Agent Card is fetched from (ADR-089).
+    agent_qa_url: str = "http://agent_qa:8004"
+    #: The QA agent's whole A2A exchange: its queries plus one interpretation call (45 s).
+    qa_a2a_timeout_s: float = 50.0
+    #: How many times a specialist is re-asked after an interpretation failure (ADR-089).
+    max_qa_retry_attempts: int = 2
     #: Given to the routing prompt as today's date. Same variable and default as the
     #: reporting agent's (ADR-050), so both read dates against one "today" (ADR-054).
     as_of: dt.date = DATASET_WINDOW_END
@@ -61,6 +80,9 @@ class Settings:
             agent_reporting_url=env("AGENT_REPORTING_URL", d.agent_reporting_url),
             agent_sentiment_url=env("AGENT_SENTIMENT_URL", d.agent_sentiment_url),
             agent_forecast_url=env("AGENT_FORECAST_URL", d.agent_forecast_url),
+            agent_qa_url=env("AGENT_QA_URL", d.agent_qa_url),
+            qa_a2a_timeout_s=float(env("QA_A2A_TIMEOUT_S", str(d.qa_a2a_timeout_s))),
+            max_qa_retry_attempts=_retry_attempts(env("MAX_QA_RETRY_ATTEMPTS")),
             route_timeout_s=float(env("ROUTE_TIMEOUT_S", str(d.route_timeout_s))),
             a2a_timeout_s=float(env("A2A_TIMEOUT_S", str(d.a2a_timeout_s))),
             sentiment_a2a_timeout_s=float(

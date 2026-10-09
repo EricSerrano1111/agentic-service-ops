@@ -34,6 +34,12 @@ from .deadline import (
     clamp_to_deadline,
     current_deadline,
 )
+from .guidance import (
+    GUIDANCE_KEY,
+    MAX_GUIDANCE_CHARS,
+    clean_guidance,
+    with_reviewer_note,
+)
 from .logging import (
     TRACE_ID_KEY,
     JsonFormatter,
@@ -65,6 +71,10 @@ __all__ = [
     "max_cost_per_run_usd",
     "parse_cost_usd",
     "track_request_cost",
+    "GUIDANCE_KEY",
+    "MAX_GUIDANCE_CHARS",
+    "clean_guidance",
+    "with_reviewer_note",
     "CLOUD_SQL_INSTANCE_VAR",
     "database_host",
     "CONNECT_TIMEOUT_VAR",

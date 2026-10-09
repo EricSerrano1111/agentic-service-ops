@@ -16,6 +16,7 @@ from collections.abc import Callable
 
 import httpx
 from a2a.client import A2ACardResolver, ClientConfig, create_client
+from a2a.helpers.proto_helpers import new_data_part
 from a2a.types import (
     AgentCard,
     Message,
@@ -67,6 +68,8 @@ async def send_question(
     token_provider: IdTokenProvider | None = None,
     card_cache: AgentCardCache | None = None,
     deadline: Deadline | None = None,
+    data: dict | None = None,
+    metadata: dict | None = None,
 ) -> Task:
     """Send `question` to the agent at `agent_url` and return the finished Task.
 
@@ -76,15 +79,19 @@ async def send_question(
     client); a token that can't be fetched raises `AgentAuthError`. With a `card_cache`, a
     fresh cached card skips the fetch, and any failed call drops the card. `transport` is a
     test seam only. With a `deadline`, its absolute time goes to the agent in the message
-    metadata; `timeout_s` is still the caller's, already clamped to it.
+    metadata; `timeout_s` is still the caller's, already clamped to it. `data` adds one
+    structured data part after the text (the QA agent's verification request); `metadata` adds
+    keys to the message metadata (the reviewer note a specialist is re-asked with).
     """
     message = Message(
         message_id=uuid.uuid4().hex,
         role=Role.ROLE_USER,
-        parts=[Part(text=question)],
+        parts=[Part(text=question)] + ([new_data_part(data)] if data is not None else []),
         # The request's one deadline travels with the trace id (ADR-088); the agent clamps its
         # own hops to it and never trusts it blindly.
-        metadata={TRACE_ID_KEY: trace_id} | (deadline.as_metadata() if deadline else {}),
+        metadata=(metadata or {})
+        | {TRACE_ID_KEY: trace_id}
+        | (deadline.as_metadata() if deadline else {}),
     )
     request = SendMessageRequest(
         message=message,

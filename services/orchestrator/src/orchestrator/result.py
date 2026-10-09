@@ -14,7 +14,7 @@ from a2a.types import Task, TaskState
 from common import COST_KEY, parse_cost_usd
 from google.protobuf.json_format import MessageToDict
 from pydantic import ValidationError
-from schemas import ForecastAnswer, ReportingAnswer, SentimentAnswer
+from schemas import ForecastAnswer, ReportingAnswer, SentimentAnswer, Verdict
 
 log = logging.getLogger("orchestrator")
 
@@ -23,9 +23,18 @@ class TaskFailed(RuntimeError):
     """The agent's task did not complete. `error_code` is the agent's machine-readable
     reason from the status message metadata, when it gave one."""
 
-    def __init__(self, task_id: str, state: str, reason: str, error_code: str | None) -> None:
+    def __init__(
+        self,
+        task_id: str,
+        state: str,
+        reason: str,
+        error_code: str | None,
+        parsed_request: dict | None = None,
+    ) -> None:
         super().__init__(reason)
         self.task_id, self.state, self.reason, self.error_code = task_id, state, reason, error_code
+        #: How the specialist read the question, for a decline (QA verifies it); else None.
+        self.parsed_request = parsed_request
 
 
 def _status(task: Task) -> tuple[str, str | None]:
@@ -37,6 +46,25 @@ def _status(task: Task) -> tuple[str, str | None]:
         MessageToDict(message.metadata).get("error_code") if message.HasField("metadata") else None
     )
     return text, (str(code) if code else None)
+
+
+def _parsed_request(task: Task) -> dict | None:
+    """The `parsed_request` a declining specialist put in its status metadata, if it is a
+    JSON object. Untrusted: it is only ever passed on to QA, which validates it."""
+    if not (task.status.HasField("message") and task.status.message.HasField("metadata")):
+        return None
+    try:
+        value = MessageToDict(task.status.message.metadata).get("parsed_request")
+    except Exception:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def failure_code(task: Task) -> str | None:
+    """The `error_code` of a failed task, or None."""
+    if task.status.state == TaskState.TASK_STATE_COMPLETED:
+        return None
+    return _status(task)[1]
 
 
 def extract_cost(task: Task) -> float | None:
@@ -69,7 +97,9 @@ def extract_answer(task: Task) -> tuple[str, ReportingAnswer]:
     state = TaskState.Name(task.status.state)
     if task.status.state != TaskState.TASK_STATE_COMPLETED:
         text, code = _status(task)
-        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
+        raise TaskFailed(
+            task.id, state, text or f"task ended in {state}", code, _parsed_request(task)
+        )
 
     texts: list[str] = []
     data: list[dict] = []
@@ -99,7 +129,9 @@ def extract_sentiment_answer(task: Task) -> tuple[str, SentimentAnswer]:
     state = TaskState.Name(task.status.state)
     if task.status.state != TaskState.TASK_STATE_COMPLETED:
         text, code = _status(task)
-        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
+        raise TaskFailed(
+            task.id, state, text or f"task ended in {state}", code, _parsed_request(task)
+        )
 
     texts: list[str] = []
     data: list[dict] = []
@@ -129,7 +161,9 @@ def extract_forecast_answer(task: Task) -> tuple[str, ForecastAnswer]:
     state = TaskState.Name(task.status.state)
     if task.status.state != TaskState.TASK_STATE_COMPLETED:
         text, code = _status(task)
-        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
+        raise TaskFailed(
+            task.id, state, text or f"task ended in {state}", code, _parsed_request(task)
+        )
 
     texts: list[str] = []
     data: list[dict] = []
@@ -148,3 +182,25 @@ def extract_forecast_answer(task: Task) -> tuple[str, ForecastAnswer]:
             task.id, state, f"answer failed validation: {exc.error_count()} error(s)", None
         ) from None
     return "\n".join(texts), answer
+
+
+def extract_verdict(task: Task) -> Verdict:
+    """The QA agent's verdict from its completed task (ADR-089). A task that did not complete,
+    or whose payload is not a valid verdict, is `TaskFailed`: the orchestrator then treats QA
+    as unavailable and never returns the answer as verified."""
+    state = TaskState.Name(task.status.state)
+    if task.status.state != TaskState.TASK_STATE_COMPLETED:
+        text, code = _status(task)
+        raise TaskFailed(task.id, state, text or f"task ended in {state}", code)
+    data = [
+        MessageToDict(part.data)
+        for artifact in task.artifacts
+        for part in artifact.parts
+        if part.HasField("data")
+    ]
+    if len(data) != 1:
+        raise TaskFailed(task.id, state, "completed task is missing its verdict", None)
+    try:
+        return Verdict.model_validate(data[0])
+    except ValidationError:
+        raise TaskFailed(task.id, state, "verdict failed validation", None) from None

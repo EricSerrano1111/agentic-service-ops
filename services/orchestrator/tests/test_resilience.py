@@ -24,7 +24,7 @@ from orchestrator.app import AskResponse, create_app, is_dependency_failure
 from orchestrator.config import Settings
 from orchestrator.degraded import DegradedResult, answer_for, warning_for
 from orchestrator.result import extract_cost
-from test_orchestrator import ANSWER, QUESTION, FakeLLM, decision
+from test_orchestrator import ANSWER, QA_URL, QUESTION, FakeLLM, decision, verdict_task
 
 SECRET = (
     "SUPER-SECRET-bearer-abc123 postgresql://user:hunter2@db/x Traceback (most recent call last)"
@@ -67,11 +67,19 @@ def task(state=TaskState.TASK_STATE_COMPLETED, cost=None, code=None, reason=None
 class Hop:
     """Replaces send_question; records each call and answers from `behaviour(call_number)`."""
 
-    def __init__(self, behaviour=None):
+    def __init__(self, behaviour=None, qa=None):
         self.calls: list[dict] = []
+        self.qa_calls: list[dict] = []
         self.behaviour = behaviour or (lambda n: task())
+        self.qa = qa or (lambda n: verdict_task())
 
     async def __call__(self, agent_url, question, *, trace_id, timeout_s, **kwargs):
+        if agent_url == QA_URL:  # the verification hop has its own responder and its own record
+            self.qa_calls.append({"url": agent_url, "timeout_s": timeout_s, **kwargs})
+            result = self.qa(len(self.qa_calls))
+            if isinstance(result, BaseException):
+                raise result
+            return result
         self.calls.append({"url": agent_url, "timeout_s": timeout_s, **kwargs})
         result = self.behaviour(len(self.calls))
         if isinstance(result, BaseException):
@@ -255,19 +263,21 @@ def test_declines_and_4xx_never_open_the_breaker(monkeypatch):
     assert len(declines.calls) == 6
 
 
-def test_the_language_model_breaker_open_is_degraded_naming_the_language_model(monkeypatch):
+def test_the_language_model_breaker_open_is_degraded_naming_routing(monkeypatch):
     hop = Hop()
     llm = FakeLLM(decision("reporting"), error=LLMBreakerOpen("the Gemini circuit breaker is open"))
     body = ask(client_for(monkeypatch, llm, hop)).json()
-    assert body["outcome"] == "degraded" and body["unavailable_capability"] == "language model"
-    assert "language model service is temporarily unavailable" in body["warning"]
-    assert hop.calls == []
+    assert body["outcome"] == "degraded" and body["unavailable_capability"] == "routing"
+    assert "routing service is temporarily unavailable" in body["warning"]
+    assert hop.calls == [] and hop.qa_calls == []
 
 
-def test_an_ordinary_language_model_failure_keeps_its_own_status(monkeypatch):
+def test_an_ordinary_language_model_failure_is_the_same_degraded_result(monkeypatch):
     llm = FakeLLM(decision("reporting"), error=LLMUnavailable("503 from google"))
     response = ask(client_for(monkeypatch, llm, Hop()))
-    assert response.status_code == 503 and response.json()["error"] == "model_unavailable"
+    body = response.json()
+    assert response.status_code == 200 and body["outcome"] == "degraded"
+    assert body["unavailable_capability"] == "routing"
 
 
 @pytest.mark.parametrize(

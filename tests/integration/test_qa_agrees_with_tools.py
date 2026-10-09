@@ -124,7 +124,9 @@ def assert_agrees(checker, answer: ReportingAnswer):
 @pytest.mark.parametrize("group_by", [None, *COUNT_BREAKDOWNS])
 def test_incident_counts_agree(tools, checker, span, group_by):
     figures = tool_queries.count_by_severity(tools, *span, group_by=group_by)
-    assert_agrees(checker, answer_for(figures, request_for("incident_count", span, group_by=group_by), span))
+    assert_agrees(
+        checker, answer_for(figures, request_for("incident_count", span, group_by=group_by), span)
+    )
 
 
 @pytest.mark.parametrize("span", RANGES)
@@ -136,7 +138,11 @@ def test_filtered_incident_counts_agree(tools, checker, people, span):
         ({"account_id": account.account_id}, {"account_name": account.account_name}),
         (
             {"account_id": account.account_id, "region": "northeast"},
-            {"account_name": account.account_name, "region": "northeast", "group_by": "incident_type"},
+            {
+                "account_name": account.account_name,
+                "region": "northeast",
+                "group_by": "incident_type",
+            },
         ),
         ({"technician_id": technician.technician_id}, {"technician_name": technician.full_name}),
         (
@@ -148,7 +154,8 @@ def test_filtered_incident_counts_agree(tools, checker, people, span):
         group_by = request_fields.get("group_by")
         figures = tool_queries.count_by_severity(tools, *span, group_by=group_by, **tool_args)
         assert_agrees(
-            checker, answer_for(figures, request_for("incident_count", span, **request_fields), span)
+            checker,
+            answer_for(figures, request_for("incident_count", span, **request_fields), span),
         )
 
 
@@ -182,8 +189,12 @@ def test_filtered_rate_metrics_agree(tools, checker, people, metric, span):
         ),
     ]
     for tool_args, request_fields in cases:
-        figures = RATE_TOOLS[metric](tools, *span, group_by=request_fields.get("group_by"), **tool_args)
-        assert_agrees(checker, answer_for(figures, request_for(metric, span, **request_fields), span))
+        figures = RATE_TOOLS[metric](
+            tools, *span, group_by=request_fields.get("group_by"), **tool_args
+        )
+        assert_agrees(
+            checker, answer_for(figures, request_for(metric, span, **request_fields), span)
+        )
 
 
 # --------------------------------------------------------------------------- repeat drivers

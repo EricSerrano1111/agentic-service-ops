@@ -26,7 +26,11 @@ REPORTING = "reporting"
 SENTIMENT = "sentiment"
 FORECAST = "forecast"
 QA = "verification (QA)"
-LANGUAGE_MODEL = "language model"
+ROUTING = "routing"
+
+#: Appended to an answer no QA check exists for yet (sentiment, until M2): the user is told
+#: plainly that it was not verified (ADR-089).
+NOT_VERIFIED_LINE = "Not verified: sentiment answers are not yet checked by the verification agent."
 
 _CODE = re.compile(r"^[a-z0-9_]{1,64}$")
 MAX_CODES = 10
@@ -49,6 +53,11 @@ class DegradedResult(Exception):
         # Codes are machine identifiers; anything else is dropped, never echoed.
         self.failed_checks = tuple(c for c in failed_checks if _CODE.match(c))[:MAX_CODES]
         self.best_answer = best_answer
+
+
+def qa_status_for(d: DegradedResult) -> str:
+    """`unavailable` when QA was needed and could not run; otherwise no check ran."""
+    return "unavailable" if d.trigger == "qa_unavailable" else "not_checked"
 
 
 def warning_for(d: DegradedResult) -> str:
