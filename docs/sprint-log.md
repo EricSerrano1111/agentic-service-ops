@@ -653,14 +653,20 @@ now written; they record the planning decisions above.*
 - *#32: check 2 probes `POST /ask` and `GET /` (401 or 403 only); `/healthz` is reserved by Cloud Run and answers 404, now an INFO line.*
 - *#33: caller token from the metadata server (superseded, dead code).*
 - *#34: check 6 impersonates `CALLER_SA` in the pipeline (ADR-085); #29 earlier added the labels, account-name defaults and the secrets list.*
+*2026-10-08, notes for the owner on the reporting filters (ADR-086):*
+- *`05-test-scenarios.md` (yours to edit, not edited here): TS-01-A ("SLA compliance in the west region last month"), TS-02-C ("incident rate for the central region", no period given) and TS-05-B ("SLA compliance in the west region in July 2026") are now answerable as scoped figures. Each can be restated as: routed to reporting, the answer says "the west region" (or "central"), and the counts and rate equal the independent calculation. TS-02-C's assumed range (July 2026) is stated by the agent as before. "Region" means the customer site's region, the same column the by-region breakdown uses; an area that is not one of the four regions is declined, not mapped (L-68).*
+- *The golden set was not opened (ADR-074). Golden items about one region or one account may have a different correct answer now that the tools can scope a figure; check them at the Sprint 5 evaluation and, if needed, make a `golden_v3` with disclosure.*
+- *The deploy trigger is still disabled (ADR-083); merging this changes `services/**` and deploys nothing.*
 *Planned sequence update (2026-10-08): the deploy window is done. The reporting filters (L-62) start next, from about 2026-10-09; then QA; the fault-injection harness last.*
 *For `06` (due 2026-11-08), not written there: the window's failures are material for its production-support write-up: a create-body field the API rejects, a reserved path (`/healthz`) that hides the IAM boundary, identity-token minting in Cloud Build, IAM propagation delay (a new invoker binding took over a minute), and a revision failing its readiness probe while the database was stopped.*
 
 **Planned:**
-- [ ] Sprint 4 backlog (2026-10-08): dispose engines in the MCP figures tests' fixtures (L-66).
+- [x] Sprint 4 backlog (2026-10-08): dispose engines in the MCP figures tests' fixtures (L-66).
+  *2026-10-08: done. A pool-less, disposed engine fixture in `tests/integration/conftest.py`; the integration suite passes (883) at `max_connections=25`, where the two figures files had 11 failures before. L-66 resolved.*
 - [ ] Sprint 4 backlog (2026-10-08): the trace-ID-in-access-logs follow-up PR. It needs an access-log middleware in all seven servers and a trace-ID header on the A2A and MCP clients, because the ID only reaches agents and MCP servers in the request body.
-- [ ] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
+- [x] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
   *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
+  *2026-10-08: done (ADR-086, PR `feat/reporting-filters`). `region` and `account_id` filters on the four incident tools, `find_account`, `parse_v4` (the agent's default) and the clarification reasons `account_not_found` and `account_ambiguous`. Evidence: 90 integration tests against raw SQL as `app_eval` (the filtered figure equals its group's row, every metric, every region, all 50 accounts, combinations); the parse gate passed on the first candidate (`parse_v3` 15/16 in each of 3 runs, `parse_v4` 15/16 on the old items and 12/12 on the new in each of 3 runs, both unsupported areas declined in all 3), 134 of 220 calls; one end-to-end filtered question matched SQL. L-62 resolved; L-67 to L-69 recorded.*
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
   - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
 - [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
@@ -742,6 +748,8 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.*
+- [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
 - [ ] FR-03 (ambiguous questions not force-routed) is open (L-58, ADR-075, ADR-076). Any
   reattempt needs a new owner-written fresh set: `fr03_fresh_v1` has now been used to

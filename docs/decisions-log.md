@@ -2605,3 +2605,20 @@ training grants.
 **Consequences:**
 - QA (Sprint 4) recomputes a filtered figure from the same definitions. 05 TS-01-A, TS-02-C and TS-05-B can now be corrected by the owner.
 - Golden-set items about one region or account may have a different correct answer; check at the Sprint 5 evaluation (the golden set was not opened).
+
+**Results (2026-10-08, recorded at the end of the same PR as the design above, which is unchanged):**
+- **Invariant:** 90 integration tests against raw SQL run as `app_eval` hold, over three ranges (July 2026, the regional-outage fortnight, the full window): every region for the incident count and the three metrics; all 50 accounts for each tool in July; region and account together; a region filter with an account breakdown and an account filter with a region breakdown (the cross-tab); and a technician filter with a region. A filtered figure equals its group's row in the unfiltered breakdown every time.
+- **Parse gate, passed on the first candidate** (`gemini-3.5-flash-lite`, free key, k=3, as-of 2026-08-30; files in `evals/results/reporting_parse/2026-10-08/`):
+
+| Prompt, items | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| `parse_v3`, 16 old items (baseline) | 15 | 15 | 15 |
+| `parse_v4`, the same 16 old items | 15 | 15 | 15 |
+| `parse_v4`, the 12 new items | 12 | 12 | 12 |
+| `parse_v4`, the 2 unsupported-area items declined | 2 | 2 | 2 |
+
+  (a) the old items: `parse_v4`'s mean 15.0 against `parse_v3`'s 15.0, so at least the baseline minus 1: **pass**. (b) at least 10 of 12 new items in every run: 12, 12, 12: **pass**. (c) Texas and the Midwest parsed to `region: "unsupported"` in all three runs: **pass**. The one miss in every run, for both prompts, is `r17`, as recorded for `parse_v3` since ADR-073.
+- **No revision was needed.** `parse_v4` is the agent's default; `parse_v3` stays in the repo.
+- **Calls:** 48 (baseline) + 84 (candidate) + 2 (end-to-end) = 134 of the 220 budgeted.
+- **The set is not blind:** the 12 new items were drafted by the assistant, who also wrote the prompt, and the prompt's examples were chosen to differ from them (a test holds that). A pass here measures this prompt on items its author wrote; it does not show the model generalises to how the owner phrases region and account questions (R-16, L-69).
+- **Tests of the new edges** (malformed input, exposure): an invalid region value (`Midwest`, `West`, an injection string), `account_id` of 0, a negative or non-integer, pattern characters in `find_account` (nine), SQL text, an oversized name, an empty and a numeric name, and a typed account name never in a log line (`test_a_typed_account_name_is_never_logged`, `test_account_lookup_failures_log_counts_and_ids_not_names`).

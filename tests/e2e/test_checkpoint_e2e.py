@@ -235,3 +235,47 @@ def test_sla_compliance_by_region_matches_independent_sql():
     # Worst first for SLA compliance: lowest rate first, in the data part too.
     rates = [Decimal(g["rate"]) for g in figures["groups"]]
     assert rates == sorted(rates)
+
+
+WEST_COUNT = "How many incidents were reported in the West last month?"
+
+WEST_COUNT_SQL = """
+    SELECT i.severity, count(*)
+    FROM incidents i
+    JOIN service_requests r ON r.request_id = i.request_id
+    JOIN locations loc ON loc.location_id = r.location_id
+    WHERE loc.region = 'west'
+      AND i.reported_at >= (%(start)s::date)::timestamp AT TIME ZONE 'UTC'
+      AND i.reported_at <  ((%(end)s::date + 1))::timestamp AT TIME ZONE 'UTC'
+    GROUP BY i.severity
+"""
+
+
+def test_a_region_filtered_question_matches_independent_sql():
+    """ADR-086: "in the West" restricts to the site's region; the figures equal raw SQL run as
+    `app_eval`, the answer says so, and the trace id reaches all three services. Two calls."""
+    response = ask(WEST_COUNT)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert (body["route"]["route"], body["outcome"]) == ("reporting", "answered")
+    reporting = body["reporting"]
+    assert reporting["request"]["region"] == "west" and reporting["request"]["group_by"] is None
+    assert reporting["request"]["account_name"] is None
+    as_of = dt.date.fromisoformat(reporting["as_of"])
+    start, end = previous_month(as_of)
+    assert (reporting["start"], reporting["end"]) == (start.isoformat(), end.isoformat())
+
+    with eval_connect() as conn:
+        rows = conn.execute(WEST_COUNT_SQL, {"start": start, "end": end}).fetchall()
+    by_severity = {"low": 0, "medium": 0, "high": 0} | dict(rows)
+    figures = reporting["figures"]
+    assert figures["region"] == "west" and figures["account_id"] is None
+    assert figures["by_severity"] == by_severity
+    assert figures["incident_count"] == sum(by_severity.values()) > 0
+    print(f"\nWest answer: {body['answer']}")
+    assert "in the west region" in body["answer"]
+
+    trace_id = body["trace_id"]
+    for service in SERVICES:
+        traced = [line for line in compose_logs(service) if line.get("trace_id") == trace_id]
+        assert traced, f"trace id {trace_id} not found in {service} logs"

@@ -87,6 +87,8 @@ agents are built:
     and the total count, and logs only the count, not the name typed. The reporting agent
     resolves the name before any metric call: no match or several matches ends the turn
     with no figures, and names reach only the answer template, never a model (ADR-073).
+    `find_account` follows exactly the same rules for account names, and the `region` filter
+    accepts only the four site regions (ADR-086).
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).
@@ -138,6 +140,7 @@ are unchanged; the rows cross-reference them.
 | Comment examples at most 5 per call (the sentiment agent asks for 3), and never sent to a model (guarantees 8, 9). | Built | `test_limit_outside_1_to_5_is_rejected`, `test_examples_reject_a_limit_above_5`, `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`. |
 | On-demand scoring at most 250 comments per request, newest first, with coverage reported. | Built | `test_above_the_cap_the_newest_are_scored_and_coverage_is_partial`, `test_the_cap_and_batch_follow_the_real_container_measurement`. |
 | Technician lookup returns at most 5 names plus the total, matches by whole word in code, and rejects wildcards and pattern characters (guarantee 11). | Built | `test_find_technician_rejects_wildcards_and_patterns`, `test_patterns_and_non_name_characters_are_rejected`, `test_at_most_five_matches_are_returned_with_the_total`; the name is never logged. |
+| Account lookup (`find_account`) follows the technician rules exactly: at most 5 names plus the total, whole-word matching in code, patterns and wildcards rejected, the typed name never logged (only the match count, or the resolved `account_id`). A region filter takes only the four values, an account filter only a positive id; anything else is rejected before any query (guarantee 11, ADR-086). | Built | `test_find_account_rejects_wildcards_patterns_and_sql`, `test_find_account_rejects_an_oversized_empty_or_numeric_name`, `test_invalid_region_and_account_values_are_rejected_before_any_query`, `test_a_typed_account_name_is_never_logged`, `test_a_filtered_call_logs_the_account_id_and_region_not_the_account_name` (`mcp_incidents`); `test_account_lookup_failures_log_counts_and_ids_not_names`, `test_a_rejected_account_name_is_logged_without_the_name` (reporting agent). |
 | Date span at most 731 days (feedback); forecast horizon 1 to 26 weeks and history 1 to 52 weeks. | Built | `test_span_of_exactly_731_days_is_allowed` and the "more than 731 days" case in `test_invalid_scopes_are_rejected`, `test_horizon_outside_1_to_26_is_rejected`, `test_history_weeks_outside_1_to_52_is_rejected`. |
 | Database statement timeout of 10 seconds on every server that connects (`MCP_DB_STATEMENT_TIMEOUT_MS`). | Built (configuration; no test of the timeout firing) | `config.py` and the engine options in each server. |
 | Forecast numbers only for slice-bands the model manifest marks served (guarantee 10). | Built | `test_no_numbers_ever_for_an_unserved_slice_band`, `test_real_artifact_serves_numbers_only_where_the_manifest_says`; the shared result contract rejects an unserved week carrying numbers (`test_numbers_for_an_unserved_week_are_rejected`, orchestrator). |
