@@ -37,7 +37,7 @@ MAX_HISTORY_WEEKS = 52
 YEAR_END_PHRASE = "holiday adjustment"
 #: What a forecast decline's text says for each reason (matched case-insensitively).
 DECLINE_PATTERNS = {
-    "sla": r"sla.*can't be forecast",
+    "sla": r"\bsla\b.*can't be forecast",
     "incidents": r"incidents can't be forecast",
     "sentiment": r"sentiment can't be forecast",
     "region": r"can't be broken down by region",
@@ -49,11 +49,12 @@ DECLINE_PATTERNS = {
 }
 
 
-def band_name(horizon: int) -> str:
+def band_name(horizon: int) -> str | None:
+    """The band a horizon falls in, or None outside 1 to 26."""
     for name, lo, hi in BANDS:
         if lo <= horizon <= hi:
             return name
-    raise ValueError("horizon outside 1 to 26")
+    return None
 
 
 @dataclass(frozen=True)
@@ -235,7 +236,7 @@ class Checker:
             ):
                 problems.append("shown_error_differs_from_manifest")
         if a.period_total is not None and any(
-            not table[band_name(w.horizon)]["served"] for w in a.weeks
+            not table.get(band_name(w.horizon), {}).get("served") for w in a.weeks
         ):
             problems.append("period_total_with_unserved_band")
         return result("serving_matches_manifest", problems)
@@ -272,7 +273,7 @@ class Checker:
         return result("history_matches_database", problems)
 
     def _text(self, a: ForecastAnswer, text: str) -> CheckResult:
-        allowed: set[str] = {str(HORIZON_CAP)}
+        allowed: set[str] = {str(HORIZON_CAP), "80"}  # "80% range"
         required: list[set[str]] = []
         n = len(a.weeks) + a.beyond_horizon_weeks
         for value in (n, len(a.weeks), a.beyond_horizon_weeks):

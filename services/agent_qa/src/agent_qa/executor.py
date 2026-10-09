@@ -150,8 +150,12 @@ class QAExecutor(AgentExecutor):
                     "The interpretation check could not run.",
                 )
                 return
-            except Exception:
-                log.exception("verification failed", extra={"task_id": task.id})
+            except Exception as exc:
+                # The type only: a database error's text can carry query or connection detail.
+                log.error(
+                    "verification failed",
+                    extra={"task_id": task.id, "error": type(exc).__name__},
+                )
                 await self._fail(updater, task.id, "qa_unavailable", "Verification is unavailable.")
                 return
 

@@ -114,7 +114,7 @@ def decline_reasons(req: ReportingRequest) -> set[str]:
             reasons.add("repeat_region_or_account")
         if req.technician_name is not None:
             reasons.add("repeat_technician")
-    if req.region is not None and req.group_by == "region":
+    if req.region not in (None, "unsupported") and req.group_by == "region":
         reasons.add("region_same_dimension")
     if req.account_name is not None and req.group_by == "account":
         reasons.add("account_same_dimension")

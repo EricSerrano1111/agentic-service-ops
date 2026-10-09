@@ -224,6 +224,43 @@ services:
       retries: 10
       start_period: 5s
 
+  agent_qa:
+    build:
+      context: .
+      dockerfile: services/agent_qa/Dockerfile
+    # The one agent that holds database credentials directly: app_qa's, read-only, and no other
+    # role's (ADR-055, ADR-087). It runs its own SQL and calls no specialist or MCP server.
+    # Published on the loopback interface only (like the orchestrator), so it can be probed
+    # from this machine; nothing else can reach it from outside the compose network.
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432" # the container port, not the host mapping above
+      POSTGRES_DB: ${POSTGRES_DB:-service_ops}
+      DB_ROLE_QA_USER: ${DB_ROLE_QA_USER:?set DB_ROLE_QA_USER in .env}
+      DB_ROLE_QA_PASSWORD: ${DB_ROLE_QA_PASSWORD:?set DB_ROLE_QA_PASSWORD in .env}
+      QA_DB_STATEMENT_TIMEOUT_MS: ${QA_DB_STATEMENT_TIMEOUT_MS:-10000}
+      QA_INTERP_TIMEOUT_S: ${QA_INTERP_TIMEOUT_S:-30}
+      REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
+      REPORTING_MIN_GROUP_DENOMINATOR: ${REPORTING_MIN_GROUP_DENOMINATOR:-20}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:?set GOOGLE_AI_API_KEY in .env}
+      GEMINI_MODEL_QA: ${GEMINI_MODEL_QA:?set GEMINI_MODEL_QA in .env}
+      LLM_THINKING_LEVEL_QA: ${LLM_THINKING_LEVEL_QA:-}
+      LLM_MODE: free
+      AGENT_QA_PUBLIC_URL: http://agent_qa:8004/
+      AGENT_QA_PORT: "8004"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:${AGENT_QA_PORT:-8004}:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8004/readyz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   orchestrator:
     build:
       context: .
@@ -232,6 +269,9 @@ services:
       AGENT_REPORTING_URL: http://agent_reporting:8001
       AGENT_SENTIMENT_URL: http://agent_sentiment:8002
       AGENT_FORECAST_URL: http://agent_forecast:8003
+      AGENT_QA_URL: http://agent_qa:8004
+      QA_A2A_TIMEOUT_S: ${QA_A2A_TIMEOUT_S:-50}
+      MAX_QA_RETRY_ATTEMPTS: ${MAX_QA_RETRY_ATTEMPTS:-2}
       FORECAST_A2A_TIMEOUT_S: ${FORECAST_A2A_TIMEOUT_S:-60}
       SENTIMENT_A2A_TIMEOUT_S: ${SENTIMENT_A2A_TIMEOUT_S:-85}
       ROUTE_TIMEOUT_S: ${ROUTE_TIMEOUT_S:-30}
@@ -254,6 +294,8 @@ services:
       agent_sentiment:
         condition: service_healthy
       agent_forecast:
+        condition: service_healthy
+      agent_qa:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]

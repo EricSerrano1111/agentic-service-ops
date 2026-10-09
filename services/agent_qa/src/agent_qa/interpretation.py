@@ -22,7 +22,7 @@ from typing import Any, Literal, Protocol
 
 from llm import LLMResult
 from llm.prompts import Prompt, load_prompt
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from schemas import MAX_GUIDANCE_CHARS, ForecastRequest, ReportingRequest
 
 log = logging.getLogger("agent_qa")
@@ -49,7 +49,7 @@ class Judgement(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    faithful: bool
+    faithful: StrictBool
     differs_in: list[DiffField] = Field(default_factory=list, max_length=10)
     note: str = Field(default="", max_length=MAX_GUIDANCE_CHARS)
 
@@ -114,7 +114,7 @@ _CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
 
 def clean_note(note: str) -> str:
     """A reviewer note safe to hand on: one line, no control characters, capped."""
-    return _CONTROL.sub(" ", note).strip()[:MAX_GUIDANCE_CHARS]
+    return " ".join(_CONTROL.sub(" ", note).split())[:MAX_GUIDANCE_CHARS]
 
 
 GENERIC_GUIDANCE = "Re-read the question: the previous reading did not match what it asks for."
@@ -166,7 +166,6 @@ __all__ = [
     "CHECK_CODE",
     "Interpreter",
     "Judgement",
-    "ValidationError",
     "clean_note",
     "guidance_for",
     "load_interp_prompt",

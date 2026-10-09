@@ -14,7 +14,9 @@ Asserted from `docker compose config`, the resolved configuration Docker actuall
   key (ADR-048).
 - `mcp_feedback` gets `app_sentiment`'s credentials and nothing else, no model key,
   and the models folder read-only (ADR-067).
-- Only the orchestrator publishes a host port among the application services.
+- Only the orchestrator and the QA agent publish a host port among the application services,
+  both on loopback (the QA agent so it can be probed from this machine, ADR-089).
+- `agent_qa` gets `app_qa`'s credentials and nothing else, a model key, no models folder.
 """
 
 from __future__ import annotations
@@ -38,9 +40,16 @@ APP_SERVICES = (
     "agent_reporting",
     "agent_sentiment",
     "agent_forecast",
+    "agent_qa",
     "orchestrator",
 )
-LLM_SERVICES = ("agent_reporting", "agent_sentiment", "agent_forecast", "orchestrator")
+LLM_SERVICES = (
+    "agent_reporting",
+    "agent_sentiment",
+    "agent_forecast",
+    "agent_qa",
+    "orchestrator",
+)
 LLM_PREFIXES = ("GOOGLE_", "GEMINI_", "LLM_", "ANTHROPIC_")
 
 
@@ -98,9 +107,9 @@ def test_no_secret_literals_in_compose(compose):
                 assert str(value).startswith("${"), f"{name}.{key} is a literal"
 
 
-def test_only_orchestrator_publishes_a_port(compose):
+def test_only_orchestrator_and_qa_publish_a_port(compose):
     published = {name for name in APP_SERVICES if compose[name].get("ports")}
-    assert published == {"orchestrator"}
+    assert published == {"orchestrator", "agent_qa"}
 
 
 def _bind_address(port) -> str:
@@ -121,7 +130,7 @@ def test_every_published_port_binds_loopback_only(compose):
         for name, service in compose.items()
         for port in service.get("ports") or []
     ]
-    assert {n for n, _ in published} == {"orchestrator", "postgres"}
+    assert {n for n, _ in published} == {"orchestrator", "agent_qa", "postgres"}
     assert [(n, a) for n, a in published if a != "127.0.0.1"] == []
 
 
@@ -194,3 +203,24 @@ def test_mcp_volume_holds_only_app_forecast_credentials_and_no_model_key(compose
 def test_mcp_volume_mounts_only_the_forecast_models_read_only(compose):
     (mount,) = compose["mcp_volume"]["volumes"]
     assert (mount["target"], mount.get("read_only")) == ("/models/forecast", True)
+
+
+def test_agent_qa_holds_only_app_qa_credentials_and_no_models_folder(compose):
+    service = compose["agent_qa"]
+    assert "env_file" not in service and not service.get("volumes")
+    db_vars = {key for key in _env(service) if key.startswith(DB_PREFIXES)}
+    assert db_vars == {
+        "POSTGRES_HOST",
+        "POSTGRES_PORT",
+        "POSTGRES_DB",
+        "DB_ROLE_QA_USER",
+        "DB_ROLE_QA_PASSWORD",
+    }
+    admin = [k for k in _env(service) if "ADMIN" in k]
+    assert admin == []
+
+
+def test_the_orchestrator_waits_for_qa_and_knows_where_it_is(compose):
+    service = compose["orchestrator"]
+    assert service["depends_on"]["agent_qa"]["condition"] == "service_healthy"
+    assert _env(service)["AGENT_QA_URL"] == "http://agent_qa:8004"

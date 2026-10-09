@@ -3,8 +3,7 @@
 Every query is written from the data dictionary's metric definitions, not from the incidents or
 volume servers' code, and none of it imports them or `db_models`. Bound parameters only; the
 few identifiers that vary (a join, a column) come from closed tables in this file, never from
-the answer or the question. Counts, never rows with free text: `incident_notes` and
-`feedback_text` are never selected.
+the answer or the question. Counts and identifiers, never a free-text or personal column.
 
 The `Source` protocol is what the checks need, so they can be unit tested against a fake and
 integration tested against the loaded database.
