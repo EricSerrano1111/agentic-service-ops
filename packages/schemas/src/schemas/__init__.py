@@ -85,6 +85,15 @@ from .sentiment import (
     TrendVerdict,
     UnsupportedDimension,
 )
+from .verification import (
+    MAX_GUIDANCE_CHARS,
+    CheckClass,
+    CheckResult,
+    QaStatus,
+    Verdict,
+    VerificationRequest,
+    VerifiedDomain,
+)
 
 __all__ = [
     "MAX_COUNT_GROUPS",
@@ -155,4 +164,11 @@ __all__ = [
     "Route",
     "RouteDecision",
     "SeverityCounts",
+    "MAX_GUIDANCE_CHARS",
+    "CheckClass",
+    "CheckResult",
+    "QaStatus",
+    "Verdict",
+    "VerificationRequest",
+    "VerifiedDomain",
 ]
