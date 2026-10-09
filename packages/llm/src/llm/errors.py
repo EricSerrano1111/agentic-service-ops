@@ -29,6 +29,12 @@ class LLMUnavailable(LLMError):
     """Transient server errors (5xx, timeouts) persisted through the bounded retries."""
 
 
+class LLMBreakerOpen(LLMUnavailable):
+    """The Gemini circuit breaker is open (ADR-088): three counted failures in a row, so calls
+    fail fast for a cool-down instead of waiting on a dependency that is down. The orchestrator
+    turns this into the degraded result naming the language model."""
+
+
 class LLMAuthError(LLMError):
     """Billing, key or permission problem. Retrying cannot fix it."""
 
