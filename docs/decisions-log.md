@@ -98,6 +98,8 @@
 | 084 | The deploy window was pulled forward to 2026-10-08 to 10-10; verified serving on day one (supersedes ADR-078's dates) | Accepted |
 | 085 | Deploy verification and IAM changes found in the window: build account self-impersonation, `verify.py` checks 2 and 6, create body (supersedes ADR-081 in part) | Accepted |
 | 086 | Region and account filters on the reporting metrics, `find_account`, and the parse gate (resolves L-62) | Accepted |
+| 087 | The QA agent's checks; the sentiment rating cross-check rule, pre-registered (extends ADR-055 and ADR-056) | Accepted |
+| 088 | The verification loop, one request deadline, circuit breaker values and the per-request cost cap (supersedes ADR-055 in part; fixes ADR-077's open values) | Accepted |
 
 ---
 
@@ -2363,6 +2365,8 @@ training grants.
 - NFR-4's evidence in the traceability matrix points here until the breaker exists.
 - The degraded result it fails fast to is FR-13, also Sprint 4.
 
+**Note 2026-10-09 (ADR-088):** the values this ADR left open are fixed in ADR-088. The breaker opens after N = 3 consecutive counted failures, stays open for a 30 s cool-down and then allows one trial call. Counted: timeouts, connection errors, HTTP 5xx, `LLMUnavailable`, `LLMRateLimited` after its own retries, `LLMDailyQuotaExhausted`. Not counted: 4xx, validation errors, `LLMOutputInvalid` and declines. The implementation is a small in-house async class (`packages/common`), not `pybreaker`. This entry is otherwise unchanged.
+
 ### ADR-078 — The reporting-slice deploy is pulled forward to 2026-10-12
 *Date: 2026-10-05. Supersedes ADR-045's dates and stop date only. Its scope, checks, stop-rule consequences and the rest of its decision stand.*
 
@@ -2628,3 +2632,121 @@ training grants.
 - **Timing, from git.** `gate.py` has a single commit, `eacfd0d` (2026-10-08 19:30:17 -0500), made together with `11a3875` (the same second) and `parse_v4.jsonl` and `run.py`; neither file has been changed since. The first live call was made after that commit: the baseline result file was written at 19:34:22 and the candidate's at 19:41:29. The ADR-086 design commit `1530840` (19:09:17) and the eval-set commit `eacfd0d` both precede every live call. Neither choice was decided or changed after any result was seen.
 - **Pre-run edits, for completeness.** Before `eacfd0d` and before any run, the label of item `f06` was reworded from "Meridian Foods' SLA compliance" to "SLA compliance for Meridian Foods", because a trailing-apostrophe possessive made the expected `account_name` ambiguous; and the prompt's examples were changed so none coincides with an eval item (a unit test holds that). The gate was not edited after any result.
 - **Effect on the verdict: none observed.** Under the stricter whole-request exact match, `f11` and `f12` were also correct in all three runs (`parse_v4`: SLA compliance for 2026-07-01 to 07-31, and incident count for 2026-04-01 to 06-30, both with `region: "unsupported"`), so (c) passes either way.
+
+
+### ADR-087 — The QA agent's checks
+*Date: 2026-10-09. Extends ADR-055 and ADR-056. Supersedes nothing. Committed before any QA code and before the sentiment baseline is measured; the rating cross-check rule below is fixed here and is never changed after a result is seen, including after phase N's catch-rate results.*
+
+**Decision:**
+
+**QA is its own service, `agent_qa`.**
+- It is an A2A agent with no MCP server. It holds `app_qa` database credentials directly (ADR-055: QA runs its own SQL and never calls the specialists' tools).
+- All of its checks are deterministic code, apart from one LLM call that checks interpretation.
+- **The LLM's output is schema-constrained:** a verdict, the failed check codes, and guidance text. It has no tool access and cannot cause SQL to run, so prompt injection through that call can at worst flip a verdict. The deterministic checks still run regardless.
+- It is a sidecar-less Cloud Run service in Sprint 5 (ADR-079).
+
+**Its verdict** is `pass`, or `fail` with a list of failed checks. Each failed check has a code, a `class` (`figures` or `interpretation`) and guidance text.
+
+**Reporting:**
+- QA recomputes every figure in the answer with its own SQL, written independently from data dictionary §6. QA never imports `mcp_incidents` code. This covers the date ranges, `group_by`, the technician, region and account filters (ADR-086), and the cap and ordering rules.
+- **Declines and clarifications** (an unsupported region, no or several matches for a technician or account, same-dimension combinations, filtered repeat drivers) must carry **no figures**. QA checks that, and checks that the decline matches its stated reason. A region parsed as `unsupported` is never treated as a real region.
+- **The interpretation call:** does the parsed request (metric, range, breakdown, filters) match the question?
+
+**Forecast** (ADR-055, ADR-071, ADR-072):
+- QA checks the history against its own SQL.
+- It checks the arithmetic: each interval contains its point forecast, a total equals the sum of its weeks, and the horizon is at most 26 weeks.
+- It looks up the `volume_v2` manifest's serving table. Any numbers for a slice-band marked unserved fail. A shown error that does not equal the manifest's `shown_error` fails.
+- Plus the interpretation call.
+
+**Sentiment** (ADR-055, ADR-067, ADR-068):
+- QA recomputes the counts, shares, buckets and flag counts from `sentiment_predictions` for the answer's range and region.
+- It re-runs the trend test (ADR-068's rule) from those counts.
+- It checks that each quoted comment's ID exists, is in range and in region, and that its text equals `feedback_text`.
+- It re-applies the calibrated threshold τ to the confidences and checks that the flags match (ADR-066).
+- It runs the rating cross-check under the rule below.
+- **The interpretation call gets the answer with every quote replaced by its feedback ID** (security guarantee 9; the Sprint 4 planning note). No customer comment ever reaches QA's LLM.
+
+**If QA itself is unavailable** (breaker open, timeout, error): the answer is **never** returned as verified. It returns as the degraded result, marked "not verified", with the escalation flag.
+
+**The sentiment rating cross-check (pre-registered, fixed now):**
+- *Clear contradiction* (ADR-055): a stored `bert_v1` prediction of `positive` on a 1 to 2 star rating, or `negative` on 4 to 5 stars. *Covered*: comments with a rating, predicted `positive` or `negative`. Neutral, mixed, 3-star and unrated comments are excluded.
+- **Baseline:** p̂ = contradictions / covered over the full data window, measured once as `app_eval` with no model calls (`evals/qa_baseline/`). It is also reported per region, for information only.
+- **Rule:** `p0 = max(p̂, 0.01)`. The 1% floor stands for the real-world rating and text disagreement that this synthetic data does not contain (L-24); without it a single contradiction would fail an answer when p̂ is near 0. **The floor is the owner's judgement.** An answer **fails** the cross-check if its covered count is **n ≥ 20 and the one-sided exact binomial P(X ≥ x | n, p0) < 0.01**, where x is its contradiction count. If n < 20 the check is reported as `insufficient_coverage` and does not fail the answer. Coverage (n, x) is reported on every sentiment verdict.
+- The baseline measurement is the only measurement this rule ever uses. Neither the 1% floor, the 0.01 significance level, the minimum of 20, nor p0 changes after any result, including phase N's catch rate.
+
+**Context:**
+- ADR-056 put one LLM call in QA for interpretation; ADR-055 put the sentiment thresholds under a Sprint 4 stop rule. Both need a fixed rule before any measurement that could tempt a change.
+- On synthetic data the star rating is drawn from the same label the text was written to, so the normal contradiction rate is close to the model's own error rate and the cross-check looks stronger here than it would on real customers (L-24).
+
+**Alternatives considered:**
+- *QA as a library inside the orchestrator* (rejected). It would put `app_qa` credentials in the orchestrator, which holds none, and it breaks the one-service-one-role pattern (ADR-023).
+- *An LLM that also recomputes figures* (rejected). Figures are decided by SQL alone (ADR-056).
+- *A threshold set from p̂ alone* (rejected). With p̂ near 0 one contradiction would fail an answer.
+
+**Required versus portfolio value:** QA is required (FR-09 to FR-11). The 1% floor is a judgement, not a measurement. The sidecar-less split into a service is the right size for the one-role-per-service pattern.
+
+**Consequences:**
+- Phase M builds `agent_qa`; phase N measures its catch rate against injected faults.
+- The 1% floor makes the check lenient on this data: it will pass answers that a rate fitted to p̂ would fail. That is the intended trade, stated here.
+
+**Result of the baseline measurement (2026-10-09), recorded after it was made. The rule above is unchanged:**
+- Measured once as `app_eval` over the full data window, on all 7,521 stored `bert_v1` predictions (`model_version` `0fa27f641d95…`, the SHA-256 of the committed manifest): **n = 4,715 covered comments, x = 7 clear contradictions, p̂ = 0.001485.** So **p0 = max(0.001485, 0.01) = 0.01**: the floor decides, as the rule anticipated.
+- Per region, for information only: central 2 of 1,198 (0.0017), northeast 1 of 1,395 (0.0007), southeast 3 of 1,208 (0.0025), west 1 of 914 (0.0011).
+- Excluded from coverage: 749 unrated comments, and 2,057 rated comments predicted neutral or mixed.
+- What the rule means on this data: with p0 = 0.01, an answer covering 100 comments fails at 5 contradictions (P = 0.0034) and passes at 4 (P = 0.018); one covering 20 fails at 3 (P = 0.0010); under 20 it is reported as `insufficient_coverage`. The measured rate is a seventh of the floor, so the floor, which is the owner's judgement, is what sets the bar here. The synthetic star ratings come from the same label as the text (L-24), so the real-world rate this floor stands for is not measured by this data.
+- Files: `evals/results/qa_baseline/2026-10-09/baseline.json`; `evals/qa_baseline/measure.py`; the rule is `common.stats.rating_cross_check`, tested against scipy on fixed numbers.
+
+### ADR-088 — The verification loop, deadline, circuit breaker and cost cap
+*Date: 2026-10-09. Supersedes ADR-055 in part: which failures are retried. ADR-055's bound of at most 2 revisions, and the orchestrator owning the loop, both stand. Fixes the open values of ADR-077. Applies ADR-034.*
+
+**Decision:**
+
+**Retry only what a retry can fix.**
+- **`interpretation` failures** are re-delegated to the specialist with QA's guidance appended to its parse input, at most 2 times.
+- **`figures` failures are not retried.** They escalate at once with the degraded result. The figures are deterministic code: a recompute that disagrees will disagree again on a retry, so a retry only spends calls and time. That kind of disagreement is a defect, and escalation is the right response.
+
+**One request deadline (ADR-034).**
+- Set once when the request arrives: now plus 120 s.
+- Passed on every A2A call as metadata, an absolute epoch-milliseconds deadline. Each hop uses the smaller of the time remaining minus a **5 s reserve** and its own existing cap. MCP calls get the remaining time too.
+- On expiry: the degraded result, with "time limit reached" and the escalation flag (NFR-1). The 5 s reserve keeps time to build the degraded response before 120 s.
+- A deadline received in metadata is never trusted: a missing or malformed one is replaced by the receiver's own 120 s default, one already past is expired, and one more than 120 s ahead is clamped to 120 s.
+
+**Circuit breaker** (ADR-077's open values, decided here).
+- One breaker per dependency: the Gemini transport in `packages/llm`, and each A2A client (reporting, sentiment, forecast, QA).
+- **It opens after N = 3 consecutive counted failures.** It stays open for a **30 s cool-down**, then allows **one** trial call. Success closes it; failure re-opens it for another 30 s.
+- **Counted failures:** timeouts, connection errors, HTTP 5xx, `LLMUnavailable`, `LLMRateLimited` after its own retries, and `LLMDailyQuotaExhausted`.
+- **Not counted:** 4xx, validation errors, `LLMOutputInvalid` and declines. These are the caller's or the content's fault, not the dependency's.
+- While open, a call fails fast to the degraded result, **naming the capability that is unavailable** (NFR-4: "the forecast service is temporarily unavailable"). The other domains keep answering. A counted failure of a specialist also returns the degraded result naming it on that request; the breaker's job is to make the following requests fail fast.
+- **Implementation:** a small async class in `packages/common`, with no library. `pybreaker`'s async support does not fit asyncio cleanly, and the needed logic is about 60 lines plus tests. ADR-077's alternatives considered both options.
+- **State is per process.** Two Cloud Run instances keep two breakers. Recorded as a limitation.
+- **Required versus portfolio value:** as ADR-077 says, the breaker is built because NFR-4 names it, not because of measured load.
+
+**Per-request cost cap** (architecture §9).
+- Every LLM call's list-price cost, which `LLMClient` already meters, is added to a per-request total.
+- Each A2A response carries its service's `cost_usd` for the request in metadata, and the orchestrator sums them with its own.
+- **`MAX_COST_PER_RUN_USD`, default `0.02`.** Before each further hop, if the running total has reached the cap, the orchestrator returns the degraded result with "cost limit reached". The check is on the total already incurred, so a single hop can overshoot the cap by its own cost.
+- At Flash-Lite list prices a normal request costs well under $0.01, so the cap guards against runaway loops and is not a budget. It applies in free mode too, at list-price equivalent.
+
+**The degraded result (FR-13).** `AskResponse` gains `outcome: degraded`, plus `escalate: true`, a `warning` and an optional `unavailable_capability`.
+- The best available answer text is included only if one exists, and only marked "not verified".
+- An answer that **failed** QA is never shown as an answer. It is replaced by the warning naming the failed checks.
+- Triggers: the deadline, an open breaker or a counted failure of a dependency (naming the capability), the cost cap, and QA unavailable.
+
+**Context:**
+- ADR-055 left which failures are retried, and the 120 s ceiling was a sum of per-hop timeouts rather than one deadline (the 2026-10-01 planning note). `MAX_COST_PER_RUN_USD` has existed since Sprint 1 as a blank placeholder that nothing reads.
+- NFR-1 and NFR-4 are submitted requirements; FR-12 and FR-13 bound the loop and define its failure outcome.
+
+**Alternatives considered:**
+- *Retry figures failures too* (rejected): same code, same answer.
+- *`pybreaker`* (rejected): see above.
+- *A per-hop timeout sum instead of one deadline* (rejected): the QA loop multiplies hops, so the sum no longer bounds the request.
+
+**Consequences:**
+- A specialist that is down now yields a degraded result (HTTP 200, `outcome: degraded`) instead of a 502 or 504. The language-model routing call keeps its own error statuses (429 with `Retry-After`, 503) unless its breaker is open.
+- The breaker's per-process state and the list-price cost estimate are limitations (L-70, L-71).
+- QA's own calls count toward the cost cap and have their own breaker.
+
+**Built in phase 4a (2026-10-09), recorded after the build. The decision above is unchanged:**
+- The deadline, the per-dependency breakers (one for the Gemini transport per process, one per specialist in the orchestrator), the cost accounting and the degraded result exist and are tested. The QA agent and its breaker, and the revision loop, are phase M.
+- Where the design left a point open, the build chose the simpler reading and says so here: (1) the cost cap is checked on the total already incurred before each specialist hop (`total >= MAX_COST_PER_RUN_USD`), not on a projection of the next hop's cost; (2) a counted failure of a specialist returns the degraded result on that request, and the breaker's job is to fail the following requests fast; (3) an individual language-model failure that does not open the breaker keeps its existing status (429 with `Retry-After`, 503, 500), and only an open breaker is the degraded result; (4) a hop that is cut short because the request deadline is nearer than the hop's own cap is reported as the time limit, not as the specialist being down.
+- Hardening found by the new tests: protobuf cannot serialise an infinite number in message metadata, so the agents' metadata readers return no metadata instead of raising, and the orchestrator ignores unreadable response metadata. A negative, non-finite, boolean or text `cost_usd` is rejected, because a negative number could keep a runaway request under the cap.

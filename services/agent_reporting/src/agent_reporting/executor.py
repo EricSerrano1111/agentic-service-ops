@@ -23,7 +23,17 @@ from a2a.helpers.proto_helpers import new_data_part, new_task_from_user_message,
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.server.tasks import TaskUpdater
-from common import TRACE_ID_KEY, bind_trace_id
+from common import (
+    COST_KEY,
+    TRACE_ID_KEY,
+    Deadline,
+    DeadlineExceeded,
+    bind_deadline,
+    bind_trace_id,
+    clamp_to_deadline,
+    current_cost_usd,
+    track_request_cost,
+)
 from google.protobuf.json_format import MessageToDict
 from llm import (
     LLMDailyQuotaExhausted,
@@ -51,6 +61,8 @@ from .render import render_answer
 
 log = logging.getLogger("agent_reporting")
 
+#: What a task failed for when the request's one deadline ran out (ADR-088).
+TIME_LIMIT = "The time limit for this request was reached."
 ARTIFACT_NAME = "reporting_answer"
 
 #: The agent, not the model, picks the tool: one fixed tool per metric (ADR-046).
@@ -183,12 +195,39 @@ DATA_SCHEMA = "ReportingAnswer"
 _TOOL_QUERY_FAILED = "incident query failed"
 
 
+def message_metadata(context: RequestContext) -> dict:
+    """The message metadata as a dict, or {} when there is none or it cannot be read. Metadata
+    is attacker-shaped input on a new service edge: a number protobuf cannot serialise (an
+    infinity) must not crash the task, so it is treated as no metadata at all."""
+    if context.message is None or not context.message.HasField("metadata"):
+        return {}
+    try:
+        return MessageToDict(context.message.metadata)
+    except Exception:
+        log.warning("message metadata not readable; ignored")
+        return {}
+
+
+def deadline_of(context: RequestContext) -> Deadline:
+    """The orchestrator's request deadline from the message metadata, never trusted: a missing
+    or malformed one is replaced by this agent's own 120 s default, a far-future one is clamped
+    (ADR-088)."""
+    deadline = Deadline.from_metadata(message_metadata(context))
+    if deadline.origin in ("malformed", "clamped"):
+        log.warning("received deadline not trusted", extra={"origin": deadline.origin})
+    return deadline
+
+
+def cost_metadata(extra: dict | None = None) -> dict:
+    """Response metadata carrying this service's list-price cost for the request (ADR-088)."""
+    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)}
+
+
 def trace_id_of(context: RequestContext) -> str | None:
     """The orchestrator's trace id: message metadata first, then request metadata."""
-    if context.message is not None and context.message.HasField("metadata"):
-        trace_id = MessageToDict(context.message.metadata).get(TRACE_ID_KEY)
-        if trace_id:
-            return str(trace_id)
+    trace_id = message_metadata(context).get(TRACE_ID_KEY)
+    if trace_id:
+        return str(trace_id)
     trace_id = context.metadata.get(TRACE_ID_KEY)
     return str(trace_id) if trace_id else None
 
@@ -221,7 +260,11 @@ class ReportingExecutor(AgentExecutor):
 
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         trace_id = trace_id_of(context)
-        with bind_trace_id(trace_id):
+        with (
+            bind_trace_id(trace_id),
+            bind_deadline(deadline_of(context)),
+            track_request_cost(),
+        ):
             task = context.current_task
             if task is None:
                 task = new_task_from_user_message(context.message)
@@ -231,8 +274,11 @@ class ReportingExecutor(AgentExecutor):
             log.info("task received", extra={"task_id": task.id, "question_chars": len(question)})
 
             try:
-                async with asyncio.timeout(self.settings.parse_timeout_s):
+                async with asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)):
                     resolved = await self.parser.parse(question, trace_id=trace_id)
+            except DeadlineExceeded:
+                await self._fail(updater, task.id, "deadline_exceeded", TIME_LIMIT)
+                return
             except TimeoutError:
                 await self._fail(
                     updater,
@@ -338,7 +384,7 @@ class ReportingExecutor(AgentExecutor):
                     new_data_part(answer.model_dump(mode="json"), media_type="application/json"),
                 ],
                 name=ARTIFACT_NAME,
-                metadata={"schema": DATA_SCHEMA},
+                metadata=cost_metadata({"schema": DATA_SCHEMA}),
             )
             await updater.complete()
             log.info(
@@ -357,6 +403,8 @@ class ReportingExecutor(AgentExecutor):
                 trace_id=trace_id,
                 timeout_s=self.settings.mcp_timeout_s,
             )
+        except DeadlineExceeded:
+            await self._fail(updater, task_id, "deadline_exceeded", TIME_LIMIT)
         except TimeoutError:
             await self._fail(
                 updater,
@@ -420,7 +468,9 @@ class ReportingExecutor(AgentExecutor):
             fields["reason"] = reason
         log.warning("task failed", extra=fields)
         await updater.failed(
-            updater.new_agent_message([new_text_part(reason)], metadata={"error_code": code})
+            updater.new_agent_message(
+                [new_text_part(reason)], metadata=cost_metadata({"error_code": code})
+            )
         )
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:

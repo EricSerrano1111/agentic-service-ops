@@ -6,7 +6,12 @@ Policy (ADR-048):
   `LLM_MAX_RETRY_WAIT_S` of total waiting; past that, `LLMRateLimited`.
 - Daily 429: `LLMDailyQuotaExhausted` at once. Billing or permission: `LLMAuthError` at
   once. 5xx and timeouts: a small bounded backoff, then `LLMUnavailable`.
-- Every call is metered at list price and logged as one JSON line with the trace id.
+- Every call is metered at list price and logged as one JSON line with the trace id; its
+  cost is also added to the running total of the request being handled (`common.cost`).
+- One circuit breaker guards the Gemini dependency (ADR-088): it opens after 3 consecutive
+  counted failures (`LLMUnavailable`, `LLMRateLimited` after its own retries,
+  `LLMDailyQuotaExhausted`) and then fails fast with `LLMBreakerOpen` for 30 s. Invalid output,
+  rejected requests, auth and cap errors are not the dependency's fault and do not count.
 - Structured output is validated with Pydantic; invalid output raises
   `LLMOutputInvalid` with the raw text. There is no repair loop.
 """
@@ -22,13 +27,14 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
-from common import bind_trace_id
+from common import BreakerOpen, CircuitBreaker, add_cost, bind_trace_id
 from pydantic import BaseModel, ValidationError
 
 from .classify import Kind, classify
 from .config import LLMSettings, Price, Role, load_price_table, resolve_thinking_level
 from .errors import (
     LLMAuthError,
+    LLMBreakerOpen,
     LLMBudgetExceeded,
     LLMConfigError,
     LLMDailyQuotaExhausted,
@@ -43,6 +49,16 @@ from .redact import redact
 from .transport import GeminiTransport, Transport
 
 log = logging.getLogger("llm")
+
+
+def counts_against_gemini(exc: BaseException) -> bool:
+    """Is this a failure of the dependency (ADR-088)? Unavailability after the bounded
+    retries, rate limiting after its own retries, and the daily quota are. Everything else
+    (a rejected request, bad output, a key or cap problem) is the caller's or the content's."""
+    return isinstance(exc, LLMUnavailable | LLMRateLimited | LLMDailyQuotaExhausted) and not (
+        isinstance(exc, LLMBreakerOpen)
+    )
+
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -128,8 +144,11 @@ class LLMClient:
         transport: Transport | None = None,
         prices: dict[str, Price] | None = None,
         sleep=asyncio.sleep,
+        breaker: CircuitBreaker | None = None,
     ) -> None:
         self.settings = settings
+        #: One per client, so one per process in a service: state is per process (L-70).
+        self.breaker = breaker if breaker is not None else CircuitBreaker("gemini")
         self.prices = prices if prices is not None else load_price_table()
         self._transport = transport if transport is not None else GeminiTransport(settings)
         self._sleep = sleep
@@ -191,6 +210,28 @@ class LLMClient:
         *,
         model: str | None = None,
         response_model: type[T] | None = None,
+        trace_id: str | None,
+    ) -> LLMResult[T]:
+        """One model call, under the circuit breaker. Raises `LLMBreakerOpen` at once while
+        the breaker is open."""
+        try:
+            return await self.breaker.call(
+                lambda: self._generate(
+                    prompt, model=model, response_model=response_model, trace_id=trace_id
+                ),
+                counts_against_gemini,
+            )
+        except BreakerOpen:
+            with bind_trace_id(trace_id):
+                log.warning("llm breaker open", extra={"dependency": "gemini"})
+            raise LLMBreakerOpen("the Gemini circuit breaker is open") from None
+
+    async def _generate(
+        self,
+        prompt: str,
+        *,
+        model: str | None,
+        response_model: type[T] | None,
         trace_id: str | None,
     ) -> LLMResult[T]:
         model = model or self.settings.default_model
@@ -271,6 +312,7 @@ class LLMClient:
                 self.totals.input_tokens += inp
                 self.totals.output_tokens += out
                 self.totals.cost_usd += cost or 0.0
+                add_cost(cost)  # the running total of the request being handled (ADR-088)
                 text = getattr(response, "text", None) or ""
                 parsed = None
                 if response_model is not None:

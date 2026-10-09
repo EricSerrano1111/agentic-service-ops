@@ -8,10 +8,15 @@ match, so the orchestrator never passes on figures it has not checked the shape 
 
 from __future__ import annotations
 
+import logging
+
 from a2a.types import Task, TaskState
+from common import COST_KEY, parse_cost_usd
 from google.protobuf.json_format import MessageToDict
 from pydantic import ValidationError
 from schemas import ForecastAnswer, ReportingAnswer, SentimentAnswer
+
+log = logging.getLogger("orchestrator")
 
 
 class TaskFailed(RuntimeError):
@@ -32,6 +37,31 @@ def _status(task: Task) -> tuple[str, str | None]:
         MessageToDict(message.metadata).get("error_code") if message.HasField("metadata") else None
     )
     return text, (str(code) if code else None)
+
+
+def extract_cost(task: Task) -> float | None:
+    """The service's list-price cost for this request, from A2A response metadata (ADR-088):
+    an artifact's metadata for a completed task, the status message's for a failed one. A
+    missing cost is None; a malformed or negative one is rejected and ignored (it could be
+    used to keep a runaway request under the cap)."""
+    found = None
+    structs = [a.metadata for a in task.artifacts if a.HasField("metadata")]
+    if task.status.HasField("message") and task.status.message.HasField("metadata"):
+        structs.append(task.status.message.metadata)
+    metadata = []
+    for struct in structs:
+        try:
+            metadata.append(MessageToDict(struct))
+        except Exception:  # e.g. an infinite number, which protobuf cannot serialise
+            log.warning("ignored unreadable response metadata from a service")
+    for md in metadata:
+        if COST_KEY in md:
+            cost = parse_cost_usd(md[COST_KEY])
+            if cost is None:
+                log.warning("ignored a malformed cost_usd from a service")
+                continue
+            found = (found or 0.0) + cost
+    return found
 
 
 def extract_answer(task: Task) -> tuple[str, ReportingAnswer]:

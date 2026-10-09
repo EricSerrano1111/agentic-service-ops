@@ -13,6 +13,7 @@ from .client import LLMClient, LLMResult, UsageTotals
 from .config import LLMSettings, Price, Secret, load_price_table
 from .errors import (
     LLMAuthError,
+    LLMBreakerOpen,
     LLMBudgetExceeded,
     LLMConfigError,
     LLMDailyQuotaExhausted,
@@ -26,6 +27,7 @@ from .errors import (
 
 __all__ = [
     "LLMAuthError",
+    "LLMBreakerOpen",
     "LLMBudgetExceeded",
     "LLMClient",
     "LLMConfigError",

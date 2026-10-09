@@ -25,7 +25,7 @@ from a2a.types import (
     SendMessageRequest,
     Task,
 )
-from common import TRACE_ID_KEY
+from common import TRACE_ID_KEY, Deadline
 
 from .auth import BearerForOrigin, IdTokenProvider, audience_of
 
@@ -66,6 +66,7 @@ async def send_question(
     transport: httpx.AsyncBaseTransport | None = None,
     token_provider: IdTokenProvider | None = None,
     card_cache: AgentCardCache | None = None,
+    deadline: Deadline | None = None,
 ) -> Task:
     """Send `question` to the agent at `agent_url` and return the finished Task.
 
@@ -74,13 +75,16 @@ async def send_question(
     agent's origin goes on the card fetch and the message call alike (both share one HTTP
     client); a token that can't be fetched raises `AgentAuthError`. With a `card_cache`, a
     fresh cached card skips the fetch, and any failed call drops the card. `transport` is a
-    test seam only.
+    test seam only. With a `deadline`, its absolute time goes to the agent in the message
+    metadata; `timeout_s` is still the caller's, already clamped to it.
     """
     message = Message(
         message_id=uuid.uuid4().hex,
         role=Role.ROLE_USER,
         parts=[Part(text=question)],
-        metadata={TRACE_ID_KEY: trace_id},
+        # The request's one deadline travels with the trace id (ADR-088); the agent clamps its
+        # own hops to it and never trusts it blindly.
+        metadata={TRACE_ID_KEY: trace_id} | (deadline.as_metadata() if deadline else {}),
     )
     request = SendMessageRequest(
         message=message,
