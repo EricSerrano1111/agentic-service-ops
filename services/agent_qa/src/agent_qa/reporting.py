@@ -35,7 +35,7 @@ from schemas import (
 from . import names, textcheck
 from .config import Settings
 from .db import UNATTRIBUTED, GroupRow, Source, utc_bounds
-from .repeats import Drivers, compute
+from .repeats import MIN_JOBS, Drivers, compute
 from .stats import rate_string
 
 MAX_GROUPS = 25
@@ -350,7 +350,11 @@ class Checker:
 
         if not tally(f.overall, want.overall):
             problems.append("overall")
-        if f.groups_compared != want.groups_compared:
+        # §6 compares a group with "the rest"; a group that is every job leaves no rest, and whether
+        # it counts as compared (and so what Bonferroni multiplies by) is not defined (L-72). Then
+        # the significance fields are not checked, only the counts, rates and order.
+        no_rest = any(g.rest.jobs == 0 and g.this.jobs >= MIN_JOBS for g in want.groups)
+        if not no_rest and f.groups_compared != want.groups_compared:
             problems.append("groups_compared")
         by_label = {(g.label, g.group_id): g for g in want.groups}
         shown = list(f.groups)
@@ -365,6 +369,8 @@ class Checker:
                 continue
             if not (tally(g.this, exp.this) and tally(g.rest, exp.rest)):
                 problems.append("group_counts")
+            if no_rest:
+                continue
             if g.compared != exp.compared:
                 problems.append("compared_flag")
             elif g.compared and exp.p_value is not None:

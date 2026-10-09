@@ -217,7 +217,7 @@ on them (guarantee 2).
 | Model output is structured and validated: the call sets the response schema from the typed model, the reply is parsed against it, and an invalid reply fails with no repair and no default route or range. | Built | `packages/llm` `transport.py` and `client.py`; `test_invalid_parse_output_fails_and_never_guesses_a_range`, `test_unclear_question_asks_to_rephrase`. |
 | No tools are exposed to a model, and automatic function calling is disabled. The agent's code picks the tool from the parsed metric (ADR-046). | Built | `packages/llm` `transport.py` (`automatic_function_calling` disabled); `test_each_metric_calls_its_own_tool`. |
 | Model output is never executed: parsed values only select among fixed code paths. | Built | By search, no `eval`, `exec` or subprocess call in `services/` or `packages/`. |
-| QA checks that the parsed request matches the question. | Built for reporting and forecast (2026-10-09, ADR-089); sentiment is `not_checked` until M2 | The interpretation gate (`evals/qa_interp/`, results in `evals/results/qa_interp/`) measures it on synthetic mutations and is not blind; see L-74. Sentiment answers say they are not verified. |
+| QA checks that the parsed request matches the question. | **Built as advisory only** for reporting and forecast (2026-10-09, ADR-089): the check runs and is logged and reported on the verdict, but it failed its gate twice (`evals/qa_interp/`, `evals/results/qa_interp/`) and does not fail an answer (`QA_INTERP_MODE=advisory`, L-74). Sentiment is `not_checked` until M2. | `test_an_advisory_interpretation_failure_is_reported_but_never_fails_the_answer`, `test_in_advisory_mode_a_model_failure_does_not_withhold_the_verdict` (`test_qa_service.py`). So a wrong parse is still not blocked downstream. |
 
 **What an injected question could still achieve.** A wrong route or wrong parameters: another
 specialist, another period, region, metric or technician, or a decline. The data returned stays
@@ -228,9 +228,10 @@ grants. Two smaller effects remain: the router's one-sentence `reason` is model-
 derived from the question, and it is returned in the response and logged; and quoted comments
 (at most 3) appear verbatim in an answer, so the Sprint 5 interface must render them as plain
 text (React escapes text by default; the interface is not built, so this is a requirement on it,
-not a control). Since 2026-10-09 the QA agent checks that a reporting or forecast parse
-matches the question and that the figures are right for it (ADR-089); a wrong route is still
-not checked (a question sent to the wrong domain gets that domain's answer or decline), and
+not a control). Since 2026-10-09 the QA agent checks that the figures of a reporting or forecast answer
+are right for the request as parsed, and runs an interpretation check on the parse that is
+advisory only (ADR-089, L-74), so a wrong parse is reported in a log and on QA's verdict but not
+blocked; a wrong route is still not checked (a question sent to the wrong domain gets that domain's answer or decline), and
 sentiment answers are not checked yet.
 
 **A question is data, not template syntax.** Until 2026-10-04 a question containing text

@@ -816,3 +816,39 @@ def test_the_decline_phrases_cover_every_reason_class():
         "account_same_dimension",
         "technician_breakdown",
     }
+
+
+def test_a_group_that_is_every_job_is_not_checked_for_significance_but_its_counts_are():
+    """§6 is silent on a group with no 'rest' (L-72): the significance fields are not compared,
+    the counts and rates still are."""
+    spec = [("repair", True)] * 6 + [("repair", False)] * 24
+    js = jobs(spec)
+    group = RepeatGroup(
+        group="repair",
+        this=JobsRepeated(jobs=30, repeated=6, rate=rate_string(6, 30)),
+        rest=JobsRepeated(jobs=0, repeated=0, rate=None),
+        compared=False,  # the specialist's reading; QA's would say compared
+        stands_out=False,
+    )
+    figures = RepeatDriversResult(
+        start=JULY[0],
+        end=JULY[1],
+        group_by="service_type",
+        overall=JobsRepeated(jobs=30, repeated=6, rate=rate_string(6, 30)),
+        groups=[group],
+        group_count=1,
+        groups_compared=0,
+    )
+    req = request("repeat_visit_drivers", group_by="service_type")
+    c = checker(repeat_jobs=(js, {}))
+    assert "figures_match_database" not in failed(c.check_answer(answer(figures, req), ""))
+    wrong = figures.model_copy(
+        update={
+            "groups": [
+                group.model_copy(
+                    update={"this": JobsRepeated(jobs=30, repeated=7, rate=rate_string(7, 30))}
+                )
+            ]
+        }
+    )
+    assert "figures_match_database" in failed(c.check_answer(answer(wrong, req), ""))
