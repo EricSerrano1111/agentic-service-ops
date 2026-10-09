@@ -65,3 +65,53 @@ The correct pairs come from parse sets drafted by assistants (L-69), and the mut
 synthetic: a mutation is easier to spot than a real mis-parse, which tends to be subtler. A pass
 here is evidence that the check catches blunt errors and rarely rejects a faithful reading. It is
 not evidence about the rate of real mis-parses it would catch. Results say so.
+
+---
+
+## Result: `qa_interp_v1` (2026-10-09), appended after the run
+
+`evals/results/qa_interp/2026-10-09/interp_qa_interp_v1_k3_092924.json`. **Run 1 of 3 completed (all 84
+pairs); the gate failed on it.** False rejects: **6 of 42** (reporting 3, forecast 3), above the limit
+of 2, so **(a) fails**. Caught: **37 of 42** (reporting 26 of 28, forecast 11 of 14), so (b) passes.
+No call failed.
+
+The 6 false rejects: two quarter ranges (a "this quarter" range that ends at the as-of date was
+called premature; "last quarter" was misread as the first quarter), the unsupported area "Midwest"
+read as the central region, and three forecast declines (incidents, a region, a past month) judged
+wrong because the system cannot answer them. The 5 misses: a date range shifted by a month, a
+dropped account name, and three forecast mutations (a wrong service-type slice twice, and a
+forecast decline made answerable).
+
+**The process was stopped 19 pairs into run 2** (103 requests used, retries included). A complete
+run that misses (a) fails the gate whatever runs 2 and 3 show, so continuing would only have spent
+quota that the one allowed revision needs. **This early stop was not written down before the run;**
+it is disclosed here. `gate.py` now exits 1 for a complete failing run even when later runs are
+absent (the thresholds are unchanged), and says so in its docstring. The file keeps run 1 whole and
+the 19 cells of run 2.
+
+## Revision: `qa_interp_v2` (committed before any v2 call)
+
+The one revision the gate allows. What it targets, in general terms, from what run 1 showed:
+
+1. **The judge compared without working out the dates first.** v2 asks for a short `meaning`
+   (what the question asks, dates computed from the as-of date) before the verdict, and states
+   the date conventions: "to date" periods end at as-of, last month/quarter/year are whole previous
+   periods, a bare month is its most recent occurrence, with a worked example at another as-of date.
+2. **Declines were judged as errors.** v2 says an unsupported metric, an unsupported area (a state,
+   a city, never mapped to a region) and a forecast flagged unsupported are the correct reading of a
+   question that asks for such a thing, and that the judge is not to mark a reading wrong because the
+   system cannot answer it.
+3. **Defaults and open details.** v2 says a question with no service type is the total slice, a named
+   customer or technician must appear in the reading, and a detail the question leaves open is not
+   grounds for rejecting.
+
+Its examples use no question from the pairs (`test_the_revision_names_no_gate_question`). It is
+not blind to run 1's misses: it was written after seeing them, which is what a revision is, and the
+gate does not change. Same 84 pairs, same seed, same model, key, thinking level and as-of date, k = 3,
+same gate in every run.
+
+*Timing, a departure from the text above:* the gate text says a revision runs the next day because
+v1's 252 calls plus v2's 252 would not fit in one day. v1 stopped at 103 requests, so v2's 252 fit
+in the 420-call gate budget (355) and under the 400-per-Pacific-day limit together with today's other
+calls, and it is run on the same day. If v2 fails the gate, the interpretation check ships in
+advisory mode, as above.

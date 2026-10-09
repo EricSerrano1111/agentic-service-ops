@@ -293,6 +293,9 @@ def test_the_model_output_schema_is_closed():
     with pytest.raises(ValidationError):
         Judgement.model_validate({"faithful": "yes"})
     with pytest.raises(ValidationError):
+        Judgement.model_validate({"faithful": True, "meaning": "m" * 301})
+    assert Judgement.model_validate({"faithful": True}).meaning == ""
+    with pytest.raises(ValidationError):
         Judgement.model_validate({"faithful": False, "note": "x" * 301})
 
 

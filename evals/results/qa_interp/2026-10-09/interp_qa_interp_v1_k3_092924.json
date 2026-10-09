@@ -10,7 +10,7 @@
   "k": 3,
   "resumed_from": null,
   "stopped": null,
-  "requests": 98,
+  "requests": 103,
   "runs": [
     [
       {
@@ -1001,6 +1001,55 @@
           "breakdown"
         ],
         "note": "The breakdown should have been incident type instead of region.",
+        "error": null
+      },
+      {
+        "id": "r-t01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-t01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The question asks for first-time fix rate rather than SLA compliance.",
+        "error": null
+      },
+      {
+        "id": "r-t02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-t02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been null because no specific region was mentioned in the question.",
+        "error": null
+      },
+      {
+        "id": "r-t03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
         "error": null
       }
     ],

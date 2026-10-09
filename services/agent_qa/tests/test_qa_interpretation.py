@@ -33,12 +33,28 @@ def test_the_prompt_is_qa_interp_v1_and_renders_with_its_three_placeholders():
     assert "Domain: reporting" in text and "Q?" in text and "{{" not in text
 
 
-def test_the_prompt_keeps_its_json_template_in_the_schemas_key_order():
+@pytest.mark.parametrize("name", ["qa_interp_v1", "qa_interp_v2"])
+def test_a_prompt_keeps_its_json_template_in_the_schemas_key_order(name):
     """L-51: the model writes keys in the order the prompt shows them."""
-    text = load_interp_prompt().text
-    template = text[text.index('{"faithful"') :]
-    positions = [template.index(f'"{k}"') for k in Judgement.model_fields]
+    text = load_interp_prompt(name).text
+    template = text[text.index("Answer with JSON only") :]
+    shown = [k for k in Judgement.model_fields if f'"{k}"' in template]
+    assert "faithful" in shown and "differs_in" in shown and "note" in shown
+    positions = [template.index(f'"{k}"') for k in shown]
     assert positions == sorted(positions)
+    assert ("meaning" in shown) == (name == "qa_interp_v2")
+
+
+def test_the_revision_names_no_gate_question():
+    """v2 was written after v1's result, so none of the gate's questions may appear in it."""
+    import json
+    from pathlib import Path
+
+    pairs = Path(__file__).resolve().parents[3] / "evals" / "qa_interp" / "pairs_v1.jsonl"
+    questions = {json.loads(line)["question"] for line in pairs.read_text("utf-8").splitlines()}
+    for name in ("qa_interp_v1", "qa_interp_v2"):
+        text = load_interp_prompt(name).text
+        assert not [q for q in questions if q in text], name
 
 
 def test_the_prompt_names_the_question_as_data_not_instructions():

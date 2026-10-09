@@ -139,6 +139,7 @@ async def run(args: argparse.Namespace) -> int:
                     trace_id=f"interp-{pair['id']}-k{i + 1}",
                 )
                 cell |= {
+                    "meaning": judgement.meaning,
                     "faithful": judgement.faithful,
                     "differs_in": list(judgement.differs_in),
                     "note": judgement.note,

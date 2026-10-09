@@ -189,6 +189,13 @@ def test_fewer_than_three_complete_runs_is_incomplete_not_a_pass():
     assert not verdict["passes"] and not verdict["complete"]
 
 
+def test_one_complete_failing_run_fails_the_gate_even_if_the_rest_were_never_run():
+    verdict = gate.evaluate([result(cells(6, 37), cells(0, 42)[:19])])
+    assert verdict["failed"] and not verdict["passes"] and not verdict["complete"]
+    assert verdict["runs"][0]["total"]["false_rejects"] == 6
+    assert not gate.evaluate([result(cells(0, 42), cells(0, 42)[:19])])["failed"]
+
+
 def test_a_resumed_file_fills_in_the_cells_the_first_one_missed():
     first = result(cells(0, 42), cells(0, 42), cells(0, 42)[:30])
     second = result([], [], cells(0, 42)[30:])

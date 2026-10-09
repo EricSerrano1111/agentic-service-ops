@@ -45,10 +45,15 @@ DiffField = Literal[
 
 
 class Judgement(BaseModel):
-    """The model's whole output. Key order is the prompt template's (L-51)."""
+    """The model's whole output. Key order is the prompt template's (L-51).
+
+    `meaning` (prompt v2 on) is the model's own short statement of what the question asks, written
+    before the verdict so the comparison is made against something worked out. It is derived from
+    the question, so it never leaves this process: it is not logged and not in the verdict."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    meaning: str = Field(default="", max_length=300)
     faithful: StrictBool
     differs_in: list[DiffField] = Field(default_factory=list, max_length=10)
     note: str = Field(default="", max_length=MAX_GUIDANCE_CHARS)

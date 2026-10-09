@@ -12,7 +12,9 @@ The gate passes only if (a) and (b) hold in **every** run and every run is compl
 pairs judged). A call that failed (an API error) counts against the pair: a correct pair
 whose call failed is a false reject, a wrong pair whose call failed is not caught. Given
 several files (a resumed run), cells are merged by (run, pair id) with the later file winning.
-Exit status 0 when the gate passes, 1 when it does not, 2 when runs are incomplete.
+A complete run that misses (a) or (b) fails the gate whatever follows, so a run stopped after
+it still exits 1. Exit status 0 when the gate passes, 1 when it does not, 2 when runs are
+incomplete and none has failed yet.
 """
 
 from __future__ import annotations
@@ -76,13 +78,21 @@ def evaluate(files: list[dict]) -> dict:
         and all(r["a_false_rejects_ok"] and r["b_catches_ok"] for r in runs)
         and len(runs) >= 3
     )
+    # One complete run that misses (a) or (b) fails the gate for good: later runs cannot repair
+    # it, so a run stopped after that point (to save quota) is still a failed gate, not an
+    # incomplete one.
+    done = [r for r in runs if r["complete"]]  # a run still being filled in is not scored
+    failed = any(
+        r["complete"] and not (r["a_false_rejects_ok"] and r["b_catches_ok"]) for r in runs
+    )
     return {
         "prompt": files[-1].get("prompt"),
         "runs": runs,
+        "failed": failed,
         "complete": complete and len(runs) >= 3,
-        "a_every_run_at_most_2_false_rejects": bool(runs)
-        and all(r["a_false_rejects_ok"] for r in runs),
-        "b_every_run_at_least_34_of_42_caught": bool(runs) and all(r["b_catches_ok"] for r in runs),
+        "a_every_run_at_most_2_false_rejects": bool(done)
+        and all(r["a_false_rejects_ok"] for r in done),
+        "b_every_run_at_least_34_of_42_caught": bool(done) and all(r["b_catches_ok"] for r in done),
         "passes": passes,
     }
 
@@ -95,9 +105,11 @@ def table(verdict: dict) -> str:
     for number, run in enumerate(verdict["runs"], 1):
         for domain in ("reporting", "forecast", "total"):
             r = run[domain]
+            tag = "" if run["complete"] else " (incomplete)"
+            rejects = f"{r['false_rejects']:>2} of {r['correct_pairs']:<2}"
+            caught = f"{r['caught']:>2} of {r['wrong_pairs']:<2}"
             lines.append(
-                f"{number:>3} | {domain:<9} | {r['false_rejects']:>2} of {r['correct_pairs']:<2}"
-                f"{'':<17} | {r['caught']:>2} of {r['wrong_pairs']:<2}{'':<10} | {r['errors']}"
+                f"{number:>3}{tag} | {domain:<9} | {rejects:<26} | {caught:<17} | {r['errors']}"
             )
     lines.append(
         f"(a) every run <= {MAX_FALSE_REJECTS} false rejects of {CORRECT_PAIRS}: "
@@ -117,6 +129,8 @@ def main(argv: list[str]) -> int:
         return 2
     verdict = evaluate([load(p) for p in argv[1:]])
     print(table(verdict))
+    if verdict["failed"]:
+        return 1
     if not verdict["complete"]:
         print("incomplete: not every run has judged all 84 pairs", file=sys.stderr)
         return 2
