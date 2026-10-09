@@ -19,6 +19,7 @@ resolution-markers = [
 [manifest]
 members = [
     "agent-forecast",
+    "agent-qa",
     "agent-reporting",
     "agent-sentiment",
     "agentic-service-ops",
@@ -81,6 +82,33 @@ requires-dist = [
     { name = "service-ops-common", editable = "packages/common" },
     { name = "service-ops-llm", editable = "packages/llm" },
     { name = "service-ops-schemas", editable = "packages/schemas" },
+    { name = "uvicorn", specifier = ">=0.31" },
+]
+
+[[package]]
+name = "agent-qa"
+version = "0.1.0"
+source = { editable = "services/agent_qa" }
+dependencies = [
+    { name = "a2a-sdk", extra = ["fastapi"] },
+    { name = "fastapi" },
+    { name = "psycopg", extra = ["binary"] },
+    { name = "service-ops-common" },
+    { name = "service-ops-llm" },
+    { name = "service-ops-schemas" },
+    { name = "sqlalchemy" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "a2a-sdk", extras = ["fastapi"], specifier = "==1.1.5" },
+    { name = "fastapi", specifier = ">=0.115.2" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
+    { name = "service-ops-common", editable = "packages/common" },
+    { name = "service-ops-llm", editable = "packages/llm" },
+    { name = "service-ops-schemas", editable = "packages/schemas" },
+    { name = "sqlalchemy", specifier = ">=2.0.30" },
     { name = "uvicorn", specifier = ">=0.31" },
 ]
 

@@ -85,6 +85,7 @@ members = [
     "services/agent_reporting",
     "services/agent_sentiment",
     "services/agent_forecast",
+    "services/agent_qa",
     "services/orchestrator",
 ]
 

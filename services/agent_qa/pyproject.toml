@@ -1,0 +1,35 @@
+[project]
+name = "agent-qa"
+version = "0.1.0"
+description = "QA agent: A2A server that verifies reporting and forecast answers (ADR-087, ADR-089)"
+requires-python = ">=3.12"
+# Both protocol SDKs are pinned exactly (R-12, ADR-047). This agent holds app_qa credentials
+# directly and runs its own SQL (ADR-055); it imports no specialist or MCP server code, and
+# not db-models either, so its SQL is written from the data dictionary alone (ADR-087).
+dependencies = [
+    "a2a-sdk[fastapi]==1.1.5",
+    "service-ops-common",
+    "service-ops-llm",
+    "service-ops-schemas",
+    "SQLAlchemy>=2.0.30",
+    "psycopg[binary]>=3.2",
+    "fastapi>=0.115.2",
+    "uvicorn>=0.31",
+]
+
+# Siblings resolve to the workspace members, never PyPI.
+[tool.uv.sources]
+service-ops-common = { workspace = true }
+service-ops-llm = { workspace = true }
+service-ops-schemas = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_qa"]
+
+# Prompts ship inside the package so an installed image finds them (llm.prompts).
+[tool.hatch.build.targets.wheel.force-include]
+"prompts" = "agent_qa/prompts"
