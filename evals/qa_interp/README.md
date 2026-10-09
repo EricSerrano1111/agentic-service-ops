@@ -121,3 +121,33 @@ assumption that v1 would use all 252 calls, which would have left no room for v2
 That did not happen (103 used), and the owner's brief authorises exactly one revision. The note's
 condition no longer holds, so v2 is run without asking. The 420-call cap and the 400 per Pacific
 day still bind: 103 + 252 = 355 gate calls, and the end-to-end checks (20) come after.
+
+## Result: `qa_interp_v2` (2026-10-09), appended after the run, and the outcome
+
+`evals/results/qa_interp/2026-10-09/interp_qa_interp_v2_k3_094124.json`. **Run 1 of 3 completed; the gate
+failed on it again.** False rejects **7 of 42** (reporting 4, forecast 3), above the limit of 2, so
+**(a) fails** (v1 had 6). Caught **39 of 42** (reporting 27 of 28, forecast 12 of 14), so (b) passes
+(v1: 37). No call failed. The run was stopped 7 pairs into run 2 for the same reason as v1's (91
+requests used).
+
+What did not change: the same kinds of correct pair were rejected. Two quarter ranges
+("this quarter" to the as-of date, "last quarter"), the unsupported areas (Texas, the Midwest) and
+three forecast declines. In several of them the model's own `meaning` was right and its verdict
+contradicted it ("the question asks about Texas, which is not one of the four regions", then
+`faithful: false`), and it computed "last quarter" at an as-of date of 2026-08-30 as January to March
+once, after the prompt gave the rule and a worked example. With the thinking level at `minimal`,
+Flash-Lite does not reliably do the date arithmetic or hold a verdict to its own stated meaning.
+
+**Outcome (as the gate pre-registered): the interpretation check ships in advisory mode.** It runs
+on every reporting and forecast answer (the shipped prompt is `qa_interp_v2`, which caught more),
+its result is logged (`advisory_failed`) and reported on the verdict as an advisory, and it never
+fails an answer, triggers a re-ask or makes QA unavailable (`QA_INTERP_MODE=advisory`, the default;
+`enforce` restores gating for a prompt that later passes). The retry loop in the orchestrator is
+unchanged and tested; it simply never sees an interpretation failure from QA until a prompt passes.
+The gate was not loosened and no third prompt was tried. Gate calls used: 194 of 420 (v1 103, v2 91).
+This is recorded as L-74.
+
+Not tried, and what a next attempt would change: a higher thinking level (the setting exists,
+`LLM_THINKING_LEVEL_QA`, and costs more per call), a stronger model for this one call (the optional
+Sprint 5 comparison, ADR-056), or computing the expected dates in code and giving the model only the
+comparison. Each is a new decision and a new pre-registered gate.
