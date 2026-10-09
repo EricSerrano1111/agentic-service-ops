@@ -14,6 +14,7 @@ import httpx
 import pytest
 from a2a.helpers.proto_helpers import new_data_part, new_text_part
 from a2a.types import Message, Role, Task, TaskState, TaskStatus
+from common import Deadline, DeadlineExceeded
 from orchestrator import app as app_mod
 from orchestrator.app import AskResponse, create_app
 from orchestrator.config import Settings
@@ -297,16 +298,37 @@ def test_the_qa_hop_is_clamped_to_the_time_left_minus_the_reserve(monkeypatch):
     assert call["timeout_s"] == pytest.approx(20.0, abs=0.5)
 
 
-def test_a_deadline_that_runs_out_before_qa_shows_the_unverified_answer(monkeypatch):
-    def slow(n):
-        time.sleep(0.01)
-        return task()
+class RunsOutAfter(Deadline):
+    """A deadline with time for `hops` hops and none after: the next `hop_timeout` raises."""
 
-    # 5.05 s left at the start leaves nothing after the 5 s reserve once the specialist ran.
-    hop = Hop(slow)
-    body = ask(routed(monkeypatch, "reporting", hop, deadline=in_seconds(5.02))).json()
+    hops_left = 0
+
+    def hop_timeout(self, cap_s, now=None, reserve_s=5.0):
+        if type(self).hops_left <= 0:
+            raise DeadlineExceeded("no time left")
+        type(self).hops_left -= 1
+        return min(30.0, cap_s)
+
+
+def test_a_deadline_that_runs_out_before_qa_shows_the_unverified_answer(monkeypatch):
+    RunsOutAfter.hops_left = 2  # routing and the specialist; none left for QA
+    hop = Hop()
+    deadline = RunsOutAfter(int((time.time() + 60) * 1000))
+    body = ask(routed(monkeypatch, "reporting", hop, deadline=deadline)).json()
     assert body["outcome"] == "degraded" and "Time limit reached" in body["warning"]
-    assert hop.qa_calls == []
+    assert hop.qa_calls == [] and len(hop.calls) == 1
+    assert body["qa_status"] == "not_checked"
+    assert "Not verified: As of 2026-08-30" in body["answer"]  # the specialist's, marked
+
+
+def test_a_deadline_that_runs_out_between_asks_hides_the_failed_answer(monkeypatch):
+    RunsOutAfter.hops_left = 3  # routing, specialist, QA (fails interpretation); none for a re-ask
+    hop = Hop(qa=lambda n: verdict_task(interpretation_fail()))
+    deadline = RunsOutAfter(int((time.time() + 60) * 1000))
+    body = ask(routed(monkeypatch, "reporting", hop, deadline=deadline)).json()
+    assert body["outcome"] == "degraded" and "Time limit reached" in body["warning"]
+    assert len(hop.calls) == 1 and len(hop.qa_calls) == 1
+    assert "172" not in body["answer"] and "Not verified" not in body["answer"]
 
 
 def test_the_cap_stops_the_loop_before_the_qa_hop_and_shows_the_unverified_answer(monkeypatch):

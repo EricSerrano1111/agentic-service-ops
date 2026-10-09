@@ -1,0 +1,1009 @@
+{
+  "evidence": "observed",
+  "not_blind": "correct pairs come from parse sets drafted by assistants (L-69); mutations are synthetic (seed fixed in build_sets.py)",
+  "model": "gemini-3.5-flash-lite",
+  "key": "free",
+  "thinking_level": "minimal",
+  "prompt": "qa_interp_v1",
+  "prompt_sha": "bfef37465b5f",
+  "as_of": "2026-08-30",
+  "k": 3,
+  "resumed_from": null,
+  "stopped": null,
+  "requests": 98,
+  "runs": [
+    [
+      {
+        "id": "r-m01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "technician"
+        ],
+        "note": "The reading should have left the technician null since no technician was mentioned.",
+        "error": null
+      },
+      {
+        "id": "r-m02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have used the incident rate metric instead of SLA compliance.",
+        "error": null
+      },
+      {
+        "id": "r-m03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for an overall figure without any breakdown.",
+        "error": null
+      },
+      {
+        "id": "r-m04-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m04-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should start on 1 January of the current year.",
+        "error": null
+      },
+      {
+        "id": "r-c01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-c01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for a breakdown by account.",
+        "error": null
+      },
+      {
+        "id": "r-c02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-c02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The question did not specify a region.",
+        "error": null
+      },
+      {
+        "id": "r-c03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-c03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for a breakdown by incident type, not by region.",
+        "error": null
+      },
+      {
+        "id": "r-t01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-t01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The metric should have been first-time fix rate instead of SLA compliance.",
+        "error": null
+      },
+      {
+        "id": "r-t02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-t02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The question did not specify a region.",
+        "error": null
+      },
+      {
+        "id": "r-t03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-t03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The question did not mention any specific region.",
+        "error": null
+      },
+      {
+        "id": "r-d01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should be set to the entire current calendar quarter instead of ending prematurely on August 30.",
+        "error": null
+      },
+      {
+        "id": "r-d01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric",
+          "dates"
+        ],
+        "note": "The metric should be repeat visit drivers and the dates should cover the entire current quarter.",
+        "error": null
+      },
+      {
+        "id": "r-d02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-d02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown",
+          "region"
+        ],
+        "note": "The reading should have included a regional breakdown because the question asks if repeat visits are concentrated in any region.",
+        "error": null
+      },
+      {
+        "id": "r-q01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should be the first quarter of 2026.",
+        "error": null
+      },
+      {
+        "id": "r-q01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The metric should be incident_rate instead of repeat_visit_drivers.",
+        "error": null
+      },
+      {
+        "id": "r-q02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-q02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should have been March instead of April.",
+        "error": null
+      },
+      {
+        "id": "r-r15-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-r15-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading incorrectly added a region filter for the west.",
+        "error": null
+      },
+      {
+        "id": "r-r17-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-r17-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The question asks about average resolution time, but the metric was read as SLA compliance.",
+        "error": null
+      },
+      {
+        "id": "r-f01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The question asked for the first time fix rate, but the system read it as incident count.",
+        "error": null
+      },
+      {
+        "id": "r-f03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for a single overall figure for the central region without any service type breakdown.",
+        "error": null
+      },
+      {
+        "id": "r-f04-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f04-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been northeast.",
+        "error": null
+      },
+      {
+        "id": "r-f05-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f05-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The question asks for the incident count rather than the first time fix rate.",
+        "error": null
+      },
+      {
+        "id": "r-f06-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f06-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The question asked for SLA compliance, but the metric was read as first time fix rate.",
+        "error": null
+      },
+      {
+        "id": "r-f07-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f07-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "account"
+        ],
+        "note": "The question asks about Silver Creek, not Meridian Foods.",
+        "error": null
+      },
+      {
+        "id": "r-f08-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f08-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f09-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f09-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The question asked for SLA compliance instead of first-time fix rate.",
+        "error": null
+      },
+      {
+        "id": "r-f10-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f10-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should have been the entire year of 2025.",
+        "error": null
+      },
+      {
+        "id": "r-f11-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-f11-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been set to unsupported because Texas is not one of the allowed regions.",
+        "error": null
+      },
+      {
+        "id": "r-f12-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been central because the question asks for the Midwest.",
+        "error": null
+      },
+      {
+        "id": "r-f12-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading should have included the Midwest region restriction.",
+        "error": null
+      },
+      {
+        "id": "f-f01-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f01-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f02-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f02-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The question asks to forecast total requests, not upgrade requests.",
+        "error": null
+      },
+      {
+        "id": "f-f03-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f03-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f04-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f04-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The question asks for a forecast of ten weeks instead of twelve.",
+        "error": null
+      },
+      {
+        "id": "f-f05-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f05-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The question asks for total repair volume instead of a specific service type.",
+        "error": null
+      },
+      {
+        "id": "f-f06-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f06-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The question asked about November instead of September.",
+        "error": null
+      },
+      {
+        "id": "f-f07-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f07-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The question asks for next year, so the horizon should cover the entire following year rather than 26 weeks.",
+        "error": null
+      },
+      {
+        "id": "f-f08-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f08-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The question asks for the second quarter of the year 2027.",
+        "error": null
+      },
+      {
+        "id": "f-f09-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f09-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric",
+          "unsupported"
+        ],
+        "note": "The question asks for an SLA forecast, which is not supported.",
+        "error": null
+      },
+      {
+        "id": "f-f10-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "metric",
+          "unsupported"
+        ],
+        "note": "The question asks about incidents, which cannot be forecasted.",
+        "error": null
+      },
+      {
+        "id": "f-f10-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "unsupported"
+        ],
+        "note": "The question asks to forecast incidents, which the system does not support.",
+        "error": null
+      },
+      {
+        "id": "f-f11-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "region",
+          "unsupported"
+        ],
+        "note": "The question asks for a forecast in the West region, which the system does not support.",
+        "error": null
+      },
+      {
+        "id": "f-f11-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading should have restricted the forecast to the West region.",
+        "error": null
+      },
+      {
+        "id": "f-f12-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "dates",
+          "unsupported"
+        ],
+        "note": "The question asks about July 2026, which is in the past, but the system should have treated it as a forecast request or flagged it as unsupported instead of treating it as a valid past period.",
+        "error": null
+      },
+      {
+        "id": "f-f12-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f13-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f13-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The question asks for a specific period in January rather than a twelve-week horizon.",
+        "error": null
+      },
+      {
+        "id": "f-f14-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "f-f14-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The question asks about repair volume, not upgrade volume.",
+        "error": null
+      }
+    ],
+    [
+      {
+        "id": "r-m01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "technician"
+        ],
+        "note": "The system incorrectly restricted the reading to a specific technician.",
+        "error": null
+      },
+      {
+        "id": "r-m02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have set the metric to incident rate instead of SLA compliance.",
+        "error": null
+      },
+      {
+        "id": "r-m03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for an overall figure for the year 2025 without any breakdown.",
+        "error": null
+      },
+      {
+        "id": "r-m04-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-m04-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should have started on January 1, 2026, instead of February 1, 2026.",
+        "error": null
+      },
+      {
+        "id": "r-c01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-c01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The reading missed the requested breakdown by account.",
+        "error": null
+      },
+      {
+        "id": "r-c02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-c02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The question did not specify a region.",
+        "error": null
+      },
+      {
+        "id": "r-c03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null
+      },
+      {
+        "id": "r-c03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The breakdown should have been incident type instead of region.",
+        "error": null
+      }
+    ],
+    []
+  ]
+}
