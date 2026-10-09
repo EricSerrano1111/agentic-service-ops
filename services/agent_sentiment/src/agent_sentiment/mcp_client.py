@@ -7,7 +7,7 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx2
-from common import TRACE_ID_KEY
+from common import TRACE_ID_KEY, clamp_to_deadline
 from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
 from pydantic import BaseModel
@@ -32,6 +32,9 @@ async def call_tool[R: BaseModel](
 ) -> R:
     """Call one tool once and validate its structured result against `result_model`
     (architecture §11). Raises `TimeoutError` past `timeout_s`, connect included."""
+    # Never longer than the request's one deadline allows (ADR-088); raises DeadlineExceeded
+    # when none is left. `timeout_s` is this agent's own cap.
+    timeout_s = clamp_to_deadline(timeout_s)
     async with asyncio.timeout(timeout_s):
         async with (
             httpx2.AsyncClient(timeout=timeout_s) as http,
