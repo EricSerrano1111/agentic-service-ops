@@ -6,9 +6,12 @@ carries user-facing text plus an `error_code` in its metadata, which the orchest
 maps to an HTTP status. A range is never guessed: an unparseable question fails.
 
 A technician named in the question is resolved with `find_technician` before the metric
-call (ADR-073). No match, or more than one, ends the task with no figures (codes
-`technician_not_found`, `technician_ambiguous`); nothing is kept for a follow-up, so the
-user asks again with the full name (ADR-031).
+call (ADR-073), and an account the same way with `find_account` (ADR-086). No match, or more
+than one, ends the task with no figures (codes `technician_not_found`,
+`technician_ambiguous`, `account_not_found`, `account_ambiguous`); nothing is kept for a
+follow-up, so the user asks again with the full name (ADR-031). A technician is resolved
+before an account. A region is one of four values, passed straight to the tools; any other
+area is declined, never mapped.
 """
 
 from __future__ import annotations
@@ -30,6 +33,7 @@ from llm import (
     LLMRequestError,
 )
 from schemas import (
+    AccountMatches,
     FirstTimeFixResult,
     IncidentRateResult,
     IncidentSummary,
@@ -58,10 +62,13 @@ TOOLS: dict[str, tuple[str, type]] = {
     "repeat_visit_drivers": ("get_repeat_visit_drivers", RepeatDriversResult),
 }
 FIND_TECHNICIAN = "find_technician"
+FIND_ACCOUNT = "find_account"
+REGIONS = "northeast, southeast, central or west"
 SUPPORTED = (
     "incident counts, incident rate, SLA compliance and first-time fix rate over a date "
     "range, by account, region, service type or technician, or for one named technician "
-    "(incident counts also by incident type or severity); and which incident types, "
+    "(incident counts also by incident type or severity), optionally for one region "
+    "(northeast, southeast, central or west) or one account; and which incident types, "
     "service types, regions, accounts or technicians have more repeat visits"
 )
 #: Breakdowns each metric offers (ADR-073).
@@ -91,6 +98,29 @@ def unsupported_reason(request: ReportingRequest) -> str | None:
         return (
             f"That metric can't be broken down by {request.group_by.replace('_', ' ')}. "
             f"I can report {SUPPORTED}."
+        )
+    if request.region == "unsupported":
+        return (
+            f"I can only restrict a question to one of four regions: {REGIONS}. Other areas, "
+            "such as a state or a city, aren't mapped to a region. "
+            f"I can report {SUPPORTED}."
+        )
+    if request.metric == "repeat_visit_drivers" and (
+        request.region is not None or request.account_name is not None
+    ):
+        return (
+            "Repeat-visit drivers can't be filtered to one region or account yet; ask for them "
+            f"by region or by account instead. I can report {SUPPORTED}."
+        )
+    if request.region is not None and request.group_by == "region":
+        return (
+            "A single region's figures can't also be broken down by region. Ask for the "
+            f"region alone, or for the breakdown alone. I can report {SUPPORTED}."
+        )
+    if request.account_name is not None and request.group_by == "account":
+        return (
+            "A single account's figures can't also be broken down by account. Ask for the "
+            f"account alone, or for the breakdown alone. I can report {SUPPORTED}."
         )
     if request.technician_name is not None:
         if request.metric == "repeat_visit_drivers":
@@ -123,6 +153,27 @@ def technician_reply(matches: TechnicianMatches) -> tuple[str, str] | None:
             "technician_ambiguous",
             f"{matches.total_matches} technicians match {matches.name}: "
             f"{_match_list(matches)}. Please ask again with the full name.",
+        )
+    return None
+
+
+def _account_list(matches: AccountMatches) -> str:
+    names = [m.account_name for m in matches.matches]
+    more = matches.total_matches - len(names)
+    if more > 0:
+        return ", ".join(names) + f" and {more} more"
+    return ", ".join(names[:-1]) + f" and {names[-1]}"
+
+
+def account_reply(matches: AccountMatches) -> tuple[str, str] | None:
+    """(error_code, text) when the name doesn't pick out one account, else None (ADR-086)."""
+    if matches.total_matches == 0:
+        return "account_not_found", f"No account matches {matches.name}."
+    if matches.total_matches > 1:
+        return (
+            "account_ambiguous",
+            f"{matches.total_matches} accounts match {matches.name}: "
+            f"{_account_list(matches)}. Please ask again with the full name.",
         )
     return None
 
@@ -237,6 +288,35 @@ class ReportingExecutor(AgentExecutor):
                     return
                 arguments["technician_id"] = matches.matches[0].technician_id
 
+            if request.account_name is not None:
+                found = await self._call(
+                    updater,
+                    task.id,
+                    trace_id,
+                    FIND_ACCOUNT,
+                    {"name": request.account_name},
+                    AccountMatches,
+                )
+                if found is None:
+                    return
+                reply = account_reply(found)
+                if reply is not None:
+                    # As for technicians: the log gets the count and the ids, never the name.
+                    await self._fail(
+                        updater,
+                        task.id,
+                        *reply,
+                        log_reason=False,
+                        log_extra={
+                            "total_matches": found.total_matches,
+                            "account_ids": [m.account_id for m in found.matches],
+                        },
+                    )
+                    return
+                arguments["account_id"] = found.matches[0].account_id
+            if request.region is not None:
+                arguments["region"] = request.region
+
             figures = await self._call(updater, task.id, trace_id, tool, arguments, result_model)
             if figures is None:
                 return
@@ -287,6 +367,16 @@ class ReportingExecutor(AgentExecutor):
         except McpToolError as exc:
             if _TOOL_QUERY_FAILED in str(exc):
                 await self._fail(updater, task_id, "tool_error", "The incidents query failed.")
+            elif tool == FIND_ACCOUNT:
+                # The name has characters no account name has (the tool rejects patterns).
+                await self._fail(
+                    updater,
+                    task_id,
+                    "account_not_found",
+                    f"No account matches {arguments['name']}.",
+                    log_reason=False,
+                    log_extra={"total_matches": 0, "account_ids": [], "name_rejected": True},
+                )
             elif tool == FIND_TECHNICIAN:
                 # The name has characters no display name has (the tool rejects patterns).
                 name = arguments["name"]

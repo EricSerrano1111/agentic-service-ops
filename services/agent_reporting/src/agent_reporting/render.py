@@ -9,6 +9,10 @@ figure says how many cases it rests on, and flags fewer than the group minimum a
 few to compare reliably; repeat-visit drivers open with the repeat count and rate and
 the fact that every repeat is recorded through a repeat-visit-required incident, then
 say which groups stand out (or that none does), worst first.
+
+ADR-086: a region and/or account filter is stated in the text ("For the west region, ...", "for
+Bluewater Energy Inc. in the west region"), a filtered rate states the cases it rests on, and
+fewer than the group minimum is flagged as too few to compare reliably, as for a technician.
 """
 
 from __future__ import annotations
@@ -84,6 +88,10 @@ def render_incident_summary(summary: IncidentSummary) -> str:
     if summary.technician_name is not None:
         # No denominator: the count attributed to the technician is the whole answer.
         whose = f" attributed to {summary.technician_name}"
+    if summary.account_name is not None:
+        whose += f" for {summary.account_name}"
+    if summary.region is not None:
+        whose += f" in the {summary.region} region"
     text = (
         f"{_plural(summary.incident_count, 'incident')}{whose} reported "
         f"{_span(summary.start, summary.end)}: "
@@ -206,12 +214,24 @@ def _groups(figures, min_denominator: int) -> str:
     return text
 
 
-# --------------------------------------------------------------------------- one technician
+# --------------------------------------------------------------------------- one subject
 
 
-def _for_technician(figures, min_denominator: int) -> str:
-    """A metric filtered to one technician: the figure and the cases it rests on."""
-    name, span, n = figures.technician_name, _span(figures.start, figures.end), figures.denominator
+def subject_of(figures) -> str | None:
+    """Who a filtered figure is about, in words: "Priya Kim", "Bluewater Energy Inc. in the
+    west region", "the west region"; None when nothing is filtered (ADR-073, ADR-086)."""
+    names = [n for n in (figures.technician_name, figures.account_name) if n]
+    who = " and ".join(names)
+    if figures.region is not None:
+        where = f"the {figures.region} region"
+        return f"{who} in {where}" if who else where
+    return who or None
+
+
+def _for_subject(figures, min_denominator: int) -> str:
+    """A metric filtered to a technician, an account and/or a region: the figure and the
+    cases it rests on."""
+    name, span, n = subject_of(figures), _span(figures.start, figures.end), figures.denominator
     if isinstance(figures, IncidentRateResult):
         noun = "completed request"
         if figures.rate is None:
@@ -238,6 +258,14 @@ def _for_technician(figures, min_denominator: int) -> str:
         )
     if n < min_denominator:
         text += f" That is {TOO_FEW}."
+    return text
+
+
+def _filtered(figures, min_denominator: int) -> str:
+    """A filtered figure, then its breakdown by a different dimension when one was asked."""
+    text = _for_subject(figures, min_denominator)
+    if figures.group_by is not None:
+        text += _groups(figures, min_denominator)
     return text
 
 
@@ -333,8 +361,8 @@ def render_answer(
         return lead + render_incident_summary(figures)
     if isinstance(figures, RepeatDriversResult):
         return lead + render_repeat_drivers(figures, min_denominator)
-    if figures.technician_id is not None:
-        return lead + _for_technician(figures, min_denominator)
+    if subject_of(figures) is not None:
+        return lead + _filtered(figures, min_denominator)
     body = _overall(figures)
     if figures.group_by is not None:
         body += _groups(figures, min_denominator)

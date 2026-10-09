@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .incidents import IncidentSummary
 from .metrics import FirstTimeFixResult, IncidentRateResult, SlaComplianceResult
 from .repeats import RepeatDriversResult
+from .sentiment import SiteRegion
 
 #: What the parsing call may ask for. "unsupported" lets the model say a question asks
 #: for a metric or breakdown the agent doesn't offer, instead of guessing the nearest.
@@ -30,6 +31,10 @@ RequestGroupBy = Literal[
     "severity",
     "unsupported",
 ]
+
+#: A region named in the question (ADR-086): one of the four site regions, or "unsupported"
+#: for any other area (a state, a city, "Midwest"). Areas are never mapped to a region.
+RequestRegion = SiteRegion | Literal["unsupported"]
 
 Figures = Annotated[
     IncidentSummary
@@ -65,6 +70,12 @@ class ReportingRequest(BaseModel):
     #: this field after `end`, the model wrote it third and then could not go back to the
     #: dates (L-51). A unit test holds the two orders together.
     technician_name: str | None = Field(default=None, min_length=1, max_length=100)
+    #: A site region the question restricts to, or "unsupported" for another area (ADR-086).
+    region: RequestRegion | None = None
+    #: An account named in the question, as written; resolved by `find_account`, never by
+    #: the model (ADR-086). Both fields sit before `start` and `end`, in the prompt
+    #: template's order (L-51).
+    account_name: str | None = Field(default=None, min_length=1, max_length=100)
     start: dt.date | None = Field(default=None, description="First day, inclusive.")
     end: dt.date | None = Field(default=None, description="Last day, inclusive.")
 
@@ -103,6 +114,14 @@ class ReportingAnswer(BaseModel):
             getattr(self.figures, "technician_id", None) is None
         ):
             raise ValueError("figures are filtered to a technician exactly when one was named")
+        if self.request.region == "unsupported":
+            raise ValueError("an unsupported area is declined, never answered")
+        if self.request.region != getattr(self.figures, "region", None):
+            raise ValueError("figures are filtered to a region exactly when one was named")
+        if (self.request.account_name is None) != (
+            getattr(self.figures, "account_id", None) is None
+        ):
+            raise ValueError("figures are filtered to an account exactly when one was named")
         if self.range_assumed != (self.request.start is None):
             raise ValueError("range_assumed must match whether the request had dates")
         return self

@@ -40,6 +40,8 @@ from llm import (
     LLMUnavailable,
 )
 from schemas import (
+    AccountMatch,
+    AccountMatches,
     FirstTimeFixResult,
     GroupCount,
     GroupRate,
@@ -174,11 +176,40 @@ def fake_repeats(
     )
 
 
-def fake_result(tool: str, result_model, start, end, group_by, technician_id=None):
+ACCOUNTS = [
+    (3, "Bluewater Energy Inc."),
+    (4, "Bluewater Hospitality Partners"),
+    (5, "Cedar Ridge Retail Inc."),
+]
+
+
+def fake_account_matches(name: str) -> AccountMatches:
+    found = [
+        AccountMatch(account_id=i, account_name=n)
+        for i, n in ACCOUNTS
+        if all(w in n.lower().split() for w in name.lower().split())
+    ]
+    return AccountMatches(name=name, matches=found, total_matches=len(found))
+
+
+def fake_result(
+    tool: str,
+    result_model,
+    start,
+    end,
+    group_by,
+    technician_id=None,
+    region=None,
+    account_id=None,
+):
     technician = {}
     if technician_id is not None:
         name = dict(TECHNICIANS)[technician_id]
         technician = {"technician_id": technician_id, "technician_name": name}
+    if region is not None:
+        technician["region"] = region
+    if account_id is not None:
+        technician |= {"account_id": account_id, "account_name": dict(ACCOUNTS)[account_id]}
     if result_model is RepeatDriversResult:
         return fake_repeats(start, end, group_by)
     if result_model is IncidentSummary:
@@ -193,6 +224,9 @@ def fake_result(tool: str, result_model, start, end, group_by, technician_id=Non
             group_by=group_by,
             groups=groups,
             group_count=2,
+            **{
+                k: v for k, v in technician.items() if k in ("region", "account_id", "account_name")
+            },
         )
     groups = None
     if group_by is not None:
@@ -224,6 +258,9 @@ def mcp_calls(monkeypatch):
         if tool == "find_technician":
             calls.append({"tool": tool, "name": arguments["name"]})
             return fake_matches(arguments["name"])
+        if tool == "find_account":
+            calls.append({"tool": tool, "name": arguments["name"]})
+            return fake_account_matches(arguments["name"])
         start = dt.date.fromisoformat(arguments["start"])
         end = dt.date.fromisoformat(arguments["end"])
         group_by = arguments.get("group_by", arguments.get("by"))
@@ -234,10 +271,20 @@ def mcp_calls(monkeypatch):
             "group_by": group_by,
             "trace_id": trace_id,
         }
-        if "technician_id" in arguments:
-            call["technician_id"] = arguments["technician_id"]
+        for extra in ("technician_id", "region", "account_id"):
+            if extra in arguments:
+                call[extra] = arguments[extra]
         calls.append(call)
-        return fake_result(tool, result_model, start, end, group_by, arguments.get("technician_id"))
+        return fake_result(
+            tool,
+            result_model,
+            start,
+            end,
+            group_by,
+            arguments.get("technician_id"),
+            arguments.get("region"),
+            arguments.get("account_id"),
+        )
 
     monkeypatch.setattr(executor_mod, "call_tool", fake)
     return calls
@@ -977,7 +1024,11 @@ def test_prompt_json_template_keys_follow_the_schema_property_order():
         line for line in load_parse_prompt().text.splitlines() if line.startswith('{"metric"')
     )
     keys = re.findall(r'"(\w+)":', template)
-    assert keys == list(ReportingRequest.model_json_schema()["properties"])
+    schema_keys = list(ReportingRequest.model_json_schema()["properties"])
+    # parse_v3 predates the region and account fields (ADR-086): it may omit optional keys,
+    # but the keys it writes must keep the schema's relative order.
+    assert keys == [k for k in schema_keys if k in keys]
+    assert {"metric", "group_by", "technician_name", "start", "end"} <= set(keys)
 
 
 #: Questions that look like template syntax. The question is data: it renders without
@@ -1144,3 +1195,301 @@ async def test_mcp_ready_is_false_when_the_server_is_unreachable():
     assert (
         await mcp_ready(SETTINGS.mcp_incidents_url, transport=httpx2.MockTransport(refuse)) is False
     )
+
+
+# ------------------------------------------------------------- region and account (ADR-086)
+
+METRIC_TOOLS = [
+    ("incident_count", "get_incidents_by_date_range"),
+    ("incident_rate", "get_incident_rate"),
+    ("sla_compliance", "get_sla_compliance"),
+    ("first_time_fix_rate", "get_first_time_fix_rate"),
+]
+
+
+def _scope_figures(model, numerator, denominator, **scope):
+    return model(
+        start=JULY[0],
+        end=JULY[1],
+        numerator=numerator,
+        denominator=denominator,
+        rate=rate_string(numerator, denominator, 100 if model is IncidentRateResult else 1),
+        **scope,
+    )
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(("metric", "tool"), METRIC_TOOLS)
+async def test_a_region_filter_reaches_every_tool_and_the_text(mcp_calls, metric, tool):
+    llm = FakeLLM(req(metric, region="west", **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    [call] = mcp_calls  # no lookup: a region needs none
+    assert call["tool"] == tool and call["region"] == "west" and "account_id" not in call
+    answer = ReportingAnswer.model_validate(MessageToDict(task.artifacts[0].parts[1].data))
+    assert answer.figures.region == "west" and answer.request.region == "west"
+    assert "the west region" in task.artifacts[0].parts[0].text
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(("metric", "tool"), METRIC_TOOLS)
+async def test_one_matching_account_is_resolved_then_filters_every_tool(mcp_calls, metric, tool):
+    llm = FakeLLM(req(metric, account_name="cedar ridge", **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[0] == {"tool": "find_account", "name": "cedar ridge"}
+    assert mcp_calls[1]["tool"] == tool and mcp_calls[1]["account_id"] == 5
+    answer = ReportingAnswer.model_validate(MessageToDict(task.artifacts[0].parts[1].data))
+    assert answer.figures.account_name == "Cedar Ridge Retail Inc."
+    assert "Cedar Ridge Retail Inc." in task.artifacts[0].parts[0].text
+
+
+@pytest.mark.anyio
+async def test_no_matching_account_answers_with_no_figures(mcp_calls):
+    task = await _send(create_app(SETTINGS, FakeLLM(req("sla_compliance", account_name="Zed"))))
+    assert task.status.state == TaskState.TASK_STATE_FAILED
+    assert _failure(task) == ("account_not_found", "No account matches Zed.")
+    assert [c["tool"] for c in mcp_calls] == ["find_account"]
+    assert not task.artifacts
+
+
+@pytest.mark.anyio
+async def test_several_matching_accounts_are_listed_with_no_figures(mcp_calls):
+    task = await _send(
+        create_app(SETTINGS, FakeLLM(req("sla_compliance", account_name="Bluewater")))
+    )
+    assert task.status.state == TaskState.TASK_STATE_FAILED
+    assert _failure(task) == (
+        "account_ambiguous",
+        "2 accounts match Bluewater: Bluewater Energy Inc. and Bluewater Hospitality Partners. "
+        "Please ask again with the full name.",
+    )
+    assert [c["tool"] for c in mcp_calls] == ["find_account"]
+    assert not task.artifacts
+
+
+@pytest.mark.anyio
+async def test_a_rejected_account_name_reads_as_no_match(monkeypatch):
+    async def rejects(url, tool, arguments, result_model, **kwargs):
+        raise McpToolError("name must be ... wildcards and patterns are not accepted")
+
+    monkeypatch.setattr(executor_mod, "call_tool", rejects)
+    task = await _send(create_app(SETTINGS, FakeLLM(req("sla_compliance", account_name="B%"))))
+    assert _failure(task) == ("account_not_found", "No account matches B%.")
+
+
+def test_more_than_five_account_matches_say_how_many_more():
+    from agent_reporting.executor import account_reply
+
+    matches = AccountMatches(
+        name="Acme",
+        matches=[
+            AccountMatch(account_id=i, account_name=f"Acme {c}") for i, c in enumerate("ABCDE")
+        ],
+        total_matches=7,
+    )
+    code, text = account_reply(matches)
+    assert code == "account_ambiguous"
+    assert "7 accounts match Acme: Acme A, Acme B, Acme C, Acme D, Acme E and 2 more." in text
+
+
+@pytest.mark.anyio
+async def test_region_and_account_together_reach_the_tool_as_an_and(mcp_calls):
+    llm = FakeLLM(req("sla_compliance", region="west", account_name="cedar", **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[1]["region"] == "west" and mcp_calls[1]["account_id"] == 5
+    assert "Cedar Ridge Retail Inc. in the west region" in task.artifacts[0].parts[0].text
+
+
+@pytest.mark.anyio
+async def test_a_filter_with_a_breakdown_by_another_dimension_is_answered(mcp_calls):
+    llm = FakeLLM(req("sla_compliance", region="west", group_by="account", **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[0]["region"] == "west" and mcp_calls[0]["group_by"] == "account"
+    text = task.artifacts[0].parts[0].text
+    assert "For the west region, SLA compliance was" in text and "By account, worst first" in text
+
+
+@pytest.mark.anyio
+async def test_a_technician_is_resolved_before_an_account(mcp_calls):
+    both_bad = req("sla_compliance", technician_name="Dave", account_name="Zed")
+    task = await _send(create_app(SETTINGS, FakeLLM(both_bad)))
+    assert _failure(task)[0] == "technician_not_found"
+    assert [c["tool"] for c in mcp_calls] == ["find_technician"]
+
+
+@pytest.mark.anyio
+async def test_a_technician_and_a_region_filter_together(mcp_calls):
+    llm = FakeLLM(req("sla_compliance", technician_name="ben", region="central", **_JULY))
+    task = await _send(create_app(SETTINGS, llm))
+    assert task.status.state == TaskState.TASK_STATE_COMPLETED
+    assert mcp_calls[1]["technician_id"] == 9 and mcp_calls[1]["region"] == "central"
+    assert "Ben Okafor in the central region" in task.artifacts[0].parts[0].text
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("fields", "expected"),
+    [
+        ({"region": "unsupported"}, "northeast, southeast, central or west"),
+        ({"region": "west", "group_by": "region"}, "can't also be broken down by region"),
+        ({"account_name": "cedar", "group_by": "account"}, "can't also be broken down by account"),
+        (
+            {"metric": "repeat_visit_drivers", "region": "west"},
+            "can't be filtered to one region or account",
+        ),
+        (
+            {"metric": "repeat_visit_drivers", "account_name": "cedar"},
+            "can't be filtered to one region or account",
+        ),
+    ],
+)
+async def test_unsupported_filter_questions_are_declined_with_no_lookup(
+    mcp_calls, fields, expected
+):
+    fields = {"metric": "sla_compliance"} | fields
+    task = await _send(create_app(SETTINGS, FakeLLM(req(**fields))))
+    assert task.status.state == TaskState.TASK_STATE_FAILED
+    code, text = _failure(task)
+    assert code == "not_supported" and expected in text
+    assert "I can report" in text and "one region" in text
+    assert mcp_calls == [] and not task.artifacts
+
+
+@pytest.mark.parametrize(
+    ("model", "noun"),
+    [
+        (IncidentRateResult, "based on 52 completed requests"),
+        (SlaComplianceResult, "based on 52 dispatched requests"),
+        (FirstTimeFixResult, "based on 52 completed requests"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("scope", "subject"),
+    [
+        ({"region": "west"}, "the west region"),
+        ({"account_id": 5, "account_name": "Cedar Ridge Retail Inc."}, "Cedar Ridge Retail Inc."),
+        (
+            {"region": "west", "account_id": 5, "account_name": "Cedar Ridge Retail Inc."},
+            "Cedar Ridge Retail Inc. in the west region",
+        ),
+    ],
+)
+def test_a_filtered_rate_states_its_filter_and_its_denominator(model, noun, scope, subject):
+    figures = _scope_figures(model, 2 if model is IncidentRateResult else 49, 52, **scope)
+    answer = _metric_answer(
+        figures,
+        req(
+            figures.metric,
+            region=scope.get("region"),
+            account_name=scope.get("account_name"),
+            **_JULY,
+        ),
+    )
+    text = render_answer(answer)
+    assert f"For {subject}, " in text and noun in text
+    assert TOO_FEW_TEXT not in text
+
+
+def test_a_filtered_rate_on_few_cases_is_flagged():
+    figures = _scope_figures(SlaComplianceResult, 11, 12, region="west")
+    text = render_answer(_metric_answer(figures, req("sla_compliance", region="west", **_JULY)))
+    assert "based on 12 dispatched requests" in text and TOO_FEW_TEXT in text
+
+
+def test_a_region_filtered_incident_count_states_the_region():
+    summary_ = summary(*JULY).model_copy(update={"region": "west"})
+    answer = ReportingAnswer(
+        request=req("incident_count", region="west", **_JULY),
+        start=JULY[0],
+        end=JULY[1],
+        range_assumed=False,
+        as_of=AS_OF,
+        figures=summary_,
+    )
+    assert "172 incidents in the west region reported" in render_answer(answer)
+
+
+TOO_FEW_TEXT = "too few to compare reliably"
+
+
+def test_the_answer_ties_the_request_filters_to_the_figures():
+    figures = _scope_figures(SlaComplianceResult, 49, 52, region="west")
+    with pytest.raises(ValueError, match="region"):
+        _metric_answer(figures, req("sla_compliance", **_JULY))  # figures filtered, none asked
+    with pytest.raises(ValueError, match="region"):
+        _metric_answer(
+            _scope_figures(SlaComplianceResult, 49, 52),
+            req("sla_compliance", region="west", **_JULY),
+        )
+    with pytest.raises(ValueError, match="account"):
+        _metric_answer(
+            _scope_figures(SlaComplianceResult, 49, 52),
+            req("sla_compliance", account_name="cedar", **_JULY),
+        )
+    with pytest.raises(ValueError, match="unsupported area"):
+        _metric_answer(
+            _scope_figures(SlaComplianceResult, 49, 52),
+            req("sla_compliance", region="unsupported", **_JULY),
+        )
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("name", "code", "total", "ids"),
+    [
+        ("Zed", "account_not_found", 0, []),
+        ("Bluewater", "account_ambiguous", 2, [3, 4]),
+    ],
+)
+async def test_account_lookup_failures_log_counts_and_ids_not_names(
+    mcp_calls, name, code, total, ids
+):
+    question = "how is MARKER-Q9 doing on SLA?"
+    with captured_logs("agent_reporting") as lines:
+        task = await _send(
+            create_app(SETTINGS, FakeLLM(req("sla_compliance", account_name=name))),
+            text=question,
+            trace_id="t-acct",
+        )
+        logged = lines()
+    assert _failure(task)[0] == code
+    [failed] = [x for x in logged if x["msg"] == "task failed"]
+    assert (failed["code"], failed["total_matches"], failed["account_ids"]) == (code, total, ids)
+    assert "reason" not in failed and failed["trace_id"] == "t-acct"
+    text = json.dumps(logged)
+    for forbidden in (name, "Bluewater Energy", "Bluewater Hospitality", "MARKER-Q9"):
+        assert forbidden not in text, forbidden
+
+
+@pytest.mark.anyio
+async def test_a_rejected_account_name_is_logged_without_the_name(monkeypatch):
+    async def rejects(*args, **kwargs):
+        raise McpToolError("name must be ... wildcards and patterns are not accepted")
+
+    monkeypatch.setattr(executor_mod, "call_tool", rejects)
+    with captured_logs("agent_reporting") as lines:
+        task = await _send(
+            create_app(SETTINGS, FakeLLM(req("sla_compliance", account_name="ZedMARKER%")))
+        )
+        logged = lines()
+    assert _failure(task) == ("account_not_found", "No account matches ZedMARKER%.")
+    [failed] = [x for x in logged if x["msg"] == "task failed"]
+    assert failed["total_matches"] == 0 and failed["name_rejected"] is True
+    assert "ZedMARKER" not in json.dumps(logged)
+
+
+@pytest.mark.anyio
+async def test_the_parse_log_says_an_account_was_named_but_not_which(mcp_calls):
+    with captured_logs("agent_reporting") as lines:
+        await _send(
+            create_app(
+                SETTINGS, FakeLLM(req("sla_compliance", account_name="cedar", region="west"))
+            )
+        )
+        logged = lines()
+    [parsed] = [x for x in logged if x["msg"] == "question parsed"]
+    assert parsed["account_named"] is True and parsed["region"] == "west"
+    assert "cedar" not in json.dumps(logged).lower()

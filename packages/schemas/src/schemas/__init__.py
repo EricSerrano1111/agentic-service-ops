@@ -62,6 +62,7 @@ from .reporting import (
     ReportingAnswer,
     ReportingRequest,
     RequestGroupBy,
+    RequestRegion,
 )
 from .routing import Domain, Route, RouteDecision
 from .sentiment import (
@@ -146,6 +147,7 @@ __all__ = [
     "IncidentSummary",
     "Metric",
     "RequestGroupBy",
+    "RequestRegion",
     "SlaComplianceResult",
     "rate_string",
     "ReportingAnswer",

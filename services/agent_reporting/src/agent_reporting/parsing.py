@@ -1,10 +1,10 @@
 """Question parsing (ADR-046) and date resolution (ADR-050).
 
 One LLM call maps the question to a `ReportingRequest`: the metric, an optional
-breakdown, a technician named in the question, and an inclusive date range, or no dates
-when the question states none. Code, not the model, then applies the default for a
-dateless question: the calendar month before the as-of date's month. Figures stay
-deterministic; only this step uses a model.
+breakdown, a technician, an account or a region named in the question, and an inclusive
+date range, or no dates when the question states none. Code, not the model, then applies
+the default for a dateless question: the calendar month before the as-of date's month.
+Figures stay deterministic; only this step uses a model.
 """
 
 from __future__ import annotations
@@ -78,6 +78,8 @@ class Parser:
                 "metric": result.parsed.metric,
                 "group_by": result.parsed.group_by,
                 "technician_named": result.parsed.technician_name is not None,
+                "account_named": result.parsed.account_name is not None,
+                "region": result.parsed.region,
                 "parsed_start": _iso(result.parsed.start),
                 "parsed_end": _iso(result.parsed.end),
                 "start": resolved.start.isoformat(),
