@@ -20,9 +20,10 @@ from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START, ReportingRequest
 
 log = logging.getLogger("agent_reporting")
 
-#: parse_v1 and parse_v2 stay in prompts/ for the record. v2 added metric and group_by;
-#: v3 adds incident-count breakdowns, a technician name and repeat-visit drivers (ADR-073).
-PROMPT_NAME = "parse_v3"
+#: parse_v1 to parse_v3 stay in prompts/ for the record. v2 added metric and group_by; v3 adds
+#: incident-count breakdowns, a technician name and repeat-visit drivers (ADR-073); v4 adds a
+#: region and an account name (ADR-086), after passing the pre-registered gate.
+PROMPT_NAME = "parse_v4"
 
 
 class ParsingLLM(Protocol):

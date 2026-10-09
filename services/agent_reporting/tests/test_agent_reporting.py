@@ -556,7 +556,7 @@ async def test_prompt_version_is_logged_with_the_parse(mcp_calls):
         logger.removeHandler(handler)
         logger.disabled = was_disabled
     [line] = [json.loads(x) for x in stream.getvalue().splitlines() if "question parsed" in x]
-    assert line["prompt_version"] == "parse_v3" and len(line["prompt_sha"]) == 12
+    assert line["prompt_version"] == "parse_v4" and len(line["prompt_sha"]) == 12
     assert line["trace_id"] == "t-log" and line["range_assumed"] is True
 
 
@@ -1024,11 +1024,8 @@ def test_prompt_json_template_keys_follow_the_schema_property_order():
         line for line in load_parse_prompt().text.splitlines() if line.startswith('{"metric"')
     )
     keys = re.findall(r'"(\w+)":', template)
-    schema_keys = list(ReportingRequest.model_json_schema()["properties"])
-    # parse_v3 predates the region and account fields (ADR-086): it may omit optional keys,
-    # but the keys it writes must keep the schema's relative order.
-    assert keys == [k for k in schema_keys if k in keys]
-    assert {"metric", "group_by", "technician_name", "start", "end"} <= set(keys)
+    assert keys == list(ReportingRequest.model_json_schema()["properties"])
+    assert load_parse_prompt().version == "parse_v4"
 
 
 #: Questions that look like template syntax. The question is data: it renders without
