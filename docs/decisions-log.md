@@ -97,6 +97,7 @@
 | 083 | The deploy runs in the paid project; cost-split labels; trigger disabled between windows (extends ADR-041) | Accepted |
 | 084 | The deploy window was pulled forward to 2026-10-08 to 10-10; verified serving on day one (supersedes ADR-078's dates) | Accepted |
 | 085 | Deploy verification and IAM changes found in the window: build account self-impersonation, `verify.py` checks 2 and 6, create body (supersedes ADR-081 in part) | Accepted |
+| 086 | Region and account filters on the reporting metrics, `find_account`, and the parse gate (resolves L-62) | Accepted |
 
 ---
 
@@ -2564,3 +2565,43 @@ training grants.
 **Consequences:**
 - The build account can mint identity tokens as itself and, through its invoker binding on the orchestrator, call the orchestrator. It still cannot invoke reporting (only the orchestrator's account can) and holds no data-plane role.
 - ADR-081's description of the build account's roles gains the self-impersonation binding. Its other decisions stand.
+
+
+### ADR-086 — Region and account filters on the reporting metrics, and `find_account`
+*Date: 2026-10-08. Extends ADR-073 (the single-technician filter and `find_technician`) and ADR-046 (one parse call, template answers). Resolves L-62 (or partly, see Results). Supersedes nothing.*
+
+**Decision (the design, fixed before the build and before any live call):**
+- **Two filters.** `region` is one of `northeast`, `southeast`, `central`, `west`: the **site's** region (`locations.region` through the request), the same column `group_by=region` uses. `account_id` is one account, the request's `account_id`, the same column `group_by=account` uses.
+- **Which tools.** `get_incidents_by_date_range`, `get_incident_rate`, `get_sla_compliance` and `get_first_time_fix_rate` gain optional `region` and `account_id`. `get_repeat_visit_drivers` does **not** get them in this phase: a filtered repeat-driver question is declined with a message naming what is supported (recorded as a limitation).
+- **Semantics, the invariant.** Each metric is restricted on the same entity and dates its breakdown uses. **A filtered figure equals that group's row in the matching unfiltered breakdown**, for incident count, incident rate, SLA compliance and first-time fix, by region and by account. The definitions are in data dictionary §6.
+- **Combinations.**
+  - `region` and `account_id` together: allowed, as AND.
+  - A filter together with `group_by` on a **different** dimension (the West broken down by account): allowed.
+  - A filter together with `group_by` on the **same** dimension: declined, with a message.
+  - A filter together with `technician_id`: allowed, as AND. A technician filter together with a breakdown stays declined (ADR-073).
+  - Every filtered answer states the filter in its text, and a filtered rate states its denominator, with ADR-073's "too few to compare reliably" rule below 20.
+- **`find_account(name)`.** It applies `find_technician`'s rules exactly: a whole-name or every-word whole-word match, case-insensitive, over the fixed account list; at most 5 matches plus the total count; pattern and wildcard characters rejected; no SQL built from the name. No match: "No account matches {name}", no figures. Several matches: list them, ask the user to ask again with the full name, end the turn (single-shot, ADR-031). The orchestrator outcome is `needs_clarification` with the new reasons `account_not_found` and `account_ambiguous`, mirroring the technician reasons. If a question names both a technician and an account, the technician is resolved first, then the account.
+- **Regions.** Only the four values; the parse prompt lists them. Any other area (a state, a city, "Midwest", "East Coast") is **not mapped**: the parse says `unsupported` and the answer declines, naming the four supported regions. No synonyms, because a silent mapping would be an unrecorded choice.
+- **Logs.** A typed account name never appears in a log line, the same rule as technician names; the log carries the resolved `account_id` only.
+- **Parse prompt `parse_v4`** (a new file; `parse_v3` stays): adds `region` and `account_name`. In `ReportingRequest` the two fields sit **before** `start` and `end`, in the order of the prompt's JSON template (L-51). Routing (`route_v3`) and every other agent are unchanged.
+
+**Parse evaluation, pre-registered (committed before the first live call):**
+- **Set:** `evals/reporting_parse/parse_v4.jsonl`: the 16 `parse_v3` items unchanged, plus 12 new filter items drafted by the assistant: 4 region, 4 account (one ambiguous partial name, one no-match), 2 combined (region and account, or a filter with a breakdown), 2 unsupported areas (a state and "Midwest"). Labels are committed before any run and never change. They are **drafted, not owner-written, so the set is not blind** (R-16).
+- **Runs:** k=3 per prompt, `gemini-3.5-flash-lite`, free key, thinking `minimal`, as-of 2026-08-30, scored by the existing exact-match runner (extended with `region` and `account_name`). Baseline: `parse_v3` on the 16 old items (48 calls). Candidate: `parse_v4` on all 28 items (84 calls). Budget 220 free-tier calls, the end-to-end check included.
+- **Gate (fixed now, never loosened):** (a) on the 16 old items, `parse_v4`'s mean correct is at least `parse_v3`'s 3-run mean minus 1; (b) on the 12 new items, `parse_v4` gets at least 10 of 12 in **every** run; (c) on the 2 unsupported-area items, `region` is `unsupported` in all 3 runs (never mapped to a region).
+- **Revisions:** at most one (`parse_v5`, 84 more calls), disclosed with what it targeted. If the gate still fails, stop: the filters ship in the tools and the agent stays on `parse_v3`, with the filters unreachable by question, recorded as a limitation.
+
+**Context:**
+- L-62: the tools filtered only by technician, so "SLA compliance in the west region" got a full breakdown or an unscoped figure presented as scoped, which QA's recompute would not catch. 05 TS-01-A, TS-02-C and TS-05-B depend on the filters.
+- All 50 account names fit the technician-name character set, so `find_technician`'s rules transfer unchanged. Several share a first word (three "Bluewater" accounts), so partial names are routinely ambiguous.
+
+**Alternatives considered:**
+- *Mapping states and cities to regions* (rejected). It would be an unrecorded choice with no mapping table in the data.
+- *Accepting the region as free text* (rejected). Only four values exist; a closed set is validated at the edge.
+- *Filters on the repeat-driver tool now* (rejected for this phase). Its significance rule compares a group against the rest, so a filter changes what "the rest" means, which needs its own decision.
+
+**Required versus portfolio value:** required. A question scoped to a region or an account is a normal question for this system.
+
+**Consequences:**
+- QA (Sprint 4) recomputes a filtered figure from the same definitions. 05 TS-01-A, TS-02-C and TS-05-B can now be corrected by the owner.
+- Golden-set items about one region or account may have a different correct answer; check at the Sprint 5 evaluation (the golden set was not opened).
