@@ -774,6 +774,7 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [ ] A second interpretation-gate attempt for QA's check (L-74), **only on an owner-written set** of question and parsed-request pairs, with a new pre-registered gate; the 84 assistant-drafted pairs have been used to judge `qa_interp_v1` and `v2` and can't confirm a third prompt. Review the 13 rejected correct pairs listed in L-74 first. *Added 2026-10-09.*
 - [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.*
 - [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
