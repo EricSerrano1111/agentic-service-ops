@@ -9,9 +9,9 @@ name; at most 25. By incident type, each type except `repeat_visit_required` is 
 with it against jobs without it, plus one comparison of any-other-incident against none (at
 least 20 jobs on each side, p < 0.05, no Bonferroni).
 
-Where §6 is silent and the code reads it one way, the gap is recorded in L-72: an incident
-type with no job in range (listed with zero jobs, or left out), and a group that leaves no
-"rest" to compare with.
+A group that is every job in the range (no "rest") is listed with its rate but not compared:
+it is left out of the Bonferroni count, its p-value is null and it never stands out. An incident
+type with no job in the range is not listed. (The owner's rulings of 2026-10-09, in §6.)
 """
 
 from __future__ import annotations
@@ -88,9 +88,9 @@ def compute(jobs: list[dict[str, Any]], types: dict[int, set[str]], by: str) -> 
     for label, gid, items in members:
         this = Tally(len(items), sum(j["repeated"] for j in items))
         rest = Tally(total.jobs - this.jobs, total.repeated - this.repeated)
-        compared = this.jobs >= MIN_JOBS
+        compared = this.jobs >= MIN_JOBS and rest.jobs > 0
         p = None
-        if compared and rest.jobs > 0:
+        if compared:
             p = fisher_two_sided(
                 this.repeated, this.jobs - this.repeated, rest.repeated, rest.jobs - rest.repeated
             )

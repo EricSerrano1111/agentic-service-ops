@@ -9,7 +9,7 @@ import pytest
 from agent_qa import reporting
 from agent_qa.db import UNATTRIBUTED
 from agent_qa.repeats import compute
-from agent_qa.reporting import Checker, decline_reasons, last_full_month
+from agent_qa.reporting import Checker, decline_reason, last_full_month
 from agent_qa.stats import fisher_two_sided, rate_string
 from qa_fakes import AS_OF, SETTINGS, FakeSource, row
 from schemas import (
@@ -78,55 +78,63 @@ TEXT = "As of 2026-08-30: 172 incidents reported from 2026-07-01 to 2026-07-31 (
 # --------------------------------------------------------------------------- the request rules
 
 
-@pytest.mark.parametrize(
-    ("fields", "expected"),
-    [
-        ({"metric": "unsupported"}, {"unsupported_metric"}),
-        ({"metric": "sla_compliance", "group_by": "unsupported"}, {"unsupported_breakdown"}),
-        ({"metric": "sla_compliance", "group_by": "severity"}, {"breakdown_not_offered"}),
-        ({"metric": "incident_rate", "group_by": "incident_type"}, {"breakdown_not_offered"}),
-        ({"metric": "repeat_visit_drivers", "group_by": "severity"}, {"breakdown_not_offered"}),
-        ({"metric": "incident_count", "region": "unsupported"}, {"unsupported_area"}),
-        (
-            {"metric": "repeat_visit_drivers", "region": "west"},
-            {"repeat_region_or_account"},
-        ),
-        (
-            {"metric": "repeat_visit_drivers", "account_name": "Bluewater"},
-            {"repeat_region_or_account"},
-        ),
-        ({"metric": "repeat_visit_drivers", "technician_name": "Ben"}, {"repeat_technician"}),
-        (
-            {"metric": "incident_count", "region": "west", "group_by": "region"},
-            {"region_same_dimension"},
-        ),
-        (
-            {"metric": "incident_count", "account_name": "Bluewater", "group_by": "account"},
-            {"account_same_dimension"},
-        ),
-        (
-            {"metric": "sla_compliance", "technician_name": "Ben", "group_by": "region"},
-            {"technician_breakdown"},
-        ),
-        # several reasons at once: every true one is reported, so any may be the one stated
-        (
-            {
-                "metric": "repeat_visit_drivers",
-                "region": "unsupported",
-                "technician_name": "Ben",
-                "group_by": "region",
-            },
-            {
-                "unsupported_area",
-                "repeat_region_or_account",
-                "repeat_technician",
-                "technician_breakdown",
-            },
-        ),
-    ],
-)
-def test_the_rules_that_decline_a_request(fields, expected):
-    assert decline_reasons(ReportingRequest(**fields)) == expected
+ORDER = [
+    # (request fields, the first rule that applies): the reporting agent's order (§6, ruling 6)
+    ({"metric": "unsupported"}, "unsupported_metric"),
+    ({"metric": "sla_compliance", "group_by": "unsupported"}, "unsupported_breakdown"),
+    ({"metric": "sla_compliance", "group_by": "severity"}, "breakdown_not_offered"),
+    ({"metric": "incident_rate", "group_by": "incident_type"}, "breakdown_not_offered"),
+    ({"metric": "repeat_visit_drivers", "group_by": "severity"}, "breakdown_not_offered"),
+    ({"metric": "incident_count", "region": "unsupported"}, "unsupported_area"),
+    ({"metric": "repeat_visit_drivers", "region": "west"}, "repeat_region_or_account"),
+    ({"metric": "repeat_visit_drivers", "account_name": "Bluewater"}, "repeat_region_or_account"),
+    ({"metric": "repeat_visit_drivers", "technician_name": "Ben"}, "repeat_technician"),
+    ({"metric": "incident_count", "region": "west", "group_by": "region"}, "region_same_dimension"),
+    (
+        {"metric": "incident_count", "account_name": "Bluewater", "group_by": "account"},
+        "account_same_dimension",
+    ),
+    (
+        {"metric": "sla_compliance", "technician_name": "Ben", "group_by": "region"},
+        "technician_breakdown",
+    ),
+    # several rules at once: the first in the order is the reason
+    (
+        {
+            "metric": "repeat_visit_drivers",
+            "region": "unsupported",
+            "technician_name": "Ben",
+            "group_by": "region",
+        },
+        "unsupported_area",
+    ),
+    (
+        {"metric": "repeat_visit_drivers", "region": "west", "technician_name": "Ben"},
+        "repeat_region_or_account",
+    ),
+    (
+        {
+            "metric": "incident_count",
+            "region": "west",
+            "group_by": "region",
+            "technician_name": "Ben",
+        },
+        "region_same_dimension",
+    ),
+    (
+        {"metric": "repeat_visit_drivers", "technician_name": "Ben", "group_by": "region"},
+        "repeat_technician",
+    ),
+    (
+        {"metric": "unsupported", "region": "unsupported", "group_by": "unsupported"},
+        "unsupported_metric",
+    ),
+]
+
+
+@pytest.mark.parametrize(("fields", "expected"), ORDER)
+def test_the_first_rule_that_applies_is_the_reason(fields, expected):
+    assert decline_reason(ReportingRequest(**fields)) == expected
 
 
 @pytest.mark.parametrize(
@@ -142,7 +150,7 @@ def test_the_rules_that_decline_a_request(fields, expected):
     ],
 )
 def test_supported_requests_have_no_decline_reason(fields):
-    assert decline_reasons(ReportingRequest(**fields)) == set()
+    assert decline_reason(ReportingRequest(**fields)) is None
 
 
 def test_the_default_range_is_the_last_full_calendar_month():
@@ -364,13 +372,39 @@ def test_rate_groups_are_ranked_lowest_first_for_a_rate_where_higher_is_better()
     assert "figures_match_database" in failed(c.check_answer(answer(ftf(backwards), req), ""))
 
 
-def test_tied_rates_may_come_in_either_order():
-    rows = [row("a", 8, 10), row("b", 8, 10), row("c", 9, 10)]
+def test_tied_rates_are_ordered_by_larger_denominator_then_name():
+    """§6 (ruling 2, 2026-10-09): rate, then larger denominator, then name. One order only."""
+    rows = [row("a", 4, 5), row("b", 8, 10), row("c", 8, 10), row("d", 9, 10)]
     req = request("first_time_fix_rate", group_by="region")
     c = ftf_checker(rows)
-    for order in (("a", "b", "c"), ("b", "a", "c")):
-        groups = [group_rate(n, *{"a": (8, 10), "b": (8, 10), "c": (9, 10)}[n]) for n in order]
-        assert "figures_match_database" not in failed(c.check_answer(answer(ftf(groups), req), ""))
+    right = [
+        group_rate("b", 8, 10),
+        group_rate("c", 8, 10),
+        group_rate("a", 4, 5),
+        group_rate("d", 9, 10),
+    ]
+    assert "figures_match_database" not in failed(c.check_answer(answer(ftf(right), req), ""))
+    for wrong in (
+        [right[2], right[0], right[1], right[3]],  # name only, the smaller denominator first
+        [right[1], right[0], right[2], right[3]],  # the name tie-break reversed
+    ):
+        assert "figures_match_database" in failed(c.check_answer(answer(ftf(wrong), req), ""))
+
+
+def test_the_tie_at_the_cap_keeps_the_larger_denominators():
+    """Summit-style case: 30 groups tie at 1.0; the 25 shown are the 25 with the most jobs."""
+    rows = [row(f"g{i:02d}", 3 + i, 3 + i) for i in range(30)]
+    by_size = sorted(rows, key=lambda r: (-r.denominator, r.label))
+    req = request("first_time_fix_rate", group_by="region")
+    c = ftf_checker(rows)
+    right = [group_rate(r.label, r.numerator, r.denominator) for r in by_size[:25]]
+    assert "figures_match_database" not in failed(
+        c.check_answer(answer(ftf(right, group_count=30, truncated=True), req), "")
+    )
+    by_name = [group_rate(r.label, r.numerator, r.denominator) for r in rows[:25]]
+    assert "figures_match_database" in failed(
+        c.check_answer(answer(ftf(by_name, group_count=30, truncated=True), req), "")
+    )
 
 
 def test_a_group_with_no_rate_must_come_last():
@@ -597,7 +631,7 @@ def test_a_wrong_p_value_is_caught():
     )
 
 
-def test_an_incident_type_with_no_job_may_be_listed_with_zero_jobs_or_left_out():
+def test_an_incident_type_with_no_job_is_not_listed():
     js = jobs([("repair", i % 4 == 0) for i in range(80)])
     types = {j["request_id"]: {"missed_sla"} for j in js}
     out = compute(js, types, "incident_type")
@@ -640,9 +674,13 @@ def test_an_incident_type_with_no_job_may_be_listed_with_zero_jobs_or_left_out()
 
     req = request("repeat_visit_drivers", group_by="incident_type")
     c = checker(repeat_jobs=(js, types))
-    for gs, count in ((groups, len(groups)), (groups + [zero], len(groups) + 1)):
-        assert "figures_match_database" not in failed(
-            c.check_answer(answer(figures(gs, count), req), "")
+    assert "figures_match_database" not in failed(
+        c.check_answer(answer(figures(groups, len(groups)), req), "")
+    )
+    # listing the type with zero jobs (ruling 3) is a failure, whatever group_count says
+    for count in (len(groups), len(groups) + 1):
+        assert "figures_match_database" in failed(
+            c.check_answer(answer(figures(groups + [zero], count), req), "")
         )
 
 
@@ -818,16 +856,16 @@ def test_the_decline_phrases_cover_every_reason_class():
     }
 
 
-def test_a_group_that_is_every_job_is_not_checked_for_significance_but_its_counts_are():
-    """§6 is silent on a group with no 'rest' (L-72): the significance fields are not compared,
-    the counts and rates still are."""
+def test_a_group_that_is_every_job_is_listed_with_its_rate_and_not_compared():
+    """§6 (ruling 4): a group equal to all jobs is listed with its rate, left out of the
+    Bonferroni count, p null, never stands out. A reading that compares it fails."""
     spec = [("repair", True)] * 6 + [("repair", False)] * 24
     js = jobs(spec)
     group = RepeatGroup(
         group="repair",
         this=JobsRepeated(jobs=30, repeated=6, rate=rate_string(6, 30)),
         rest=JobsRepeated(jobs=0, repeated=0, rate=None),
-        compared=False,  # the specialist's reading; QA's would say compared
+        compared=False,
         stands_out=False,
     )
     figures = RepeatDriversResult(
@@ -852,3 +890,83 @@ def test_a_group_that_is_every_job_is_not_checked_for_significance_but_its_count
         }
     )
     assert "figures_match_database" in failed(c.check_answer(answer(wrong, req), ""))
+    compared = group.model_copy(update={"compared": True, "p_value": 1.0, "p_adjusted": 1.0})
+    for update in (
+        {"groups": [compared], "groups_compared": 1},
+        {"groups": [compared]},
+        {"groups_compared": 1},
+    ):
+        assert "figures_match_database" in failed(
+            c.check_answer(answer(figures.model_copy(update=update), req), "")
+        )
+
+
+# ------------------------------------------------------------------ one reading per decline
+
+
+def test_an_unsupported_decline_must_state_the_first_rule_not_a_later_one():
+    c = checker()
+    req = ReportingRequest(metric="repeat_visit_drivers", region="west", technician_name="Ben")
+    first = "Repeat-visit drivers can't be filtered to one region or account yet."
+    later = "Repeat-visit drivers can't be filtered to one technician; ask by technician."
+    assert failed(c.check_decline(req, "not_supported", first)) == set()
+    assert "decline_matches_reason" in failed(c.check_decline(req, "not_supported", later))
+
+
+def test_a_name_decline_is_wrong_when_a_rule_declines_the_request_first():
+    c = checker()
+    req = ReportingRequest(metric="incident_count", region="unsupported", technician_name="Dave")
+    assert "decline_matches_reason" in failed(
+        c.check_decline(req, "technician_not_found", "No technician matches Dave.")
+    )
+
+
+def test_the_technician_is_reported_before_the_account():
+    c = checker()
+    req = ReportingRequest(
+        metric="sla_compliance", technician_name="Dave", account_name="Acme Corp"
+    )
+    assert (
+        failed(c.check_decline(req, "technician_not_found", "No technician matches Dave.")) == set()
+    )
+    assert "decline_matches_reason" in failed(
+        c.check_decline(req, "account_not_found", "No account matches Acme Corp.")
+    )
+    resolved = ReportingRequest(
+        metric="sla_compliance", technician_name="Ben Okafor", account_name="Acme Corp"
+    )
+    assert (
+        failed(c.check_decline(resolved, "account_not_found", "No account matches Acme Corp."))
+        == set()
+    )
+
+
+def test_the_phrase_for_each_rule_is_not_a_substring_of_another_rules_phrase():
+    from agent_qa.reporting import DECLINE_PHRASES
+
+    texts = {k: f"x {v} y" for k, v in DECLINE_PHRASES.items()}
+    for key, text in texts.items():
+        stated = {c for c, phrase in DECLINE_PHRASES.items() if phrase in text}
+        assert stated == {key}, key
+
+
+# --------------------------------------------------------------------------- name words (ruling 5)
+
+
+def test_name_words_strip_leading_and_trailing_punctuation():
+    from agent_qa import names
+
+    accounts = [
+        (1, "Summit Distribution Co."),
+        (2, "Summit Properties Partners"),
+        (3, "Mary-Ann LLC"),
+    ]
+    assert names.match("Summit Distribution Co", accounts).total == 1
+    assert names.match("Summit Distribution Co.", accounts).total == 1
+    assert names.match("co", accounts).total == 1
+    assert names.match("Mary-Ann", accounts).total == 1
+    assert names.match("Mary", accounts).total == 0
+    assert names.match("Summit Distr", accounts).total == 0
+    assert names.match("Summit", accounts).total == 2
+    assert names.match("Summit%", accounts).rejected
+    assert names.words("  St.  John's -x- ") == ["st", "john's", "x"]

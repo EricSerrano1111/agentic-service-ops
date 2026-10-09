@@ -83,9 +83,9 @@ def add_months(day: dt.date, months: int) -> dt.date:
 
 
 def answerable(request) -> bool:
-    from agent_qa.reporting import decline_reasons
+    from agent_qa.reporting import decline_reason
 
-    return not decline_reasons(request)
+    return not decline_reason(request)
 
 
 def reporting_request(fields: dict):

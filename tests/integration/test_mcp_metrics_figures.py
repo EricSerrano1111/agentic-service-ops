@@ -203,9 +203,17 @@ async def test_tool_figures_match_independent_sql(
         }
         for (key, label), (n, d) in groups.items()
     ]
-    # Worst first: a higher incident rate is worse; a lower SLA or first-time fix rate is.
+    # Worst first: a higher incident rate is worse; a lower SLA or first-time fix rate is. Equal
+    # rates: the larger denominator, then the name; no rate last (§6, ruling 2026-10-09).
     sign = -1 if tool == INCIDENT_RATE else 1
-    expected.sort(key=lambda g: (g["rate"] is None, sign * Decimal(g["rate"] or 0), g["group"]))
+    expected.sort(
+        key=lambda g: (
+            g["rate"] is None,
+            sign * Decimal(g["rate"] or 0),
+            -g["denominator"],
+            g["group"],
+        )
+    )
     assert got["group_count"] == len(expected)
     assert got["truncated"] == (len(expected) > 25)
     assert got["groups"] == expected[:25]  # truncation keeps the worst

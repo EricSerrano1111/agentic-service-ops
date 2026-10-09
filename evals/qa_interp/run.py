@@ -40,14 +40,14 @@ def default_rpm(model: str) -> float:
 def reading_for(pair: dict, as_of: dt.date) -> str:
     """The model's input for a pair: the same readings the service builds (never the label)."""
     from agent_qa.interpretation import reading_forecast, reading_reporting
-    from agent_qa.reporting import decline_reasons, last_full_month
+    from agent_qa.reporting import decline_reason, last_full_month
     from schemas import ForecastRequest, ReportingRequest
 
     if pair["domain"] == "forecast":
         return reading_forecast(ForecastRequest(**pair["request"]), as_of)
     request = ReportingRequest(**pair["request"])
     named = request.start is not None
-    if decline_reasons(request):  # a decline never resolved a range
+    if decline_reason(request):  # a decline never resolved a range
         return reading_reporting(
             request, request.start if named else None, request.end if named else None, False, as_of
         )

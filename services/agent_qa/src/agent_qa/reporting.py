@@ -3,13 +3,10 @@ and compares, checks the request was one that should be answered, checks decline
 figures and say a true reason, and checks the answer text states the verified numbers.
 
 Written from data dictionary §6 alone. It imports nothing from the reporting agent or the
-incidents server (a test fails if it does). Where §6 is silent and the specialist's code reads
-it one way, the check is tolerant of every reading and the gap is recorded in L-72:
-- a rate breakdown's tie order and the place of groups with no rate (checked as "not out of
-  order", and a cut-off group is never better than a kept one);
-- an incident type with no job in a repeat-drivers range (listed with zero jobs, or absent);
-- "whole word" tokenisation in name lookup (whitespace);
-- which of several applicable reasons a decline states (any true one passes).
+incidents server (a test fails if it does). Every check enforces exactly one reading: the
+owner's rulings of 2026-10-09 on the gaps in §6 (L-72) are in §6 now, and there is no tolerance
+left. A figure, an order, a group listed or left out, a decline reason that is not the first
+that applies, all fail when they differ.
 """
 
 from __future__ import annotations
@@ -35,7 +32,7 @@ from schemas import (
 from . import names, textcheck
 from .config import Settings
 from .db import UNATTRIBUTED, GroupRow, Source, utc_bounds
-from .repeats import MIN_JOBS, Drivers, compute
+from .repeats import Drivers, compute
 from .stats import rate_string
 
 MAX_GROUPS = 25
@@ -67,7 +64,7 @@ DECLINE_PHRASES = {
     "repeat_technician": "can't be filtered to one technician",
     "region_same_dimension": "can't also be broken down by region",
     "account_same_dimension": "can't also be broken down by account",
-    "technician_breakdown": "can't also be broken down",
+    "technician_breakdown": "single technician's figures can't also be broken down",
 }
 DECLINE_CODES = {
     "not_supported",
@@ -96,31 +93,32 @@ def result(code: str, problems: list[str], check_class: str = "figures") -> Chec
 # --------------------------------------------------------------------------- the request
 
 
-def decline_reasons(req: ReportingRequest) -> set[str]:
-    """Every reason this request cannot be answered (§6, ADR-073, ADR-086), as reason classes.
-    Empty when it should be answered."""
-    reasons: set[str] = set()
+def decline_reason(req: ReportingRequest) -> str | None:
+    """The reason this request cannot be answered, or None (§6, ADR-073, ADR-086). When several
+    rules apply, the first in this order is the reason (the owner's ruling, 2026-10-09; it is the
+    order the reporting agent checks them in)."""
     if req.metric == "unsupported":
-        reasons.add("unsupported_metric")
-        return reasons
+        return "unsupported_metric"
     if req.group_by == "unsupported":
-        reasons.add("unsupported_breakdown")
-    elif req.group_by is not None and req.group_by not in BREAKDOWNS[req.metric]:
-        reasons.add("breakdown_not_offered")
+        return "unsupported_breakdown"
+    if req.group_by is not None and req.group_by not in BREAKDOWNS[req.metric]:
+        return "breakdown_not_offered"
     if req.region == "unsupported":
-        reasons.add("unsupported_area")
-    if req.metric == "repeat_visit_drivers":
-        if req.region is not None or req.account_name is not None:
-            reasons.add("repeat_region_or_account")
-        if req.technician_name is not None:
-            reasons.add("repeat_technician")
-    if req.region not in (None, "unsupported") and req.group_by == "region":
-        reasons.add("region_same_dimension")
+        return "unsupported_area"
+    if req.metric == "repeat_visit_drivers" and (
+        req.region is not None or req.account_name is not None
+    ):
+        return "repeat_region_or_account"
+    if req.region is not None and req.group_by == "region":
+        return "region_same_dimension"
     if req.account_name is not None and req.group_by == "account":
-        reasons.add("account_same_dimension")
-    if req.technician_name is not None and req.group_by is not None:
-        reasons.add("technician_breakdown")
-    return reasons
+        return "account_same_dimension"
+    if req.technician_name is not None:
+        if req.metric == "repeat_visit_drivers":
+            return "repeat_technician"
+        if req.group_by is not None:
+            return "technician_breakdown"
+    return None
 
 
 def last_full_month(as_of: dt.date) -> tuple[dt.date, dt.date]:
@@ -140,74 +138,42 @@ def _expected_range(req: ReportingRequest, as_of: dt.date) -> tuple[dt.date, dt.
 # --------------------------------------------------------------------------- rate groups
 
 
-def _worse_key(rate: str | None, higher_is_worse: bool) -> tuple[bool, Decimal]:
-    """Sorts worst first; a group with no rate sorts last."""
+def _rank_key(row: GroupRow, scale: int, higher_is_worse: bool):
+    """§6 order for a rate breakdown: worst rate first (highest when a higher rate is worse),
+    then the larger denominator, then the name; a group with no rate last, in the same order."""
+    rate = rate_string(row.numerator, row.denominator, scale)
     if rate is None:
-        return True, Decimal(0)
+        return (True, Decimal(0), -row.denominator, row.label)
     value = Decimal(rate)
-    return False, -value if higher_is_worse else value
-
-
-def _compare_ranked(
-    shown: list[Any],
-    expected: list[tuple[Any, str | None]],
-    shown_identity,
-    shown_rate,
-    group_count: int,
-    truncated: bool,
-    higher_is_worse: bool,
-) -> list[str]:
-    """Order and cut-off of a ranked list, tolerant of ties and of where a rate-less group
-    falls inside the tie order: the shown groups must be in worst-first order, be the right
-    number, and no cut-off group may be worse than a kept one."""
-    problems = []
-    if group_count != len(expected):
-        problems.append("group_count")
-    if truncated != (len(expected) > MAX_GROUPS):
-        problems.append("truncated_flag")
-    if len(shown) != min(MAX_GROUPS, len(expected)):
-        problems.append("groups_shown")
-    keys = [_worse_key(shown_rate(g), higher_is_worse) for g in shown]
-    if keys != sorted(keys):
-        problems.append("group_order")
-    shown_ids = {shown_identity(g) for g in shown}
-    if len(shown_ids) != len(shown):
-        problems.append("duplicate_group")
-    omitted = [
-        _worse_key(rate, higher_is_worse) for ident, rate in expected if ident not in shown_ids
-    ]
-    if keys and omitted and max(keys) > min(omitted):
-        problems.append("cutoff_group_kept_a_worse_one")
-    return problems
+    return (False, -value if higher_is_worse else value, -row.denominator, row.label)
 
 
 def _compare_rate_groups(src_rows: list[GroupRow], figures, scale: int, higher: bool) -> list[str]:
-    by_identity = {(r.label, r.group_id): r for r in src_rows}
+    """The groups shown are exactly the first 25 of QA's own ranking, in order, with QA's own
+    figures; the count and the truncation flag are QA's too."""
+    ranked = sorted(src_rows, key=lambda r: _rank_key(r, scale, higher))
     expected = [
-        ((r.label, r.group_id), rate_string(r.numerator, r.denominator, scale)) for r in src_rows
+        (
+            r.label,
+            r.group_id,
+            r.numerator,
+            r.denominator,
+            rate_string(r.numerator, r.denominator, scale),
+        )
+        for r in ranked[:MAX_GROUPS]
     ]
-    shown = figures.groups or []
+    shown = [
+        (g.group, g.group_id, g.numerator, g.denominator, g.rate) for g in figures.groups or []
+    ]
     problems = []
-    for g in shown:
-        row = by_identity.get((g.group, g.group_id))
-        if row is None:
-            problems.append("group_not_in_database")
-            continue
-        if (
-            g.numerator != row.numerator
-            or g.denominator != row.denominator
-            or g.rate != rate_string(row.numerator, row.denominator, scale)
-        ):
-            problems.append("group_figures")
-    problems += _compare_ranked(
-        shown,
-        expected,
-        lambda g: (g.group, g.group_id),
-        lambda g: g.rate,
-        figures.group_count,
-        figures.truncated,
-        higher,
-    )
+    if [x[:2] for x in shown] != [x[:2] for x in expected]:
+        problems.append("groups_listed_or_order")
+    elif shown != expected:
+        problems.append("group_figures")
+    if figures.group_count != len(ranked):
+        problems.append("group_count")
+    if figures.truncated != (len(ranked) > MAX_GROUPS):
+        problems.append("truncated_flag")
     return problems
 
 
@@ -226,13 +192,13 @@ class Checker:
         checks = [
             result(
                 "request_supported",
-                ["answered a request that should be declined"] if decline_reasons(req) else [],
+                ["answered a request that should be declined"] if decline_reason(req) else [],
             ),
             self._check_range(answer),
         ]
         identity, ids = self._check_filters(answer)
         checks.append(identity)
-        if not decline_reasons(req) and identity.passed:
+        if decline_reason(req) is None and identity.passed:
             checks.append(self._check_figures(answer, ids))
         else:
             checks.append(bad("figures_match_database", "not compared: the request is not valid"))
@@ -350,51 +316,33 @@ class Checker:
 
         if not tally(f.overall, want.overall):
             problems.append("overall")
-        # §6 compares a group with "the rest"; a group that is every job leaves no rest, and whether
-        # it counts as compared (and so what Bonferroni multiplies by) is not defined (L-72). Then
-        # the significance fields are not checked, only the counts, rates and order.
-        no_rest = any(g.rest.jobs == 0 and g.this.jobs >= MIN_JOBS for g in want.groups)
-        if not no_rest and f.groups_compared != want.groups_compared:
+        if f.groups_compared != want.groups_compared:
             problems.append("groups_compared")
-        by_label = {(g.label, g.group_id): g for g in want.groups}
-        shown = list(f.groups)
-        zero_job = 0
-        for g in shown:
-            exp = by_label.get((g.group, g.group_id))
-            if exp is None:
-                if f.group_by == "incident_type" and g.this.jobs == 0:
-                    zero_job += 1  # a type with no job in range, listed with zero jobs
-                    continue
-                problems.append("group_not_in_database")
-                continue
-            if not (tally(g.this, exp.this) and tally(g.rest, exp.rest)):
-                problems.append("group_counts")
-            if no_rest:
-                continue
-            if g.compared != exp.compared:
-                problems.append("compared_flag")
-            elif g.compared and exp.p_value is not None:
-                if g.p_value is None or not _close(g.p_value, exp.p_value):
+        # §6: listed by repeat rate, then more jobs, then name; at most 25; an incident type with
+        # no job in the range is not listed; `group_count` counts the groups listed.
+        expected = want.groups[:MAX_GROUPS]
+        if [(g.group, g.group_id) for g in f.groups] != [(g.label, g.group_id) for g in expected]:
+            problems.append("groups_listed_or_order")
+        else:
+            for g, exp in zip(f.groups, expected, strict=True):
+                if not (tally(g.this, exp.this) and tally(g.rest, exp.rest)):
+                    problems.append("group_counts")
+                if g.compared != exp.compared:
+                    problems.append("compared_flag")
+                if (g.p_value is None) != (exp.p_value is None) or (
+                    exp.p_value is not None and not _close(g.p_value, exp.p_value)
+                ):
                     problems.append("p_value")
-                if not _close(g.p_adjusted, exp.p_adjusted):
+                if (g.p_adjusted is None) != (exp.p_adjusted is None) or (
+                    exp.p_adjusted is not None and not _close(g.p_adjusted, exp.p_adjusted)
+                ):
                     problems.append("p_adjusted")
-            if g.stands_out != exp.stands_out:
-                problems.append("stands_out")
-        # Listing order: repeat rate (highest first), then more jobs, then name (§6).
-        kept = [g for g in shown if g.this.jobs > 0 or f.group_by != "incident_type"]
-        order = [(-_fraction(g.this), -g.this.jobs, g.group) for g in kept]
-        if order != sorted(order):
-            problems.append("group_order")
-        if f.group_count - zero_job != len(want.groups):
+                if g.stands_out != exp.stands_out:
+                    problems.append("stands_out")
+        if f.group_count != len(want.groups):
             problems.append("group_count")
-        if f.truncated != (f.group_count > len(f.groups)):
+        if f.truncated != (len(want.groups) > MAX_GROUPS):
             problems.append("truncated_flag")
-        if len(kept) != min(MAX_GROUPS, len(want.groups)):
-            problems.append("groups_shown")
-        if len(want.groups) > MAX_GROUPS:
-            expected_ids = {(g.label, g.group_id) for g in want.groups[:MAX_GROUPS]}
-            if {(g.group, g.group_id) for g in kept} != expected_ids:
-                problems.append("cutoff_groups")
         if f.group_by == "incident_type":
             a, b, compared, p, higher = want.other
             if not (
@@ -490,25 +438,34 @@ class Checker:
     def check_decline(
         self, request: ReportingRequest, error_code: str, text: str
     ) -> list[CheckResult]:
-        """A decline carries no figures and says a true reason."""
+        """A decline carries no figures and states the reason the rules give: for an unsupported
+        request the first rule that applies; for a name, the technician before the account, and
+        only when no rule declined the request first (the reporting agent's order, §6)."""
         problems: list[str] = []
-        reasons = decline_reasons(request)
+        reason = decline_reason(request)
         if error_code not in DECLINE_CODES:
             return [bad("decline_matches_reason", "not a decline code QA knows")]
         if error_code == "not_supported":
             stated = {c for c, phrase in DECLINE_PHRASES.items() if phrase in text}
-            if not stated:
-                problems.append("reason_not_recognised_in_text")
-            elif not (stated & reasons):
-                problems.append("reason_in_text_does_not_apply")
-        elif error_code.startswith("technician"):
-            problems += self._name_decline(
-                error_code, "technician", request.technician_name, self.src.technicians(), text
-            )
+            if reason is None:
+                problems.append("declined_a_request_that_can_be_answered")
+            elif stated != {reason}:
+                problems.append("reason_stated_is_not_the_first_that_applies")
         else:
-            problems += self._name_decline(
-                error_code, "account", request.account_name, self.src.accounts(), text
-            )
+            if reason is not None:
+                problems.append("a_rule_declines_it_before_any_name_is_looked_up")
+            elif error_code.startswith("technician"):
+                problems += self._name_decline(
+                    error_code, request.technician_name, self.src.technicians(), text
+                )
+            else:
+                if request.technician_name is not None and (
+                    names.match(request.technician_name, self.src.technicians()).total != 1
+                ):
+                    problems.append("the_technician_is_reported_before_the_account")
+                problems += self._name_decline(
+                    error_code, request.account_name, self.src.accounts(), text
+                )
         sanctioned = re.sub(r"\b\d+ (?:technicians|accounts) match\b|\band \d+ more\b", " ", text)
         own = [request.technician_name or "", request.account_name or ""]
         problems_text = ["text_carries_a_number"] if textcheck.numbers_in(sanctioned, own) else []
@@ -517,7 +474,7 @@ class Checker:
             result("decline_no_figures", problems_text),
         ]
 
-    def _name_decline(self, code, kind, typed, candidates, text) -> list[str]:
+    def _name_decline(self, code, typed, candidates, text) -> list[str]:
         if typed is None:
             return ["no_name_was_parsed"]
         found = names.match(typed, candidates)
@@ -544,4 +501,4 @@ def _close(a: float | None, b: float | None) -> bool:
     return a is not None and b is not None and math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-12)
 
 
-__all__ = ["Checker", "decline_reasons", "last_full_month", "UNATTRIBUTED", "Drivers"]
+__all__ = ["Checker", "decline_reason", "last_full_month", "UNATTRIBUTED", "Drivers"]

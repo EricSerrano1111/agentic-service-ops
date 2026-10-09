@@ -96,24 +96,24 @@ def test_every_forecast_mutation_changes_the_slice_the_when_or_the_decline_flag(
 
 
 def test_a_labelled_decline_is_mutated_into_something_that_looks_answerable():
-    from agent_qa.reporting import decline_reasons
+    from agent_qa.reporting import decline_reason
     from schemas import ReportingRequest
 
     for source_id in ("r17", "f11", "f12"):
         ok = next(p for p in PAIRS if p["id"] == f"r-{source_id}-ok")
         bad = next(p for p in PAIRS if p["id"] == f"r-{source_id}-bad")
-        assert decline_reasons(ReportingRequest(**ok["request"])) == {
+        assert decline_reason(ReportingRequest(**ok["request"])) == (
             "unsupported_metric" if source_id == "r17" else "unsupported_area"
-        }
-        assert decline_reasons(ReportingRequest(**bad["request"])) == set()
+        )
+        assert decline_reason(ReportingRequest(**bad["request"])) is None
 
 
 def test_no_wrong_reporting_pair_is_a_request_the_agent_would_decline():
-    from agent_qa.reporting import decline_reasons
+    from agent_qa.reporting import decline_reason
     from schemas import ReportingRequest
 
     for pair in by_label("reporting", "mismatch"):
-        assert decline_reasons(ReportingRequest(**pair["request"])) == set(), pair["id"]
+        assert decline_reason(ReportingRequest(**pair["request"])) is None, pair["id"]
 
 
 def test_the_mutation_values_are_valid_requests():
