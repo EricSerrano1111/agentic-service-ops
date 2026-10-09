@@ -47,6 +47,8 @@ ANSWER = {
         "start": "2026-07-01",
         "end": "2026-07-31",
         "technician_name": None,
+        "region": None,
+        "account_name": None,
     },
     "start": "2026-07-01",
     "end": "2026-07-31",
@@ -64,6 +66,9 @@ ANSWER = {
         "truncated": False,
         "technician_id": None,
         "technician_name": None,
+        "region": None,
+        "account_id": None,
+        "account_name": None,
     },
 }
 QUESTION = "How many incidents were reported last month?"
@@ -515,6 +520,12 @@ def test_not_supported_metric_is_a_normal_not_available_answer(monkeypatch):
             "technician_ambiguous",
             "2 technicians match Priya: Priya Castillo and Priya Kim. "
             "Please ask again with the full name.",
+        ),
+        ("account_not_found", "No account matches Zed."),
+        (
+            "account_ambiguous",
+            "2 accounts match Bluewater: Bluewater Energy Inc. and Bluewater Hospitality "
+            "Partners. Please ask again with the full name.",
         ),
     ],
 )

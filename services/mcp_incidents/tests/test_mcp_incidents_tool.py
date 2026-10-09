@@ -22,6 +22,7 @@ from mcp import Client
 from mcp_incidents.config import DEFAULT_WINDOW_END, DEFAULT_WINDOW_START, Settings
 from mcp_incidents.queries import InvalidRange, parse_date_range
 from mcp_incidents.server import (
+    FIND_ACCOUNT,
     FIND_TECHNICIAN,
     FIRST_TIME_FIX,
     INCIDENT_RATE,
@@ -58,12 +59,31 @@ def _technician(technician_id):
     return {"technician_id": technician_id, "technician_name": "Priya Kim"}
 
 
+def _scope_fields(region, account_id):
+    """The filter fields a result carries (ADR-086)."""
+    fields = {}
+    if region is not None:
+        fields["region"] = region
+    if account_id is not None:
+        fields |= {"account_id": account_id, "account_name": "Bluewater Energy Inc."}
+    return fields
+
+
 def _fake_count():
     """The count query stand-in: records its arguments, returns fixed figures."""
     calls = []
+    filters = []
 
-    def query(start: dt.date, end: dt.date, group_by=None, technician_id=None):
+    def query(
+        start: dt.date,
+        end: dt.date,
+        group_by=None,
+        technician_id=None,
+        region=None,
+        account_id=None,
+    ):
         calls.append((start, end, group_by, technician_id))
+        filters.append((region, account_id))
         groups = None
         if group_by is not None:
             groups = [GroupCount(group="unattributed", count=4), GroupCount(group="x", count=2)]
@@ -76,22 +96,35 @@ def _fake_count():
             groups=groups,
             group_count=None if groups is None else 2,
             **_technician(technician_id),
+            **_scope_fields(region, account_id),
         )
 
     query.calls = calls
+    query.filters = filters
     return query
 
 
-def _fake_summary(start: dt.date, end: dt.date, group_by=None, technician_id=None):
-    return _fake_count()(start, end, group_by, technician_id)
+def _fake_summary(
+    start: dt.date, end: dt.date, group_by=None, technician_id=None, region=None, account_id=None
+):
+    return _fake_count()(start, end, group_by, technician_id, region, account_id)
 
 
 def _fake_metric(model):
     """A metric query stand-in: records its arguments, returns fixed figures."""
     calls = []
+    filters = []
 
-    def query(start: dt.date, end: dt.date, group_by=None, technician_id=None):
+    def query(
+        start: dt.date,
+        end: dt.date,
+        group_by=None,
+        technician_id=None,
+        region=None,
+        account_id=None,
+    ):
         calls.append((start, end, group_by, technician_id))
+        filters.append((region, account_id))
         groups = None
         if group_by is not None:
             groups = [GroupRate(group="northeast", numerator=1, denominator=3, rate="0.3333")]
@@ -105,9 +138,11 @@ def _fake_metric(model):
             groups=groups,
             group_count=None if groups is None else 1,
             **_technician(technician_id),
+            **_scope_fields(region, account_id),
         )
 
     query.calls = calls
+    query.filters = filters
     return query
 
 
@@ -115,6 +150,20 @@ def _fake_find(name: str) -> TechnicianMatches:
     from mcp_incidents.queries import match_technicians
 
     return match_technicians(name, [(1, "Priya Kim"), (2, "Priya Castillo"), (3, "Ben Okafor")])
+
+
+def _fake_find_account(name: str):
+    from mcp_incidents.queries import match_accounts
+
+    return match_accounts(
+        name,
+        [
+            (1, "Bluewater Energy Inc."),
+            (2, "Bluewater Hospitality Partners"),
+            (3, "Bluewater Manufacturing LLC"),
+            (4, "Cedar Ridge Retail Inc."),
+        ],
+    )
 
 
 def _fake_repeats(start: dt.date, end: dt.date, by):
@@ -147,6 +196,7 @@ def backend(incidents=_fake_summary, count=None) -> Backend:
         sla_compliance=_fake_metric(SlaComplianceResult),
         first_time_fix_rate=_fake_metric(FirstTimeFixResult),
         find_technician=_fake_find,
+        find_account=_fake_find_account,
         repeat_drivers=_fake_repeats,
     )
 
@@ -224,10 +274,12 @@ async def test_only_the_narrow_tools_are_exposed():
         SLA_COMPLIANCE,
         FIRST_TIME_FIX,
         FIND_TECHNICIAN,
+        FIND_ACCOUNT,
         REPEAT_DRIVERS,
     }
     count = tools[TOOL_NAME].input_schema["properties"]
-    assert set(count) == {"start", "end", "group_by", "technician_id"}
+    assert set(count) == {"start", "end", "group_by", "technician_id", "region", "account_id"}
+    assert _enum(count["region"]) == ["northeast", "southeast", "central", "west"]
     assert _enum(count["group_by"]) == [
         "account",
         "region",
@@ -238,10 +290,11 @@ async def test_only_the_narrow_tools_are_exposed():
     ]
     for name in (INCIDENT_RATE, SLA_COMPLIANCE, FIRST_TIME_FIX):
         schema = tools[name].input_schema["properties"]
-        assert set(schema) == {"start", "end", "group_by", "technician_id"}
+        assert set(schema) == {"start", "end", "group_by", "technician_id", "region", "account_id"}
         # Every dimension app_reporting has grants for; no free-form breakdown.
         assert _enum(schema["group_by"]) == ["account", "region", "service_type", "technician"]
     assert set(tools[FIND_TECHNICIAN].input_schema["properties"]) == {"name"}
+    assert set(tools[FIND_ACCOUNT].input_schema["properties"]) == {"name"}
     repeats = tools[REPEAT_DRIVERS].input_schema["properties"]
     assert set(repeats) == {"start", "end", "by"}
     assert _enum(repeats["by"]) == [
@@ -264,6 +317,9 @@ async def test_only_the_narrow_tools_are_exposed():
         "truncated",
         "technician_id",
         "technician_name",
+        "region",
+        "account_id",
+        "account_name",
     }
     assert set(tools[FIND_TECHNICIAN].output_schema["properties"]) == {
         "name",
@@ -336,7 +392,7 @@ async def test_technician_id_must_be_a_positive_integer(bad):
 async def test_an_unknown_technician_id_is_a_caller_error_returned_verbatim():
     from mcp_incidents.queries import InvalidArgument
 
-    def unknown(start, end, group_by=None, technician_id=None):
+    def unknown(start, end, group_by=None, technician_id=None, region=None, account_id=None):
         raise InvalidArgument(
             f"no technician has id {technician_id}", argument="technician_id", kind="unknown_id"
         )

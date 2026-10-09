@@ -1,4 +1,25 @@
-# Reporting parse set (`parse_v3.jsonl`)
+# Reporting parse sets (`parse_v3.jsonl`, `parse_v4.jsonl`)
+
+**`parse_v4.jsonl` (ADR-086)** is the 16 `parse_v3` items below, unchanged byte for byte (a
+test holds that), plus 12 new items on region and account filters (`f01` to `f12`): 4 region,
+4 account (`f07` an ambiguous partial name, `f08` a name nobody has), 2 combined (`f09` a region
+with an account, `f10` a region with a breakdown by account) and 2 unsupported areas (`f11`
+Texas, `f12` the Midwest, expected `region: "unsupported"`). Labels were committed before any
+run and never change. The new items were **drafted by the assistant that wrote `parse_v4`**, so
+the set is **not blind** (R-16, L-69), and the prompt's own examples were kept out of them. The
+labels now carry `region` and `account_name`; the 16 old items omit them and are scored as null.
+
+`gate.py` computes the pre-registered gate from two saved run files (ADR-086): (a) the old
+items' mean correct at least the baseline's minus 1; (b) at least 10 of 12 new items in every
+run; (c) both unsupported areas parse to `region: "unsupported"` in every run. Runs:
+`run.py --file parse_v3 --prompt parse_v3 --k 3 --budget 48` (baseline) and
+`run.py --file parse_v4 --prompt parse_v4 --k 3 --budget 84`; each writes a new file under
+`evals/results/reporting_parse/<date>/`. 2026-10-08: baseline 15/16 in each of 3 runs;
+`parse_v4` 27/28 in each of 3 runs (the one miss, `r17`, is the baseline's too); gate passed.
+
+---
+
+# The original set (`parse_v3.jsonl`)
 
 16 questions for the reporting agent's one LLM call (ADR-046, ADR-073), each labelled with
 the `ReportingRequest` it should parse to. Written and committed before any live call;

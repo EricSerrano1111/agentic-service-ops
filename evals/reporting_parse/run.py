@@ -8,7 +8,8 @@ code applies a default range (`Resolved.request`), field by field and as a whole
 request; `technician_name` is compared case-insensitively (see README).
 A failed parse scores as wrong on every field. Paces under the free-tier per-minute
 limit (as `evals/routing/run_seed.py`), stops at `--budget` requests, and stops on a
-daily-quota 429. Writes evals/results/reporting_agent/<date>/parse_<prompt>_k<k>.json.
+daily-quota 429. Writes evals/results/reporting_parse/<date>/parse_<set>_<prompt>_k<k>_<time>.json
+(a new file every run, so a failed iteration is never overwritten).
 Not a test; never in CI.
 """
 
@@ -24,11 +25,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SET = Path(__file__).resolve().parent
-FIELDS = ("metric", "group_by", "technician_name", "start", "end")
+FIELDS = ("metric", "group_by", "technician_name", "region", "account_name", "start", "end")
+#: Free-text names, compared case-insensitively with whitespace collapsed: the lookups
+#: (`find_technician`, `find_account`) match that way.
+NAME_FIELDS = ("technician_name", "account_name")
 
 
 def same(field: str, got, expected) -> bool:
-    if field == "technician_name" and got is not None and expected is not None:
+    if field in NAME_FIELDS and got is not None and expected is not None:
         return " ".join(got.split()).casefold() == " ".join(expected.split()).casefold()
     return got == expected
 
@@ -90,14 +94,14 @@ async def run(args: argparse.Namespace) -> int:
             except LLMError as exc:
                 row["error"] = f"{type(exc).__name__}: {redact(str(exc), ())[:200]}"
             row["fields"] = {
-                f: row["got"] is not None and same(f, row["got"][f], item["expected"][f])
+                f: row["got"] is not None and same(f, row["got"].get(f), item["expected"].get(f))
                 for f in FIELDS
             }
             row["exact"] = all(row["fields"].values())
             rows.append(row)
             mark = "ok  " if row["exact"] else "MISS"
             wrong = [f for f, ok in row["fields"].items() if not ok]
-            got = {f: row["got"][f] for f in wrong} if row["got"] else row["error"]
+            got = {f: row["got"].get(f) for f in wrong} if row["got"] else row["error"]
             print(f"  k{k} {mark} {item['id']} [{item['category']}] {got if wrong else ''}")
         runs.append(rows)
         if stopped:
@@ -105,9 +109,10 @@ async def run(args: argparse.Namespace) -> int:
             break
 
     summary = summarise(items, runs)
-    out = ROOT / "evals" / "results" / "reporting_agent" / args.date
+    out = ROOT / "evals" / "results" / "reporting_parse" / args.date
     out.mkdir(parents=True, exist_ok=True)
-    path = out / f"parse_{parser.prompt.version}_k{args.k}.json"
+    stamp = dt.datetime.now().strftime("%H%M%S")
+    path = out / f"parse_{args.file}_{parser.prompt.version}_k{args.k}_{stamp}.json"
     path.write_text(
         json.dumps(
             {

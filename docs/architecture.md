@@ -186,11 +186,12 @@ Security is a first-class design requirement, not a section in the writeup. MCP'
 
 **Layer 1 — No raw SQL as an MCP tool.** Never expose a generic `run_query` tool, even read-only. Prompt injection via a malicious string in customer feedback text could craft a query reaching into the billing archive. Expose narrow, purpose-built functions only:
 
-- `get_incidents_by_date_range(start, end, group_by?, technician_id?)` — incident counts by severity; optional breakdown by account, region, service type, technician (attributed, with an "unattributed" group), incident type or severity, top 25 (ADR-073)
-- `get_incident_rate`, `get_sla_compliance`, `get_first_time_fix_rate(start, end, group_by?, technician_id?)` — the §6 metrics, counts with Decimal-string rates, optional breakdown by account, region, service type or technician, worst first (ADR-033, ADR-073)
+- `get_incidents_by_date_range(start, end, group_by?, technician_id?, region?, account_id?)` — incident counts by severity; optional breakdown by account, region, service type, technician (attributed, with an "unattributed" group), incident type or severity, top 25 (ADR-073)
+- `get_incident_rate`, `get_sla_compliance`, `get_first_time_fix_rate(start, end, group_by?, technician_id?, region?, account_id?)` — the §6 metrics, counts with Decimal-string rates, optional breakdown by account, region, service type or technician, worst first (ADR-033, ADR-073)
 - `find_technician(name)` — at most 5 matching technicians (id and display name) and the total; whole-word, case-insensitive matching in code, no patterns accepted (ADR-073)
+- `find_account(name)` — the same for accounts (ADR-086). The four tools above also take an optional `region` (northeast, southeast, central or west: the site's) and `account_id`, which combine as an AND and with a breakdown by a different dimension; a filtered figure equals its group's row in the breakdown (ADR-086, data dictionary §6)
 - `get_repeat_visit_drivers(start, end, by)` — repeat-visit rate by incident type, service type, region, account or technician, with Fisher's exact test and Bonferroni correction deciding what stands out (ADR-073)
-  - All five read `incidents`, `service_requests`, `archived_requests` and the reference tables as `app_reporting`; counts and rates only, no free-text column, no row identifiers beyond account and technician ids
+  - All of them read `incidents`, `service_requests`, `archived_requests` and the reference tables as `app_reporting`; counts and rates only, no free-text column, no row identifiers beyond account and technician ids
 - `get_sentiment_summary(start, end, region?, bucket)` — counts, shares, monthly or quarterly buckets and the human-review flag count, from stored predictions (`sentiment_predictions`); no comment text (ADR-067)
 - `get_feedback_examples(start, end, region?, label?, flagged_only, limit ≤ 5)` — at most 5 comments with text, for citation (ADR-067)
   - Both read four columns of `service_feedback` (`rating` withheld, ADR-027) and a comment's region, with no grant on `incidents` or `sentiment_labels`. Neither writes nor accepts free-form query input; storing predictions for unscored comments is internal, at most 250 per call
@@ -494,7 +495,7 @@ agentic-service-ops/
 │   ├── orchestrator/ # intent classification + A2A routing
 │   │   └── prompts/ # versioned routing prompts (route_v1.md, route_v2.md, route_v3.md the default, given the as-of date); version + hash logged per decision
 │   │
-│   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046)
+│   ├── agent_reporting/ # deterministic figures; one LLM call parses the question (ADR-046; prompt parse_v4, ADR-086)
 │   │   └── prompts/ # versioned parsing prompt (parse_v1.md); dates resolve as of REPORTING_AS_OF_DATE (ADR-050)
 │   │
 │   ├── agent_sentiment/ # one LLM call parses the question; templates render figures from mcp_feedback;
@@ -509,7 +510,8 @@ agentic-service-ops/
 │   ├── mcp_incidents/ # scoped tools + own DB role (app_reporting). Tools: get_incidents_by_date_range,
 │   │                  # get_incident_rate, get_sla_compliance, get_first_time_fix_rate (§6 metrics;
 │   │                  # group_by account | region | service_type | technician; rates as Decimal strings;
-│   │                  # optional technician_id), find_technician, get_repeat_visit_drivers (ADR-073)
+│   │                  # optional technician_id, region, account_id), find_technician, find_account,
+│   │                  # get_repeat_visit_drivers (ADR-073, ADR-086)
 │   ├── mcp_feedback/ # sentiment from stored bert_v1 predictions, own DB role (app_sentiment; ADR-062, ADR-067).
 │   │                 # Tools: get_sentiment_summary, get_feedback_examples. Unscored comments are
 │   │                 # scored on demand (cap 250, newest first); backfill.py scores the rest.
@@ -534,7 +536,7 @@ agentic-service-ops/
 │   ├── forecast/                   # backtest vs. seasonal-naive baseline
 │   ├── sentiment_parse/            # parse_v1.jsonl: 14 labelled questions for the sentiment agent's parse; run.py (k runs, free key)
 │   ├── forecast_parse/             # parse_v1.jsonl: 14 labelled questions for the forecast agent's parse; run.py
-│   ├── reporting_parse/            # parse_v3.jsonl: 16 labelled questions for the reporting agent's parse; run.py
+│   ├── reporting_parse/            # parse_v3.jsonl (16) and parse_v4.jsonl (28) labelled questions for the reporting agent's parse; run.py, gate.py (ADR-086)
 │   ├── golden/                     # golden set v1, blind until Sprint 5 (ADR-074)
 │   │   ├── golden_v1.jsonl         # 36 items: 10 owner-written (verbatim), 26 drafted; routes, behaviour, outcomes, must/must_not
 │   │   ├── golden_v2.jsonl         # v1 with G35 expecting intent_ambiguous and G01/G16 scored on AskResponse.reason (ADR-075)

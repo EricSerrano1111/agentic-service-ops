@@ -42,9 +42,12 @@ from .metrics import (
     rate_string,
 )
 from .repeats import (
+    MAX_ACCOUNT_MATCHES,
     MAX_REPEAT_GROUPS,
     MAX_TECHNICIAN_MATCHES,
     MIN_GROUP_JOBS,
+    AccountMatch,
+    AccountMatches,
     JobsRepeated,
     RepeatBy,
     RepeatDriversResult,
@@ -59,6 +62,7 @@ from .reporting import (
     ReportingAnswer,
     ReportingRequest,
     RequestGroupBy,
+    RequestRegion,
 )
 from .routing import Domain, Route, RouteDecision
 from .sentiment import (
@@ -88,12 +92,15 @@ __all__ = [
     "GroupCount",
     "IncidentGroupBy",
     "MAX_REPEAT_GROUPS",
+    "MAX_ACCOUNT_MATCHES",
     "MAX_TECHNICIAN_MATCHES",
     "MIN_GROUP_JOBS",
     "JobsRepeated",
     "RepeatBy",
     "RepeatDriversResult",
     "RepeatGroup",
+    "AccountMatch",
+    "AccountMatches",
     "TechnicianMatch",
     "TechnicianMatches",
     "FORECAST_SLICES",
@@ -140,6 +147,7 @@ __all__ = [
     "IncidentSummary",
     "Metric",
     "RequestGroupBy",
+    "RequestRegion",
     "SlaComplianceResult",
     "rate_string",
     "ReportingAnswer",

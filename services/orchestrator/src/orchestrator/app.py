@@ -54,10 +54,22 @@ RATE_LIMIT_RETRY_AFTER_S = 60
 
 Outcome = Literal["answered", "not_available", "split_required", "declined", "needs_clarification"]
 #: Why an answer is `needs_clarification` (ADR-075): the reporting agent's codes for a
-#: technician name that picks out no one or several (ADR-073), or an ambiguous question.
+#: technician or account name that picks out no one or several (ADR-073, ADR-086), or an
+#: ambiguous question.
 #: Null for every other outcome.
-Reason = Literal["technician_not_found", "technician_ambiguous", "intent_ambiguous"]
-_CLARIFY = ("technician_not_found", "technician_ambiguous")
+Reason = Literal[
+    "technician_not_found",
+    "technician_ambiguous",
+    "account_not_found",
+    "account_ambiguous",
+    "intent_ambiguous",
+]
+_CLARIFY = (
+    "technician_not_found",
+    "technician_ambiguous",
+    "account_not_found",
+    "account_ambiguous",
+)
 
 
 class AskRequest(BaseModel):

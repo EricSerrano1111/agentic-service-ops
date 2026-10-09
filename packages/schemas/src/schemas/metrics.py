@@ -16,6 +16,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from .sentiment import SiteRegion
+
 GroupBy = Literal["account", "region", "service_type", "technician"]
 MAX_GROUPS = 25
 _PLACES = Decimal("0.0001")
@@ -63,6 +65,11 @@ class _MetricResult(BaseModel):
     #: uses; the figures above are then that technician's alone.
     technician_id: int | None = None
     technician_name: str | None = None
+    #: Region and account filters (ADR-086), on the columns the matching breakdown uses; the
+    #: figures above are then that region's and/or that account's alone.
+    region: SiteRegion | None = None
+    account_id: int | None = None
+    account_name: str | None = None
 
     @model_validator(mode="after")
     def _consistent(self):
@@ -72,6 +79,12 @@ class _MetricResult(BaseModel):
             raise ValueError("technician_id and technician_name go together")
         if self.technician_id is not None and self.group_by is not None:
             raise ValueError("a single-technician figure has no breakdown")
+        if (self.account_id is None) != (self.account_name is None):
+            raise ValueError("account_id and account_name go together")
+        if self.region is not None and self.group_by == "region":
+            raise ValueError("a region filter has no breakdown by region")
+        if self.account_id is not None and self.group_by == "account":
+            raise ValueError("an account filter has no breakdown by account")
         if (self.group_by is None) != (self.groups is None):
             raise ValueError("groups are present exactly when group_by is set")
         if self.groups is not None:

@@ -21,6 +21,7 @@ RepeatBy = Literal["incident_type", "service_type", "region", "account", "techni
 MAX_REPEAT_GROUPS = 25
 MIN_GROUP_JOBS = 20
 MAX_TECHNICIAN_MATCHES = 5
+MAX_ACCOUNT_MATCHES = 5
 _RATE = r"^\d+\.\d{4}$"
 
 
@@ -119,4 +120,21 @@ class TechnicianMatches(BaseModel):
 
     name: str
     matches: list[TechnicianMatch] = Field(max_length=MAX_TECHNICIAN_MATCHES)
+    total_matches: int = Field(ge=0)
+
+
+class AccountMatch(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    account_id: int
+    account_name: str
+
+
+class AccountMatches(BaseModel):
+    """`find_account` (ADR-086): at most 5 matches, and how many there were."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str
+    matches: list[AccountMatch] = Field(max_length=MAX_ACCOUNT_MATCHES)
     total_matches: int = Field(ge=0)

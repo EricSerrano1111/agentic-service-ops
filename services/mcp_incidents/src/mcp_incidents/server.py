@@ -10,10 +10,12 @@ Tools:
 - `get_incident_rate`, `get_sla_compliance`, `get_first_time_fix_rate`: the §6 metrics,
   optionally broken down by account, region, service type or technician.
 - `find_technician`: up to 5 technicians whose display name matches a name (ADR-073).
+- `find_account`: the same for accounts (ADR-086).
 - `get_repeat_visit_drivers`: repeat-visit rate by group, with a significance rule.
 
 The count and the three metrics also take an optional `technician_id` filter, never
-together with a breakdown.
+together with a breakdown, and optional `region` and `account_id` filters (ADR-086), which
+combine with each other and with a breakdown by a different dimension.
 """
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import Field
 from schemas import (
+    AccountMatches,
     FirstTimeFixResult,
     GroupBy,
     IncidentGroupBy,
@@ -39,6 +42,7 @@ from schemas import (
     IncidentSummary,
     RepeatBy,
     RepeatDriversResult,
+    SiteRegion,
     SlaComplianceResult,
     TechnicianMatches,
 )
@@ -53,7 +57,9 @@ from .queries import (
     InvalidArgument,
     InvalidRange,
     check_connection,
+    check_scope,
     count_by_severity,
+    find_account,
     find_technician,
     make_engine,
     parse_date_range,
@@ -66,6 +72,7 @@ INCIDENT_RATE = "get_incident_rate"
 SLA_COMPLIANCE = "get_sla_compliance"
 FIRST_TIME_FIX = "get_first_time_fix_rate"
 FIND_TECHNICIAN = "find_technician"
+FIND_ACCOUNT = "find_account"
 REPEAT_DRIVERS = "get_repeat_visit_drivers"
 
 Start = Annotated[str, Field(description="First day, inclusive: YYYY-MM-DD (UTC).")]
@@ -101,6 +108,31 @@ RepeatByArg = Annotated[
         "original job)."
     ),
 ]
+RegionArg = Annotated[
+    SiteRegion | None,
+    Field(
+        description="Optional: restrict to one region of the customer site: northeast, "
+        "southeast, central or west (the same region group_by=region uses). Not combinable "
+        "with group_by=region."
+    ),
+]
+AccountArg = Annotated[
+    int | None,
+    Field(
+        ge=1,
+        description="Optional: restrict to one account's id, from find_account (the same "
+        "account group_by=account uses). Not combinable with group_by=account.",
+    ),
+]
+AccountNameArg = Annotated[
+    str,
+    Field(
+        min_length=1,
+        max_length=MAX_NAME_LENGTH,
+        description="An account's name or part of it (whole words), e.g. its first word. "
+        "Letters, spaces, apostrophes, hyphens and periods only; no wildcards.",
+    ),
+]
 NameArg = Annotated[
     str,
     Field(
@@ -116,13 +148,25 @@ NameArg = Annotated[
 class Backend:
     """The query functions behind the tools. Replaced with fakes in the offline tests."""
 
-    incidents: Callable[[dt.date, dt.date, IncidentGroupBy | None, int | None], IncidentSummary]
-    incident_rate: Callable[[dt.date, dt.date, GroupBy | None, int | None], IncidentRateResult]
-    sla_compliance: Callable[[dt.date, dt.date, GroupBy | None, int | None], SlaComplianceResult]
+    # (start, end, group_by, technician_id, region, account_id)
+    incidents: Callable[
+        [dt.date, dt.date, IncidentGroupBy | None, int | None, str | None, int | None],
+        IncidentSummary,
+    ]
+    incident_rate: Callable[
+        [dt.date, dt.date, GroupBy | None, int | None, str | None, int | None],
+        IncidentRateResult,
+    ]
+    sla_compliance: Callable[
+        [dt.date, dt.date, GroupBy | None, int | None, str | None, int | None],
+        SlaComplianceResult,
+    ]
     first_time_fix_rate: Callable[
-        [dt.date, dt.date, GroupBy | None, int | None], FirstTimeFixResult
+        [dt.date, dt.date, GroupBy | None, int | None, str | None, int | None],
+        FirstTimeFixResult,
     ]
     find_technician: Callable[[str], TechnicianMatches]
+    find_account: Callable[[str], AccountMatches]
     repeat_drivers: Callable[[dt.date, dt.date, RepeatBy], RepeatDriversResult]
     #: Raises when the database is unreachable; the `/readyz` probe calls it.
     ready: Callable[[], None] = lambda: None
@@ -131,11 +175,16 @@ class Backend:
     def from_settings(cls, settings: Settings) -> Backend:
         engine = make_engine(settings)
         return cls(
-            incidents=lambda s, e, g, t: count_by_severity(engine, s, e, g, t),
-            incident_rate=lambda s, e, g, t: metrics.incident_rate(engine, s, e, g, t),
-            sla_compliance=lambda s, e, g, t: metrics.sla_compliance(engine, s, e, g, t),
-            first_time_fix_rate=lambda s, e, g, t: metrics.first_time_fix_rate(engine, s, e, g, t),
+            incidents=lambda s, e, g, t, r, a: count_by_severity(engine, s, e, g, t, r, a),
+            incident_rate=lambda s, e, g, t, r, a: metrics.incident_rate(engine, s, e, g, t, r, a),
+            sla_compliance=lambda s, e, g, t, r, a: metrics.sla_compliance(
+                engine, s, e, g, t, r, a
+            ),
+            first_time_fix_rate=lambda s, e, g, t, r, a: metrics.first_time_fix_rate(
+                engine, s, e, g, t, r, a
+            ),
             find_technician=lambda name: find_technician(engine, name),
+            find_account=lambda name: find_account(engine, name),
             repeat_drivers=lambda s, e, by: repeats.repeat_drivers(engine, s, e, by),
             ready=lambda: check_connection(engine),
         )
@@ -177,25 +226,24 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         call: Callable,
         group_by: str | None = None,
         technician_id: int | None = None,
+        region: str | None = None,
+        account_id: int | None = None,
         *,
         filtered: bool = True,
     ) -> Any:
-        """Validate the range (and the filter), run the query, log."""
+        """Validate the range (and the filters), run the query, log."""
         meta = ctx.request_context.meta or {}
         with bind_trace_id(meta.get(TRACE_ID_KEY)):
             try:
                 s, e = parse_date_range(start, end, settings.window_start, settings.window_end)
             except InvalidRange as exc:
                 raise reject(tool, str(exc), exc.argument, exc.kind) from None
-            if group_by is not None and technician_id is not None:
-                raise reject(
-                    tool,
-                    "a technician filter cannot be combined with group_by",
-                    "technician_id,group_by",
-                    "conflicting_arguments",
-                )
+            try:
+                check_scope(group_by, technician_id, region, account_id)
+            except InvalidArgument as exc:
+                raise reject(tool, str(exc), exc.argument, exc.kind) from None
             began = time.perf_counter()
-            args = (group_by, technician_id) if filtered else (group_by,)
+            args = (group_by, technician_id, region, account_id) if filtered else (group_by,)
             result = await call_backend(tool, call, s, e, *args)
             log.info(
                 "tool call",
@@ -205,6 +253,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
                     "end": e.isoformat(),
                     "group_by": group_by,
                     "technician_id": technician_id,
+                    "region": region,
+                    "account_id": account_id,
                     "duration_ms": round((time.perf_counter() - began) * 1000, 1),
                 },
             )
@@ -217,14 +267,27 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         ctx: Context,
         group_by: CountGroupByArg = None,
         technician_id: TechnicianArg = None,
+        region: RegionArg = None,
+        account_id: AccountArg = None,
     ) -> IncidentSummary:
         """Count incidents reported in a date range, in total and by severity.
 
         Optionally broken down (top 25 groups, highest count first; the totals cover
-        every group), or only incidents attributed to one technician. Returns aggregates
-        only: no incident rows and no free-text fields.
+        every group), or only incidents attributed to one technician, and/or restricted to
+        one site region and one account (ADR-086). Returns aggregates only: no incident
+        rows and no free-text fields.
         """
-        return await run(TOOL_NAME, ctx, start, end, backend.incidents, group_by, technician_id)
+        return await run(
+            TOOL_NAME,
+            ctx,
+            start,
+            end,
+            backend.incidents,
+            group_by,
+            technician_id,
+            region,
+            account_id,
+        )
 
     @server.tool(name=INCIDENT_RATE)
     async def get_incident_rate(
@@ -233,6 +296,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         ctx: Context,
         group_by: GroupByArg = None,
         technician_id: TechnicianArg = None,
+        region: RegionArg = None,
+        account_id: AccountArg = None,
     ) -> IncidentRateResult:
         """Incidents per 100 completed requests (data dictionary §6).
 
@@ -244,7 +309,15 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         Groups are sorted worst first: highest rate first. The top 25 are kept.
         """
         return await run(
-            INCIDENT_RATE, ctx, start, end, backend.incident_rate, group_by, technician_id
+            INCIDENT_RATE,
+            ctx,
+            start,
+            end,
+            backend.incident_rate,
+            group_by,
+            technician_id,
+            region,
+            account_id,
         )
 
     @server.tool(name=SLA_COMPLIANCE)
@@ -254,6 +327,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         ctx: Context,
         group_by: GroupByArg = None,
         technician_id: TechnicianArg = None,
+        region: RegionArg = None,
+        account_id: AccountArg = None,
     ) -> SlaComplianceResult:
         """Share of dispatched requests completed within their SLA window (§6).
 
@@ -264,7 +339,15 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         Groups are sorted worst first: lowest rate first. The top 25 are kept.
         """
         return await run(
-            SLA_COMPLIANCE, ctx, start, end, backend.sla_compliance, group_by, technician_id
+            SLA_COMPLIANCE,
+            ctx,
+            start,
+            end,
+            backend.sla_compliance,
+            group_by,
+            technician_id,
+            region,
+            account_id,
         )
 
     @server.tool(name=FIRST_TIME_FIX)
@@ -274,6 +357,8 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         ctx: Context,
         group_by: GroupByArg = None,
         technician_id: TechnicianArg = None,
+        region: RegionArg = None,
+        account_id: AccountArg = None,
     ) -> FirstTimeFixResult:
         """Share of completed requests with no follow-up visit (§6).
 
@@ -284,7 +369,15 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
         Groups are sorted worst first: lowest rate first. The top 25 are kept.
         """
         return await run(
-            FIRST_TIME_FIX, ctx, start, end, backend.first_time_fix_rate, group_by, technician_id
+            FIRST_TIME_FIX,
+            ctx,
+            start,
+            end,
+            backend.first_time_fix_rate,
+            group_by,
+            technician_id,
+            region,
+            account_id,
         )
 
     @server.tool(name=FIND_TECHNICIAN)
@@ -299,6 +392,20 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
             result = await call_backend(FIND_TECHNICIAN, backend.find_technician, name)
             # The count only: the name a user typed is not logged.
             log.info("tool call", extra={"tool": FIND_TECHNICIAN, "matches": result.total_matches})
+            return result
+
+    @server.tool(name=FIND_ACCOUNT)
+    async def find_account_tool(name: AccountNameArg, ctx: Context) -> AccountMatches:
+        """Accounts whose name matches `name`, case-insensitively: every word of `name`
+        must be a whole word of the account name (a first word finds every account that
+        has it). At most 5 matches (id and name), and the total match count. No wildcards
+        or patterns.
+        """
+        meta = ctx.request_context.meta or {}
+        with bind_trace_id(meta.get(TRACE_ID_KEY)):
+            result = await call_backend(FIND_ACCOUNT, backend.find_account, name)
+            # The count only: the name a user typed is not logged.
+            log.info("tool call", extra={"tool": FIND_ACCOUNT, "matches": result.total_matches})
             return result
 
     @server.tool(name=REPEAT_DRIVERS)

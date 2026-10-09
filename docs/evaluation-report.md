@@ -723,6 +723,8 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** For now. Region and account filters, a `parse_v3` update and a parse eval re-run are a Sprint 4 item, built before QA.
 - **Recorded in:** the Sprint 4 planned items in `docs/sprint-log.md`.
 
+**Update 2026-10-08 (resolved, ADR-086):** the four incident tools take `region` and `account_id` filters, `find_account` resolves a name, and `parse_v4` (gate passed) extracts both from a question. A filtered figure equals its group's row in the unfiltered breakdown, proved against raw SQL. The unscoped-figure-presented-as-scoped failure is closed for these four tools; what remains is L-67 and L-68. The 05 scenarios TS-01-A, TS-02-C and TS-05-B can be corrected.
+
 ### L-63 — Log redaction masks bearer tokens, authorization fields and URL passwords by pattern only (2026-10-08)
 - **What:** The shared JSON formatter (`packages/common`) masks `Bearer <token>`, `authorization` header fields and the password in `scheme://user:password@host` in every log line. It is a pattern match, not a guarantee: a secret in another shape, or split across fields, is not caught. It was added because the A2A SDK logs the whole server call context, request headers included, at DEBUG, so an agent running with `LOG_LEVEL=DEBUG` on Cloud Run would otherwise log the caller's ID token. The router's `reason` and tracebacks (L-60) are not redacted by it.
 - **Why accepted:** Production runs at INFO, where the SDK does not log headers, and the application code never logs the header, the token or the database URL (asserted by tests at every level). The pattern covers the shapes this system can produce.
@@ -745,3 +747,20 @@ build are appended here as they are found (CLAUDE.md).
 - **Why accepted:** For now. Local Postgres allows 100 connections, so the leak is invisible locally and in CI.
 - **Fix:** dispose the engines in a test fixture (Sprint 4 backlog).
 - **Recorded in:** `docs/deploy-window-log.md`; the Sprint 4 backlog in `docs/sprint-log.md`.
+
+**Update 2026-10-08 (resolved):** `tests/integration/conftest.py` gives every MCP server built during a test a pool-less engine (`NullPool`) and disposes it at the end of the test. Evidence: against local Postgres with `max_connections=25` (a temporary compose override, not committed), the two figures test files had 11 failures before the fixture, and the full integration suite then passed (883 passed). The servers' own code is unchanged.
+
+### L-67 — Repeat-visit drivers cannot be filtered to one region or account (2026-10-08)
+- **What:** `get_repeat_visit_drivers` takes neither `region` nor `account_id` (ADR-086). A question such as "what drives repeat visits in the west?" is declined with a message naming what is supported (repeat drivers by region or by account). The significance rule compares a group against all other jobs, so a filter changes what "the rest" means; that needs its own decision.
+- **Why accepted:** For this phase. The four other metrics are filterable, and the decline is explicit.
+- **Recorded in:** ADR-086; `docs/data-dictionary.md` §6.
+
+### L-68 — Areas other than the four regions are declined, not mapped (2026-10-08)
+- **What:** A state, a city or a broader area ("Texas", "the Midwest", "the East Coast") parses to `region: "unsupported"` and the answer declines, naming northeast, southeast, central and west. No synonyms, and nothing says which states belong to which region, because the data holds a region per site and no mapping table. "Western" and similar adjectives are not mapped either. A user who means a region by another name gets a decline, not a guess.
+- **Why accepted:** A silent mapping would be an unrecorded choice, the Sprint 2 stop rule's point. Declining is honest and cheap to lift later, if the owner decides a mapping.
+- **Recorded in:** ADR-086; `docs/data-dictionary.md` §6; parse items f11 and f12.
+
+### L-69 — The parse_v4 set was drafted by the prompt's author, so it is not blind (2026-10-08)
+- **What:** The 12 filter items in `evals/reporting_parse/parse_v4.jsonl` were written by the assistant that wrote `parse_v4`. They were committed before any run and the prompt's examples were kept out of them (a test checks that), but their phrasing is the author's. 12 of 12 in all three runs shows the prompt parses these questions; it does not show how it parses the owner's wording. No account with a similar name to another beyond "Silver Creek" and "Bluewater" (ambiguity), no misspelling and no lowercase-only question was tried.
+- **Why accepted:** For now (R-16). An owner-written fresh set is the fix, to be used for any later prompt change; the Sprint 5 routing evaluation is the natural place.
+- **Recorded in:** ADR-086; `evals/reporting_parse/README.md`.

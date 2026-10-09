@@ -1,5 +1,5 @@
-"""Input validation, the queries behind `get_incidents_by_date_range`, and technician
-lookup (`find_technician`, and the name a technician filter reports).
+"""Input validation, the queries behind `get_incidents_by_date_range`, and technician and
+account lookup (`find_technician`, `find_account`, and the names the filters report).
 
 SQLAlchemy Core over the `db_models` tables, bound parameters only; counts, never rows,
 and no free-text column (`incident_notes`) is read. Breakdowns (ADR-073): `account`,
@@ -7,6 +7,9 @@ and no free-text column (`incident_notes`) is read. Breakdowns (ADR-073): `accou
 `attributed_technician_id`, with incidents attributed to nobody as their own
 "unattributed" group; `incident_type` and `severity` are the incident's own columns.
 Groups are ranked highest count first, then by name, and capped at 25.
+
+Region and account filters (ADR-086) restrict on the same entity a breakdown by that
+dimension groups on: the site's `locations.region` and the request's `account_id`.
 """
 
 from __future__ import annotations
@@ -16,17 +19,21 @@ import re
 
 from db_models import Account, Incident, Location, ServiceRequest, Severity, Technician, values
 from schemas import (
+    MAX_ACCOUNT_MATCHES,
     MAX_COUNT_GROUPS,
     MAX_TECHNICIAN_MATCHES,
     UNATTRIBUTED,
+    AccountMatch,
+    AccountMatches,
     GroupCount,
     IncidentGroupBy,
     IncidentSummary,
     SeverityCounts,
+    SiteRegion,
     TechnicianMatch,
     TechnicianMatches,
 )
-from sqlalchemy import Engine, bindparam, create_engine, func, select, text
+from sqlalchemy import Engine, create_engine, func, select, text
 from sqlalchemy.engine import URL
 
 from .config import Settings
@@ -121,15 +128,47 @@ def check_connection(engine: Engine) -> None:
         conn.execute(text("SELECT 1"))
 
 
-# Counts by severity in a half-open UTC timestamp range [lo, hi).
-_SEVERITY_COUNTS = (
-    select(_incidents.c.severity, func.count().label("n"))
-    .where(
-        _incidents.c.reported_at >= bindparam("lo"),
-        _incidents.c.reported_at < bindparam("hi"),
-    )
-    .group_by(_incidents.c.severity)
-)
+def check_scope(
+    group_by: str | None,
+    technician_id: int | None = None,
+    region: str | None = None,
+    account_id: int | None = None,
+) -> None:
+    """The combinations the tools decline (ADR-073, ADR-086): a technician filter with any
+    breakdown, and a region or account filter with a breakdown by the same dimension. Every
+    other combination is an AND."""
+    if group_by is not None and technician_id is not None:
+        raise InvalidArgument(
+            "a technician filter cannot be combined with a breakdown",
+            argument="technician_id,group_by",
+            kind="conflicting_arguments",
+        )
+    if region is not None and group_by == "region":
+        raise InvalidArgument(
+            "a region filter cannot be combined with a breakdown by region",
+            argument="region,group_by",
+            kind="conflicting_arguments",
+        )
+    if account_id is not None and group_by == "account":
+        raise InvalidArgument(
+            "an account filter cannot be combined with a breakdown by account",
+            argument="account_id,group_by",
+            kind="conflicting_arguments",
+        )
+
+
+def _scope(src, region: str | None, account_id: int | None):
+    """Join the request (and the site, for a region) onto an incident source and return it
+    with the filter conditions. Filters use the columns the matching breakdown groups on."""
+    filters: list = []
+    if region is not None or account_id is not None:
+        src = src.join(_sr, _sr.c.request_id == _incidents.c.request_id)
+    if region is not None:
+        src = src.join(_loc, _loc.c.location_id == _sr.c.location_id)
+        filters.append(_loc.c.region == region)
+    if account_id is not None:
+        filters.append(_sr.c.account_id == account_id)
+    return src, filters
 
 
 def count_by_severity(
@@ -138,32 +177,37 @@ def count_by_severity(
     end: dt.date,
     group_by: IncidentGroupBy | None = None,
     technician_id: int | None = None,
+    region: SiteRegion | None = None,
+    account_id: int | None = None,
 ) -> IncidentSummary:
     """Incidents with `reported_at` on `start`..`end` inclusive, in UTC days; optionally
-    broken down, or only those attributed to one technician (not both)."""
-    if group_by is not None and technician_id is not None:
-        raise InvalidArgument(
-            "a technician filter cannot be combined with a breakdown",
-            argument="technician_id,group_by",
-            kind="conflicting_arguments",
-        )
+    broken down, restricted to one attributed technician (never with a breakdown), and/or to
+    one site region and one account (ADR-086)."""
+    check_scope(group_by, technician_id, region, account_id)
     lo = dt.datetime.combine(start, dt.time.min, dt.UTC)
     hi = dt.datetime.combine(end + dt.timedelta(days=1), dt.time.min, dt.UTC)
     name = technician_name(engine, technician_id) if technician_id is not None else None
-    query = _SEVERITY_COUNTS
+    acct = account_name(engine, account_id) if account_id is not None else None
+    src, filters = _scope(_incidents, region, account_id)
     if technician_id is not None:
-        query = query.where(_incidents.c.attributed_technician_id == technician_id)
+        filters.append(_incidents.c.attributed_technician_id == technician_id)
+    query = (
+        select(_incidents.c.severity, func.count().label("n"))
+        .select_from(src)
+        .where(_incidents.c.reported_at >= lo, _incidents.c.reported_at < hi, *filters)
+        .group_by(_incidents.c.severity)
+    )
     with engine.connect() as conn:
-        rows = conn.execute(query, {"lo": lo, "hi": hi}).all()
+        rows = conn.execute(query).all()
     counts = dict.fromkeys(values(Severity), 0)
     for severity, n in rows:
         # A value outside the vocabulary would mean the CHECK constraint is gone.
         if severity not in counts:
             raise RuntimeError(f"unexpected severity {severity!r} in incidents")
         counts[severity] = n
-    fields = {}
+    fields: dict = {}
     if group_by is not None:
-        groups = _count_groups(engine, lo, hi, group_by)
+        groups = _count_groups(engine, lo, hi, group_by, region, account_id)
         fields = {
             "group_by": group_by,
             "groups": groups[:MAX_COUNT_GROUPS],
@@ -172,6 +216,10 @@ def count_by_severity(
         }
     if technician_id is not None:
         fields = {"technician_id": technician_id, "technician_name": name}
+    if region is not None:
+        fields["region"] = region
+    if account_id is not None:
+        fields |= {"account_id": account_id, "account_name": acct}
     return IncidentSummary(
         start=start,
         end=end,
@@ -182,10 +230,16 @@ def count_by_severity(
 
 
 def _count_groups(
-    engine: Engine, lo: dt.datetime, hi: dt.datetime, group_by: IncidentGroupBy
+    engine: Engine,
+    lo: dt.datetime,
+    hi: dt.datetime,
+    group_by: IncidentGroupBy,
+    region: str | None = None,
+    account_id: int | None = None,
 ) -> list[GroupCount]:
-    """Every group's count, highest first, ties by name. The caller applies the cap."""
-    src = _incidents
+    """Every group's count, highest first, ties by name. The caller applies the cap.
+    A region and/or account filter restricts the incidents being grouped (ADR-086)."""
+    src, filters = _scope(_incidents, region, account_id)
     has_id = group_by in ("account", "technician")
     if group_by == "incident_type":
         key = label = _incidents.c.incident_type
@@ -197,7 +251,8 @@ def _count_groups(
             _tech, _tech.c.technician_id == _incidents.c.attributed_technician_id
         )
     else:
-        src = _incidents.join(_sr, _sr.c.request_id == _incidents.c.request_id)
+        if region is None and account_id is None:  # `_scope` has not joined the request
+            src = src.join(_sr, _sr.c.request_id == _incidents.c.request_id)
         if group_by == "service_type":
             key = label = _sr.c.service_type
         elif group_by == "region":
@@ -209,7 +264,7 @@ def _count_groups(
     query = (
         select(key.label("key"), label.label("label"), func.count().label("n"))
         .select_from(src)
-        .where(_incidents.c.reported_at >= lo, _incidents.c.reported_at < hi)
+        .where(_incidents.c.reported_at >= lo, _incidents.c.reported_at < hi, *filters)
         .group_by(key, label)
     )
     with engine.connect() as conn:
@@ -284,3 +339,55 @@ def technician_name(engine: Engine, technician_id: int) -> str:
             f"no technician has id {technician_id}", argument="technician_id", kind="unknown_id"
         )
     return name
+
+
+def account_name(engine: Engine, account_id: int) -> str:
+    """The display name an account filter reports; an unknown id is a caller error."""
+    with engine.connect() as conn:
+        name = conn.execute(
+            select(_acc.c.account_name).where(_acc.c.account_id == account_id)
+        ).scalar_one_or_none()
+    if name is None:
+        raise InvalidArgument(
+            f"no account has id {account_id}", argument="account_id", kind="unknown_id"
+        )
+    return name
+
+
+# --------------------------------------------------------------------------- accounts
+
+
+def match_accounts(name: str, accounts: list[tuple[int, str]]) -> AccountMatches:
+    """Pure: the technician matching rules (ADR-073) applied to (id, account name) pairs.
+
+    An account matches if every word of the query is a whole word of its name, so a first
+    word ("Bluewater") finds every account that starts with it and a partial word ("Blue")
+    finds none. At most 5 matches, by name, then id; `total_matches` says how many there
+    were. Same character rules, same length cap, no SQL built from the name.
+    """
+    cleaned = " ".join(name.split()) if isinstance(name, str) else ""
+    if not cleaned or len(cleaned) > MAX_NAME_LENGTH or not _NAME.match(cleaned):
+        raise InvalidArgument(
+            "name must be 1 to 100 characters of letters, spaces, apostrophes, hyphens "
+            "or periods; wildcards and patterns are not accepted",
+            argument="name",
+            kind="invalid_characters",
+        )
+    query = _words(cleaned)
+    found = []
+    for aid, account in accounts:
+        words = _words(account)
+        if all(w in words for w in query):
+            found.append(AccountMatch(account_id=aid, account_name=account))
+    found.sort(key=lambda m: (m.account_name.casefold(), m.account_id))
+    return AccountMatches(
+        name=cleaned, matches=found[:MAX_ACCOUNT_MATCHES], total_matches=len(found)
+    )
+
+
+def find_account(engine: Engine, name: str) -> AccountMatches:
+    """The fixed account list is read whole (50 rows) and matched in Python, so the name
+    never reaches SQL."""
+    with engine.connect() as conn:
+        rows = conn.execute(select(_acc.c.account_id, _acc.c.account_name)).all()
+    return match_accounts(name, [(r.account_id, r.account_name) for r in rows])
