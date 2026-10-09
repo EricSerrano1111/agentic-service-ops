@@ -1,0 +1,42 @@
+{
+  "evidence": "observed",
+  "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+  "role": "app_eval",
+  "n": 4715,
+  "x": 7,
+  "p_hat": 0.0014846235418875928,
+  "p0": 0.01,
+  "rule": {
+    "p0_floor": 0.01,
+    "alpha": 0.01,
+    "min_covered": 20
+  },
+  "per_region": {
+    "central": {
+      "n": 1198,
+      "x": 2,
+      "p_hat": 0.001669449081803005
+    },
+    "northeast": {
+      "n": 1395,
+      "x": 1,
+      "p_hat": 0.0007168458781362007
+    },
+    "southeast": {
+      "n": 1208,
+      "x": 3,
+      "p_hat": 0.0024834437086092716
+    },
+    "west": {
+      "n": 914,
+      "x": 1,
+      "p_hat": 0.0010940919037199124
+    }
+  },
+  "coverage": {
+    "comments": 7521,
+    "scored_with_this_model_version": 7521,
+    "unrated": 749,
+    "rated_but_neutral_or_mixed": 2057
+  }
+}
