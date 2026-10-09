@@ -35,7 +35,10 @@ def _ask(question: str, url: str) -> int:
     if response.is_success:
         route = body["route"]
         print(body["answer"])
-        print(f"route={route['route']} ({route['reason']}) prompt={body['prompt_version']}")
+        if body.get("escalate"):
+            print(f"ESCALATE: {body['warning']}")
+        if route:  # empty when the request was stopped before routing
+            print(f"route={route['route']} ({route['reason']}) prompt={body['prompt_version']}")
         if body.get("reporting"):
             print(json.dumps(body["reporting"], indent=2))
         reason = f" reason={body['reason']}" if body.get("reason") else ""

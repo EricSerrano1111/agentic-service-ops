@@ -313,18 +313,34 @@ def test_agent_failure_codes_map_to_statuses(monkeypatch, code, status, error):
 
 
 @pytest.mark.parametrize(
-    ("exc", "status", "error"),
-    [
-        (TimeoutError(), 504, "agent_timeout"),
-        (httpx.ConnectError("refused"), 502, "agent_unavailable"),
-    ],
+    "exc",
+    [TimeoutError(), httpx.ConnectError("refused"), httpx.ReadTimeout("slow")],
 )
-def test_agent_transport_errors(monkeypatch, exc, status, error):
+def test_agent_transport_errors_are_a_degraded_result_naming_the_capability(monkeypatch, exc):
+    """ADR-088, NFR-4: a counted failure of a specialist is the degraded result, not a 502/504."""
+
     def raise_():
         raise exc
 
     response = _ask(monkeypatch, FakeLLM(decision("reporting")), Sent(raise_))
-    assert response.status_code == status and response.json()["error"] == error
+    body = response.json()
+    assert response.status_code == 200 and body["outcome"] == "degraded"
+    assert body["escalate"] is True and body["unavailable_capability"] == "reporting"
+    assert "reporting service is temporarily unavailable" in body["warning"]
+    assert body["route"]["route"] == "reporting"  # it was routed before the specialist failed
+
+
+def test_a_4xx_from_an_agent_is_not_a_dependency_failure(monkeypatch):
+    request = httpx.Request("POST", "http://agent.test/")
+    exc = httpx.HTTPStatusError(
+        "bad", request=request, response=httpx.Response(404, request=request)
+    )
+
+    def raise_():
+        raise exc
+
+    response = _ask(monkeypatch, FakeLLM(decision("reporting")), Sent(raise_))
+    assert response.status_code == 502 and response.json()["error"] == "agent_unavailable"
 
 
 # --------------------------------------------------------------------------- answer validation
@@ -837,23 +853,15 @@ def test_sentiment_decline_is_a_normal_not_available_answer(monkeypatch):
     assert (response.json()["outcome"], response.json()["answer"]) == ("not_available", text)
 
 
-@pytest.mark.parametrize(
-    ("exc", "status", "error"),
-    [
-        (TimeoutError(), 504, "agent_timeout"),
-        (httpx.ConnectError("refused"), 502, "agent_unavailable"),
-    ],
-)
-def test_unreachable_sentiment_agent_gets_the_existing_failure_handling(
-    monkeypatch, exc, status, error
-):
+@pytest.mark.parametrize("exc", [TimeoutError(), httpx.ConnectError("refused")])
+def test_unreachable_sentiment_agent_is_a_degraded_result_naming_sentiment(monkeypatch, exc):
     def boom():
         raise exc
 
     response = _ask(monkeypatch, FakeLLM(decision("sentiment")), SentTo(boom))
-    assert response.status_code == status
     body = response.json()
-    assert body["error"] == error and "sentiment agent" in body["detail"]
+    assert response.status_code == 200 and body["outcome"] == "degraded"
+    assert body["unavailable_capability"] == "sentiment" and body["escalate"] is True
 
 
 def test_sentiment_answer_that_breaks_the_contract_is_rejected(monkeypatch):
@@ -948,23 +956,15 @@ def test_forecast_decline_is_a_normal_not_available_answer(monkeypatch):
     assert (response.json()["outcome"], response.json()["answer"]) == ("not_available", text)
 
 
-@pytest.mark.parametrize(
-    ("exc", "status", "error"),
-    [
-        (TimeoutError(), 504, "agent_timeout"),
-        (httpx.ConnectError("refused"), 502, "agent_unavailable"),
-    ],
-)
-def test_unreachable_forecast_agent_gets_the_existing_failure_handling(
-    monkeypatch, exc, status, error
-):
+@pytest.mark.parametrize("exc", [TimeoutError(), httpx.ConnectError("refused")])
+def test_unreachable_forecast_agent_is_a_degraded_result_naming_forecast(monkeypatch, exc):
     def boom():
         raise exc
 
     response = _ask(monkeypatch, FakeLLM(decision("forecast")), SentTo(boom))
-    assert response.status_code == status
     body = response.json()
-    assert body["error"] == error and "forecast agent" in body["detail"]
+    assert response.status_code == 200 and body["outcome"] == "degraded"
+    assert body["unavailable_capability"] == "forecast" and body["escalate"] is True
 
 
 def test_numbers_for_an_unserved_week_are_rejected(monkeypatch):
