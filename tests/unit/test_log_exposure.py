@@ -92,6 +92,7 @@ def test_database_password_is_never_logged_at_any_level_when_the_database_is_dow
             sla_compliance=None,  # type: ignore[arg-type]
             first_time_fix_rate=None,  # type: ignore[arg-type]
             find_technician=None,  # type: ignore[arg-type]
+            find_account=None,  # type: ignore[arg-type]
             repeat_drivers=None,  # type: ignore[arg-type]
             ready=lambda: check_connection(engine),
         )

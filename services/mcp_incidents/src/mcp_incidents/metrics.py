@@ -18,6 +18,12 @@ rate by technician, the numerator is incidents attributed to that technician
 Single-technician filter (ADR-073): `technician_id` restricts each metric to the same
 columns its `group_by=technician` uses, so a filtered figure equals that technician's
 group. It cannot be combined with a breakdown.
+
+Region and account filters (ADR-086): `region` (the site's `locations.region`) and
+`account_id` (the request's `account_id`) restrict each metric on the entity its breakdown
+by that dimension groups on, so a filtered figure equals that group's row. They combine
+with each other and with the technician filter as AND, and with a breakdown by a different
+dimension; a filter with a breakdown by the same dimension is declined.
 """
 
 from __future__ import annotations
@@ -34,13 +40,14 @@ from schemas import (
     GroupBy,
     GroupRate,
     IncidentRateResult,
+    SiteRegion,
     SlaComplianceResult,
     rate_string,
 )
 from sqlalchemy import Engine, and_, exists, func, select
 from sqlalchemy.sql import ColumnElement, Select
 
-from .queries import InvalidArgument, technician_name
+from .queries import account_name, check_scope, technician_name
 
 sr = ServiceRequest.__table__
 ar = ArchivedRequest.__table__
@@ -133,20 +140,37 @@ def _rank(
     return groups[:MAX_GROUPS], len(groups)
 
 
-def _technician(
-    engine: Engine, group_by: GroupBy | None, technician_id: int | None
+def _scope(
+    engine: Engine,
+    group_by: GroupBy | None,
+    technician_id: int | None,
+    region: SiteRegion | None,
+    account_id: int | None,
 ) -> dict[str, object]:
-    """Validate a technician filter; the fields it adds to the result."""
-    if technician_id is None:
-        return {}
-    if group_by is not None:
-        raise InvalidArgument(
-            "a technician filter cannot be combined with a breakdown",
-            argument="technician_id,group_by",
-            kind="conflicting_arguments",
-        )
-    name = technician_name(engine, technician_id)
-    return {"technician_id": technician_id, "technician_name": name}
+    """Validate the filters against the breakdown (ADR-073, ADR-086); the fields they add to
+    the result."""
+    check_scope(group_by, technician_id, region, account_id)
+    extra: dict[str, object] = {}
+    if technician_id is not None:
+        extra |= {
+            "technician_id": technician_id,
+            "technician_name": technician_name(engine, technician_id),
+        }
+    if region is not None:
+        extra["region"] = region
+    if account_id is not None:
+        extra |= {"account_id": account_id, "account_name": account_name(engine, account_id)}
+    return extra
+
+
+def _scoped(query: Select, region: SiteRegion | None, account_id: int | None) -> Select:
+    """Restrict a query over service_requests `sr` to a site region and/or an account: the
+    columns `_grouped` groups on for those dimensions."""
+    if region is not None:
+        query = query.join(loc, loc.c.location_id == sr.c.location_id).where(loc.c.region == region)
+    if account_id is not None:
+        query = query.where(sr.c.account_id == account_id)
+    return query
 
 
 def _only(query: Select, column: ColumnElement, technician_id: int | None) -> Select:
@@ -177,22 +201,32 @@ def incident_rate(
     end: dt.date,
     group_by: GroupBy | None = None,
     technician_id: int | None = None,
+    region: SiteRegion | None = None,
+    account_id: int | None = None,
 ) -> IncidentRateResult:
-    extra = _technician(engine, group_by, technician_id)
+    extra = _scope(engine, group_by, technician_id, region, account_id)
     lo, hi = _bounds(start, end)
-    incidents = _only(
-        select(sr.c.request_id)
-        .select_from(inc.join(sr, sr.c.request_id == inc.c.request_id))
-        .where(_in_range(inc.c.reported_at, lo, hi)),
-        inc.c.attributed_technician_id,
-        technician_id,
+    incidents = _scoped(
+        _only(
+            select(sr.c.request_id)
+            .select_from(inc.join(sr, sr.c.request_id == inc.c.request_id))
+            .where(_in_range(inc.c.reported_at, lo, hi)),
+            inc.c.attributed_technician_id,
+            technician_id,
+        ),
+        region,
+        account_id,
     )
-    completed = _only(
-        select(sr.c.request_id)
-        .select_from(ar.join(sr, sr.c.request_id == ar.c.request_id))
-        .where(_in_range(ar.c.completed_at, lo, hi)),
-        ar.c.technician_id,
-        technician_id,
+    completed = _scoped(
+        _only(
+            select(sr.c.request_id)
+            .select_from(ar.join(sr, sr.c.request_id == ar.c.request_id))
+            .where(_in_range(ar.c.completed_at, lo, hi)),
+            ar.c.technician_id,
+            technician_id,
+        ),
+        region,
+        account_id,
     )
     with engine.connect() as conn:
         num = conn.execute(incidents.with_only_columns(func.count())).scalar_one()
@@ -217,20 +251,26 @@ def sla_compliance(
     end: dt.date,
     group_by: GroupBy | None = None,
     technician_id: int | None = None,
+    region: SiteRegion | None = None,
+    account_id: int | None = None,
 ) -> SlaComplianceResult:
-    extra = _technician(engine, group_by, technician_id)
+    extra = _scope(engine, group_by, technician_id, region, account_id)
     lo, hi = _bounds(start, end)
     # §6: sla_met = completed_at <= dispatched_at + sla_window_minutes. The inner join to
     # archived_requests and the dispatched_at filter leave out every null sla_met.
     sla_met = ar.c.completed_at <= sr.c.dispatched_at + func.make_interval(
         0, 0, 0, 0, 0, sr.c.sla_window_minutes
     )
-    dispatched = _only(
-        select(sr.c.request_id)
-        .select_from(sr.join(ar, ar.c.request_id == sr.c.request_id))
-        .where(_in_range(sr.c.dispatched_at, lo, hi)),
-        ar.c.technician_id,
-        technician_id,
+    dispatched = _scoped(
+        _only(
+            select(sr.c.request_id)
+            .select_from(sr.join(ar, ar.c.request_id == sr.c.request_id))
+            .where(_in_range(sr.c.dispatched_at, lo, hi)),
+            ar.c.technician_id,
+            technician_id,
+        ),
+        region,
+        account_id,
     )
     with engine.connect() as conn:
         num, den = conn.execute(
@@ -256,19 +296,25 @@ def first_time_fix_rate(
     end: dt.date,
     group_by: GroupBy | None = None,
     technician_id: int | None = None,
+    region: SiteRegion | None = None,
+    account_id: int | None = None,
 ) -> FirstTimeFixResult:
-    extra = _technician(engine, group_by, technician_id)
+    extra = _scope(engine, group_by, technician_id, region, account_id)
     lo, hi = _bounds(start, end)
     # A non-cancelled child, of any date, means a return visit happened.
     fixed = ~exists().where(
         child.c.parent_request_id == sr.c.request_id, child.c.request_status != "cancelled"
     )
-    completed = _only(
-        select(sr.c.request_id)
-        .select_from(ar.join(sr, sr.c.request_id == ar.c.request_id))
-        .where(_in_range(ar.c.completed_at, lo, hi)),
-        ar.c.technician_id,
-        technician_id,
+    completed = _scoped(
+        _only(
+            select(sr.c.request_id)
+            .select_from(ar.join(sr, sr.c.request_id == ar.c.request_id))
+            .where(_in_range(ar.c.completed_at, lo, hi)),
+            ar.c.technician_id,
+            technician_id,
+        ),
+        region,
+        account_id,
     )
     with engine.connect() as conn:
         num, den = conn.execute(

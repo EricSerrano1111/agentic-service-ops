@@ -64,6 +64,9 @@ ANSWER = {
         "truncated": False,
         "technician_id": None,
         "technician_name": None,
+        "region": None,
+        "account_id": None,
+        "account_name": None,
     },
 }
 QUESTION = "How many incidents were reported last month?"
