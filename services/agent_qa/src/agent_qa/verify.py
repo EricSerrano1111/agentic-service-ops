@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from llm import LLMError
 from pydantic import ValidationError
 from schemas import (
     CheckResult,
@@ -70,9 +71,45 @@ class Verifier:
         if any(not c.passed for c in checks):
             return Verdict(verdict="fail", checks=checks)
 
-        judgement = await self.interpreter.judge(
-            req.domain, req.question, self._reading_of(req), trace_id=trace_id
-        )
+        advisory = self.settings.interp_mode == "advisory"
+        try:
+            judgement = await self.interpreter.judge(
+                req.domain, req.question, self._reading_of(req), trace_id=trace_id
+            )
+        except (LLMError, TimeoutError) as exc:
+            if not advisory:
+                raise
+            # Advisory: a check that could not run is reported, not a reason to withhold a
+            # verdict the deterministic checks have already given.
+            log.warning("advisory interpretation not run", extra={"error": type(exc).__name__})
+            return Verdict(
+                verdict="pass",
+                checks=checks,
+                advisories=[
+                    CheckResult(
+                        code=CHECK_CODE,
+                        check_class="interpretation",
+                        passed=False,
+                        detail="advisory: the check could not run",
+                    )
+                ],
+            )
+        if advisory:
+            return Verdict(
+                verdict="pass",
+                checks=checks,
+                advisories=[
+                    CheckResult(
+                        code=CHECK_CODE,
+                        check_class="interpretation",
+                        passed=judgement.faithful,
+                        detail=""
+                        if judgement.faithful
+                        else "advisory: differs in "
+                        + (", ".join(judgement.differs_in) or "unspecified"),
+                    )
+                ],
+            )
         if judgement.faithful:
             return Verdict(
                 verdict="pass",

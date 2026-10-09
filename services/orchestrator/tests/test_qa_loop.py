@@ -435,3 +435,27 @@ def test_create_app_builds_without_a_network():
         "interpretation_unavailable",
         "qa_timeout",
     )
+
+
+def test_an_advisory_interpretation_failure_is_logged_and_neither_fails_nor_retries(monkeypatch):
+    advisory = PASS_VERDICT | {
+        "advisories": [
+            {
+                "code": "interpretation_matches_question",
+                "check_class": "interpretation",
+                "passed": False,
+                "detail": "advisory: differs in dates",
+            }
+        ]
+    }
+    hop = Hop(qa=lambda n: verdict_task(advisory))
+    with captured_logs() as lines:
+        body = ask(routed(monkeypatch, "reporting", hop)).json()
+        logged = lines()
+    assert body["outcome"] == "answered" and body["qa_status"] == "verified"
+    assert len(hop.calls) == 1 and len(hop.qa_calls) == 1  # no re-ask
+    [seen] = [x for x in logged if x["msg"] == "qa verdict"]
+    assert seen["verdict"] == "pass" and seen["advisory_failed"] == [
+        "interpretation_matches_question"
+    ]
+    assert not [x for x in logged if x["msg"] == "qa retry"]

@@ -695,6 +695,7 @@ def create_app(
                     "attempt": retries + 1,
                     "verdict": verdict.verdict,
                     "failed_checks": list(failed),
+                    "advisory_failed": [c.code for c in verdict.advisories if not c.passed],
                     "cost_usd": round(state.total_usd, 6),
                 },
             )

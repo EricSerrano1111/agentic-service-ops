@@ -26,9 +26,9 @@ from schemas import MAX_GUIDANCE_CHARS, ForecastRequest, ReportingRequest
 JULY = (dt.date(2026, 7, 1), dt.date(2026, 7, 31))
 
 
-def test_the_prompt_is_qa_interp_v1_and_renders_with_its_three_placeholders():
+def test_the_shipped_prompt_is_qa_interp_v2_and_renders_with_its_three_placeholders():
     prompt = load_interp_prompt()
-    assert prompt.version == PROMPT_NAME == "qa_interp_v1" and len(prompt.sha) == 12
+    assert prompt.version == PROMPT_NAME == "qa_interp_v2" and len(prompt.sha) == 12
     text = prompt.render(domain="reporting", question="Q?", reading="{}")
     assert "Domain: reporting" in text and "Q?" in text and "{{" not in text
 

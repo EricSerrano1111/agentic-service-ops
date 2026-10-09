@@ -32,7 +32,7 @@ from fastapi.testclient import TestClient
 from google.protobuf.json_format import MessageToDict
 from llm import LLMBreakerOpen, LLMOutputInvalid, LLMRateLimited, LLMRequestError, LLMUnavailable
 from pydantic import ValidationError
-from qa_fakes import AS_OF, SETTINGS, FakeLLM, FakeSource, manifest
+from qa_fakes import ADVISORY, AS_OF, SETTINGS, FakeLLM, FakeSource, manifest
 from schemas import (
     IncidentSummary,
     ReportingAnswer,
@@ -541,3 +541,90 @@ def test_the_verdict_contract_ties_the_verdict_to_its_checks():
     ):
         with pytest.raises(ValidationError):
             Verdict(**bad)
+
+
+# --------------------------------------------------------------------------- advisory mode
+
+
+def advisory_app(llm, source=None):
+    source = source if source is not None else FakeSource(severity_counts=COUNTS)
+    return create_app(ADVISORY, llm, source=source, manifest=manifest()), source
+
+
+def test_the_shipped_default_is_advisory_and_the_mode_is_validated(monkeypatch):
+    from agent_qa.config import Settings as QASettings
+
+    assert QASettings.__dataclass_fields__["interp_mode"].default == "advisory"
+    monkeypatch.setenv("POSTGRES_HOST", "db")
+    monkeypatch.delenv("CLOUD_SQL_INSTANCE", raising=False)
+    monkeypatch.setenv("POSTGRES_DB", "x")
+    monkeypatch.setenv("DB_ROLE_QA_USER", "u")
+    monkeypatch.setenv("DB_ROLE_QA_PASSWORD", "p")
+    monkeypatch.delenv("QA_INTERP_MODE", raising=False)
+    assert QASettings.from_env().interp_mode == "advisory"
+    monkeypatch.setenv("QA_INTERP_MODE", " ENFORCE ")
+    assert QASettings.from_env().interp_mode == "enforce"
+    monkeypatch.setenv("QA_INTERP_MODE", "sometimes")
+    with pytest.raises(ValueError, match="QA_INTERP_MODE"):
+        QASettings.from_env()
+
+
+@pytest.mark.anyio
+async def test_an_advisory_interpretation_failure_is_reported_but_never_fails_the_answer():
+    judgement = Judgement(faithful=False, differs_in=["dates"], note="Use July 2026.")
+    app, _ = advisory_app(FakeLLM(judgement))
+    verdict = verdict_of(await send(app))
+    assert verdict.verdict == "pass" and verdict.failed == [] and verdict.guidance is None
+    [advice] = verdict.advisories
+    assert advice.code == "interpretation_matches_question" and advice.passed is False
+    assert "dates" in advice.detail and "Use July" not in advice.detail  # no free text out
+
+
+@pytest.mark.anyio
+async def test_an_advisory_pass_is_recorded_as_a_passing_advisory():
+    verdict = verdict_of(await send(advisory_app(FakeLLM())[0]))
+    assert verdict.verdict == "pass" and [a.passed for a in verdict.advisories] == [True]
+
+
+@pytest.mark.anyio
+async def test_in_advisory_mode_a_model_failure_does_not_withhold_the_verdict():
+    app, _ = advisory_app(FakeLLM(error=LLMUnavailable("503")))
+    verdict = verdict_of(await send(app))
+    assert verdict.verdict == "pass"
+    [advice] = verdict.advisories
+    assert advice.passed is False and "could not run" in advice.detail
+
+
+@pytest.mark.anyio
+async def test_advisory_mode_still_fails_a_figures_failure_without_calling_the_model():
+    llm = FakeLLM()
+    app, _ = advisory_app(llm, FakeSource(severity_counts={"low": 1, "medium": 1, "high": 1}))
+    verdict = verdict_of(await send(app))
+    assert verdict.verdict == "fail" and verdict.figures_failed and llm.prompts == []
+    assert verdict.advisories == []
+
+
+@pytest.mark.anyio
+async def test_the_advisory_judgement_is_logged_without_the_note_or_the_meaning():
+    judgement = Judgement(
+        faithful=False, differs_in=["metric"], note="CANARYNOTE", meaning="CANARYMEANING"
+    )
+    with captured_logs() as lines:
+        await send(advisory_app(FakeLLM(judgement))[0])
+        logged = lines()
+    text = json.dumps(logged)
+    assert "CANARYNOTE" not in text and "CANARYMEANING" not in text
+    done = next(x for x in logged if x["msg"] == "task completed")
+    assert done["verdict"] == "pass" and done["advisory_failed"] == [
+        "interpretation_matches_question"
+    ]
+
+
+def test_only_the_interpretation_check_can_be_advisory():
+    from schemas import CheckResult
+
+    ok = CheckResult(code="a", check_class="figures", passed=True)
+    with pytest.raises(ValidationError):
+        Verdict(verdict="pass", checks=[ok], advisories=[ok])
+    advice = CheckResult(code="i", check_class="interpretation", passed=False)
+    assert Verdict(verdict="pass", checks=[ok], advisories=[advice]).failed == []

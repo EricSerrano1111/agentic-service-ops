@@ -27,7 +27,9 @@ from schemas import MAX_GUIDANCE_CHARS, ForecastRequest, ReportingRequest
 
 log = logging.getLogger("agent_qa")
 
-PROMPT_NAME = "qa_interp_v1"
+#: v1 and v2 both failed their gate; v2 is the one shipped, in advisory mode, because it caught more
+#: wrong readings (39 of 42 against 37 in the first run; ADR-089, L-74).
+PROMPT_NAME = "qa_interp_v2"
 CHECK_CODE = "interpretation_matches_question"
 
 DiffField = Literal[

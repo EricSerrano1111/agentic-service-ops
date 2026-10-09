@@ -80,6 +80,9 @@ class Verdict(BaseModel):
     checks: list[CheckResult] = Field(max_length=MAX_CHECKS)
     #: A reviewer note for the specialist, set only when the sole failure is interpretation.
     guidance: str | None = Field(default=None, max_length=MAX_GUIDANCE_CHARS)
+    #: Checks that ran in advisory mode (ADR-089): reported here and logged, but never part of
+    #: the verdict, so they cannot fail an answer or trigger a retry. Interpretation only.
+    advisories: list[CheckResult] = Field(default_factory=list, max_length=MAX_CHECKS)
 
     @property
     def failed(self) -> list[CheckResult]:
@@ -99,4 +102,6 @@ class Verdict(BaseModel):
             raise ValueError("the verdict is fail exactly when a check failed")
         if self.guidance is not None and (self.figures_failed or not self.interpretation_failed):
             raise ValueError("guidance is only for an interpretation-only failure")
+        if any(a.check_class != "interpretation" for a in self.advisories):
+            raise ValueError("only the interpretation check can be advisory")
         return self

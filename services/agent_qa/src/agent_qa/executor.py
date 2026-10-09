@@ -174,6 +174,7 @@ class QAExecutor(AgentExecutor):
                     "task_id": task.id,
                     "verdict": verdict.verdict,
                     "failed_checks": [c.code for c in verdict.failed],
+                    "advisory_failed": [c.code for c in verdict.advisories if not c.passed],
                 },
             )
 

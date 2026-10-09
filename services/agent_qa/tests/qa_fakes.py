@@ -16,7 +16,20 @@ REPO = Path(__file__).resolve().parents[3]
 MANIFEST_PATH = REPO / "ml" / "forecast" / "artifacts" / "volume_v2.manifest.json"
 AS_OF = dt.date(2026, 8, 30)
 SETTINGS = Settings(
-    db_host="x", db_port=5432, db_name="x", db_user="x", public_url="http://agent.test/"
+    db_host="x",
+    db_port=5432,
+    db_name="x",
+    db_user="x",
+    public_url="http://agent.test/",
+    interp_mode="enforce",  # most tests exercise the check as a gate; advisory has its own
+)
+ADVISORY = Settings(
+    db_host="x",
+    db_port=5432,
+    db_name="x",
+    db_user="x",
+    public_url="http://agent.test/",
+    interp_mode="advisory",
 )
 TECHNICIANS = [(7, "Priya Kim"), (8, "Priya Castillo"), (9, "Ben Okafor")]
 ACCOUNTS = [

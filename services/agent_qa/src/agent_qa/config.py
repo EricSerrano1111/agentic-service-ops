@@ -20,6 +20,17 @@ from common import database_host
 from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
 
 DEFAULT_MANIFEST = Path("/app/artifacts/volume_v2.manifest.json")
+#: `advisory`: the interpretation check is logged and reported on the verdict but never fails
+#: an answer or triggers a retry. `enforce`: a failed check fails the verdict. The default is
+#: advisory because neither interpretation prompt passed its gate (ADR-089, L-74).
+INTERP_MODES = ("advisory", "enforce")
+
+
+def _interp_mode(raw: str | None) -> str:
+    mode = (raw or "advisory").strip().lower()
+    if mode not in INTERP_MODES:
+        raise ValueError(f"QA_INTERP_MODE must be one of {', '.join(INTERP_MODES)}, got {raw!r}")
+    return mode
 
 
 def _required(name: str) -> str:
@@ -49,6 +60,7 @@ class Settings:
     connect_timeout_s: int = 5
     #: The interpretation call, retries and 429 waits included.
     interp_timeout_s: float = 30.0
+    interp_mode: str = "advisory"
     public_url: str = "http://agent_qa:8004/"
     host: str = "0.0.0.0"
     port: int = 8004
@@ -81,6 +93,7 @@ class Settings:
             ),
             statement_timeout_ms=int(env("QA_DB_STATEMENT_TIMEOUT_MS", "10000")),
             interp_timeout_s=float(env("QA_INTERP_TIMEOUT_S", "30")),
+            interp_mode=_interp_mode(env("QA_INTERP_MODE")),
             public_url=env("AGENT_QA_PUBLIC_URL", "http://agent_qa:8004/"),
             port=int(env("AGENT_QA_PORT", "8004")),
         )
