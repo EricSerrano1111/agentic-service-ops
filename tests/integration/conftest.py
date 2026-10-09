@@ -118,3 +118,36 @@ def loaded_database(live_database: None) -> None:
         (count,) = conn.execute("SELECT count(*) FROM incidents").fetchone()
     if count == 0:
         _unavailable("database migrated but not loaded — run data/generator/load.py")
+
+
+@pytest.fixture(autouse=True)
+def _dispose_server_engines(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Stop the MCP servers' engines from leaking connections into the suite (L-66).
+
+    The figures tests build a server per call (some tests loop over dozens of calls), and
+    each server builds an engine whose pool keeps up to four connections open until garbage
+    collection. A small server's slots run out (Cloud SQL's micro tier allows 25). Here the
+    servers' engines use `NullPool`, which holds no connection between uses, and every engine
+    built during a test is disposed at its end. The servers' own code is unchanged: one
+    engine per process, never per request.
+    """
+    import mcp_feedback.store as feedback_store
+    import mcp_incidents.queries as incidents_queries
+    import mcp_volume.store as volume_store
+    from sqlalchemy import create_engine as real_create_engine
+    from sqlalchemy.pool import NullPool
+
+    built = []
+
+    def create_engine(url, **kwargs):
+        kwargs.pop("pool_size", None)
+        kwargs.pop("max_overflow", None)
+        engine = real_create_engine(url, poolclass=NullPool, **kwargs)
+        built.append(engine)
+        return engine
+
+    for module in (incidents_queries, feedback_store, volume_store):
+        monkeypatch.setattr(module, "create_engine", create_engine)
+    yield
+    for engine in built:
+        engine.dispose()
