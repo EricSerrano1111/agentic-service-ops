@@ -115,3 +115,9 @@ v1's 252 calls plus v2's 252 would not fit in one day. v1 stopped at 103 request
 in the 420-call gate budget (355) and under the 400-per-Pacific-day limit together with today's other
 calls, and it is run on the same day. If v2 fails the gate, the interpretation check ships in
 advisory mode, as above.
+
+*On the budget note above ("the owner is asked before any v2 call"):* it was written on the
+assumption that v1 would use all 252 calls, which would have left no room for v2 within the 420.
+That did not happen (103 used), and the owner's brief authorises exactly one revision. The note's
+condition no longer holds, so v2 is run without asking. The 420-call cap and the 400 per Pacific
+day still bind: 103 + 252 = 355 gate calls, and the end-to-end checks (20) come after.
