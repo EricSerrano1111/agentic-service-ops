@@ -127,7 +127,9 @@ The sentiment path is the trap. Do **not** have the QA agent re-run the same sen
 ### QA loop semantics (locked)
 
 - **Bounded retries:** Maximum 2 revision cycles per request, counted and timed by the orchestrator, which owns the loop (ADR-055).
-- **End-to-end ceiling:** No request runs longer than 120 seconds. At the ceiling, the system returns the same degraded result and escalation flag as a final QA failure (ADR-034).
+- **Retry classes (ADR-088):** only what a retry can fix is retried. A QA `interpretation` failure goes back to the specialist with QA's guidance, at most twice. A `figures` failure is **not** retried: the figures are deterministic code, so a recompute that disagrees will disagree again, and it escalates at once with the degraded result. QA is a separate service, `agent_qa`, with its own database role (ADR-087).
+- **End-to-end ceiling:** No request runs longer than 120 seconds, enforced as **one deadline** set when the request arrives and passed on every A2A call (absolute epoch milliseconds in the message metadata). Each hop uses the smaller of the time left minus a 5 s reserve and its own cap, and a received deadline is never trusted. At the ceiling, the system returns the same degraded result and escalation flag as a final QA failure (ADR-034, ADR-088).
+- **Degraded result:** `outcome: degraded` with `escalate: true`, a warning and, when a dependency is down, the capability named ("the forecast service is temporarily unavailable"); the other domains keep answering. A QA-failed answer is never shown, and an answer QA could not check is returned only marked "not verified" (ADR-088).
 - **On final failure:** Return a degraded result with an explicit warning plus a human-escalation flag. Never silently return unverified output; never loop unbounded.
 - **Granularity:** QA annotates specific failed checks rather than rejecting wholesale, so revision guidance is actionable.
 - This cap is a deliberate cost and latency control — document it as such.
@@ -258,7 +260,7 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - [ ] Config and secrets management — no hardcoded credentials *(on Cloud Run, database credentials are mounted only into the MCP container, ADR-079; **proved on the reporting slice 2026-10-08**: secrets in Secret Manager, mounted per container, and a log scan of 281 entries found no secret value)*
 - [ ] Structured logging with trace IDs correlated across agent hops *(in progress: JSON lines with one trace id across orchestrator → A2A → agent → MCP, `packages/common`; asserted by the e2e test)*
 - [ ] Health checks and readiness probes on every service *(in progress: `/healthz` liveness on every service; `/readyz` readiness on every MCP server (database answers) and every agent (its MCP server answers), built 2026-10-08, used by compose startup ordering and, on Cloud Run, by the startup probes and the agent's dependency on its sidecar, ADR-079; **proved 2026-10-08**: with the database stopped, Cloud Run refused the revision on the sidecar's `/readyz` and moved no traffic)*
-- [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-077)
+- [ ] Bounded retries, timeouts, and circuit-breaking on all inter-agent calls, within a 120-second end-to-end ceiling (ADR-077, ADR-088) *(in progress: built 2026-10-09 and tested offline and end to end: one request deadline, a breaker per specialist and for the Gemini transport, the degraded result; the revision loop and QA's own breaker are phase M)*
 - [ ] Graceful degradation — defined behavior when any specialist agent is unavailable
 - [ ] Test suite — unit and integration *(in progress: offline unit suite and the live grants integration suite exist, both in CI)*
 - [ ] Eval harness (see below)
@@ -327,7 +329,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 ### Runaway-cost guardrails
 
-- Hard per-run token/cost cap, enforced in code — QA loops fan out usage fast
+- Hard per-run token/cost cap, enforced in code — QA loops fan out usage fast *(wired 2026-10-09, ADR-088: `MAX_COST_PER_RUN_USD`, default $0.02, checked by the orchestrator before each specialist hop against the list-price total of the request across services; a list-price estimate, L-71)*
 - **Model tiering, only where measured:** every agent starts on Flash-Lite and moves up (Flash; Pro for QA as a Sprint 5 test) only when an eval shows Flash-Lite underperforming (ADR-029). The orchestrator's first measurement (routing seed set) kept it on Flash-Lite (ADR-049)
 - Aggressive caching of static context (schemas, tool definitions, system prompts) separate from dynamic context
 - Cost logging per request, surfaced in the eval harness

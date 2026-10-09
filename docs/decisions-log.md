@@ -2365,6 +2365,8 @@ training grants.
 - NFR-4's evidence in the traceability matrix points here until the breaker exists.
 - The degraded result it fails fast to is FR-13, also Sprint 4.
 
+**Note 2026-10-09 (ADR-088):** the values this ADR left open are fixed in ADR-088. The breaker opens after N = 3 consecutive counted failures, stays open for a 30 s cool-down and then allows one trial call. Counted: timeouts, connection errors, HTTP 5xx, `LLMUnavailable`, `LLMRateLimited` after its own retries, `LLMDailyQuotaExhausted`. Not counted: 4xx, validation errors, `LLMOutputInvalid` and declines. The implementation is a small in-house async class (`packages/common`), not `pybreaker`. This entry is otherwise unchanged.
+
 ### ADR-078 — The reporting-slice deploy is pulled forward to 2026-10-12
 *Date: 2026-10-05. Supersedes ADR-045's dates and stop date only. Its scope, checks, stop-rule consequences and the rest of its decision stand.*
 
@@ -2687,6 +2689,13 @@ training grants.
 - Phase M builds `agent_qa`; phase N measures its catch rate against injected faults.
 - The 1% floor makes the check lenient on this data: it will pass answers that a rate fitted to p̂ would fail. That is the intended trade, stated here.
 
+**Result of the baseline measurement (2026-10-09), recorded after it was made. The rule above is unchanged:**
+- Measured once as `app_eval` over the full data window, on all 7,521 stored `bert_v1` predictions (`model_version` `0fa27f641d95…`, the SHA-256 of the committed manifest): **n = 4,715 covered comments, x = 7 clear contradictions, p̂ = 0.001485.** So **p0 = max(0.001485, 0.01) = 0.01**: the floor decides, as the rule anticipated.
+- Per region, for information only: central 2 of 1,198 (0.0017), northeast 1 of 1,395 (0.0007), southeast 3 of 1,208 (0.0025), west 1 of 914 (0.0011).
+- Excluded from coverage: 749 unrated comments, and 2,057 rated comments predicted neutral or mixed.
+- What the rule means on this data: with p0 = 0.01, an answer covering 100 comments fails at 5 contradictions (P = 0.0034) and passes at 4 (P = 0.018); one covering 20 fails at 3 (P = 0.0010); under 20 it is reported as `insufficient_coverage`. The measured rate is a seventh of the floor, so the floor, which is the owner's judgement, is what sets the bar here. The synthetic star ratings come from the same label as the text (L-24), so the real-world rate this floor stands for is not measured by this data.
+- Files: `evals/results/qa_baseline/2026-10-09/baseline.json`; `evals/qa_baseline/measure.py`; the rule is `common.stats.rating_cross_check`, tested against scipy on fixed numbers.
+
 ### ADR-088 — The verification loop, deadline, circuit breaker and cost cap
 *Date: 2026-10-09. Supersedes ADR-055 in part: which failures are retried. ADR-055's bound of at most 2 revisions, and the orchestrator owning the loop, both stand. Fixes the open values of ADR-077. Applies ADR-034.*
 
@@ -2736,3 +2745,8 @@ training grants.
 - A specialist that is down now yields a degraded result (HTTP 200, `outcome: degraded`) instead of a 502 or 504. The language-model routing call keeps its own error statuses (429 with `Retry-After`, 503) unless its breaker is open.
 - The breaker's per-process state and the list-price cost estimate are limitations (L-70, L-71).
 - QA's own calls count toward the cost cap and have their own breaker.
+
+**Built in phase 4a (2026-10-09), recorded after the build. The decision above is unchanged:**
+- The deadline, the per-dependency breakers (one for the Gemini transport per process, one per specialist in the orchestrator), the cost accounting and the degraded result exist and are tested. The QA agent and its breaker, and the revision loop, are phase M.
+- Where the design left a point open, the build chose the simpler reading and says so here: (1) the cost cap is checked on the total already incurred before each specialist hop (`total >= MAX_COST_PER_RUN_USD`), not on a projection of the next hop's cost; (2) a counted failure of a specialist returns the degraded result on that request, and the breaker's job is to fail the following requests fast; (3) an individual language-model failure that does not open the breaker keeps its existing status (429 with `Retry-After`, 503, 500), and only an open breaker is the degraded result; (4) a hop that is cut short because the request deadline is nearer than the hop's own cap is reported as the time limit, not as the specialist being down.
+- Hardening found by the new tests: protobuf cannot serialise an infinite number in message metadata, so the agents' metadata readers return no metadata instead of raising, and the orchestrator ignores unreadable response metadata. A negative, non-finite, boolean or text `cost_usd` is rejected, because a negative number could keep a runaway request under the cap.

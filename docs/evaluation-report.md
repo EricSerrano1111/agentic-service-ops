@@ -764,3 +764,13 @@ build are appended here as they are found (CLAUDE.md).
 - **What:** The 12 filter items in `evals/reporting_parse/parse_v4.jsonl` were written by the assistant that wrote `parse_v4`. They were committed before any run and the prompt's examples were kept out of them (a test checks that), but their phrasing is the author's. 12 of 12 in all three runs shows the prompt parses these questions; it does not show how it parses the owner's wording. No account with a similar name to another beyond "Silver Creek" and "Bluewater" (ambiguity), no misspelling and no lowercase-only question was tried.
 - **Why accepted:** For now (R-16). An owner-written fresh set is the fix, to be used for any later prompt change; the Sprint 5 routing evaluation is the natural place.
 - **Recorded in:** ADR-086; `evals/reporting_parse/README.md`.
+
+### L-70 — Circuit-breaker state is per process (2026-10-09)
+- **What:** Each breaker (ADR-088) lives in one process. The orchestrator keeps one per specialist, and each service keeps one for the Gemini transport. Two Cloud Run instances keep two breakers, so one instance can have a dependency's breaker open while the other still sends it requests, and a new instance starts with all breakers closed. A breaker that opens on one instance protects only that instance's callers.
+- **Why accepted:** At this scale a service runs one or two instances, and a shared breaker would need a shared store (Redis or the database) for a protection NFR-4 asks for in its plainest form. The cost of a wrong call is a few slow requests, bounded by the per-request deadline.
+- **Recorded in:** ADR-088; `packages/common/src/common/breaker.py`.
+
+### L-71 — The per-request cost cap counts list-price estimates (2026-10-09)
+- **What:** `MAX_COST_PER_RUN_USD` (default $0.02) is compared with the sum of each model call's list-price cost, computed from token counts and `prices.toml`. It is an estimate, also in free mode where nothing is billed. It does not include thinking tokens the API does not report in the usage fields, it is checked before a specialist hop with the total already incurred (so one hop can overshoot the cap by its own cost), and it covers only what the services report in response metadata; a service that does not report a cost adds nothing. It guards against a runaway loop; it is not a budget control.
+- **Why accepted:** At Flash-Lite list prices a normal request costs well under $0.01, so the cap sits far above any real request and far below anything that matters to the project budget, whose real controls are the account alerts and the per-process spend caps (ADR-041, ADR-048).
+- **Recorded in:** ADR-088; `packages/common/src/common/cost.py`.

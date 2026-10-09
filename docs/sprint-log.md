@@ -657,6 +657,12 @@ now written; they record the planning decisions above.*
 - *`05-test-scenarios.md` (yours to edit, not edited here): TS-01-A ("SLA compliance in the west region last month"), TS-02-C ("incident rate for the central region", no period given) and TS-05-B ("SLA compliance in the west region in July 2026") are now answerable as scoped figures. Each can be restated as: routed to reporting, the answer says "the west region" (or "central"), and the counts and rate equal the independent calculation. TS-02-C's assumed range (July 2026) is stated by the agent as before. "Region" means the customer site's region, the same column the by-region breakdown uses; an area that is not one of the four regions is declined, not mapped (L-68).*
 - *The golden set was not opened (ADR-074). Golden items about one region or one account may have a different correct answer now that the tools can scope a figure; check them at the Sprint 5 evaluation and, if needed, make a `golden_v3` with disclosure.*
 - *The deploy trigger is still disabled (ADR-083); merging this changes `services/**` and deploys nothing.*
+*2026-10-09, phase 4 split into three prompts, and phase 4a (this PR, `feat/qa-foundations`) outcome:*
+- *Phase 4a (L): ADR-087 (the QA agent's checks and the sentiment rating-check rule, pre-registered) and ADR-088 (retry classes, one 120 s deadline, breaker values, cost cap, degraded result); the Deadline, CircuitBreaker and cost accounting in `packages/common`; the Gemini breaker; agents clamp to the deadline and report cost; the orchestrator's degraded result; the sentiment baseline. **No QA agent yet.***
+- *End-to-end (6 of 6 live calls): a normal reporting question answered with `cost_usd` = 0.00095 in the orchestrator log (the routing call plus the agent's parse call, list price); with `agent_reporting` stopped, three asks each returned the degraded result naming reporting (`escalate: true`), the third opened the breaker, and the fourth failed fast in 3.6 s (the routing call only) with no call to the agent; no traceback, error text or internal address in any response.*
+- *Phase 4b (M): the QA agent (`agent_qa`) and the orchestrator's verification loop.*
+- *Phase 4c (N): the fault-injection harness and the catch rate.*
+- *Sentiment baseline (measured once as `app_eval`, 2026-10-09, after the rule was committed in ADR-087): n = 4,715 covered comments, x = 7 contradictions, p̂ = 0.001485, so p0 = max(p̂, 0.01) = 0.01. The 1% floor (the owner's judgement) sets the bar on this data. Per region: central 2/1,198, northeast 1/1,395, southeast 3/1,208, west 1/914.*
 *Planned sequence update (2026-10-08): the deploy window is done. The reporting filters (L-62) start next, from about 2026-10-09; then QA; the fault-injection harness last.*
 *For `06` (due 2026-11-08), not written there: the window's failures are material for its production-support write-up: a create-body field the API rejects, a reserved path (`/healthz`) that hides the IAM boundary, identity-token minting in Cloud Build, IAM propagation delay (a new invoker binding took over a minute), and a revision failing its readiness probe while the database was stopped.*
 
@@ -670,7 +676,8 @@ now written; they record the planning decisions above.*
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
   - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
 - [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
-- [ ] Circuit breaker, one per outbound dependency (the Gemini provider interface; each A2A client), built with the per-request deadline (ADR-077; NFR-4)
+- [x] Circuit breaker, one per outbound dependency (the Gemini provider interface; each A2A client), built with the per-request deadline (ADR-077; NFR-4)
+  *2026-10-09: done for the Gemini transport and the reporting, sentiment and forecast clients (ADR-088: 3 failures, 30 s, one trial). QA's own breaker comes with the QA client in phase M. Tests: `tests/unit/test_circuit_breaker.py`, `tests/unit/test_llm_breaker.py` and the orchestrator's `test_resilience.py` (opens after 3, fails fast, one trial, 4xx and declines never count, one dependency does not affect another). End to end (`tests/e2e/test_resilience_e2e.py`, 6 live calls): see the 2026-10-09 phase 4a note. State is per process (L-70).*
 - [ ] Fault-injection harness for QA catch-rate measurement
 - [ ] Price a full routing eval run (~300-700 requests, two LLM calls per request per
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
@@ -697,7 +704,8 @@ now written; they record the planning decisions above.*
     *2026-10-08.*
   - [x] Cloud SQL major version 16, to match local Postgres (R-14 parity); record it at provisioning.
     *2026-10-08: `ops-db` is PostgreSQL 16 (see the provisioning record above).*
-- [ ] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
+- [x] Wire the per-request cost cap (§9, `MAX_COST_PER_RUN_USD`, unwired today); it matters once the QA revise loop can multiply calls.
+  *2026-10-09: wired (ADR-088). Default $0.02, list-price, summed across services from response metadata and checked before each specialist hop; malformed or negative reported costs are rejected. Estimate only (L-71).*
 - [x] Decide the service count and UI hosting at Sprint 4 planning. Evaluate each MCP server as a Cloud Run sidecar of its agent, and the UI as a static export served by the gateway or Cloud Storage, so no Node server runs in production.
   *2026-10-05: decided. Each MCP server is a sidecar of its agent (ADR-079); the UI is a Next.js static export served by the gateway (ADR-080).*
 - [ ] Draft `05-test-scenarios.md` (carried over from Sprint 3; due 2026-11-01). Includes the FR-03 known-failing scenario.
