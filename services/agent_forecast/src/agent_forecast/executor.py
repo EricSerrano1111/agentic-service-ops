@@ -25,6 +25,7 @@ from common import (
     clamp_to_deadline,
     current_cost_usd,
     track_request_cost,
+    with_reviewer_note,
 )
 from google.protobuf.json_format import MessageToDict
 from llm import (
@@ -185,7 +186,12 @@ class ForecastExecutor(AgentExecutor):
 
             try:
                 async with asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)):
-                    resolved = await self.parser.parse(question, trace_id=trace_id)
+                    # After QA's interpretation check failed, the question comes back with
+                    # a reviewer note (untrusted, capped, never logged; ADR-089).
+                    resolved = await self.parser.parse(
+                        with_reviewer_note(question, message_metadata(context)),
+                        trace_id=trace_id,
+                    )
             except DeadlineExceeded:
                 await self._fail(updater, task.id, "deadline_exceeded", TIME_LIMIT)
                 return
@@ -205,18 +211,33 @@ class ForecastExecutor(AgentExecutor):
 
             request = resolved.request
             as_of = self.settings.as_of
+            parsed = request.model_dump(mode="json")
             if request.unsupported is not None:
                 await self._fail(
-                    updater, task.id, "not_supported", decline_message(request.unsupported, as_of)
+                    updater,
+                    task.id,
+                    "not_supported",
+                    decline_message(request.unsupported, as_of),
+                    parsed_request=parsed,
                 )
                 return
             if resolved.past:
                 await self._fail(
-                    updater, task.id, "not_supported", decline_message("past_period", as_of)
+                    updater,
+                    task.id,
+                    "not_supported",
+                    decline_message("past_period", as_of),
+                    parsed_request=parsed,
                 )
                 return
             if not resolved.requested:
-                await self._fail(updater, task.id, "not_supported", no_week_message(as_of))
+                await self._fail(
+                    updater,
+                    task.id,
+                    "not_supported",
+                    no_week_message(as_of),
+                    parsed_request=parsed,
+                )
                 return
 
             try:
@@ -271,11 +292,23 @@ class ForecastExecutor(AgentExecutor):
                 },
             )
 
-    async def _fail(self, updater: TaskUpdater, task_id: str, code: str, reason: str) -> None:
+    async def _fail(
+        self,
+        updater: TaskUpdater,
+        task_id: str,
+        code: str,
+        reason: str,
+        parsed_request: dict | None = None,
+    ) -> None:
         log.warning("task failed", extra={"task_id": task_id, "code": code, "reason": reason})
+        # A decline also carries how the question was read, for QA (ADR-089); not logged.
         await updater.failed(
             updater.new_agent_message(
-                [new_text_part(reason)], metadata=cost_metadata({"error_code": code})
+                [new_text_part(reason)],
+                metadata=cost_metadata(
+                    {"error_code": code}
+                    | ({} if parsed_request is None else {"parsed_request": parsed_request})
+                ),
             )
         )
 

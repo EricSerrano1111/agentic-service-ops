@@ -113,8 +113,10 @@ def _rank(
     """Merge, compute rates, sort worst first, cap at 25.
 
     Worst first: highest rate first when a higher rate is worse (incident rate), lowest
-    first otherwise (SLA compliance, first-time fix). Null rates go last, ties by group
-    name. The cap applies after sorting, so truncation keeps the worst groups.
+    first otherwise (SLA compliance, first-time fix). Groups with the same rate: the larger
+    denominator first (the figure that rests on more cases), then group name. Null rates go
+    last, ordered the same way (data dictionary §6, owner's ruling 2026-10-09). The cap applies
+    after sorting, so truncation keeps the worst groups.
     """
     keys = set(numerators) | set(denominators)
     groups = []
@@ -134,7 +136,7 @@ def _rank(
 
     def worst_first(g: GroupRate):
         value = Decimal(g.rate or 0)
-        return (g.rate is None, -value if higher_is_worse else value, g.group)
+        return (g.rate is None, -value if higher_is_worse else value, -g.denominator, g.group)
 
     groups.sort(key=worst_first)
     return groups[:MAX_GROUPS], len(groups)

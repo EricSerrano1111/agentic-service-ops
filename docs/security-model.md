@@ -69,6 +69,11 @@ agents are built:
    QA's call is given the answer without the quoted comments, or this guarantee is
    narrowed to "no comment reaches a model except QA's interpretation check", and the QA
    prompt is treated as a prompt-injection surface (as "Still to write" already notes).
+   **As built (2026-10-09, ADR-089):** QA's interpretation call sees the user's question and
+   the parsed request as structured fields, never the answer text, a figure or a quoted
+   comment, and only reporting and forecast answers are checked. The sentiment check, with
+   each quote replaced by its ID, is still to come; until then a sentiment answer is
+   returned `not_checked` and says so, so this guarantee holds as stated.
 10. **`mcp_volume` never returns forecast numbers for a slice-band the manifest marks
     unserved, and the forecast path carries no customer text.** The server reads the
     `volume_v2` manifest's ADR-071 serving table and puts a week's point and ranges in
@@ -89,6 +94,13 @@ agents are built:
     with no figures, and names reach only the answer template, never a model (ADR-073).
     `find_account` follows exactly the same rules for account names, and the `region` filter
     accepts only the four site regions (ADR-086).
+12. **QA's one language-model call can at worst flip its own verdict.** It has no tool and no
+    path to SQL, its output is a closed schema (`faithful`, a list drawn from ten field
+    names, and a note capped at 300 characters), and the deterministic checks run first and
+    whatever it says: a request that fails a figures check never reaches the model. The
+    note it can write goes back to a specialist only as a capped, labelled, untrusted
+    reviewer note appended to that specialist's parse input, whose own output is
+    schema-constrained; the note and the question are never logged (ADR-087, ADR-089).
 
 The reporting agent's `service_feedback` grant also excludes `feedback_text`, so it can
 count and average ratings but can't read a customer's words (ADR-025).
@@ -113,7 +125,13 @@ not in a service image, a Cloud Run environment, or the Secret Manager entries a
 read. The same holds for the Postgres admin credentials the migrations run as. Today only the
 MCP servers receive database credentials in docker-compose, each its own role's:
 `mcp_incidents` holds `app_reporting`'s, `mcp_feedback` holds `app_sentiment`'s, the one
-runtime role with a write (guarantee 7), and `mcp_volume` holds `app_forecast`'s. CI uses ephemeral generator credentials that never
+runtime role with a write (guarantee 7), and `mcp_volume` holds `app_forecast`'s. The one
+agent that holds credentials directly is `agent_qa`, with `app_qa`'s and no other role's: it
+runs its own read-only SQL and calls no specialist or MCP server (ADR-055, ADR-087), which is
+why it is the highest-value target above. Its image carries the volume manifest and nothing
+else from the repository, and `tests/unit/test_qa_independence.py` fails if its code imports a
+specialist, a server or the ORM models, names a table or column it has no business with, or
+issues anything but a read. CI uses ephemeral generator credentials that never
 leave the workflow.
 
 The controls that implement these defences, and what is still planned, are set out in the
@@ -173,9 +191,11 @@ configuration, not from a question.
 | The Agent Card advertises names, descriptions and example questions only: no tool schemas, credentials or internal addresses beyond the agent's own URL. | Built | `card.py` in each agent. |
 | The orchestrator calls agents at fixed addresses from configuration (`AGENT_*_URL`), never discovered from input. | Built | `docker-compose.yml`, `config.py`; by search, no address is taken from a question or a model output. |
 | Specialist answers are validated against shared typed contracts on receipt, with numbers as typed values. | Built | `test_answer_that_breaks_the_contract_is_rejected`, `test_metric_answer_with_a_float_rate_is_rejected`, `test_numbers_for_an_unserved_week_are_rejected`. |
-| Network exposure under compose: only the orchestrator and Postgres publish a port, and both bind `127.0.0.1` only (the orchestrator since 2026-10-04); the agents and MCP servers are reachable only on the compose network. | Built | `test_only_orchestrator_publishes_a_port`, `test_every_published_port_binds_loopback_only` (`tests/unit/test_compose_isolation.py`); `docker-compose.yml`. |
+| Network exposure under compose: only the orchestrator, the QA agent and Postgres publish a port, and all bind `127.0.0.1` only (the orchestrator since 2026-10-04, QA since 2026-10-09, so it can be probed from the developer's machine); the other agents and MCP servers are reachable only on the compose network. QA's `/` accepts a verification request without authentication, like every hop (L-59), and spends model quota, so loopback is its only boundary locally. | Built | `test_only_orchestrator_and_qa_publish_a_port`, `test_every_published_port_binds_loopback_only`, `test_agent_qa_holds_only_app_qa_credentials_and_no_models_folder` (`tests/unit/test_compose_isolation.py`); `docker-compose.yml`. |
 | Per-hop timeouts that fit inside the 120-second ceiling. | Built | `test_timeouts_fit_inside_the_120s_ceiling`, `test_sentiment_timeouts_fit_inside_the_120s_ceiling`, `test_forecast_timeouts_fit_inside_the_120s_ceiling` (orchestrator tests). |
-| A single per-request deadline passed through every hop. | Planned, Sprint 4 | Sprint 4 planning note in `sprint-log.md`. |
+| A single per-request deadline passed through every hop, QA's included. | Built (2026-10-09, ADR-088, ADR-089) | `tests/unit/test_deadline.py`, the orchestrator's `test_resilience.py` and `test_qa_loop.py` (`test_the_qa_hop_is_clamped_to_the_time_left_minus_the_reserve`), `test_qa_service.py` (`test_an_expired_deadline_fails_the_task_before_any_work`). |
+| Verification before an answer is returned: a reporting or forecast answer or decline is sent to the QA agent; a pass is returned `verified`, a figures failure is the degraded result at once, an interpretation failure re-asks the specialist at most twice, and QA being down, slow or over the cost cap is the degraded result with the answer marked "not verified", never verified. QA has its own circuit breaker. | Built (2026-10-09, ADR-089) | `services/orchestrator/tests/test_qa_loop.py` (every branch); `tests/e2e/test_qa_e2e.py`. |
+| The QA agent refuses malformed input before running anything: no or several data parts, a payload over 200 KB, an unknown field, an unknown domain or kind all end the task failed `bad_request`; an answer that breaks its own contract is a failing verdict, not a crash; metadata protobuf cannot serialise is ignored; a failed task carries no exception text, and neither logs nor verdict details carry the question, the answer text or a figure. | Built (2026-10-09, ADR-089) | `services/agent_qa/tests/test_qa_service.py` (`test_input_that_is_not_a_verification_request_is_refused_before_anything_runs`, `test_an_oversized_payload_is_refused`, `test_an_answer_that_breaks_its_contract_is_a_fail_verdict_not_a_crash`, `test_no_question_text_answer_text_or_note_reaches_the_logs`, `test_a_failing_verdict_never_carries_a_figure_from_the_answer`). |
 | **Authentication between services: none today.** No token, key or certificate is checked on any hop, and the compose network is the only boundary. The orchestrator's `/ask` is unauthenticated and spends the model quota, so it is published on loopback only (`127.0.0.1:8000`), reachable from the developer's machine and nothing else. Accepted for local development (L-59); IAM ID tokens and the gateway replace it in the deploy. | Not built; accepted locally | Absence confirmed by search of `services/` and `packages/` for tokens, keys and auth dependencies (2026-10-04). L-59. |
 | IAM ID tokens between services, on the Agent Card fetch and the message call alike, audience the target's base URL, attached to the target's origin only, cached until shortly before expiry. On Cloud Run an agent's call to its own MCP server is localhost between sidecars of one service and carries no token (ADR-079). | **Built for orchestrator to reporting (2026-10-08)**; the rest, and agent to QA, Planned, Sprint 5 | `test_token_is_on_both_the_card_fetch_and_the_message_call_when_auth_is_on`, `test_the_bearer_goes_only_to_the_audience_origin`, `test_a_token_fetch_failure_is_specialist_unavailable_not_a_500` (orchestrator tests); the pipeline's check 6 answered a question through the signed hop (ADR-081, ADR-085). |
 | Ingress is IAM only on both deployed services: no `allUsers` or `allAuthenticatedUsers`; reporting's only invoker is the orchestrator's service account; a caller that is not the orchestrator is refused. | **Built (2026-10-08)** | `verify.py` checks, passing in the pipeline: unauthenticated `POST /ask` and `GET /` on the orchestrator and `GET /` on reporting each 403; the probe account (no role) gets 403 from reporting; reporting's invoker is exactly the orchestrator; neither service runs as the default compute account. `test_unauthenticated_probes_pass_on_401_and_403` and the other `verify.py` unit tests. The project Owner can invoke any service through the basic role (ADR-081). |
@@ -190,13 +210,14 @@ on them (guarantee 2).
 | Control | Status | Evidence |
 |---|---|---|
 | Customer comments are untrusted and are never sent to a language model. They reach only the fine-tuned classifier, whose output is one of four labels, and answers are rendered from templates (guarantee 9; ADR-046, ADR-068). | Built | `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`; `test_examples_are_quoted_verbatim_with_label_and_confidence`; compose gives `mcp_feedback` no model key (`test_mcp_feedback_holds_no_model_key_or_setting`). |
-| QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Planned, Sprint 4 | Sprint 4 planning note and guarantee 9 above. The QA agent (`services/agent_qa`) is not built. |
+| QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Planned, M2 (the sentiment check) | Guarantee 9 above. For reporting and forecast the call sees only the question and the parsed request (`test_a_reading_never_contains_a_figure_only_the_parsed_request`, `test_the_model_sees_the_question_and_the_reading_and_no_figures`). |
+| QA's interpretation call is contained: no tool, closed output schema, deterministic checks first, a note capped at 300 characters that reaches a specialist only as a labelled, untrusted, 500-character-capped reviewer note, never logged. | Built (2026-10-09, ADR-089) | `test_the_model_output_schema_is_closed`, `test_a_question_that_tries_to_rewrite_the_rules_changes_nothing_deterministic`, `test_the_models_free_text_is_confined_to_the_note` (`test_qa_service.py`); `tests/unit/test_reviewer_note.py`; `test_a_reviewer_note_is_appended_to_the_parse_input_under_its_label`, `test_the_note_is_capped_at_500_characters_and_stripped_of_control_characters`, `test_the_note_is_never_logged` (reporting), the forecast equivalents; `test_the_reviewer_note_is_capped_before_it_is_sent`, `test_loop_decisions_are_logged_without_the_note_or_the_question` (orchestrator). |
 | The question is rendered into the prompt as data: one pass, values inserted literally, so template-looking text can't raise or be rewritten. | Built (2026-10-04) | `tests/unit/test_prompt_rendering.py`; the per-service `test_*template_syntax*` tests named below. |
 | The question is delimited in every routing and parsing prompt and declared data, not instructions; it is limited to 2,000 characters. | Built | All ten prompt files (`route_v1` to `route_v5`, `parse_v1` to `parse_v3`, and the sentiment and forecast `parse_v1`) carry the line; `AskRequest` (`max_length=2000`). No test asserts the prompt line. |
 | Model output is structured and validated: the call sets the response schema from the typed model, the reply is parsed against it, and an invalid reply fails with no repair and no default route or range. | Built | `packages/llm` `transport.py` and `client.py`; `test_invalid_parse_output_fails_and_never_guesses_a_range`, `test_unclear_question_asks_to_rephrase`. |
 | No tools are exposed to a model, and automatic function calling is disabled. The agent's code picks the tool from the parsed metric (ADR-046). | Built | `packages/llm` `transport.py` (`automatic_function_calling` disabled); `test_each_metric_calls_its_own_tool`. |
 | Model output is never executed: parsed values only select among fixed code paths. | Built | By search, no `eval`, `exec` or subprocess call in `services/` or `packages/`. |
-| QA checks that the parsed request matches the question. | Planned, Sprint 4 | ADR-056; until it exists, nothing downstream checks the parse. |
+| QA checks that the parsed request matches the question. | **Built as advisory only** for reporting and forecast (2026-10-09, ADR-089): the check runs and is logged and reported on the verdict, but it failed its gate twice (`evals/qa_interp/`, `evals/results/qa_interp/`) and does not fail an answer (`QA_INTERP_MODE=advisory`, L-74). Sentiment is `not_checked` until M2. | `test_an_advisory_interpretation_failure_is_reported_but_never_fails_the_answer`, `test_in_advisory_mode_a_model_failure_does_not_withhold_the_verdict` (`test_qa_service.py`). So a wrong parse is still not blocked downstream. |
 
 **What an injected question could still achieve.** A wrong route or wrong parameters: another
 specialist, another period, region, metric or technician, or a decline. The data returned stays
@@ -207,8 +228,11 @@ grants. Two smaller effects remain: the router's one-sentence `reason` is model-
 derived from the question, and it is returned in the response and logged; and quoted comments
 (at most 3) appear verbatim in an answer, so the Sprint 5 interface must render them as plain
 text (React escapes text by default; the interface is not built, so this is a requirement on it,
-not a control). Until the QA agent exists (Sprint 4), nothing checks that a wrong route or
-parameter was caught.
+not a control). Since 2026-10-09 the QA agent checks that the figures of a reporting or forecast answer
+are right for the request as parsed, and runs an interpretation check on the parse that is
+advisory only (ADR-089, L-74), so a wrong parse is reported in a log and on QA's verdict but not
+blocked; a wrong route is still not checked (a question sent to the wrong domain gets that domain's answer or decline), and
+sentiment answers are not checked yet.
 
 **A question is data, not template syntax.** Until 2026-10-04 a question containing text
 such as `{{secret}}` made prompt rendering raise, and the orchestrator returned an unhandled

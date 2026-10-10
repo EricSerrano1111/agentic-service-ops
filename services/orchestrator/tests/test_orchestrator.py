@@ -40,6 +40,8 @@ from orchestrator.result import TaskFailed, extract_answer
 from orchestrator.routing import Router
 from schemas import RouteDecision
 
+TASK_FAILED = TaskState.TASK_STATE_FAILED
+
 ANSWER = {
     "request": {
         "metric": "incident_count",
@@ -72,6 +74,60 @@ ANSWER = {
     },
 }
 QUESTION = "How many incidents were reported last month?"
+QA_URL = Settings().agent_qa_url
+PASS_VERDICT = {
+    "verdict": "pass",
+    "checks": [
+        {"code": "figures_match_database", "check_class": "figures", "passed": True, "detail": ""},
+        {
+            "code": "interpretation_matches_question",
+            "check_class": "interpretation",
+            "passed": True,
+            "detail": "",
+        },
+    ],
+    "guidance": None,
+}
+
+
+def failing_verdict(code: str, check_class: str = "figures", guidance: str | None = None) -> dict:
+    """A verdict failing one check; guidance only goes with an interpretation failure."""
+    return {
+        "verdict": "fail",
+        "checks": [{"code": code, "check_class": check_class, "passed": False, "detail": ""}],
+        "guidance": guidance,
+    }
+
+
+def verdict_task(verdict: dict | None = None, cost: float | None = None) -> Task:
+    """The QA agent's completed task: its verdict as a data part."""
+    return Task(
+        id="qa-task",
+        context_id="qa-ctx",
+        status=TaskStatus(state=TaskState.TASK_STATE_COMPLETED),
+        artifacts=[
+            Artifact(
+                artifact_id="v",
+                name="qa_verdict",
+                parts=[new_text_part("verdict"), new_data_part(verdict or PASS_VERDICT)],
+                metadata=None if cost is None else {"cost_usd": cost},
+            )
+        ],
+    )
+
+
+def qa_failed_task(code: str) -> Task:
+    """The QA agent's failed task: it could not decide."""
+    status = TaskStatus(state=TASK_FAILED)
+    status.message.CopyFrom(
+        Message(
+            message_id="m",
+            role=Role.ROLE_AGENT,
+            parts=[new_text_part("could not run")],
+            metadata={"error_code": code},
+        )
+    )
+    return Task(id="qa-task", context_id="qa-ctx", status=status)
 
 
 class FakeLLM:
@@ -133,11 +189,19 @@ def _completed() -> Task:
 class Sent:
     """Replaces send_question; records whether the agent was called."""
 
-    def __init__(self, behaviour=None):
+    def __init__(self, behaviour=None, qa=None):
         self.calls: list[str] = []
+        self.qa_calls: list[dict] = []
         self.behaviour = behaviour or (lambda: _completed())
+        self.qa = qa or (lambda n: verdict_task())
 
-    async def __call__(self, agent_url, question, *, trace_id, timeout_s, **_):
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s, **kwargs):
+        if agent_url == QA_URL:  # the verification hop, answered by `qa(call number)`
+            self.qa_calls.append(kwargs)
+            result = self.qa(len(self.qa_calls))
+            if isinstance(result, BaseException):
+                raise result
+            return result
         self.calls.append(question)
         return self.behaviour()
 
@@ -244,18 +308,10 @@ def test_forecast_label_still_covers_forward_looking_questions():
     ("error", "status", "code"),
     [
         (LLMOutputInvalid("bad", raw_text="{route: ???}"), 422, "unclear_question"),
-        (LLMRateLimited("x"), 429, "rate_limited"),
-        (LLMDailyQuotaExhausted("gemini-3.7-flash"), 503, "daily_quota_exhausted"),
-        (LLMUnavailable("x"), 503, "model_unavailable"),
         (
             LLMRequestError("gemini-3.7-flash: error 400: Thinking level MINIMAL is not supported"),
             500,
             "internal_error",
-        ),
-        (
-            LLMAuthError("gemini-3.7-flash (free key, GOOGLE_AI_API_KEY): auth error"),
-            503,
-            "model_unavailable",
         ),
     ],
 )
@@ -269,10 +325,26 @@ def test_routing_errors_map_to_clear_responses(monkeypatch, error, status, code)
     assert sent.calls == []  # an unclear question is never defaulted to reporting
 
 
-def test_rate_limited_carries_retry_guidance(monkeypatch):
-    response = _ask(monkeypatch, FakeLLM(error=LLMRateLimited("x")))
-    assert response.headers["Retry-After"] == "60"
-    assert "retry" in response.json()["detail"].lower()
+@pytest.mark.parametrize(
+    "error",
+    [
+        LLMRateLimited("x"),
+        LLMDailyQuotaExhausted("gemini-3.7-flash"),
+        LLMUnavailable("x"),
+        LLMAuthError("gemini-3.7-flash (free key, GOOGLE_AI_API_KEY): auth error"),
+    ],
+)
+def test_routing_that_cannot_run_is_the_degraded_result_naming_routing(monkeypatch, error):
+    """A rate limit, a used-up quota, an outage or a bad key: routing is unavailable (FR-13)."""
+    sent = Sent()
+    response = _ask(monkeypatch, FakeLLM(error=error), sent)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["outcome"] == "degraded" and body["escalate"] is True
+    assert body["unavailable_capability"] == "routing" and body["qa_status"] == "not_checked"
+    assert "routing service is temporarily unavailable" in body["warning"]
+    assert "gemini" not in body["answer"].lower() and "GOOGLE" not in body["answer"]
+    assert sent.calls == [] and sent.qa_calls == []
 
 
 def test_unclear_question_asks_to_rephrase(monkeypatch):
@@ -280,11 +352,12 @@ def test_unclear_question_asks_to_rephrase(monkeypatch):
     assert "rephrase" in response.json()["detail"]
 
 
-def test_routing_timeout_returns_504_without_hanging(monkeypatch):
+def test_routing_timeout_is_the_degraded_result_without_hanging(monkeypatch):
     settings = Settings(route_timeout_s=0.2)
     response = _ask(monkeypatch, FakeLLM(decision("reporting"), delay=5), settings=settings)
-    assert response.status_code == 504
-    assert response.json()["error"] == "routing_timeout"
+    assert response.status_code == 200
+    body = response.json()
+    assert body["outcome"] == "degraded" and body["unavailable_capability"] == "routing"
 
 
 # --------------------------------------------------------------------------- agent errors
@@ -802,14 +875,12 @@ class SentTo(Sent):
         super().__init__(behaviour)
         self.urls: list[str] = []
 
-    async def __call__(self, agent_url, question, *, trace_id, timeout_s, **_):
-        self.urls.append(agent_url)
-        self.timeouts = getattr(self, "timeouts", []) + [timeout_s]
+    async def __call__(self, agent_url, question, *, trace_id, timeout_s, **kwargs):
+        if agent_url != QA_URL:
+            self.urls.append(agent_url)
+            self.timeouts = getattr(self, "timeouts", []) + [timeout_s]
         return await super().__call__(
-            agent_url,
-            question,
-            trace_id=trace_id,
-            timeout_s=timeout_s,
+            agent_url, question, trace_id=trace_id, timeout_s=timeout_s, **kwargs
         )
 
 

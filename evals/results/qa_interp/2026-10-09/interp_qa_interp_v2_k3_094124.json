@@ -1,0 +1,1037 @@
+{
+  "evidence": "observed",
+  "not_blind": "correct pairs come from parse sets drafted by assistants (L-69); mutations are synthetic (seed fixed in build_sets.py)",
+  "model": "gemini-3.5-flash-lite",
+  "key": "free",
+  "thinking_level": "minimal",
+  "prompt": "qa_interp_v2",
+  "prompt_sha": "5199ef6684d5",
+  "as_of": "2026-08-30",
+  "k": 3,
+  "resumed_from": null,
+  "stopped": null,
+  "requests": 91,
+  "runs": [
+    [
+      {
+        "id": "r-m01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the SLA compliance metric for the previous calendar month, July 2026, with no breakdown or filters."
+      },
+      {
+        "id": "r-m01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "technician"
+        ],
+        "note": "The reading should have had no technician specified since the question did not name one.",
+        "error": null,
+        "meaning": "What was the SLA compliance last month, July 2026?"
+      },
+      {
+        "id": "r-m02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user wants the incident rate broken down by region for the second quarter of 2026."
+      },
+      {
+        "id": "r-m02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The system should have read the metric as incident rate instead of sla compliance.",
+        "error": null,
+        "meaning": "The question asks for the incident rate broken down by region for the second quarter of 2026."
+      },
+      {
+        "id": "r-m03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The first-time fix rate for the entire year 2025."
+      },
+      {
+        "id": "r-m03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The reading incorrectly includes an account breakdown when the question asks for a single overall figure.",
+        "error": null,
+        "meaning": "The question asks for the first-time fix rate for the year 2025 overall, with no breakdown requested."
+      },
+      {
+        "id": "r-m04-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for the count of incidents reported from the beginning of the year up to the as-of date of 2026-08-30."
+      },
+      {
+        "id": "r-m04-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should have started on January first instead of February first.",
+        "error": null,
+        "meaning": "The question asks for the count of incidents from the start of the year 2026 to the as-of date of 2026-08-30, but the system used an incorrect start date of 2026-02-01."
+      },
+      {
+        "id": "r-c01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Incident counts broken down by account for July 2026"
+      },
+      {
+        "id": "r-c01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown",
+          "account"
+        ],
+        "note": "The reading should have included an account breakdown and a null account name instead of leaving both null.",
+        "error": null,
+        "meaning": "Incident counts broken down by account for July 2026"
+      },
+      {
+        "id": "r-c02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the number of incidents broken down by severity for July 2026, given an as_of date of August 30, 2026."
+      },
+      {
+        "id": "r-c02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading incorrectly added a central region filter when no region was specified.",
+        "error": null,
+        "meaning": "The user wants incident counts for last month broken down by severity, with no region restriction."
+      },
+      {
+        "id": "r-c03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the incident count broken down by incident type for the past 30 days ending on August 30, 2026."
+      },
+      {
+        "id": "r-c03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The reading should have included a breakdown by incident type instead of region.",
+        "error": null,
+        "meaning": "The question asks for the frequency of different incident types broken down by incident type in the past 30 days up to 2026-08-30."
+      },
+      {
+        "id": "r-t01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The first-time fix rate for technician Ben Okafor for the current year up to today, 2026-08-30."
+      },
+      {
+        "id": "r-t01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The metric should have been first-time fix rate instead of sla compliance.",
+        "error": null,
+        "meaning": "Ben Okafor's first-time fix rate for the year 2026 up to 2026-08-30"
+      },
+      {
+        "id": "r-t02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Count of incidents attributed to Priya for July 2026"
+      },
+      {
+        "id": "r-t02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been null because no region was mentioned.",
+        "error": null,
+        "meaning": "The number of incidents attributed to Priya between 2026-07-01 and 2026-07-31."
+      },
+      {
+        "id": "r-t03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Marcus's SLA compliance for the period of July 2026"
+      },
+      {
+        "id": "r-t03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been null since no region was specified.",
+        "error": null,
+        "meaning": "Marcus's SLA compliance for July 2026"
+      },
+      {
+        "id": "r-d01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range for this quarter should be from July 1, 2026 to August 30, 2026, but the system used an incorrect date range.",
+        "error": null,
+        "meaning": "The user wants a breakdown of repeat visit drivers by incident type for the current quarter ending on August 30, 2026, which covers the period from July 1, 2026 to August 30, 2026."
+      },
+      {
+        "id": "r-d01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have used the repeat visit drivers metric instead of incident count.",
+        "error": null,
+        "meaning": "The question asks for incident count broken down by incident type for this quarter up to 2026-08-30."
+      },
+      {
+        "id": "r-d02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for repeat visit drivers broken down by region for the period from 2026-01-01 to 2026-06-30."
+      },
+      {
+        "id": "r-d02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown",
+          "region"
+        ],
+        "note": "The reading should have included a region breakdown instead of an account breakdown.",
+        "error": null,
+        "meaning": "The question asks for the concentration of repeat visits by region during the first half of 2026."
+      },
+      {
+        "id": "r-q01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The dates should be the previous quarter ending 2026-03-31.",
+        "error": null,
+        "meaning": "The question asks for the incident rate for the previous quarter, which is 2026-01-01 to 2026-03-31 given the as-of date of 2026-08-30."
+      },
+      {
+        "id": "r-q01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric",
+          "dates"
+        ],
+        "note": "The reading should have used the incident_rate metric and the date range for the previous quarter.",
+        "error": null,
+        "meaning": "The question asks for the incident rate for the previous quarter, from 2026-01-01 to 2026-03-31."
+      },
+      {
+        "id": "r-q02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "SLA compliance broken down by service type for March 2026."
+      },
+      {
+        "id": "r-q02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The dates should be March 2026 instead of April 2026.",
+        "error": null,
+        "meaning": "The question asks for the SLA compliance broken down by service type for March 2026."
+      },
+      {
+        "id": "r-r15-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Dave's appointment window compliance for July 2026"
+      },
+      {
+        "id": "r-r15-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The dates should be for the last full calendar month before August 2026.",
+        "error": null,
+        "meaning": "The question asks for Dave's appointment window SLA compliance for the last full calendar month before July 2026."
+      },
+      {
+        "id": "r-r17-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Sarah's average resolution time over the past two weeks ending 2026-08-30"
+      },
+      {
+        "id": "r-r17-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have used average resolution time instead of SLA compliance.",
+        "error": null,
+        "meaning": "Sarah's average resolution time over the past two weeks ending 2026-08-30"
+      },
+      {
+        "id": "r-f01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the count of incidents in the west region for July 2026, given an as_of date of 2026-08-30."
+      },
+      {
+        "id": "r-f01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The number of incidents in the west region during August 2026."
+      },
+      {
+        "id": "r-f02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The first-time fix rate for the southeast region in Q2 2026 (2026-04-01 to 2026-06-30)."
+      },
+      {
+        "id": "r-f02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have used the first_time_fix_rate metric instead of incident_count.",
+        "error": null,
+        "meaning": "The question asks for the first-time fix rate in the southeast region for Q2 2026."
+      },
+      {
+        "id": "r-f03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the incident rate in the central region for the last full calendar month before July 2026."
+      },
+      {
+        "id": "r-f03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for a single regional figure without asking for any breakdown.",
+        "error": null,
+        "meaning": "The user wants the incident rate in the central region for the last full calendar month."
+      },
+      {
+        "id": "r-f04-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "SLA compliance for the northeast region in the year 2025."
+      },
+      {
+        "id": "r-f04-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading should have specified the northeast region instead of central.",
+        "error": null,
+        "meaning": "SLA compliance for the northeast region for the year 2025."
+      },
+      {
+        "id": "r-f05-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the number of incidents for the customer Cedar Ridge Retail during July 2026."
+      },
+      {
+        "id": "r-f05-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The metric should have been incident count instead of first-time fix rate.",
+        "error": null,
+        "meaning": "The question asks for the incident count for Cedar Ridge Retail for last month, July 2026."
+      },
+      {
+        "id": "r-f06-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "SLA compliance for Meridian Foods in Q1 2026, which is 2026-01-01 to 2026-03-31."
+      },
+      {
+        "id": "r-f06-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have used sla_compliance as the metric instead of first_time_fix_rate.",
+        "error": null,
+        "meaning": "SLA compliance for Meridian Foods in Q1 2026, which is 2026-01-01 to 2026-03-31"
+      },
+      {
+        "id": "r-f07-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user wants the first-time fix rate for the account Silver Creek over the past 30 days ending on August 30, 2026."
+      },
+      {
+        "id": "r-f07-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "account"
+        ],
+        "note": "The reading should have specified the account name as Silver Creek instead of Meridian Foods.",
+        "error": null,
+        "meaning": "The question asks for the first-time fix rate for the customer Silver Creek over the 30 days ending on 2026-08-30."
+      },
+      {
+        "id": "r-f08-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The incident rate for Acme Corp for July 2026."
+      },
+      {
+        "id": "r-f08-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "account"
+        ],
+        "note": "The reading should have included the account name Acme Corp.",
+        "error": null,
+        "meaning": "The incident rate for Acme Corp from 2026-07-01 to 2026-07-31."
+      },
+      {
+        "id": "r-f09-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "SLA compliance for the account Summit Distribution in the west region for July 2026"
+      },
+      {
+        "id": "r-f09-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The metric should be sla_compliance instead of first_time_fix_rate.",
+        "error": null,
+        "meaning": "SLA compliance for Summit Distribution in the west region for July 2026"
+      },
+      {
+        "id": "r-f10-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Count of incidents broken down by account for the west region during the year 2025."
+      },
+      {
+        "id": "r-f10-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should be the entire year of 2025.",
+        "error": null,
+        "meaning": "The question asks for incident counts broken down by account for the west region during the year 2025."
+      },
+      {
+        "id": "r-f11-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The question asks about Texas, which is not one of the four supported regions.",
+        "error": null,
+        "meaning": "SLA compliance in Texas for July 2026"
+      },
+      {
+        "id": "r-f11-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region",
+          "dates"
+        ],
+        "note": "The question names a state instead of one of the four valid regions and asks for a different date range.",
+        "error": null,
+        "meaning": "SLA compliance in Texas for last month, which is July 2026."
+      },
+      {
+        "id": "r-f12-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The system should have read the region as unsupported because Midwest does not map to northeast, southeast, central, or west.",
+        "error": null,
+        "meaning": "The question asks for the incident count in the Midwest region during Q2 2026."
+      },
+      {
+        "id": "r-f12-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should be set to Midwest, but the reading has region as null.",
+        "error": null,
+        "meaning": "The question asks for the number of incidents in the Midwest region during Q2 2026."
+      },
+      {
+        "id": "f-f01-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "What will total request volume look like for the period from 2026-09-01 to 2026-09-30?"
+      },
+      {
+        "id": "f-f01-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The reading set the slice to maintenance instead of total.",
+        "error": null,
+        "meaning": "The question asks for total request volume for next month, which is September 2026 given as_of 2026-08-30."
+      },
+      {
+        "id": "f-f02-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for a total request volume forecast for the next 8 weeks, with recent actual weeks for comparison."
+      },
+      {
+        "id": "f-f02-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The reading should have set slice to total instead of upgrade.",
+        "error": null,
+        "meaning": "Forecast total requests for the next 8 weeks, compared with recent weeks."
+      },
+      {
+        "id": "f-f03-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for a forecast of total request volume for December 2026."
+      },
+      {
+        "id": "f-f03-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The reading should have used the total slice instead of maintenance.",
+        "error": null,
+        "meaning": "The question asks for a forecast of total request volume for December 2026."
+      },
+      {
+        "id": "f-f04-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Forecast install requests for the next 10 weeks."
+      },
+      {
+        "id": "f-f04-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The forecast horizon should be 10 weeks instead of 12 weeks.",
+        "error": null,
+        "meaning": "Forecast install requests for the next 10 weeks from 2026-08-30."
+      },
+      {
+        "id": "f-f05-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for the repair service volume forecast for September 2026."
+      },
+      {
+        "id": "f-f05-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "What will repair request volume be in September 2026?"
+      },
+      {
+        "id": "f-f06-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the forecasted maintenance job volume for November 2026."
+      },
+      {
+        "id": "f-f06-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The period should be November 2026.",
+        "error": null,
+        "meaning": "How many maintenance jobs to plan for in November 2026"
+      },
+      {
+        "id": "f-f07-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the total volume for the year 2027."
+      },
+      {
+        "id": "f-f07-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The question asks for a full year horizon, not 26 weeks.",
+        "error": null,
+        "meaning": "The total volume for next year, 2027."
+      },
+      {
+        "id": "f-f08-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user is asking for a forecast of total request volume for the second quarter of 2027."
+      },
+      {
+        "id": "f-f08-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The reading used incorrect dates for Q2 2027.",
+        "error": null,
+        "meaning": "Forecast request volume for Q2 2027, which spans 2027-04-01 to 2027-06-30."
+      },
+      {
+        "id": "f-f09-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the SLA compliance forecast for the fourth quarter of 2026."
+      },
+      {
+        "id": "f-f09-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "unsupported"
+        ],
+        "note": "The reading should have set unsupported because the system cannot forecast SLA.",
+        "error": null,
+        "meaning": "The user asks for the SLA compliance outlook for Q4 2026, which is unsupported."
+      },
+      {
+        "id": "f-f10-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "unsupported"
+        ],
+        "note": "The reading should have set unsupported to null because the system can forecast incident volume.",
+        "error": null,
+        "meaning": "The question asks for the forecast of incident volume for September 2026."
+      },
+      {
+        "id": "f-f10-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric",
+          "unsupported"
+        ],
+        "note": "The reading should have set the metric to incident count and marked the forecast as unsupported since incident forecasting is not supported.",
+        "error": null,
+        "meaning": "The user asks for the total incident count for September 2026, which is next month given the as-of date of August 30, 2026."
+      },
+      {
+        "id": "f-f11-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "region",
+          "unsupported"
+        ],
+        "note": "The system should have set the region to west and unsupported to null.",
+        "error": null,
+        "meaning": "The user asks for a forecast of total request volume in the west region for the next 8 weeks, but the system treats region as unsupported."
+      },
+      {
+        "id": "f-f11-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading should have specified the west region instead of leaving it as total.",
+        "error": null,
+        "meaning": "Forecast total request volume in the west region for the next 8 weeks from 2026-08-30."
+      },
+      {
+        "id": "f-f12-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "horizon",
+          "dates",
+          "unsupported"
+        ],
+        "note": "The reading should have set the period to July 2026 in the future instead of marking past period as unsupported.",
+        "error": null,
+        "meaning": "The question asks for the request volume in July 2026, which is a past period."
+      },
+      {
+        "id": "f-f12-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Total request volume for July 2027"
+      },
+      {
+        "id": "f-f13-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the forecast of total requests for January 2027."
+      },
+      {
+        "id": "f-f13-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The reading should have set a specific forecast period for January instead of a 12-week horizon.",
+        "error": null,
+        "meaning": "The question asks for the forecast of total requests in January 2027, given as_of 2026-08-30."
+      },
+      {
+        "id": "f-f14-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user wants a forecast for repair volume over the coming quarter, Q4 2026."
+      },
+      {
+        "id": "f-f14-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The reading should have set slice to total instead of upgrade.",
+        "error": null,
+        "meaning": "Whether repair volume will pick up over the coming quarter, 2026-10-01 to 2026-12-31."
+      }
+    ],
+    [
+      {
+        "id": "r-m01-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for the SLA compliance metric for July 2026, which is last month relative to August 30, 2026."
+      },
+      {
+        "id": "r-m01-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "technician"
+        ],
+        "note": "The reading should not have restricted the result to a specific technician.",
+        "error": null,
+        "meaning": "What was the overall SLA compliance for July 2026, without restricting to Dave?"
+      },
+      {
+        "id": "r-m02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the incident rate broken down by region for Q2 2026 (2026-04-01 to 2026-06-30)."
+      },
+      {
+        "id": "r-m02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The system should have read the metric as incident rate instead of sla compliance.",
+        "error": null,
+        "meaning": "The question asks for the incident rate broken down by region for the second quarter of 2026."
+      },
+      {
+        "id": "r-m03-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the first-time fix rate for the year 2025."
+      },
+      {
+        "id": "r-m03-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The reading should have used a null breakdown instead of account.",
+        "error": null,
+        "meaning": "The question asks for the overall first-time fix rate for the year 2025."
+      },
+      {
+        "id": "r-m04-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for the incident count for this year, from 2026-01-01 to 2026-08-30."
+      }
+    ],
+    []
+  ]
+}

@@ -33,6 +33,7 @@ from common import (
     clamp_to_deadline,
     current_cost_usd,
     track_request_cost,
+    with_reviewer_note,
 )
 from google.protobuf.json_format import MessageToDict
 from llm import (
@@ -275,7 +276,12 @@ class ReportingExecutor(AgentExecutor):
 
             try:
                 async with asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)):
-                    resolved = await self.parser.parse(question, trace_id=trace_id)
+                    # After QA's interpretation check failed, the question comes back with
+                    # a reviewer note (untrusted, capped, never logged; ADR-089).
+                    resolved = await self.parser.parse(
+                        with_reviewer_note(question, message_metadata(context)),
+                        trace_id=trace_id,
+                    )
             except DeadlineExceeded:
                 await self._fail(updater, task.id, "deadline_exceeded", TIME_LIMIT)
                 return
@@ -295,8 +301,9 @@ class ReportingExecutor(AgentExecutor):
 
             request = resolved.request
             reason = unsupported_reason(request)
+            parsed = request.model_dump(mode="json")
             if reason is not None:
-                await self._fail(updater, task.id, "not_supported", reason)
+                await self._fail(updater, task.id, "not_supported", reason, parsed_request=parsed)
                 return
 
             tool, result_model = TOOLS[request.metric]
@@ -314,6 +321,7 @@ class ReportingExecutor(AgentExecutor):
                     FIND_TECHNICIAN,
                     {"name": request.technician_name},
                     TechnicianMatches,
+                    parsed=parsed,
                 )
                 if matches is None:
                     return
@@ -330,6 +338,7 @@ class ReportingExecutor(AgentExecutor):
                             "total_matches": matches.total_matches,
                             "technician_ids": [m.technician_id for m in matches.matches],
                         },
+                        parsed_request=parsed,
                     )
                     return
                 arguments["technician_id"] = matches.matches[0].technician_id
@@ -342,6 +351,7 @@ class ReportingExecutor(AgentExecutor):
                     FIND_ACCOUNT,
                     {"name": request.account_name},
                     AccountMatches,
+                    parsed=parsed,
                 )
                 if found is None:
                     return
@@ -357,6 +367,7 @@ class ReportingExecutor(AgentExecutor):
                             "total_matches": found.total_matches,
                             "account_ids": [m.account_id for m in found.matches],
                         },
+                        parsed_request=parsed,
                     )
                     return
                 arguments["account_id"] = found.matches[0].account_id
@@ -392,8 +403,9 @@ class ReportingExecutor(AgentExecutor):
                 extra={"task_id": task.id, "metric": request.metric, "tool": tool},
             )
 
-    async def _call(self, updater, task_id, trace_id, tool, arguments, result_model):
-        """One MCP call; on failure, fail the task and return None."""
+    async def _call(self, updater, task_id, trace_id, tool, arguments, result_model, parsed=None):
+        """One MCP call; on failure, fail the task and return None. `parsed` is how the question
+        was read; a name lookup that fails reports it, so QA can check the decline."""
         try:
             return await call_tool(
                 self.settings.mcp_incidents_url,
@@ -424,6 +436,7 @@ class ReportingExecutor(AgentExecutor):
                     f"No account matches {arguments['name']}.",
                     log_reason=False,
                     log_extra={"total_matches": 0, "account_ids": [], "name_rejected": True},
+                    parsed_request=parsed,
                 )
             elif tool == FIND_TECHNICIAN:
                 # The name has characters no display name has (the tool rejects patterns).
@@ -435,6 +448,7 @@ class ReportingExecutor(AgentExecutor):
                     f"No technician matches {name}.",
                     log_reason=False,
                     log_extra={"total_matches": 0, "technician_ids": [], "name_rejected": True},
+                    parsed_request=parsed,
                 )
             else:  # the tool rejected the range: its message is written for users
                 await self._fail(
@@ -460,16 +474,23 @@ class ReportingExecutor(AgentExecutor):
         *,
         log_reason: bool = True,
         log_extra: dict | None = None,
+        parsed_request: dict | None = None,
     ) -> None:
         """End the task failed. `reason` is the user-facing text; it is logged only when it
-        holds nothing from the question (`log_reason`), with `log_extra` standing in."""
+        holds nothing from the question (`log_reason`), with `log_extra` standing in. A decline
+        also carries `parsed_request`, how the question was read, for QA (ADR-089); it is not
+        logged."""
         fields = {"task_id": task_id, "code": code} | (log_extra or {})
         if log_reason:
             fields["reason"] = reason
         log.warning("task failed", extra=fields)
         await updater.failed(
             updater.new_agent_message(
-                [new_text_part(reason)], metadata=cost_metadata({"error_code": code})
+                [new_text_part(reason)],
+                metadata=cost_metadata(
+                    {"error_code": code}
+                    | ({} if parsed_request is None else {"parsed_request": parsed_request})
+                ),
             )
         )
 

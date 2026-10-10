@@ -348,15 +348,28 @@ async def test_find_account_matches_sql(loaded_database, connect_as: ConnectAs, 
     """Whole-word, case-insensitive matches over the fixed list, checked against SQL."""
     oracle = connect_as(ROLE_EVAL)
     async with Client(create_server(settings)) as client:
-        for query in ("Bluewater", "bluewater hospitality", "LLC", "Inc.", "Zzyzx", "Blue"):
+        for query in (
+            "Bluewater",
+            "bluewater hospitality",
+            "LLC",
+            "Inc.",
+            "Inc",
+            "Summit Distribution Co",
+            "Zzyzx",
+            "Blue",
+        ):
             result = await client.call_tool("find_account", {"name": query})
             assert not result.is_error
-            words = query.casefold().split()
+
+            def words_of(text):  # §6: whitespace words, edge punctuation stripped (ruling 5)
+                return [w.strip(".,'-") for w in text.casefold().split() if w.strip(".,'-")]
+
+            words = words_of(query)
             expected = sorted(
                 (
                     n
                     for _, n in oracle.execute("SELECT account_id, account_name FROM accounts")
-                    if all(w in n.casefold().split() for w in words)
+                    if all(w in words_of(n) for w in words)
                 ),
                 key=str.casefold,
             )

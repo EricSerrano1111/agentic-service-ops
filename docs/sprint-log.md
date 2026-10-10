@@ -663,6 +663,13 @@ now written; they record the planning decisions above.*
 - *Phase 4b (M): the QA agent (`agent_qa`) and the orchestrator's verification loop.*
 - *Phase 4c (N): the fault-injection harness and the catch rate.*
 - *Sentiment baseline (measured once as `app_eval`, 2026-10-09, after the rule was committed in ADR-087): n = 4,715 covered comments, x = 7 contradictions, p̂ = 0.001485, so p0 = max(p̂, 0.01) = 0.01. The 1% floor (the owner's judgement) sets the bar on this data. Per region: central 2/1,198, northeast 1/1,395, southeast 3/1,208, west 1/914.*
+*2026-10-09 (owner, GCP Billing): 2026-10-01 to 10-09, $0.29 gross, $0.21 savings, $0.08 net, covering the deploy window and storage since.*
+*2026-10-09, phase 4b (this PR, `feat/qa-agent-reporting-forecast`): the QA agent for reporting and forecast, and the verification loop (ADR-089).*
+- *Built: `agent_qa` (A2A agent, `app_qa` credentials, its own SQL written from the data dictionary, a compose service on loopback), the verification contract (`packages/schemas/verification.py`), `AskResponse.qa_status`, the orchestrator's loop with QA's own breaker, the reviewer note (`qa_guidance`) the specialists read as untrusted text, declines carrying their `parsed_request`, and routing failures as the degraded result. 221 QA tests, 41 loop tests, an integration suite showing QA's SQL equals the tools' on the loaded database over 100 cases, and an independence test.*
+- *Interpretation gate (pre-registered, `6c79e50` at 2026-10-09 09:29 CDT, before any live call): **failed twice**. `qa_interp_v1` run 1: 6 false rejects of 42 (limit 2), 37 of 42 caught (need 34); the one revision `qa_interp_v2` run 1: 7 and 39. Both were stopped after the first failing run (194 of 420 gate calls). The check ships in **advisory mode** (L-74). The early stops and the same-day revision are disclosed in `evals/qa_interp/README.md`.*
+- *End to end (13 of 20 live calls): a reporting, a region-filtered and a forecast question came back `qa_status: verified`; sentiment came back `not_checked` with the not-verified line; with `agent_qa` stopped, one ask returned the degraded result with `qa_status: unavailable`. 207 live calls in all (budget 450).*
+- *For the owner: seven definition gaps QA hit while checking against §6 were listed in L-72. **Ruled 2026-10-09 and fixed:** all seven are rules in data dictionary §6, the incidents tools changed for the tie order and the name words, and QA enforces one reading of each (no tolerance left).*
+- *For the owner, `05-test-scenarios.md` (yours to edit, not edited here): scenarios that expect an HTTP error when an agent is down, or when the model is rate-limited or out of quota, now get the degraded result instead (HTTP 200, `outcome: degraded`, `escalate: true`, a warning naming the capability, and for routing `routing`). They need rewording to that result. A QA-checked answer carries `qa_status`; a sentiment answer says it is not verified.*
 *Planned sequence update (2026-10-08): the deploy window is done. The reporting filters (L-62) start next, from about 2026-10-09; then QA; the fault-injection harness last.*
 *For `06` (due 2026-11-08), not written there: the window's failures are material for its production-support write-up: a create-body field the API rejects, a reserved path (`/healthz`) that hides the IAM boundary, identity-token minting in Cloud Build, IAM propagation delay (a new invoker binding took over a minute), and a revision failing its readiness probe while the database was stopped.*
 
@@ -674,10 +681,21 @@ now written; they record the planning decisions above.*
   *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
   *2026-10-08: done (ADR-086, PR `feat/reporting-filters`). `region` and `account_id` filters on the four incident tools, `find_account`, `parse_v4` (the agent's default) and the clarification reasons `account_not_found` and `account_ambiguous`. Evidence: 90 integration tests against raw SQL as `app_eval` (the filtered figure equals its group's row, every metric, every region, all 50 accounts, combinations); the parse gate passed on the first candidate (`parse_v3` 15/16 in each of 3 runs, `parse_v4` 15/16 on the old items and 12/12 on the new in each of 3 runs, both unsupported areas declined in all 3), 134 of 220 calls; one end-to-end filtered question matched SQL. L-62 resolved; L-67 to L-69 recorded.*
 - [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
+  - [x] Reporting: every figure recomputed with QA's own SQL, declines checked, text checked.
+    *2026-10-09: done (ADR-089). `services/agent_qa`, `tests/integration/test_qa_agrees_with_tools.py` (100 cases against the loaded database), `tests/unit/test_qa_independence.py`; one overall and one region-filtered question verified end to end.*
+  - [x] Forecast: weeks, arithmetic, the manifest's serving table and shown errors, the year-end caveat, history, text.
+    *2026-10-09: done (ADR-089). `services/agent_qa/tests/test_qa_forecast_checks.py`; one forecast question verified end to end.*
+  - [ ] Sentiment: rating cross-check, comment-set and confidence-flag checks (phase M2).
+    *2026-10-09: not started. Sentiment answers return `not_checked` with a visible not-verified line (L-73).*
+  - [x] The interpretation call and its gate.
+    *2026-10-09: built and measured; the gate failed twice and the check ships advisory (L-74, ADR-089).*
   - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
-- [ ] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
+    *2026-10-09: the rule is fixed in ADR-087 and the baseline measured; the check itself is phase M2.*
+- [x] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
+  *2026-10-09: done (ADR-089). Interpretation failures re-ask the specialist with QA's note, up to 2 times; a figures failure is never retried; the deadline and cost cap hold across it. 41 loop tests. With the interpretation check advisory (L-74) no running request is re-asked yet.*
 - [x] Circuit breaker, one per outbound dependency (the Gemini provider interface; each A2A client), built with the per-request deadline (ADR-077; NFR-4)
   *2026-10-09: done for the Gemini transport and the reporting, sentiment and forecast clients (ADR-088: 3 failures, 30 s, one trial). QA's own breaker comes with the QA client in phase M. Tests: `tests/unit/test_circuit_breaker.py`, `tests/unit/test_llm_breaker.py` and the orchestrator's `test_resilience.py` (opens after 3, fails fast, one trial, 4xx and declines never count, one dependency does not affect another). End to end (`tests/e2e/test_resilience_e2e.py`, 6 live calls): see the 2026-10-09 phase 4a note. State is per process (L-70).*
+  *2026-10-09: QA's own breaker is in (ADR-089): three failures open it, the following requests fail fast to the degraded result with the answer marked not verified, and a task QA rejected as malformed does not count. `test_qa_failures_open_its_own_breaker_and_specialists_keep_answering`.*
 - [ ] Fault-injection harness for QA catch-rate measurement
 - [ ] Price a full routing eval run (~300-700 requests, two LLM calls per request per
   ADR-046) on paid Flash-Lite using the official pricing page, and add that cost to the
@@ -756,6 +774,7 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [ ] A second interpretation-gate attempt for QA's check (L-74), **only on an owner-written set** of question and parsed-request pairs, with a new pre-registered gate; the 84 assistant-drafted pairs have been used to judge `qa_interp_v1` and `v2` and can't confirm a third prompt. Review the 13 rejected correct pairs listed in L-74 first. *Added 2026-10-09.*
 - [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.*
 - [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
@@ -800,6 +819,7 @@ now written; they record the planning decisions above.*
 
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
+- [ ] A log-based alert on `outcome=degraded`: a degraded answer is HTTP 200, so Cloud Run's error metrics never count it (ADR-088, ADR-089).
 - [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
 - [ ] A separate `verify-caller` service account holding the orchestrator invoker, so building and calling are separate identities (ADR-085).
 - [ ] Deploy with no traffic, verify the revision's own URL, then move traffic, so a failed verification never serves (L-64).

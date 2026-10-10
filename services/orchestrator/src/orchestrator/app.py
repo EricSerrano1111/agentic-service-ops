@@ -50,17 +50,21 @@ from llm import (
     LLMUnavailable,
 )
 from pydantic import BaseModel, Field, model_validator
+from schemas import QaStatus, Verdict, VerificationRequest
 
 from .a2a_client import AgentCardCache, AgentProtocolError, send_question
 from .auth import AgentAuthError, IdTokenProvider
 from .config import Settings
 from .degraded import (
     FORECAST,
-    LANGUAGE_MODEL,
+    NOT_VERIFIED_LINE,
+    QA,
     REPORTING,
+    ROUTING,
     SENTIMENT,
     DegradedResult,
     answer_for,
+    qa_status_for,
     warning_for,
 )
 from .result import (
@@ -69,6 +73,8 @@ from .result import (
     extract_cost,
     extract_forecast_answer,
     extract_sentiment_answer,
+    extract_verdict,
+    failure_code,
 )
 from .routing import (
     Router,
@@ -143,6 +149,10 @@ class AskResponse(BaseModel):
     escalate: bool = False
     warning: str | None = None
     unavailable_capability: str | None = None
+    #: Whether the verification agent checked this answer (ADR-089): `verified`; `not_checked`
+    #: (no check exists yet, as for sentiment, or the request ended first); `unavailable`
+    #: (QA was needed and could not run); `not_applicable` (no specialist answered).
+    qa_status: QaStatus = "not_applicable"
 
     @model_validator(mode="after")
     def _reason_only_for_clarification(self) -> AskResponse:
@@ -153,6 +163,12 @@ class AskResponse(BaseModel):
             raise ValueError("a degraded result escalates and warns; nothing else does")
         if self.unavailable_capability is not None and not degraded:
             raise ValueError("only a degraded result names an unavailable capability")
+        if self.qa_status == "verified" and (
+            degraded or self.outcome not in ("answered", "not_available", "needs_clarification")
+        ):
+            raise ValueError("only a specialist's answer or decline can be verified")
+        if self.qa_status == "unavailable" and not degraded:
+            raise ValueError("only a degraded result can say QA was unavailable")
         return self
 
 
@@ -226,13 +242,25 @@ _AGENT_ERRORS: dict[str, tuple[int, str]] = {
 }
 
 
+class TaskOutage(Exception):
+    """A task that failed because the service behind it could not do its job (QA's database or
+    model was down). It counts against that service's breaker, unlike a task that failed
+    because of the input."""
+
+
+#: QA task failures that mean QA could not decide, as opposed to a request it rejected.
+QA_OUTAGE_CODES = ("qa_unavailable", "interpretation_unavailable", "qa_timeout")
+#: The most a reviewer note handed back to a specialist may be, before it is sent (ADR-089).
+MAX_GUIDANCE = 300
+
+
 def is_dependency_failure(exc: BaseException) -> bool:
     """Does this A2A error count against the dependency's breaker (ADR-088)?
 
     Timeouts, connection errors and HTTP 5xx do. A 4xx, a validation error or a protocol
     error is the caller's or the content's fault, not the dependency's, and does not.
     """
-    if isinstance(exc, TimeoutError | A2AClientTimeoutError | httpx.TimeoutException):
+    if isinstance(exc, TaskOutage | TimeoutError | A2AClientTimeoutError | httpx.TimeoutException):
         return True
     if isinstance(exc, httpx.HTTPStatusError):
         return exc.response.status_code >= 500
@@ -277,6 +305,7 @@ class Specialist:
     extract: Callable[[Task], tuple[str, BaseModel]]
     field: str  # the AskResponse field the payload goes in
     clarify: bool = False  # does it return name-clarification codes (reporting)?
+    verified: bool = False  # does QA check its answers (ADR-089)?
 
 
 def create_app(
@@ -308,6 +337,7 @@ def create_app(
             extract_answer,
             "reporting",
             clarify=True,
+            verified=True,
         ),
         "sentiment": Specialist(
             "sentiment",
@@ -326,14 +356,31 @@ def create_app(
             breaker("forecast"),
             extract_forecast_answer,
             "forecast",
+            verified=True,
         ),
     }
+    qa_spec = Specialist(
+        "qa",
+        QA,
+        settings.agent_qa_url,
+        settings.qa_a2a_timeout_s,
+        breaker("qa"),
+        extract_verdict,
+        "qa",
+    )
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
         return {"status": "ok", "service": "orchestrator"}
 
-    async def delegate(spec: Specialist, question: str, state: RequestState) -> Task:
+    async def delegate(
+        spec: Specialist,
+        question: str,
+        state: RequestState,
+        *,
+        data: dict | None = None,
+        metadata: dict | None = None,
+    ) -> Task:
         """One hop to a specialist, under the cost cap, the request deadline and the
         specialist's breaker. Raises `DegradedResult` for any of those three, or for a counted
         failure of the specialist; other errors (4xx, a protocol error) propagate."""
@@ -357,10 +404,18 @@ def create_app(
                 deadline=state.deadline,
                 token_provider=tokens,
                 card_cache=cards,
+                **({} if data is None else {"data": data}),
+                **({} if not metadata else {"metadata": metadata}),
             )
 
+        async def guarded_hop() -> Task:
+            task = await hop()
+            if spec is qa_spec and failure_code(task) in QA_OUTAGE_CODES:
+                raise TaskOutage(spec.key)  # QA could not decide: count it, fail closed
+            return task
+
         try:
-            task = await spec.breaker.call(hop, is_dependency_failure)
+            task = await spec.breaker.call(guarded_hop, is_dependency_failure)
         except BreakerOpen:
             log.warning("breaker open", extra={"dependency": spec.key})
             raise DegradedResult("dependency", spec.capability) from None
@@ -398,6 +453,7 @@ def create_app(
             unavailable_capability=(
                 d.capability if d.trigger in ("dependency", "qa_unavailable") else None
             ),
+            qa_status=qa_status_for(d),
             route={} if state.decision is None else state.decision.model_dump(mode="json"),
             prompt_version=state.prompt_version,
             trace_id=state.trace_id,
@@ -431,18 +487,19 @@ def create_app(
             if route_timeout_s < settings.route_timeout_s:
                 raise DegradedResult("deadline") from None
             log.warning("routing timed out", extra={"timeout_s": settings.route_timeout_s})
-            return _error(
-                504,
-                "routing_timeout",
-                f"Routing the question took longer than {settings.route_timeout_s:g}s.",
-                trace_id,
-            )
+            raise DegradedResult("dependency", ROUTING) from None
         except LLMBreakerOpen:
             log.warning("breaker open", extra={"dependency": "language_model"})
-            raise DegradedResult("dependency", LANGUAGE_MODEL) from None
-        except LLMError as exc:
+            raise DegradedResult("dependency", ROUTING) from None
+        except (LLMOutputInvalid, LLMRequestError) as exc:
+            # The question could not be read (the caller's to fix), or Google rejected our request
+            # as malformed (our bug): neither is an outage, so neither is a degraded result.
             log.warning("routing failed", extra={"llm_error": type(exc).__name__})
             return _llm_error(exc, trace_id)
+        except LLMError as exc:
+            # Rate limit, quota, outage, a refused request: routing cannot run (FR-13).
+            log.warning("routing failed", extra={"llm_error": type(exc).__name__})
+            raise DegradedResult("dependency", ROUTING) from None
 
         state.decision = decision
         base = {
@@ -482,28 +539,38 @@ def create_app(
         # "reporting" is also the fallback for a route the table does not name.
         return await ask_specialist(specialists["reporting"], body.question, state, base, respond)
 
-    async def ask_specialist(
-        spec: Specialist, question: str, state: RequestState, base: dict, respond
-    ) -> Any:
-        """A question for one specialist, with the failure handling every specialist shares."""
+    @dataclass
+    class Attempt:
+        """One specialist run: an answer, or a decline (a normal answer with no figures)."""
+
+        text: str
+        task: Task | None = None
+        payload: BaseModel | None = None
+        failure: TaskFailed | None = None
+
+    async def run_specialist(
+        spec: Specialist, question: str, state: RequestState, base: dict, guidance: str | None
+    ) -> Attempt | JSONResponse:
+        """Ask a specialist once. An answer or a decline comes back as an `Attempt`; any other
+        failure is the HTTP error response for it (not something QA verifies). `guidance` is
+        QA's reviewer note from the last attempt, sent as message metadata."""
         trace_id = state.trace_id
         try:
-            task = await delegate(spec, question, state)
+            task = await delegate(
+                spec,
+                question,
+                state,
+                metadata={"qa_guidance": guidance[:MAX_GUIDANCE]} if guidance else None,
+            )
             answer, payload = spec.extract(task)
+            return Attempt(answer, task=task, payload=payload)
         except TaskFailed as exc:
             if exc.error_code == "deadline_exceeded":
                 raise DegradedResult("deadline") from None
-            if exc.error_code == "not_supported":
-                # A metric, breakdown or forecast the agent doesn't offer: a normal answer
-                # whose text says what is supported, not an error.
-                return respond(exc.reason, "not_available", task_id=exc.task_id)
-            if spec.clarify and exc.error_code in _CLARIFY:
-                return respond(
-                    exc.reason,
-                    "needs_clarification",
-                    reason=exc.error_code,
-                    task_id=exc.task_id,
-                )
+            if exc.error_code == "not_supported" or (spec.clarify and exc.error_code in _CLARIFY):
+                # A request the agent doesn't offer, or a name that picks out no one or several:
+                # a normal answer whose text says what to do, not an error.
+                return Attempt(exc.reason, failure=exc)
             log.warning(
                 "agent task failed",
                 extra={
@@ -535,8 +602,109 @@ def create_app(
                 trace_id,
                 route=base["route"],
             )
-        return respond(
-            answer, "answered", **{spec.field: payload.model_dump(mode="json")}, task_id=task.id
+
+    async def verify(
+        spec: Specialist, question: str, attempt: Attempt, state: RequestState
+    ) -> Verdict:
+        """One QA hop. QA being down, slow, over budget or unreadable is a degraded result that
+        returns the answer marked "not verified": an answer is never verified by default."""
+        failure = attempt.failure
+        request = VerificationRequest(
+            domain=spec.key,
+            kind="decline" if failure else "answer",
+            question=question,
+            text=attempt.text[:20_000],
+            answer=None if failure else attempt.payload.model_dump(mode="json"),
+            error_code=failure.error_code if failure else None,
+            parsed_request=failure.parsed_request if failure else None,
         )
+        try:
+            task = await delegate(
+                qa_spec,
+                "verification request",
+                state,
+                data=request.model_dump(mode="json", exclude_none=True),
+            )
+            return extract_verdict(task)
+        except DegradedResult as d:
+            if d.trigger == "dependency":  # QA's breaker, a timeout or a transport failure
+                raise DegradedResult("qa_unavailable", QA) from None
+            raise
+        except TaskFailed as exc:
+            if exc.error_code == "deadline_exceeded":
+                raise DegradedResult("deadline") from None
+            log.warning("qa task failed", extra={"code": exc.error_code})
+            raise DegradedResult("qa_unavailable", QA) from None
+        except (A2AClientError, httpx.HTTPError, AgentProtocolError, AgentAuthError) as exc:
+            log.warning("qa unavailable", extra={"error": type(exc).__name__})
+            raise DegradedResult("qa_unavailable", QA) from None
+
+    def pass_through(attempt: Attempt, spec: Specialist, respond, qa_status: QaStatus) -> Any:
+        """The response for a specialist's answer or decline, with its verification status."""
+        if attempt.failure is not None:
+            exc = attempt.failure
+            if exc.error_code == "not_supported":
+                return respond(
+                    exc.reason, "not_available", task_id=exc.task_id, qa_status=qa_status
+                )
+            return respond(
+                exc.reason,
+                "needs_clarification",
+                reason=exc.error_code,
+                task_id=exc.task_id,
+                qa_status=qa_status,
+            )
+        text = attempt.text
+        if not spec.verified:
+            text += "\n\n" + NOT_VERIFIED_LINE
+        return respond(
+            text,
+            "answered",
+            **{spec.field: attempt.payload.model_dump(mode="json")},
+            task_id=attempt.task.id,
+            qa_status=qa_status,
+        )
+
+    async def ask_specialist(
+        spec: Specialist, question: str, state: RequestState, base: dict, respond
+    ) -> Any:
+        """The loop (ADR-089): specialist, then QA. A pass is returned as verified. A figures
+        failure ends the request as a degraded result at once. An interpretation failure
+        re-asks the specialist with QA's note, up to `max_qa_retry_attempts` times, then ends
+        the same way. QA down, the deadline or the cost cap end it as a degraded result that
+        shows the unverified answer marked as such; an answer that failed is never shown."""
+        guidance: str | None = None
+        retries = 0
+        while True:
+            attempt = await run_specialist(spec, question, state, base, guidance)
+            if isinstance(attempt, JSONResponse):
+                return attempt
+            if not spec.verified:
+                return pass_through(attempt, spec, respond, "not_checked")
+            try:
+                verdict = await verify(spec, question, attempt, state)
+            except DegradedResult as d:
+                if d.trigger != "qa_failed" and d.best_answer is None:
+                    d.best_answer = attempt.text  # shown, marked "not verified"
+                raise
+            failed = tuple(c.code for c in verdict.failed)
+            log.info(
+                "qa verdict",
+                extra={
+                    "domain": spec.key,
+                    "attempt": retries + 1,
+                    "verdict": verdict.verdict,
+                    "failed_checks": list(failed),
+                    "advisory_failed": [c.code for c in verdict.advisories if not c.passed],
+                    "cost_usd": round(state.total_usd, 6),
+                },
+            )
+            if verdict.verdict == "pass":
+                return pass_through(attempt, spec, respond, "verified")
+            if verdict.figures_failed or retries >= settings.max_qa_retry_attempts:
+                raise DegradedResult("qa_failed", failed_checks=failed)
+            retries += 1
+            guidance = verdict.guidance
+            log.info("qa retry", extra={"domain": spec.key, "retry": retries})
 
     return app

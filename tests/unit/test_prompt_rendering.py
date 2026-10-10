@@ -35,6 +35,8 @@ SAMPLE = {
     "first_week": "2026-08-31",
     "window_start": "2023-09-04",
     "window_end": "2026-08-30",
+    "domain": "reporting",
+    "reading": '{"metric": "incident_count"}',
 }
 
 
@@ -79,6 +81,7 @@ def test_the_evaluation_sets_and_prompt_files_are_found():
         "agent_reporting",
         "agent_sentiment",
         "agent_forecast",
+        "agent_qa",
     }
 
 

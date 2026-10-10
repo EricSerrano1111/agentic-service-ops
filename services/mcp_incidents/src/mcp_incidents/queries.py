@@ -290,7 +290,21 @@ MAX_NAME_LENGTH = 100
 
 
 def _words(text: str) -> list[str]:
-    return text.casefold().split()
+    """The words of a name or a query (data dictionary §6, ruling 2026-10-09): split on
+    whitespace, strip leading and trailing characters that are not letters or digits from each
+    word, case-fold, and drop a word nothing is left of. "Co." and "Co" are the same word;
+    "O'Brien" keeps its apostrophe."""
+    words = (_strip(word) for word in text.casefold().split())
+    return [w for w in words if w]
+
+
+def _strip(word: str) -> str:
+    start, end = 0, len(word)
+    while start < end and not word[start].isalnum():
+        start += 1
+    while end > start and not word[end - 1].isalnum():
+        end -= 1
+    return word[start:end]
 
 
 def match_technicians(name: str, technicians: list[tuple[int, str]]) -> TechnicianMatches:
