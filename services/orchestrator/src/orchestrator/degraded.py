@@ -51,9 +51,16 @@ class DegradedResult(Exception):
         self.best_answer = best_answer
 
 
-def qa_status_for(d: DegradedResult) -> str:
-    """`unavailable` when QA was needed and could not run; otherwise no check ran."""
-    return "unavailable" if d.trigger == "qa_unavailable" else "not_checked"
+def qa_status_for(d: DegradedResult, qa_failed: bool = False) -> str:
+    """`unavailable` when QA was needed and could not run; `failed` when QA ran and the answer
+    did not pass (`qa_failed` also covers a deadline that came after a failed verdict, since the
+    failed answer is hidden either way); otherwise the request ended before any check ran
+    (ADR-092)."""
+    if d.trigger == "qa_unavailable":
+        return "unavailable"
+    if d.trigger == "qa_failed" or qa_failed:
+        return "failed"
+    return "not_checked"
 
 
 def warning_for(d: DegradedResult) -> str:
