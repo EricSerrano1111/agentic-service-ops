@@ -1,0 +1,5075 @@
+{
+ "bases": [
+  {
+   "base_id": "reporting:m01",
+   "agent": "reporting",
+   "item_id": "m01",
+   "source": "parse_set",
+   "category": "metric",
+   "question": "What was our SLA compliance last month?",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": null,
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: SLA compliance was 90.75% from 2026-07-01 to 2026-07-31 (inclusive, UTC): 461 of 508 dispatched requests were completed within their SLA window.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "sla_compliance",
+     "account_name": null,
+     "end": "2026-07-31",
+     "region": null,
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-07-31",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 508.0,
+     "technician_id": null,
+     "start": "2026-07-01",
+     "numerator": 461.0,
+     "metric": "sla_compliance",
+     "technician_name": null,
+     "rate": "0.9075"
+    },
+    "range_assumed": false,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "item_id": "m02",
+   "source": "parse_set",
+   "category": "metric",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "request": {
+    "metric": "incident_rate",
+    "group_by": "region",
+    "technician_name": null,
+    "start": "2026-04-01",
+    "end": "2026-06-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 10.0835 incidents per 100 completed requests from 2026-04-01 to 2026-06-30 (inclusive, UTC): 169 incidents over 1,676 completed requests. By region, worst first: northeast 12.1272 per 100 (61 incidents / 503 completed jobs); central 9.9291 per 100 (42 incidents / 423 completed jobs); west 9.1743 per 100 (30 incidents / 327 completed jobs); southeast 8.5106 per 100 (36 incidents / 423 completed jobs).",
+   "answer": {
+    "request": {
+     "group_by": "region",
+     "technician_name": null,
+     "metric": "incident_rate",
+     "account_name": null,
+     "end": "2026-06-30",
+     "region": null,
+     "start": "2026-04-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": null,
+     "groups": [
+      {
+       "group_id": null,
+       "group": "northeast",
+       "rate": "12.1272",
+       "denominator": 503.0,
+       "numerator": 61.0
+      },
+      {
+       "group_id": null,
+       "group": "central",
+       "rate": "9.9291",
+       "denominator": 423.0,
+       "numerator": 42.0
+      },
+      {
+       "group_id": null,
+       "group": "west",
+       "rate": "9.1743",
+       "denominator": 327.0,
+       "numerator": 30.0
+      },
+      {
+       "group_id": null,
+       "group": "southeast",
+       "rate": "8.5106",
+       "denominator": 423.0,
+       "numerator": 36.0
+      }
+     ],
+     "group_count": 4.0,
+     "account_id": null,
+     "truncated": false,
+     "end": "2026-06-30",
+     "group_by": "region",
+     "denominator": 1676.0,
+     "numerator": 169.0,
+     "technician_name": null,
+     "per": 100.0,
+     "metric": "incident_rate",
+     "start": "2026-04-01",
+     "rate": "10.0835",
+     "technician_id": null
+    },
+    "range_assumed": false,
+    "end": "2026-06-30",
+    "as_of": "2026-08-30",
+    "start": "2026-04-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:m03",
+   "agent": "reporting",
+   "item_id": "m03",
+   "source": "parse_set",
+   "category": "metric",
+   "question": "What was the first-time fix rate in 2025?",
+   "request": {
+    "metric": "first_time_fix_rate",
+    "group_by": null,
+    "technician_name": null,
+    "start": "2025-01-01",
+    "end": "2025-12-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: First-time fix rate was 97.67% from 2025-01-01 to 2025-12-31 (inclusive, UTC): 6,125 of 6,271 completed requests needed no return visit.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "first_time_fix_rate",
+     "account_name": null,
+     "end": "2025-12-31",
+     "region": null,
+     "start": "2025-01-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2025-12-31",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 6271.0,
+     "technician_id": null,
+     "start": "2025-01-01",
+     "numerator": 6125.0,
+     "metric": "first_time_fix_rate",
+     "technician_name": null,
+     "rate": "0.9767"
+    },
+    "range_assumed": false,
+    "end": "2025-12-31",
+    "as_of": "2026-08-30",
+    "start": "2025-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:m04",
+   "agent": "reporting",
+   "item_id": "m04",
+   "source": "parse_set",
+   "category": "metric",
+   "question": "How many incidents have been reported this year?",
+   "request": {
+    "metric": "incident_count",
+    "group_by": null,
+    "technician_name": null,
+    "start": "2026-01-01",
+    "end": "2026-08-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 438 incidents reported from 2026-01-01 to 2026-08-30 (inclusive, UTC): 67 high, 145 medium, 226 low severity.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": null,
+     "end": "2026-08-30",
+     "region": null,
+     "start": "2026-01-01"
+    },
+    "figures": {
+     "group_by": null,
+     "end": "2026-08-30",
+     "account_name": null,
+     "by_severity": {
+      "medium": 145.0,
+      "high": 67.0,
+      "low": 226.0
+     },
+     "groups": null,
+     "start": "2026-01-01",
+     "region": null,
+     "group_count": null,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 438.0,
+     "account_id": null,
+     "technician_id": null,
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-08-30",
+    "as_of": "2026-08-30",
+    "start": "2026-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "item_id": "c01",
+   "source": "parse_set",
+   "category": "count_breakdown",
+   "question": "Incident counts by account for July 2026",
+   "request": {
+    "metric": "incident_count",
+    "group_by": "account",
+    "technician_name": null,
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 54 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 6 high, 12 medium, 36 low severity. By account, highest first: Pinecrest Manufacturing Group 10; Brightpath Labs LLC 5; Riverbend Foods Partners 5; Fairhaven Health Holdings 4; Fairhaven Distribution Holdings 3. 18 more account groups are in the data.",
+   "answer": {
+    "request": {
+     "group_by": "account",
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": null,
+     "end": "2026-07-31",
+     "region": null,
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "group_by": "account",
+     "end": "2026-07-31",
+     "account_name": null,
+     "by_severity": {
+      "medium": 12.0,
+      "high": 6.0,
+      "low": 36.0
+     },
+     "groups": [
+      {
+       "group": "Pinecrest Manufacturing Group",
+       "count": 10.0,
+       "group_id": 3.0
+      },
+      {
+       "group": "Brightpath Labs LLC",
+       "count": 5.0,
+       "group_id": 36.0
+      },
+      {
+       "group": "Riverbend Foods Partners",
+       "count": 5.0,
+       "group_id": 35.0
+      },
+      {
+       "group": "Fairhaven Health Holdings",
+       "count": 4.0,
+       "group_id": 2.0
+      },
+      {
+       "group": "Fairhaven Distribution Holdings",
+       "count": 3.0,
+       "group_id": 46.0
+      },
+      {
+       "group": "Lakeside Distribution Co.",
+       "count": 3.0,
+       "group_id": 25.0
+      },
+      {
+       "group": "Westgate Logistics LLC",
+       "count": 3.0,
+       "group_id": 26.0
+      },
+      {
+       "group": "Bluewater Energy Inc.",
+       "count": 2.0,
+       "group_id": 19.0
+      },
+      {
+       "group": "Redstone Financial Inc.",
+       "count": 2.0,
+       "group_id": 6.0
+      },
+      {
+       "group": "Silver Creek Retail Group",
+       "count": 2.0,
+       "group_id": 13.0
+      },
+      {
+       "group": "Stonebridge Education LLC",
+       "count": 2.0,
+       "group_id": 12.0
+      },
+      {
+       "group": "Summit Distribution Co.",
+       "count": 2.0,
+       "group_id": 1.0
+      },
+      {
+       "group": "Cedar Ridge Retail Inc.",
+       "count": 1.0,
+       "group_id": 39.0
+      },
+      {
+       "group": "Fairhaven Retail Group",
+       "count": 1.0,
+       "group_id": 41.0
+      },
+      {
+       "group": "Granite Financial Group",
+       "count": 1.0,
+       "group_id": 40.0
+      },
+      {
+       "group": "Granite Logistics Co.",
+       "count": 1.0,
+       "group_id": 8.0
+      },
+      {
+       "group": "Granite Manufacturing Co.",
+       "count": 1.0,
+       "group_id": 44.0
+      },
+      {
+       "group": "Meridian Distribution Partners",
+       "count": 1.0,
+       "group_id": 7.0
+      },
+      {
+       "group": "Silver Creek Education LLC",
+       "count": 1.0,
+       "group_id": 45.0
+      },
+      {
+       "group": "Silver Creek Labs Inc.",
+       "count": 1.0,
+       "group_id": 27.0
+      },
+      {
+       "group": "Silver Creek Logistics LLC",
+       "count": 1.0,
+       "group_id": 24.0
+      },
+      {
+       "group": "Summit Properties Partners",
+       "count": 1.0,
+       "group_id": 34.0
+      },
+      {
+       "group": "Westgate Retail Partners",
+       "count": 1.0,
+       "group_id": 10.0
+      }
+     ],
+     "start": "2026-07-01",
+     "region": null,
+     "group_count": 23.0,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 54.0,
+     "account_id": null,
+     "technician_id": null,
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:c02",
+   "agent": "reporting",
+   "item_id": "c02",
+   "source": "parse_set",
+   "category": "count_breakdown",
+   "question": "Break down last month's incidents by severity.",
+   "request": {
+    "metric": "incident_count",
+    "group_by": "severity",
+    "technician_name": null,
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 54 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 6 high, 12 medium, 36 low severity. By severity, highest first: low 36; medium 12; high 6.",
+   "answer": {
+    "request": {
+     "group_by": "severity",
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": null,
+     "end": "2026-07-31",
+     "region": null,
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "group_by": "severity",
+     "end": "2026-07-31",
+     "account_name": null,
+     "by_severity": {
+      "medium": 12.0,
+      "high": 6.0,
+      "low": 36.0
+     },
+     "groups": [
+      {
+       "group": "low",
+       "count": 36.0,
+       "group_id": null
+      },
+      {
+       "group": "medium",
+       "count": 12.0,
+       "group_id": null
+      },
+      {
+       "group": "high",
+       "count": 6.0,
+       "group_id": null
+      }
+     ],
+     "start": "2026-07-01",
+     "region": null,
+     "group_count": 3.0,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 54.0,
+     "account_id": null,
+     "technician_id": null,
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:c03",
+   "agent": "reporting",
+   "item_id": "c03",
+   "source": "parse_set",
+   "category": "count_breakdown",
+   "question": "Which incident types were reported most often in the past 30 days?",
+   "request": {
+    "metric": "incident_count",
+    "group_by": "incident_type",
+    "technician_name": null,
+    "start": "2026-08-01",
+    "end": "2026-08-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 54 incidents reported from 2026-08-01 to 2026-08-30 (inclusive, UTC): 7 high, 20 medium, 27 low severity. By incident type, highest first: missed SLA 14; billing dispute 13; wrong dispatch info 10; technician conduct 6; equipment damage 5. 2 more incident type groups are in the data.",
+   "answer": {
+    "request": {
+     "group_by": "incident_type",
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": null,
+     "end": "2026-08-30",
+     "region": null,
+     "start": "2026-08-01"
+    },
+    "figures": {
+     "group_by": "incident_type",
+     "end": "2026-08-30",
+     "account_name": null,
+     "by_severity": {
+      "medium": 20.0,
+      "high": 7.0,
+      "low": 27.0
+     },
+     "groups": [
+      {
+       "group": "missed_sla",
+       "count": 14.0,
+       "group_id": null
+      },
+      {
+       "group": "billing_dispute",
+       "count": 13.0,
+       "group_id": null
+      },
+      {
+       "group": "wrong_dispatch_info",
+       "count": 10.0,
+       "group_id": null
+      },
+      {
+       "group": "technician_conduct",
+       "count": 6.0,
+       "group_id": null
+      },
+      {
+       "group": "equipment_damage",
+       "count": 5.0,
+       "group_id": null
+      },
+      {
+       "group": "repeat_visit_required",
+       "count": 4.0,
+       "group_id": null
+      },
+      {
+       "group": "other",
+       "count": 2.0,
+       "group_id": null
+      }
+     ],
+     "start": "2026-08-01",
+     "region": null,
+     "group_count": 7.0,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 54.0,
+     "account_id": null,
+     "technician_id": null,
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-08-30",
+    "as_of": "2026-08-30",
+    "start": "2026-08-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:t01",
+   "agent": "reporting",
+   "item_id": "t01",
+   "source": "parse_set",
+   "category": "technician",
+   "question": "What is Ben Okafor's first-time fix rate this year?",
+   "request": {
+    "metric": "first_time_fix_rate",
+    "group_by": null,
+    "technician_name": "Ben Okafor",
+    "start": "2026-01-01",
+    "end": "2026-08-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For Ben Okafor, the first-time fix rate was 99.24% from 2026-01-01 to 2026-08-30 (inclusive, UTC), based on 132 completed requests: 131 needed no return visit.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": "Ben Okafor",
+     "metric": "first_time_fix_rate",
+     "account_name": null,
+     "end": "2026-08-30",
+     "region": null,
+     "start": "2026-01-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-08-30",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 132.0,
+     "technician_id": 18.0,
+     "start": "2026-01-01",
+     "numerator": 131.0,
+     "metric": "first_time_fix_rate",
+     "technician_name": "Ben Okafor",
+     "rate": "0.9924"
+    },
+    "range_assumed": false,
+    "end": "2026-08-30",
+    "as_of": "2026-08-30",
+    "start": "2026-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:t02",
+   "agent": "reporting",
+   "item_id": "t02",
+   "source": "parse_set",
+   "category": "technician",
+   "question": "How many incidents were attributed to Priya last month?",
+   "request": {
+    "metric": "incident_count",
+    "group_by": null,
+    "technician_name": "Priya",
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "decline",
+   "error_code": "technician_ambiguous",
+   "text": "2 technicians match Priya: Priya Castillo and Priya Kim. Please ask again with the full name.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": "Priya",
+    "metric": "incident_count",
+    "region": null,
+    "end": "2026-07-31",
+    "account_name": null,
+    "start": "2026-07-01"
+   }
+  },
+  {
+   "base_id": "reporting:t03",
+   "agent": "reporting",
+   "item_id": "t03",
+   "source": "parse_set",
+   "category": "technician",
+   "question": "What was Marcus's SLA compliance in July 2026?",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": "Marcus",
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "decline",
+   "error_code": "technician_not_found",
+   "text": "No technician matches Marcus.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": "Marcus",
+    "metric": "sla_compliance",
+    "region": null,
+    "end": "2026-07-31",
+    "account_name": null,
+    "start": "2026-07-01"
+   }
+  },
+  {
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "item_id": "d01",
+   "source": "parse_set",
+   "category": "repeat_drivers",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "request": {
+    "metric": "repeat_visit_drivers",
+    "group_by": "incident_type",
+    "technician_name": null,
+    "start": "2026-07-01",
+    "end": "2026-08-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 11 of 916 jobs completed from 2026-07-01 to 2026-08-30 (inclusive, UTC) needed a repeat visit (1.20%). Every repeat visit is recorded through a repeat-visit-required incident on the original job. No other incident type stands out: no difference is larger than chance would explain (Fisher's exact test, Bonferroni-corrected, groups with at least 20 jobs). By other incident type, worst first: billing dispute 5.00% (1 of 20 jobs); missed SLA 0.00% (0 of 29 jobs). 4 with fewer than 20 jobs left out of the list; all are in the data. Jobs with any other incident: 1.12% (1 of 89 jobs); jobs with none: 1.21% (10 of 827 jobs). In this period, jobs with another incident and jobs without didn't differ clearly (1.12% vs 1.21%).",
+   "answer": {
+    "request": {
+     "group_by": "incident_type",
+     "technician_name": null,
+     "metric": "repeat_visit_drivers",
+     "account_name": null,
+     "end": "2026-08-30",
+     "region": null,
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "other_incident_higher": false,
+     "group_by": "incident_type",
+     "any_other_incident": {
+      "jobs": 89.0,
+      "repeated": 1.0,
+      "rate": "0.0112"
+     },
+     "no_other_incident": {
+      "jobs": 827.0,
+      "repeated": 10.0,
+      "rate": "0.0121"
+     },
+     "groups": [
+      {
+       "stands_out": false,
+       "p_adjusted": 0.43331643794998215,
+       "group": "billing_dispute",
+       "p_value": 0.21665821897499107,
+       "rest": {
+        "jobs": 896.0,
+        "repeated": 10.0,
+        "rate": "0.0112"
+       },
+       "this": {
+        "jobs": 20.0,
+        "repeated": 1.0,
+        "rate": "0.0500"
+       },
+       "compared": true,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": 1.0,
+       "group": "missed_sla",
+       "p_value": 0.999999999998337,
+       "rest": {
+        "jobs": 887.0,
+        "repeated": 11.0,
+        "rate": "0.0124"
+       },
+       "this": {
+        "jobs": 29.0,
+        "repeated": 0.0,
+        "rate": "0.0000"
+       },
+       "compared": true,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": null,
+       "group": "wrong_dispatch_info",
+       "p_value": null,
+       "rest": {
+        "jobs": 898.0,
+        "repeated": 11.0,
+        "rate": "0.0122"
+       },
+       "this": {
+        "jobs": 18.0,
+        "repeated": 0.0,
+        "rate": "0.0000"
+       },
+       "compared": false,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": null,
+       "group": "equipment_damage",
+       "p_value": null,
+       "rest": {
+        "jobs": 903.0,
+        "repeated": 11.0,
+        "rate": "0.0122"
+       },
+       "this": {
+        "jobs": 13.0,
+        "repeated": 0.0,
+        "rate": "0.0000"
+       },
+       "compared": false,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": null,
+       "group": "other",
+       "p_value": null,
+       "rest": {
+        "jobs": 908.0,
+        "repeated": 11.0,
+        "rate": "0.0121"
+       },
+       "this": {
+        "jobs": 8.0,
+        "repeated": 0.0,
+        "rate": "0.0000"
+       },
+       "compared": false,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": null,
+       "group": "technician_conduct",
+       "p_value": null,
+       "rest": {
+        "jobs": 909.0,
+        "repeated": 11.0,
+        "rate": "0.0121"
+       },
+       "this": {
+        "jobs": 7.0,
+        "repeated": 0.0,
+        "rate": "0.0000"
+       },
+       "compared": false,
+       "group_id": null
+      }
+     ],
+     "other_incident_p_value": 0.9999999999984016,
+     "overall": {
+      "jobs": 916.0,
+      "repeated": 11.0,
+      "rate": "0.0120"
+     },
+     "groups_compared": 2.0,
+     "metric": "repeat_visit_drivers",
+     "other_incident_compared": true,
+     "group_count": 6.0,
+     "end": "2026-08-30",
+     "start": "2026-07-01",
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-08-30",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "item_id": "d02",
+   "source": "parse_set",
+   "category": "repeat_drivers",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "request": {
+    "metric": "repeat_visit_drivers",
+    "group_by": "region",
+    "technician_name": null,
+    "start": "2026-01-01",
+    "end": "2026-06-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 59 of 3,164 jobs completed from 2026-01-01 to 2026-06-30 (inclusive, UTC) needed a repeat visit (1.86%). Every repeat visit is recorded through a repeat-visit-required incident on the original job. No region stands out: no difference is larger than chance would explain (Fisher's exact test, Bonferroni-corrected, groups with at least 20 jobs). By region, worst first: west 2.23% (14 of 627 jobs); northeast 2.14% (20 of 935 jobs); southeast 1.64% (13 of 794 jobs); central 1.49% (12 of 808 jobs).",
+   "answer": {
+    "request": {
+     "group_by": "region",
+     "technician_name": null,
+     "metric": "repeat_visit_drivers",
+     "account_name": null,
+     "end": "2026-06-30",
+     "region": null,
+     "start": "2026-01-01"
+    },
+    "figures": {
+     "other_incident_higher": null,
+     "group_by": "region",
+     "any_other_incident": null,
+     "no_other_incident": null,
+     "groups": [
+      {
+       "stands_out": false,
+       "p_adjusted": 1.0,
+       "group": "west",
+       "p_value": 0.4139018431001706,
+       "rest": {
+        "jobs": 2537.0,
+        "repeated": 45.0,
+        "rate": "0.0177"
+       },
+       "this": {
+        "jobs": 627.0,
+        "repeated": 14.0,
+        "rate": "0.0223"
+       },
+       "compared": true,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": 1.0,
+       "group": "northeast",
+       "p_value": 0.47260869176354625,
+       "rest": {
+        "jobs": 2229.0,
+        "repeated": 39.0,
+        "rate": "0.0175"
+       },
+       "this": {
+        "jobs": 935.0,
+        "repeated": 20.0,
+        "rate": "0.0214"
+       },
+       "compared": true,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": 1.0,
+       "group": "southeast",
+       "p_value": 0.6517443088358117,
+       "rest": {
+        "jobs": 2370.0,
+        "repeated": 46.0,
+        "rate": "0.0194"
+       },
+       "this": {
+        "jobs": 794.0,
+        "repeated": 13.0,
+        "rate": "0.0164"
+       },
+       "compared": true,
+       "group_id": null
+      },
+      {
+       "stands_out": false,
+       "p_adjusted": 1.0,
+       "group": "central",
+       "p_value": 0.4509805176964588,
+       "rest": {
+        "jobs": 2356.0,
+        "repeated": 47.0,
+        "rate": "0.0199"
+       },
+       "this": {
+        "jobs": 808.0,
+        "repeated": 12.0,
+        "rate": "0.0149"
+       },
+       "compared": true,
+       "group_id": null
+      }
+     ],
+     "other_incident_p_value": null,
+     "overall": {
+      "jobs": 3164.0,
+      "repeated": 59.0,
+      "rate": "0.0186"
+     },
+     "groups_compared": 4.0,
+     "metric": "repeat_visit_drivers",
+     "other_incident_compared": null,
+     "group_count": 4.0,
+     "end": "2026-06-30",
+     "start": "2026-01-01",
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-06-30",
+    "as_of": "2026-08-30",
+    "start": "2026-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "item_id": "q01",
+   "source": "parse_set",
+   "category": "dates",
+   "question": "What was the incident rate last quarter?",
+   "request": {
+    "metric": "incident_rate",
+    "group_by": null,
+    "technician_name": null,
+    "start": "2026-04-01",
+    "end": "2026-06-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 10.0835 incidents per 100 completed requests from 2026-04-01 to 2026-06-30 (inclusive, UTC): 169 incidents over 1,676 completed requests.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "incident_rate",
+     "account_name": null,
+     "end": "2026-06-30",
+     "region": null,
+     "start": "2026-04-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "account_id": null,
+     "truncated": false,
+     "end": "2026-06-30",
+     "group_by": null,
+     "denominator": 1676.0,
+     "numerator": 169.0,
+     "technician_name": null,
+     "per": 100.0,
+     "metric": "incident_rate",
+     "start": "2026-04-01",
+     "rate": "10.0835",
+     "technician_id": null
+    },
+    "range_assumed": false,
+    "end": "2026-06-30",
+    "as_of": "2026-08-30",
+    "start": "2026-04-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "item_id": "q02",
+   "source": "parse_set",
+   "category": "dates",
+   "question": "SLA compliance by service type in March",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": "service_type",
+    "technician_name": null,
+    "start": "2026-03-01",
+    "end": "2026-03-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: SLA compliance was 88.09% from 2026-03-01 to 2026-03-31 (inclusive, UTC): 466 of 529 dispatched requests were completed within their SLA window. By service type, worst first: install 85.71% (66 of 77); maintenance 87.32% (124 of 142); upgrade 88.46% (46 of 52); repair 88.89% (152 of 171); inspection 89.66% (78 of 87).",
+   "answer": {
+    "request": {
+     "group_by": "service_type",
+     "technician_name": null,
+     "metric": "sla_compliance",
+     "account_name": null,
+     "end": "2026-03-31",
+     "region": null,
+     "start": "2026-03-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": null,
+     "groups": [
+      {
+       "group_id": null,
+       "group": "install",
+       "rate": "0.8571",
+       "denominator": 77.0,
+       "numerator": 66.0
+      },
+      {
+       "group_id": null,
+       "group": "maintenance",
+       "rate": "0.8732",
+       "denominator": 142.0,
+       "numerator": 124.0
+      },
+      {
+       "group_id": null,
+       "group": "upgrade",
+       "rate": "0.8846",
+       "denominator": 52.0,
+       "numerator": 46.0
+      },
+      {
+       "group_id": null,
+       "group": "repair",
+       "rate": "0.8889",
+       "denominator": 171.0,
+       "numerator": 152.0
+      },
+      {
+       "group_id": null,
+       "group": "inspection",
+       "rate": "0.8966",
+       "denominator": 87.0,
+       "numerator": 78.0
+      }
+     ],
+     "group_count": 5.0,
+     "truncated": false,
+     "end": "2026-03-31",
+     "account_id": null,
+     "group_by": "service_type",
+     "denominator": 529.0,
+     "technician_id": null,
+     "start": "2026-03-01",
+     "numerator": 466.0,
+     "metric": "sla_compliance",
+     "technician_name": null,
+     "rate": "0.8809"
+    },
+    "range_assumed": false,
+    "end": "2026-03-31",
+    "as_of": "2026-08-30",
+    "start": "2026-03-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:r15",
+   "agent": "reporting",
+   "item_id": "r15",
+   "source": "parse_set",
+   "category": "routing_v1",
+   "question": "How is Dave doing with meeting his appointment windows?",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": "Dave",
+    "start": null,
+    "end": null
+   },
+   "kind": "decline",
+   "error_code": "technician_not_found",
+   "text": "No technician matches Dave.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": "Dave",
+    "metric": "sla_compliance",
+    "region": null,
+    "end": null,
+    "account_name": null,
+    "start": null
+   }
+  },
+  {
+   "base_id": "reporting:r17",
+   "agent": "reporting",
+   "item_id": "r17",
+   "source": "parse_set",
+   "category": "routing_v1",
+   "question": "Is Sarah's average resolution time improving over the last two weeks?",
+   "request": {
+    "metric": "unsupported",
+    "group_by": null,
+    "technician_name": "Sarah",
+    "start": "2026-08-17",
+    "end": "2026-08-30"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "That metric isn't supported yet. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": "Sarah",
+    "metric": "unsupported",
+    "region": null,
+    "end": "2026-08-30",
+    "account_name": null,
+    "start": "2026-08-17"
+   }
+  },
+  {
+   "base_id": "reporting:f01",
+   "agent": "reporting",
+   "item_id": "f01",
+   "source": "parse_set",
+   "category": "region",
+   "question": "How many incidents were reported in the west last month?",
+   "request": {
+    "metric": "incident_count",
+    "group_by": null,
+    "technician_name": null,
+    "region": "west",
+    "account_name": null,
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 11 incidents in the west region reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 1 high, 5 medium, 5 low severity.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": null,
+     "end": "2026-07-31",
+     "region": "west",
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "group_by": null,
+     "end": "2026-07-31",
+     "account_name": null,
+     "by_severity": {
+      "medium": 5.0,
+      "high": 1.0,
+      "low": 5.0
+     },
+     "groups": null,
+     "start": "2026-07-01",
+     "region": "west",
+     "group_count": null,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 11.0,
+     "account_id": null,
+     "technician_id": null,
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "item_id": "f02",
+   "source": "parse_set",
+   "category": "region",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "request": {
+    "metric": "first_time_fix_rate",
+    "group_by": null,
+    "technician_name": null,
+    "region": "southeast",
+    "account_name": null,
+    "start": "2026-04-01",
+    "end": "2026-06-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For the southeast region, the first-time fix rate was 98.82% from 2026-04-01 to 2026-06-30 (inclusive, UTC), based on 423 completed requests: 418 needed no return visit.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "first_time_fix_rate",
+     "account_name": null,
+     "end": "2026-06-30",
+     "region": "southeast",
+     "start": "2026-04-01"
+    },
+    "figures": {
+     "region": "southeast",
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-06-30",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 423.0,
+     "technician_id": null,
+     "start": "2026-04-01",
+     "numerator": 418.0,
+     "metric": "first_time_fix_rate",
+     "technician_name": null,
+     "rate": "0.9882"
+    },
+    "range_assumed": false,
+    "end": "2026-06-30",
+    "as_of": "2026-08-30",
+    "start": "2026-04-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f03",
+   "agent": "reporting",
+   "item_id": "f03",
+   "source": "parse_set",
+   "category": "region",
+   "question": "What's the incident rate in the central region?",
+   "request": {
+    "metric": "incident_rate",
+    "group_by": null,
+    "technician_name": null,
+    "region": "central",
+    "account_name": null,
+    "start": null,
+    "end": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: the question named no dates, so this covers the last full calendar month, 2026-07-01 to 2026-07-31. For the central region, 13.2231 incidents per 100 completed requests from 2026-07-01 to 2026-07-31 (inclusive, UTC): 16 attributed incidents, based on 121 completed requests.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "incident_rate",
+     "account_name": null,
+     "end": null,
+     "region": "central",
+     "start": null
+    },
+    "figures": {
+     "region": "central",
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "account_id": null,
+     "truncated": false,
+     "end": "2026-07-31",
+     "group_by": null,
+     "denominator": 121.0,
+     "numerator": 16.0,
+     "technician_name": null,
+     "per": 100.0,
+     "metric": "incident_rate",
+     "start": "2026-07-01",
+     "rate": "13.2231",
+     "technician_id": null
+    },
+    "range_assumed": true,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "item_id": "f04",
+   "source": "parse_set",
+   "category": "region",
+   "question": "SLA compliance for the northeast region in 2025",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": null,
+    "region": "northeast",
+    "account_name": null,
+    "start": "2025-01-01",
+    "end": "2025-12-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For the northeast region, SLA compliance was 88.87% from 2025-01-01 to 2025-12-31 (inclusive, UTC), based on 1,833 dispatched requests: 1,629 completed within their SLA window.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "sla_compliance",
+     "account_name": null,
+     "end": "2025-12-31",
+     "region": "northeast",
+     "start": "2025-01-01"
+    },
+    "figures": {
+     "region": "northeast",
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2025-12-31",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 1833.0,
+     "technician_id": null,
+     "start": "2025-01-01",
+     "numerator": 1629.0,
+     "metric": "sla_compliance",
+     "technician_name": null,
+     "rate": "0.8887"
+    },
+    "range_assumed": false,
+    "end": "2025-12-31",
+    "as_of": "2026-08-30",
+    "start": "2025-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f05",
+   "agent": "reporting",
+   "item_id": "f05",
+   "source": "parse_set",
+   "category": "account",
+   "question": "How many incidents did Cedar Ridge Retail have last month?",
+   "request": {
+    "metric": "incident_count",
+    "group_by": null,
+    "technician_name": null,
+    "region": null,
+    "account_name": "Cedar Ridge Retail",
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 1 incident for Cedar Ridge Retail Inc. reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 0 high, 1 medium, 0 low severity.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": "Cedar Ridge Retail",
+     "end": "2026-07-31",
+     "region": null,
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "group_by": null,
+     "end": "2026-07-31",
+     "account_name": "Cedar Ridge Retail Inc.",
+     "by_severity": {
+      "medium": 1.0,
+      "high": 0.0,
+      "low": 0.0
+     },
+     "groups": null,
+     "start": "2026-07-01",
+     "region": null,
+     "group_count": null,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 1.0,
+     "account_id": 39.0,
+     "technician_id": null,
+     "truncated": false
+    },
+    "range_assumed": false,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "item_id": "f06",
+   "source": "parse_set",
+   "category": "account",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": null,
+    "region": null,
+    "account_name": "Meridian Foods",
+    "start": "2026-01-01",
+    "end": "2026-03-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For Meridian Foods LLC, SLA compliance was 96.15% from 2026-01-01 to 2026-03-31 (inclusive, UTC), based on 26 dispatched requests: 25 completed within their SLA window.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "sla_compliance",
+     "account_name": "Meridian Foods",
+     "end": "2026-03-31",
+     "region": null,
+     "start": "2026-01-01"
+    },
+    "figures": {
+     "region": null,
+     "account_name": "Meridian Foods LLC",
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-03-31",
+     "account_id": 38.0,
+     "group_by": null,
+     "denominator": 26.0,
+     "technician_id": null,
+     "start": "2026-01-01",
+     "numerator": 25.0,
+     "metric": "sla_compliance",
+     "technician_name": null,
+     "rate": "0.9615"
+    },
+    "range_assumed": false,
+    "end": "2026-03-31",
+    "as_of": "2026-08-30",
+    "start": "2026-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f07",
+   "agent": "reporting",
+   "item_id": "f07",
+   "source": "parse_set",
+   "category": "account_ambiguous",
+   "question": "What is the first-time fix rate for Silver Creek over the past 30 days?",
+   "request": {
+    "metric": "first_time_fix_rate",
+    "group_by": null,
+    "technician_name": null,
+    "region": null,
+    "account_name": "Silver Creek",
+    "start": "2026-08-01",
+    "end": "2026-08-30"
+   },
+   "kind": "decline",
+   "error_code": "account_ambiguous",
+   "text": "7 accounts match Silver Creek: Silver Creek Distribution Co., Silver Creek Distribution LLC, Silver Creek Education LLC, Silver Creek Foods Inc., Silver Creek Labs Inc. and 2 more. Please ask again with the full name.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": null,
+    "metric": "first_time_fix_rate",
+    "region": null,
+    "end": "2026-08-30",
+    "account_name": "Silver Creek",
+    "start": "2026-08-01"
+   }
+  },
+  {
+   "base_id": "reporting:f08",
+   "agent": "reporting",
+   "item_id": "f08",
+   "source": "parse_set",
+   "category": "account_no_match",
+   "question": "Incident rate for Acme Corp last month",
+   "request": {
+    "metric": "incident_rate",
+    "group_by": null,
+    "technician_name": null,
+    "region": null,
+    "account_name": "Acme Corp",
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "decline",
+   "error_code": "account_not_found",
+   "text": "No account matches Acme Corp.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": null,
+    "metric": "incident_rate",
+    "region": null,
+    "end": "2026-07-31",
+    "account_name": "Acme Corp",
+    "start": "2026-07-01"
+   }
+  },
+  {
+   "base_id": "reporting:f09",
+   "agent": "reporting",
+   "item_id": "f09",
+   "source": "parse_set",
+   "category": "combined",
+   "question": "SLA compliance for Summit Distribution in the west last month",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": null,
+    "region": "west",
+    "account_name": "Summit Distribution",
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: Summit Distribution Co. in the west region completed no dispatched requests from 2026-07-01 to 2026-07-31 (inclusive, UTC), so there is no SLA figure.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "sla_compliance",
+     "account_name": "Summit Distribution",
+     "end": "2026-07-31",
+     "region": "west",
+     "start": "2026-07-01"
+    },
+    "figures": {
+     "region": "west",
+     "account_name": "Summit Distribution Co.",
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-07-31",
+     "account_id": 1.0,
+     "group_by": null,
+     "denominator": 0.0,
+     "technician_id": null,
+     "start": "2026-07-01",
+     "numerator": 0.0,
+     "metric": "sla_compliance",
+     "technician_name": null,
+     "rate": null
+    },
+    "range_assumed": false,
+    "end": "2026-07-31",
+    "as_of": "2026-08-30",
+    "start": "2026-07-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "item_id": "f10",
+   "source": "parse_set",
+   "category": "combined",
+   "question": "Break down the west region's incidents by account for 2025",
+   "request": {
+    "metric": "incident_count",
+    "group_by": "account",
+    "technician_name": null,
+    "region": "west",
+    "account_name": null,
+    "start": "2025-01-01",
+    "end": "2025-12-31"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: 164 incidents in the west region reported from 2025-01-01 to 2025-12-31 (inclusive, UTC): 27 high, 49 medium, 88 low severity. By account, highest first: Redstone Logistics Co. 17; Fairhaven Distribution Holdings 15; Silver Creek Labs Inc. 11; Brightpath Labs LLC 10; Granite Logistics Co. 8. 29 more account groups are in the data. 34 groups in total; the top 25 are in the data, so their counts don't sum to the total.",
+   "answer": {
+    "request": {
+     "group_by": "account",
+     "technician_name": null,
+     "metric": "incident_count",
+     "account_name": null,
+     "end": "2025-12-31",
+     "region": "west",
+     "start": "2025-01-01"
+    },
+    "figures": {
+     "group_by": "account",
+     "end": "2025-12-31",
+     "account_name": null,
+     "by_severity": {
+      "medium": 49.0,
+      "high": 27.0,
+      "low": 88.0
+     },
+     "groups": [
+      {
+       "group": "Redstone Logistics Co.",
+       "count": 17.0,
+       "group_id": 4.0
+      },
+      {
+       "group": "Fairhaven Distribution Holdings",
+       "count": 15.0,
+       "group_id": 46.0
+      },
+      {
+       "group": "Silver Creek Labs Inc.",
+       "count": 11.0,
+       "group_id": 27.0
+      },
+      {
+       "group": "Brightpath Labs LLC",
+       "count": 10.0,
+       "group_id": 36.0
+      },
+      {
+       "group": "Granite Logistics Co.",
+       "count": 8.0,
+       "group_id": 8.0
+      },
+      {
+       "group": "Silver Creek Logistics LLC",
+       "count": 8.0,
+       "group_id": 24.0
+      },
+      {
+       "group": "Westgate Logistics LLC",
+       "count": 8.0,
+       "group_id": 26.0
+      },
+      {
+       "group": "Stonebridge Education LLC",
+       "count": 7.0,
+       "group_id": 12.0
+      },
+      {
+       "group": "Riverbend Foods Partners",
+       "count": 6.0,
+       "group_id": 35.0
+      },
+      {
+       "group": "Silver Creek Retail Group",
+       "count": 6.0,
+       "group_id": 13.0
+      },
+      {
+       "group": "Cedar Ridge Retail Inc.",
+       "count": 5.0,
+       "group_id": 39.0
+      },
+      {
+       "group": "Meridian Foods LLC",
+       "count": 5.0,
+       "group_id": 38.0
+      },
+      {
+       "group": "Bluewater Hospitality Partners",
+       "count": 4.0,
+       "group_id": 18.0
+      },
+      {
+       "group": "Brightpath Education Holdings",
+       "count": 4.0,
+       "group_id": 33.0
+      },
+      {
+       "group": "Lakeside Retail Co.",
+       "count": 4.0,
+       "group_id": 21.0
+      },
+      {
+       "group": "Meridian Distribution Partners",
+       "count": 4.0,
+       "group_id": 7.0
+      },
+      {
+       "group": "Redstone Financial Inc.",
+       "count": 4.0,
+       "group_id": 6.0
+      },
+      {
+       "group": "Silver Creek Foods Inc.",
+       "count": 4.0,
+       "group_id": 48.0
+      },
+      {
+       "group": "Stonebridge Labs Co.",
+       "count": 4.0,
+       "group_id": 37.0
+      },
+      {
+       "group": "Clearview Hospitality Inc.",
+       "count": 3.0,
+       "group_id": 49.0
+      },
+      {
+       "group": "Meridian Education LLC",
+       "count": 3.0,
+       "group_id": 47.0
+      },
+      {
+       "group": "Pinecrest Hospitality Holdings",
+       "count": 3.0,
+       "group_id": 23.0
+      },
+      {
+       "group": "Westgate Foods Partners",
+       "count": 3.0,
+       "group_id": 30.0
+      },
+      {
+       "group": "Bluewater Energy Inc.",
+       "count": 2.0,
+       "group_id": 19.0
+      },
+      {
+       "group": "Brightpath Foods Inc.",
+       "count": 2.0,
+       "group_id": 16.0
+      }
+     ],
+     "start": "2025-01-01",
+     "region": "west",
+     "group_count": 34.0,
+     "metric": "incident_count",
+     "technician_name": null,
+     "incident_count": 164.0,
+     "account_id": null,
+     "technician_id": null,
+     "truncated": true
+    },
+    "range_assumed": false,
+    "end": "2025-12-31",
+    "as_of": "2026-08-30",
+    "start": "2025-01-01"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "reporting:f11",
+   "agent": "reporting",
+   "item_id": "f11",
+   "source": "parse_set",
+   "category": "unsupported_area",
+   "question": "What was SLA compliance in Texas last month?",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": null,
+    "region": "unsupported",
+    "account_name": null,
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "I can only restrict a question to one of four regions: northeast, southeast, central or west. Other areas, such as a state or a city, aren't mapped to a region. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": null,
+    "metric": "sla_compliance",
+    "region": "unsupported",
+    "end": "2026-07-31",
+    "account_name": null,
+    "start": "2026-07-01"
+   }
+  },
+  {
+   "base_id": "reporting:f12",
+   "agent": "reporting",
+   "item_id": "f12",
+   "source": "parse_set",
+   "category": "unsupported_area",
+   "question": "How many incidents were reported in the Midwest in Q2 2026?",
+   "request": {
+    "metric": "incident_count",
+    "group_by": null,
+    "technician_name": null,
+    "region": "unsupported",
+    "account_name": null,
+    "start": "2026-04-01",
+    "end": "2026-06-30"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "I can only restrict a question to one of four regions: northeast, southeast, central or west. Other areas, such as a state or a city, aren't mapped to a region. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+   "answer": null,
+   "parsed_request": {
+    "group_by": null,
+    "technician_name": null,
+    "metric": "incident_count",
+    "region": "unsupported",
+    "end": "2026-06-30",
+    "account_name": null,
+    "start": "2026-04-01"
+   }
+  },
+  {
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "item_id": "f01",
+   "source": "parse_set",
+   "category": "total",
+   "question": "What will request volume look like next month?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2026-09-01",
+    "period_end": "2026-09-30",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 4 weeks from 2026-09-07 to 2026-10-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\nTotal over these 4 weeks: about 649 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.",
+   "answer": {
+    "request": {
+     "period_start": "2026-09-01",
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2026-09-30"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": 125.65760243110228,
+      "band": "1-4",
+      "hi95": 192.43524320764632,
+      "horizon": 2.0,
+      "point": 155.50225491843807,
+      "hi80": 178.75184150945415,
+      "served": true,
+      "lo80": 135.27665550477684,
+      "week_start": "2026-09-07"
+     },
+     {
+      "lo95": 129.39612060314806,
+      "band": "1-4",
+      "hi95": 198.28207145972183,
+      "horizon": 3.0,
+      "point": 160.177810048846,
+      "hi80": 184.1633739503344,
+      "served": true,
+      "lo80": 139.31614241039813,
+      "week_start": "2026-09-14"
+     },
+     {
+      "lo95": 132.97132075238622,
+      "band": "1-4",
+      "hi95": 203.87639346666526,
+      "horizon": 4.0,
+      "point": 164.6502757650155,
+      "hi80": 189.3407313170937,
+      "served": true,
+      "lo80": 143.1795109320367,
+      "week_start": "2026-09-21"
+     },
+     {
+      "lo95": 136.17668778213553,
+      "band": "5-13",
+      "hi95": 208.89682174821655,
+      "horizon": 5.0,
+      "point": 168.66202084016217,
+      "hi80": 193.9862050860897,
+      "served": true,
+      "lo80": 146.64381552937115,
+      "week_start": "2026-09-28"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": 648.9923615724617,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-09-28",
+    "bands": {
+     "5-13": {
+      "shown_error": 5.488484131615858,
+      "served": true
+     },
+     "1-4": {
+      "shown_error": 13.575509695123564,
+      "served": true
+     }
+    },
+    "requested_first_week": "2026-09-07",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "item_id": "f02",
+   "source": "parse_set",
+   "category": "total",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": 8,
+    "period_start": null,
+    "period_end": null,
+    "want_history": true,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 8 weeks from 2026-08-31 to 2026-10-25 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-08-31: about 151 requests (80% range 131-173)\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\n- Week of 2026-10-05: about 172 requests (80% range 149-198)\n- Week of 2026-10-12: about 174 requests (80% range 152-201)\n- Week of 2026-10-19: about 176 requests (80% range 153-202)\nTotal over these 8 weeks: about 1,322 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.\nRecent actual weekly counts (total request volume): 2026-07-06: 136, 2026-07-13: 99, 2026-07-20: 123, 2026-07-27: 150, 2026-08-03: 153, 2026-08-10: 157, 2026-08-17: 121, 2026-08-24: 136.",
+   "answer": {
+    "request": {
+     "period_start": null,
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": 8.0,
+     "want_history": true,
+     "period_end": null
+    },
+    "history": [
+     {
+      "count": 136.0,
+      "week_start": "2026-07-06"
+     },
+     {
+      "count": 99.0,
+      "week_start": "2026-07-13"
+     },
+     {
+      "count": 123.0,
+      "week_start": "2026-07-20"
+     },
+     {
+      "count": 150.0,
+      "week_start": "2026-07-27"
+     },
+     {
+      "count": 153.0,
+      "week_start": "2026-08-03"
+     },
+     {
+      "count": 157.0,
+      "week_start": "2026-08-10"
+     },
+     {
+      "count": 121.0,
+      "week_start": "2026-08-17"
+     },
+     {
+      "count": 136.0,
+      "week_start": "2026-08-24"
+     }
+    ],
+    "weeks": [
+     {
+      "lo95": 121.95177667779414,
+      "band": "1-4",
+      "hi95": 186.64146248793276,
+      "horizon": 1.0,
+      "point": 150.86834642212153,
+      "hi80": 173.38909529793656,
+      "served": true,
+      "lo80": 131.27271881218553,
+      "week_start": "2026-08-31"
+     },
+     {
+      "lo95": 125.65760243110228,
+      "band": "1-4",
+      "hi95": 192.43524320764632,
+      "horizon": 2.0,
+      "point": 155.50225491843807,
+      "hi80": 178.75184150945415,
+      "served": true,
+      "lo80": 135.27665550477684,
+      "week_start": "2026-09-07"
+     },
+     {
+      "lo95": 129.39612060314806,
+      "band": "1-4",
+      "hi95": 198.28207145972183,
+      "horizon": 3.0,
+      "point": 160.177810048846,
+      "hi80": 184.1633739503344,
+      "served": true,
+      "lo80": 139.31614241039813,
+      "week_start": "2026-09-14"
+     },
+     {
+      "lo95": 132.97132075238622,
+      "band": "1-4",
+      "hi95": 203.87639346666526,
+      "horizon": 4.0,
+      "point": 164.6502757650155,
+      "hi80": 189.3407313170937,
+      "served": true,
+      "lo80": 143.1795109320367,
+      "week_start": "2026-09-21"
+     },
+     {
+      "lo95": 136.17668778213553,
+      "band": "5-13",
+      "hi95": 208.89682174821655,
+      "horizon": 5.0,
+      "point": 168.66202084016217,
+      "hi80": 193.9862050860897,
+      "served": true,
+      "lo80": 146.64381552937115,
+      "week_start": "2026-09-28"
+     },
+     {
+      "lo95": 138.81115212722267,
+      "band": "5-13",
+      "hi95": 213.03132672389953,
+      "horizon": 6.0,
+      "point": 171.96256540810066,
+      "hi80": 197.81061613432342,
+      "served": true,
+      "lo80": 149.4920974395783,
+      "week_start": "2026-10-05"
+     },
+     {
+      "lo95": 140.69761721372998,
+      "band": "5-13",
+      "hi95": 216.0061459772249,
+      "horizon": 7.0,
+      "point": 174.33172414255722,
+      "hi80": 200.56008143641685,
+      "served": true,
+      "lo80": 151.53339500488605,
+      "week_start": "2026-10-12"
+     },
+     {
+      "lo95": 141.7015104642084,
+      "band": "5-13",
+      "hi95": 217.61433431803928,
+      "horizon": 8.0,
+      "point": 175.60261920463884,
+      "hi80": 202.0425108611036,
+      "served": true,
+      "lo80": 152.6227314247156,
+      "week_start": "2026-10-19"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": 1321.75761674988,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-10-19",
+    "bands": {
+     "5-13": {
+      "shown_error": 5.488484131615858,
+      "served": true
+     },
+     "1-4": {
+      "shown_error": 13.575509695123564,
+      "served": true
+     }
+    },
+    "requested_first_week": "2026-08-31",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "item_id": "f03",
+   "source": "parse_set",
+   "category": "total",
+   "question": "How busy will December be?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2026-12-01",
+    "period_end": "2026-12-31",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 4 weeks from 2026-12-07 to 2027-01-03 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-12-07: about 156 requests (80% range 135-179)\n- Week of 2026-12-14: about 151 requests (80% range 131-174)\n- Week of 2026-12-21: about 126 requests (80% range 108-147)\n- Week of 2026-12-28: about 122 requests (80% range 105-143)\nTotal over these 4 weeks: about 555 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.\nChristmas and New Year weeks include a holiday adjustment that hasn't been validated on held-out data.",
+   "answer": {
+    "request": {
+     "period_start": "2026-12-01",
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2026-12-31"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": 125.63674445738894,
+      "band": "14-26",
+      "hi95": 193.1618328298426,
+      "horizon": 15.0,
+      "point": 155.7826172272241,
+      "hi80": 179.30462477210634,
+      "served": true,
+      "lo80": 135.34633510434207,
+      "week_start": "2026-12-07"
+     },
+     {
+      "lo95": 121.78844200078137,
+      "band": "14-26",
+      "hi95": 187.24659669227168,
+      "horizon": 16.0,
+      "point": 151.01149387083234,
+      "hi80": 173.81351820202494,
+      "served": true,
+      "lo80": 131.2007921880656,
+      "week_start": "2026-12-14"
+     },
+     {
+      "lo95": 99.3589601237764,
+      "band": "14-26",
+      "hi95": 159.08805402404258,
+      "horizon": 17.0,
+      "point": 125.72519085666178,
+      "hi80": 146.64162803873967,
+      "served": true,
+      "lo80": 107.79219944126778,
+      "week_start": "2026-12-21"
+     },
+     {
+      "lo95": 96.58585148204742,
+      "band": "14-26",
+      "hi95": 154.59929660203852,
+      "horizon": 18.0,
+      "point": 122.19699137390205,
+      "hi80": 142.5118069870935,
+      "served": true,
+      "lo80": 104.77801816228326,
+      "week_start": "2026-12-28"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [
+     "2026-12-21",
+     "2026-12-28"
+    ],
+    "period_total": 554.7162933286203,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-12-28",
+    "bands": {
+     "14-26": {
+      "shown_error": 11.491661356128652,
+      "served": true
+     }
+    },
+    "requested_first_week": "2026-12-07",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f04",
+   "agent": "forecast",
+   "item_id": "f04",
+   "source": "parse_set",
+   "category": "service_type",
+   "question": "Forecast install requests for the next 10 weeks.",
+   "request": {
+    "slice": "install",
+    "horizon_weeks": 10,
+    "period_start": null,
+    "period_end": null,
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of install requests, 10 weeks from 2026-08-31 to 2026-11-08 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-28: about 28 requests (80% range 21-39)\n- Week of 2026-10-05: about 29 requests (80% range 21-39)\n- Week of 2026-10-12: about 29 requests (80% range 21-39)\n- Week of 2026-10-19: about 29 requests (80% range 21-39)\n- Week of 2026-10-26: about 29 requests (80% range 21-39)\n- Week of 2026-11-02: about 28 requests (80% range 21-39)\nNo total is given, because some of these weeks aren't shown.\nForecasts for install requests at 1-4 weeks ahead aren't shown: they were off by 43.7% on held-out weeks.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 18.0% on average.",
+   "answer": {
+    "request": {
+     "period_start": null,
+     "slice": "install",
+     "unsupported": null,
+     "horizon_weeks": 10.0,
+     "want_history": false,
+     "period_end": null
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 1.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-08-31"
+     },
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 2.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-09-07"
+     },
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 3.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-09-14"
+     },
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 4.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-09-21"
+     },
+     {
+      "lo95": 17.44123754331662,
+      "band": "5-13",
+      "hi95": 45.80420149595658,
+      "horizon": 5.0,
+      "point": 28.264499973870358,
+      "hi80": 38.75549015844286,
+      "served": true,
+      "lo80": 20.613388077582638,
+      "week_start": "2026-09-28"
+     },
+     {
+      "lo95": 17.623666901156962,
+      "band": "5-13",
+      "hi95": 46.330290993677465,
+      "horizon": 6.0,
+      "point": 28.574632384446247,
+      "hi80": 39.19373653261552,
+      "served": true,
+      "lo80": 20.832655626665662,
+      "week_start": "2026-10-05"
+     },
+     {
+      "lo95": 17.724858822888706,
+      "band": "5-13",
+      "hi95": 46.63650506166751,
+      "horizon": 7.0,
+      "point": 28.75109507846599,
+      "hi80": 39.44689562855017,
+      "served": true,
+      "lo80": 20.955399785952,
+      "week_start": "2026-10-12"
+     },
+     {
+      "lo95": 17.7325334951729,
+      "band": "5-13",
+      "hi95": 46.690551020921205,
+      "horizon": 8.0,
+      "point": 28.77397713015294,
+      "hi80": 39.487652612233326,
+      "served": true,
+      "lo80": 20.967105034500502,
+      "week_start": "2026-10-19"
+     },
+     {
+      "lo95": 17.640684577579385,
+      "band": "5-13",
+      "hi95": 46.47712189467106,
+      "horizon": 9.0,
+      "point": 28.63369077533668,
+      "hi80": 39.302989107376206,
+      "served": true,
+      "lo80": 20.86070973323828,
+      "week_start": "2026-10-26"
+     },
+     {
+      "lo95": 17.450382285728896,
+      "band": "5-13",
+      "hi95": 45.99968128813697,
+      "horizon": 10.0,
+      "point": 28.332172939957857,
+      "hi80": 38.89574095912323,
+      "served": true,
+      "lo80": 20.637530066422332,
+      "week_start": "2026-11-02"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": null,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-11-02",
+    "bands": {
+     "5-13": {
+      "shown_error": 17.957601388809973,
+      "served": true
+     },
+     "1-4": {
+      "shown_error": 43.69451185173943,
+      "served": false
+     }
+    },
+    "requested_first_week": "2026-08-31",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "item_id": "f05",
+   "source": "parse_set",
+   "category": "service_type",
+   "question": "What will repair volume look like next month?",
+   "request": {
+    "slice": "repair",
+    "horizon_weeks": null,
+    "period_start": "2026-09-01",
+    "period_end": "2026-09-30",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of repair requests, 4 weeks from 2026-09-07 to 2026-10-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-28: about 61 requests (80% range 50-75)\nNo total is given, because some of these weeks aren't shown.\nForecasts for repair requests at 1-4 weeks ahead aren't shown: they were off by 27.9% on held-out weeks.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 10.8% on average.",
+   "answer": {
+    "request": {
+     "period_start": "2026-09-01",
+     "slice": "repair",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2026-09-30"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 2.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-09-07"
+     },
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 3.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-09-14"
+     },
+     {
+      "lo95": null,
+      "band": "1-4",
+      "hi95": null,
+      "horizon": 4.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-09-21"
+     },
+     {
+      "lo95": 44.77843587922092,
+      "band": "5-13",
+      "hi95": 83.29090396431698,
+      "horizon": 5.0,
+      "point": 61.07074915611005,
+      "hi80": 74.80849286078106,
+      "served": true,
+      "lo80": 49.855788559052854,
+      "week_start": "2026-09-28"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": null,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-09-28",
+    "bands": {
+     "5-13": {
+      "shown_error": 10.844175610995082,
+      "served": true
+     },
+     "1-4": {
+      "shown_error": 27.94405151159528,
+      "served": false
+     }
+    },
+    "requested_first_week": "2026-09-07",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "item_id": "f06",
+   "source": "parse_set",
+   "category": "service_type",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "request": {
+    "slice": "maintenance",
+    "horizon_weeks": null,
+    "period_start": "2026-11-01",
+    "period_end": "2026-11-30",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of maintenance requests, 5 weeks from 2026-11-02 to 2026-12-06 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\nForecasts for maintenance requests at 5-13 weeks ahead aren't shown: they were off by 22.9% on held-out weeks.\nForecasts for maintenance requests at 14-26 weeks ahead aren't shown: they were off by 22.7% on held-out weeks.",
+   "answer": {
+    "request": {
+     "period_start": "2026-11-01",
+     "slice": "maintenance",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2026-11-30"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": null,
+      "band": "5-13",
+      "hi95": null,
+      "horizon": 10.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-11-02"
+     },
+     {
+      "lo95": null,
+      "band": "5-13",
+      "hi95": null,
+      "horizon": 11.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-11-09"
+     },
+     {
+      "lo95": null,
+      "band": "5-13",
+      "hi95": null,
+      "horizon": 12.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-11-16"
+     },
+     {
+      "lo95": null,
+      "band": "5-13",
+      "hi95": null,
+      "horizon": 13.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-11-23"
+     },
+     {
+      "lo95": null,
+      "band": "14-26",
+      "hi95": null,
+      "horizon": 14.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-11-30"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": null,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-11-30",
+    "bands": {
+     "5-13": {
+      "shown_error": 22.920142370536908,
+      "served": false
+     },
+     "14-26": {
+      "shown_error": 22.70256105985401,
+      "served": false
+     }
+    },
+    "requested_first_week": "2026-11-02",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "item_id": "f07",
+   "source": "parse_set",
+   "category": "beyond_horizon",
+   "question": "What will volume be next year?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2027-01-01",
+    "period_end": "2027-12-31",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 52 weeks from 2027-01-04 to 2028-01-02 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2027-01-04: about 139 requests (80% range 121-160)\n- Week of 2027-01-11: about 136 requests (80% range 118-157)\n- Week of 2027-01-18: about 134 requests (80% range 116-154)\n- Week of 2027-01-25: about 133 requests (80% range 115-153)\n- Week of 2027-02-01: about 132 requests (80% range 115-152)\n- Week of 2027-02-08: about 133 requests (80% range 115-153)\n- Week of 2027-02-15: about 134 requests (80% range 116-154)\n- Week of 2027-02-22: about 136 requests (80% range 118-156)\nTotal over these 8 weeks: about 1,076 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.\nThe remaining 44 weeks fall beyond the 26-week forecast horizon and aren't forecast.",
+   "answer": {
+    "request": {
+     "period_start": "2027-01-01",
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2027-12-31"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": 111.98758985214323,
+      "band": "14-26",
+      "hi95": 172.12472129427482,
+      "horizon": 19.0,
+      "point": 138.83743260273044,
+      "hi80": 159.7850511861736,
+      "served": true,
+      "lo80": 120.63602038252297,
+      "week_start": "2027-01-04"
+     },
+     {
+      "lo95": 109.72152837177401,
+      "band": "14-26",
+      "hi95": 168.6107932642406,
+      "horizon": 20.0,
+      "point": 136.01556505389263,
+      "hi80": 156.5280170489446,
+      "served": true,
+      "lo80": 118.19119851971854,
+      "week_start": "2027-01-11"
+     },
+     {
+      "lo95": 108.08477076413611,
+      "band": "14-26",
+      "hi95": 166.06362364039822,
+      "horizon": 21.0,
+      "point": 133.9736865710361,
+      "hi80": 154.16851052656315,
+      "served": true,
+      "lo80": 116.42422069286076,
+      "week_start": "2027-01-18"
+     },
+     {
+      "lo95": 107.10979629904595,
+      "band": "14-26",
+      "hi95": 164.53655830444802,
+      "horizon": 22.0,
+      "point": 132.7534453177601,
+      "hi80": 152.7555030136792,
+      "served": true,
+      "lo80": 115.3704900710343,
+      "week_start": "2027-01-25"
+     },
+     {
+      "lo95": 106.80276303916123,
+      "band": "14-26",
+      "hi95": 164.0420391175714,
+      "horizon": 23.0,
+      "point": 132.3636771638458,
+      "hi80": 152.30006663484107,
+      "served": true,
+      "lo80": 115.03700175221579,
+      "week_start": "2027-02-01"
+     },
+     {
+      "lo95": 107.14542391487535,
+      "band": "14-26",
+      "hi95": 164.5541718988309,
+      "horizon": 24.0,
+      "point": 132.78262877749296,
+      "hi80": 152.77781848625466,
+      "served": true,
+      "lo80": 115.40436091936851,
+      "week_start": "2027-02-08"
+     },
+     {
+      "lo95": 108.0961391753091,
+      "band": "14-26",
+      "hi95": 166.0099753491547,
+      "horizon": 25.0,
+      "point": 133.9590885301623,
+      "hi80": 154.13012912457168,
+      "served": true,
+      "lo80": 116.42783602243173,
+      "week_start": "2027-02-15"
+     },
+     {
+      "lo95": 109.59015527278734,
+      "band": "14-26",
+      "hi95": 168.30960343329392,
+      "horizon": 26.0,
+      "point": 135.81264880030852,
+      "hi80": 156.26436197424462,
+      "served": true,
+      "lo80": 118.03763405245303,
+      "week_start": "2027-02-22"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": 1076.4981728172288,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2027-12-27",
+    "bands": {
+     "14-26": {
+      "shown_error": 11.491661356128652,
+      "served": true
+     }
+    },
+    "requested_first_week": "2027-01-04",
+    "beyond_horizon_weeks": 44.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "item_id": "f08",
+   "source": "parse_set",
+   "category": "beyond_horizon",
+   "question": "Forecast requests for Q2 2027.",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2027-04-01",
+    "period_end": "2027-06-30",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 13 weeks from 2027-04-05 to 2027-07-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\nAll requested weeks fall beyond the 26-week forecast horizon, so none is forecast.",
+   "answer": {
+    "request": {
+     "period_start": "2027-04-01",
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2027-06-30"
+    },
+    "history": [],
+    "weeks": [],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": null,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2027-06-28",
+    "bands": {},
+    "requested_first_week": "2027-04-05",
+    "beyond_horizon_weeks": 13.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f09",
+   "agent": "forecast",
+   "item_id": "f09",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "What's the SLA outlook for Q4?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2026-10-01",
+    "period_end": "2026-12-31",
+    "want_history": false,
+    "unsupported": "sla"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "SLA outlook can't be forecast: there's no model for SLA compliance. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+   "answer": null,
+   "parsed_request": {
+    "period_end": "2026-12-31",
+    "slice": "total",
+    "unsupported": "sla",
+    "horizon_weeks": null,
+    "want_history": false,
+    "period_start": "2026-10-01"
+   }
+  },
+  {
+   "base_id": "forecast:f10",
+   "agent": "forecast",
+   "item_id": "f10",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "How many incidents will we have next month?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2026-09-01",
+    "period_end": "2026-09-30",
+    "want_history": false,
+    "unsupported": "incidents"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "Incidents can't be forecast: there's no incident model. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+   "answer": null,
+   "parsed_request": {
+    "period_end": "2026-09-30",
+    "slice": "total",
+    "unsupported": "incidents",
+    "horizon_weeks": null,
+    "want_history": false,
+    "period_start": "2026-09-01"
+   }
+  },
+  {
+   "base_id": "forecast:f11",
+   "agent": "forecast",
+   "item_id": "f11",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "Forecast request volume in the West for the next 8 weeks.",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": 8,
+    "period_start": null,
+    "period_end": null,
+    "want_history": false,
+    "unsupported": "region"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "Forecasts can't be broken down by region. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+   "answer": null,
+   "parsed_request": {
+    "period_end": null,
+    "slice": "total",
+    "unsupported": "region",
+    "horizon_weeks": 8.0,
+    "want_history": false,
+    "period_start": null
+   }
+  },
+  {
+   "base_id": "forecast:f12",
+   "agent": "forecast",
+   "item_id": "f12",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "What was request volume in July?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2026-07-01",
+    "period_end": "2026-07-31",
+    "want_history": false,
+    "unsupported": "past_period"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "That period has already happened; forecasts cover weeks after 2026-08-30. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+   "answer": null,
+   "parsed_request": {
+    "period_end": "2026-07-31",
+    "slice": "total",
+    "unsupported": "past_period",
+    "horizon_weeks": null,
+    "want_history": false,
+    "period_start": "2026-07-01"
+   }
+  },
+  {
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "item_id": "f13",
+   "source": "parse_set",
+   "category": "ambiguous",
+   "question": "How many requests should we expect in January?",
+   "request": {
+    "slice": "total",
+    "horizon_weeks": null,
+    "period_start": "2027-01-01",
+    "period_end": "2027-01-31",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 4 weeks from 2027-01-04 to 2027-01-31 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2027-01-04: about 139 requests (80% range 121-160)\n- Week of 2027-01-11: about 136 requests (80% range 118-157)\n- Week of 2027-01-18: about 134 requests (80% range 116-154)\n- Week of 2027-01-25: about 133 requests (80% range 115-153)\nTotal over these 4 weeks: about 542 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.",
+   "answer": {
+    "request": {
+     "period_start": "2027-01-01",
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2027-01-31"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": 111.98758985214323,
+      "band": "14-26",
+      "hi95": 172.12472129427482,
+      "horizon": 19.0,
+      "point": 138.83743260273044,
+      "hi80": 159.7850511861736,
+      "served": true,
+      "lo80": 120.63602038252297,
+      "week_start": "2027-01-04"
+     },
+     {
+      "lo95": 109.72152837177401,
+      "band": "14-26",
+      "hi95": 168.6107932642406,
+      "horizon": 20.0,
+      "point": 136.01556505389263,
+      "hi80": 156.5280170489446,
+      "served": true,
+      "lo80": 118.19119851971854,
+      "week_start": "2027-01-11"
+     },
+     {
+      "lo95": 108.08477076413611,
+      "band": "14-26",
+      "hi95": 166.06362364039822,
+      "horizon": 21.0,
+      "point": 133.9736865710361,
+      "hi80": 154.16851052656315,
+      "served": true,
+      "lo80": 116.42422069286076,
+      "week_start": "2027-01-18"
+     },
+     {
+      "lo95": 107.10979629904595,
+      "band": "14-26",
+      "hi95": 164.53655830444802,
+      "horizon": 22.0,
+      "point": 132.7534453177601,
+      "hi80": 152.7555030136792,
+      "served": true,
+      "lo80": 115.3704900710343,
+      "week_start": "2027-01-25"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": 541.5801295454193,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2027-01-25",
+    "bands": {
+     "14-26": {
+      "shown_error": 11.491661356128652,
+      "served": true
+     }
+    },
+    "requested_first_week": "2027-01-04",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "item_id": "f14",
+   "source": "parse_set",
+   "category": "ambiguous",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "request": {
+    "slice": "repair",
+    "horizon_weeks": null,
+    "period_start": "2026-10-01",
+    "period_end": "2026-12-31",
+    "want_history": false,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of repair requests, 13 weeks from 2026-10-05 to 2027-01-03 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-10-05: about 62 requests (80% range 51-76)\n- Week of 2026-10-12: about 63 requests (80% range 51-77)\n- Week of 2026-10-19: about 63 requests (80% range 52-77)\n- Week of 2026-10-26: about 63 requests (80% range 51-77)\n- Week of 2026-11-02: about 62 requests (80% range 51-76)\n- Week of 2026-11-09: about 61 requests (80% range 50-75)\n- Week of 2026-11-16: about 60 requests (80% range 49-74)\n- Week of 2026-11-23: about 58 requests (80% range 48-72)\nNo total is given, because some of these weeks aren't shown.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 10.8% on average.\nForecasts for repair requests at 14-26 weeks ahead aren't shown: they were off by 20.5% on held-out weeks.\nChristmas and New Year weeks include a holiday adjustment that hasn't been validated on held-out data.",
+   "answer": {
+    "request": {
+     "period_start": "2026-10-01",
+     "slice": "repair",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2026-12-31"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": 45.55611124685167,
+      "band": "5-13",
+      "hi95": 84.79707156919017,
+      "horizon": 6.0,
+      "point": 62.15323664792745,
+      "hi80": 76.15199804295028,
+      "served": true,
+      "lo80": 50.72781969075188,
+      "week_start": "2026-10-05"
+     },
+     {
+      "lo95": 46.058535207338174,
+      "band": "5-13",
+      "hi95": 85.78373488344054,
+      "horizon": 7.0,
+      "point": 62.85756257878531,
+      "hi80": 77.03007032649549,
+      "served": true,
+      "lo80": 51.2926076349029,
+      "week_start": "2026-10-12"
+     },
+     {
+      "lo95": 46.24902594503015,
+      "band": "5-13",
+      "hi95": 86.18200091007992,
+      "horizon": 8.0,
+      "point": 63.133458610192584,
+      "hi80": 77.38093769493759,
+      "served": true,
+      "lo80": 51.50924394065159,
+      "week_start": "2026-10-19"
+     },
+     {
+      "lo95": 46.11231451744707,
+      "band": "5-13",
+      "hi95": 85.96373991245324,
+      "horizon": 9.0,
+      "point": 62.96020180986606,
+      "hi80": 77.17929433582017,
+      "served": true,
+      "lo80": 51.36075739033171,
+      "week_start": "2026-10-26"
+     },
+     {
+      "lo95": 45.65657516450353,
+      "band": "5-13",
+      "hi95": 85.1449896763994,
+      "horizon": 10.0,
+      "point": 62.349247156973796,
+      "hi80": 76.43941604045482,
+      "served": true,
+      "lo80": 50.856335937783996,
+      "week_start": "2026-11-02"
+     },
+     {
+      "lo95": 44.9126100895058,
+      "band": "5-13",
+      "hi95": 83.78397951634841,
+      "horizon": 11.0,
+      "point": 61.3429474655799,
+      "hi80": 75.21345707526523,
+      "served": true,
+      "lo80": 50.03037155969772,
+      "week_start": "2026-11-09"
+     },
+     {
+      "lo95": 43.930336418065,
+      "band": "5-13",
+      "hi95": 81.97421696244254,
+      "horizon": 12.0,
+      "point": 60.009623634610065,
+      "hi80": 73.58530006712937,
+      "served": true,
+      "lo80": 48.93850980402795,
+      "week_start": "2026-11-16"
+     },
+     {
+      "lo95": 42.77326895647606,
+      "band": "5-13",
+      "hi95": 79.8340491552557,
+      "horizon": 13.0,
+      "point": 58.43597570334804,
+      "hi80": 71.66120806064946,
+      "served": true,
+      "lo80": 47.65148884333967,
+      "week_start": "2026-11-23"
+     },
+     {
+      "lo95": null,
+      "band": "14-26",
+      "hi95": null,
+      "horizon": 14.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-11-30"
+     },
+     {
+      "lo95": null,
+      "band": "14-26",
+      "hi95": null,
+      "horizon": 15.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-12-07"
+     },
+     {
+      "lo95": null,
+      "band": "14-26",
+      "hi95": null,
+      "horizon": 16.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-12-14"
+     },
+     {
+      "lo95": null,
+      "band": "14-26",
+      "hi95": null,
+      "horizon": 17.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-12-21"
+     },
+     {
+      "lo95": null,
+      "band": "14-26",
+      "hi95": null,
+      "horizon": 18.0,
+      "point": null,
+      "hi80": null,
+      "served": false,
+      "lo80": null,
+      "week_start": "2026-12-28"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [
+     "2026-12-21",
+     "2026-12-28"
+    ],
+    "period_total": null,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-12-28",
+    "bands": {
+     "5-13": {
+      "shown_error": 10.844175610995082,
+      "served": true
+     },
+     "14-26": {
+      "shown_error": 20.513052244548774,
+      "served": false
+     }
+    },
+    "requested_first_week": "2026-10-05",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "item_id": "p01",
+   "source": "parse_set",
+   "category": "region_trend",
+   "question": "Is sentiment trending down in the West?",
+   "request": {
+    "start": null,
+    "end": null,
+    "region": "west",
+    "bucket": "month",
+    "want_trend": true,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the West from 2026-03-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30; no period was named, so this range was assumed.\n241 comments: positive 120 (49.8%), neutral 59 (24.5%), negative 37 (15.4%), mixed 25 (10.4%).\n2 comments (0.8%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-08: 7 of 32 negative (21.9%). Earlier months, 2026-03 to 2026-07: 30 of 209 negative (14.4%). Two-proportion test p = 0.2718.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": true,
+     "region": "west",
+     "bucket": "month",
+     "start": null,
+     "unsupported": null,
+     "want_examples": false,
+     "end": null
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "west",
+     "buckets": [
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 21.0,
+        "mixed": 1.0,
+        "negative": 5.0,
+        "neutral": 9.0
+       },
+       "n_scored": 36.0,
+       "bucket": "2026-03"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 20.0,
+        "mixed": 2.0,
+        "negative": 5.0,
+        "neutral": 15.0
+       },
+       "n_scored": 42.0,
+       "bucket": "2026-04"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 23.0,
+        "mixed": 8.0,
+        "negative": 8.0,
+        "neutral": 10.0
+       },
+       "n_scored": 49.0,
+       "bucket": "2026-05"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 22.0,
+        "mixed": 3.0,
+        "negative": 8.0,
+        "neutral": 12.0
+       },
+       "n_scored": 45.0,
+       "bucket": "2026-06"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 18.0,
+        "mixed": 6.0,
+        "negative": 4.0,
+        "neutral": 9.0
+       },
+       "n_scored": 37.0,
+       "bucket": "2026-07"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 16.0,
+        "mixed": 5.0,
+        "negative": 7.0,
+        "neutral": 4.0
+       },
+       "n_scored": 32.0,
+       "bucket": "2026-08"
+      }
+     ],
+     "start": "2026-03-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 120.0,
+      "mixed": 25.0,
+      "negative": 37.0,
+      "neutral": 59.0
+     },
+     "n_comments": 241.0,
+     "shares": {
+      "positive": "0.4979",
+      "mixed": "0.1037",
+      "negative": "0.1535",
+      "neutral": "0.2448"
+     },
+     "complete": true,
+     "end": "2026-08-30",
+     "bucket": "month",
+     "n_scored": 241.0
+    },
+    "range_assumed": true,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-03-01",
+    "trend": {
+     "z": 1.099,
+     "earlier_buckets": [
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07"
+     ],
+     "latest_bucket": "2026-08",
+     "earlier_negative": 30.0,
+     "verdict": "no clear change",
+     "latest_n": 32.0,
+     "p_value": 0.2718,
+     "earlier_n": 209.0,
+     "latest_negative": 7.0,
+     "small_sample": false
+    },
+    "quoted_feedback_ids": [],
+    "end": "2026-08-30"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "item_id": "p02",
+   "source": "parse_set",
+   "category": "region_trend",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "request": {
+    "start": "2026-01-01",
+    "end": "2026-08-30",
+    "region": "central",
+    "bucket": "month",
+    "want_trend": true,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the Central region from 2026-01-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30.\n443 comments: positive 231 (52.1%), neutral 109 (24.6%), negative 72 (16.3%), mixed 31 (7.0%).\n2 comments (0.5%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-08: 5 of 49 negative (10.2%). Earlier months, 2026-01 to 2026-07: 67 of 394 negative (17.0%). Two-proportion test p = 0.2236.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": true,
+     "region": "central",
+     "bucket": "month",
+     "start": "2026-01-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-08-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "central",
+     "buckets": [
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 31.0,
+        "mixed": 2.0,
+        "negative": 13.0,
+        "neutral": 17.0
+       },
+       "n_scored": 63.0,
+       "bucket": "2026-01"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 23.0,
+        "mixed": 5.0,
+        "negative": 2.0,
+        "neutral": 11.0
+       },
+       "n_scored": 41.0,
+       "bucket": "2026-02"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 28.0,
+        "mixed": 4.0,
+        "negative": 9.0,
+        "neutral": 14.0
+       },
+       "n_scored": 55.0,
+       "bucket": "2026-03"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 27.0,
+        "mixed": 5.0,
+        "negative": 12.0,
+        "neutral": 13.0
+       },
+       "n_scored": 57.0,
+       "bucket": "2026-04"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 39.0,
+        "mixed": 4.0,
+        "negative": 10.0,
+        "neutral": 17.0
+       },
+       "n_scored": 70.0,
+       "bucket": "2026-05"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 27.0,
+        "mixed": 5.0,
+        "negative": 12.0,
+        "neutral": 14.0
+       },
+       "n_scored": 58.0,
+       "bucket": "2026-06"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 27.0,
+        "mixed": 2.0,
+        "negative": 9.0,
+        "neutral": 12.0
+       },
+       "n_scored": 50.0,
+       "bucket": "2026-07"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 29.0,
+        "mixed": 4.0,
+        "negative": 5.0,
+        "neutral": 11.0
+       },
+       "n_scored": 49.0,
+       "bucket": "2026-08"
+      }
+     ],
+     "start": "2026-01-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 231.0,
+      "mixed": 31.0,
+      "negative": 72.0,
+      "neutral": 109.0
+     },
+     "n_comments": 443.0,
+     "shares": {
+      "positive": "0.5214",
+      "mixed": "0.0700",
+      "negative": "0.1625",
+      "neutral": "0.2460"
+     },
+     "complete": true,
+     "end": "2026-08-30",
+     "bucket": "month",
+     "n_scored": 443.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-01-01",
+    "trend": {
+     "z": -1.2169,
+     "earlier_buckets": [
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07"
+     ],
+     "latest_bucket": "2026-08",
+     "earlier_negative": 67.0,
+     "verdict": "no clear change",
+     "latest_n": 49.0,
+     "p_value": 0.2236,
+     "earlier_n": 394.0,
+     "latest_negative": 5.0,
+     "small_sample": false
+    },
+    "quoted_feedback_ids": [],
+    "end": "2026-08-30"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "item_id": "p03",
+   "source": "parse_set",
+   "category": "region_trend",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "request": {
+    "start": "2025-01-01",
+    "end": "2025-12-31",
+    "region": "southeast",
+    "bucket": "quarter",
+    "want_trend": true,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the Southeast from 2025-01-01 to 2025-12-31 (inclusive, UTC), as of 2026-08-30.\n631 comments: positive 312 (49.5%), neutral 136 (21.6%), negative 129 (20.4%), mixed 54 (8.6%).\n8 comments (1.3%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest quarter, 2025-Q4: 36 of 159 negative (22.6%). Earlier quarters, 2025-Q1 to 2025-Q3: 93 of 472 negative (19.7%). Two-proportion test p = 0.4269.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": true,
+     "region": "southeast",
+     "bucket": "quarter",
+     "start": "2025-01-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2025-12-31"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "southeast",
+     "buckets": [
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 73.0,
+        "mixed": 15.0,
+        "negative": 35.0,
+        "neutral": 31.0
+       },
+       "n_scored": 154.0,
+       "bucket": "2025-Q1"
+      },
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 99.0,
+        "mixed": 10.0,
+        "negative": 26.0,
+        "neutral": 31.0
+       },
+       "n_scored": 166.0,
+       "bucket": "2025-Q2"
+      },
+      {
+       "flagged_count": 4.0,
+       "counts": {
+        "positive": 70.0,
+        "mixed": 15.0,
+        "negative": 32.0,
+        "neutral": 35.0
+       },
+       "n_scored": 152.0,
+       "bucket": "2025-Q3"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 70.0,
+        "mixed": 14.0,
+        "negative": 36.0,
+        "neutral": 39.0
+       },
+       "n_scored": 159.0,
+       "bucket": "2025-Q4"
+      }
+     ],
+     "start": "2025-01-01",
+     "flagged_count": 8.0,
+     "counts": {
+      "positive": 312.0,
+      "mixed": 54.0,
+      "negative": 129.0,
+      "neutral": 136.0
+     },
+     "n_comments": 631.0,
+     "shares": {
+      "positive": "0.4945",
+      "mixed": "0.0856",
+      "negative": "0.2044",
+      "neutral": "0.2155"
+     },
+     "complete": true,
+     "end": "2025-12-31",
+     "bucket": "quarter",
+     "n_scored": 631.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2025-01-01",
+    "trend": {
+     "z": 0.7945,
+     "earlier_buckets": [
+      "2025-Q1",
+      "2025-Q2",
+      "2025-Q3"
+     ],
+     "latest_bucket": "2025-Q4",
+     "earlier_negative": 93.0,
+     "verdict": "no clear change",
+     "latest_n": 159.0,
+     "p_value": 0.4269,
+     "earlier_n": 472.0,
+     "latest_negative": 36.0,
+     "small_sample": false
+    },
+    "quoted_feedback_ids": [],
+    "end": "2025-12-31"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "item_id": "p04",
+   "source": "parse_set",
+   "category": "region_trend",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "request": {
+    "start": "2026-03-01",
+    "end": "2026-06-30",
+    "region": "northeast",
+    "bucket": "month",
+    "want_trend": true,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the Northeast from 2026-03-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n281 comments: positive 141 (50.2%), neutral 65 (23.1%), negative 53 (18.9%), mixed 22 (7.8%).\n2 comments (0.7%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-06: 10 of 73 negative (13.7%). Earlier months, 2026-03 to 2026-05: 43 of 208 negative (20.7%). Two-proportion test p = 0.1900.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": true,
+     "region": "northeast",
+     "bucket": "month",
+     "start": "2026-03-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-06-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "northeast",
+     "buckets": [
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 29.0,
+        "mixed": 5.0,
+        "negative": 8.0,
+        "neutral": 14.0
+       },
+       "n_scored": 56.0,
+       "bucket": "2026-03"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 36.0,
+        "mixed": 4.0,
+        "negative": 18.0,
+        "neutral": 17.0
+       },
+       "n_scored": 75.0,
+       "bucket": "2026-04"
+      },
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 38.0,
+        "mixed": 4.0,
+        "negative": 17.0,
+        "neutral": 18.0
+       },
+       "n_scored": 77.0,
+       "bucket": "2026-05"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 38.0,
+        "mixed": 9.0,
+        "negative": 10.0,
+        "neutral": 16.0
+       },
+       "n_scored": 73.0,
+       "bucket": "2026-06"
+      }
+     ],
+     "start": "2026-03-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 141.0,
+      "mixed": 22.0,
+      "negative": 53.0,
+      "neutral": 65.0
+     },
+     "n_comments": 281.0,
+     "shares": {
+      "positive": "0.5018",
+      "mixed": "0.0783",
+      "negative": "0.1886",
+      "neutral": "0.2313"
+     },
+     "complete": true,
+     "end": "2026-06-30",
+     "bucket": "month",
+     "n_scored": 281.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-03-01",
+    "trend": {
+     "z": -1.3105,
+     "earlier_buckets": [
+      "2026-03",
+      "2026-04",
+      "2026-05"
+     ],
+     "latest_bucket": "2026-06",
+     "earlier_negative": 43.0,
+     "verdict": "no clear change",
+     "latest_n": 73.0,
+     "p_value": 0.19,
+     "earlier_n": 208.0,
+     "latest_negative": 10.0,
+     "small_sample": false
+    },
+    "quoted_feedback_ids": [],
+    "end": "2026-06-30"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "item_id": "p05",
+   "source": "parse_set",
+   "category": "time_summary",
+   "question": "How did customers feel last quarter?",
+   "request": {
+    "start": "2026-04-01",
+    "end": "2026-06-30",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment from 2026-04-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n723 comments: positive 366 (50.6%), neutral 176 (24.3%), negative 128 (17.7%), mixed 53 (7.3%).\n5 comments (0.7%) are low-confidence and flagged for review.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": false,
+     "region": null,
+     "bucket": "month",
+     "start": "2026-04-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-06-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": null,
+     "buckets": [
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 117.0,
+        "mixed": 14.0,
+        "negative": 47.0,
+        "neutral": 64.0
+       },
+       "n_scored": 242.0,
+       "bucket": "2026-04"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 133.0,
+        "mixed": 19.0,
+        "negative": 41.0,
+        "neutral": 59.0
+       },
+       "n_scored": 252.0,
+       "bucket": "2026-05"
+      },
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 116.0,
+        "mixed": 20.0,
+        "negative": 40.0,
+        "neutral": 53.0
+       },
+       "n_scored": 229.0,
+       "bucket": "2026-06"
+      }
+     ],
+     "start": "2026-04-01",
+     "flagged_count": 5.0,
+     "counts": {
+      "positive": 366.0,
+      "mixed": 53.0,
+      "negative": 128.0,
+      "neutral": 176.0
+     },
+     "n_comments": 723.0,
+     "shares": {
+      "positive": "0.5062",
+      "mixed": "0.0733",
+      "negative": "0.1770",
+      "neutral": "0.2434"
+     },
+     "complete": true,
+     "end": "2026-06-30",
+     "bucket": "month",
+     "n_scored": 723.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-04-01",
+    "trend": null,
+    "quoted_feedback_ids": [],
+    "end": "2026-06-30"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "item_id": "p06",
+   "source": "parse_set",
+   "category": "time_summary",
+   "question": "What's customer sentiment this year?",
+   "request": {
+    "start": "2026-01-01",
+    "end": "2026-08-30",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment from 2026-01-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30.\n1,702 comments: positive 870 (51.1%), neutral 404 (23.7%), negative 309 (18.2%), mixed 119 (7.0%).\n10 comments (0.6%) are low-confidence and flagged for review.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": false,
+     "region": null,
+     "bucket": "month",
+     "start": "2026-01-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-08-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": null,
+     "buckets": [
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 101.0,
+        "mixed": 14.0,
+        "negative": 47.0,
+        "neutral": 54.0
+       },
+       "n_scored": 216.0,
+       "bucket": "2026-01"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 83.0,
+        "mixed": 8.0,
+        "negative": 34.0,
+        "neutral": 42.0
+       },
+       "n_scored": 167.0,
+       "bucket": "2026-02"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 110.0,
+        "mixed": 13.0,
+        "negative": 38.0,
+        "neutral": 50.0
+       },
+       "n_scored": 211.0,
+       "bucket": "2026-03"
+      },
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 117.0,
+        "mixed": 14.0,
+        "negative": 47.0,
+        "neutral": 64.0
+       },
+       "n_scored": 242.0,
+       "bucket": "2026-04"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 133.0,
+        "mixed": 19.0,
+        "negative": 41.0,
+        "neutral": 59.0
+       },
+       "n_scored": 252.0,
+       "bucket": "2026-05"
+      },
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 116.0,
+        "mixed": 20.0,
+        "negative": 40.0,
+        "neutral": 53.0
+       },
+       "n_scored": 229.0,
+       "bucket": "2026-06"
+      },
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 111.0,
+        "mixed": 17.0,
+        "negative": 33.0,
+        "neutral": 51.0
+       },
+       "n_scored": 212.0,
+       "bucket": "2026-07"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 99.0,
+        "mixed": 14.0,
+        "negative": 29.0,
+        "neutral": 31.0
+       },
+       "n_scored": 173.0,
+       "bucket": "2026-08"
+      }
+     ],
+     "start": "2026-01-01",
+     "flagged_count": 10.0,
+     "counts": {
+      "positive": 870.0,
+      "mixed": 119.0,
+      "negative": 309.0,
+      "neutral": 404.0
+     },
+     "n_comments": 1702.0,
+     "shares": {
+      "positive": "0.5112",
+      "mixed": "0.0699",
+      "negative": "0.1816",
+      "neutral": "0.2374"
+     },
+     "complete": true,
+     "end": "2026-08-30",
+     "bucket": "month",
+     "n_scored": 1702.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-01-01",
+    "trend": null,
+    "quoted_feedback_ids": [],
+    "end": "2026-08-30"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "item_id": "p07",
+   "source": "parse_set",
+   "category": "time_summary",
+   "question": "What was feedback sentiment like in July?",
+   "request": {
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment from 2026-07-01 to 2026-07-31 (inclusive, UTC), as of 2026-08-30.\n212 comments: positive 111 (52.4%), neutral 51 (24.1%), negative 33 (15.6%), mixed 17 (8.0%).\n2 comments (0.9%) are low-confidence and flagged for review.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": false,
+     "region": null,
+     "bucket": "month",
+     "start": "2026-07-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-07-31"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": null,
+     "buckets": [
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 111.0,
+        "mixed": 17.0,
+        "negative": 33.0,
+        "neutral": 51.0
+       },
+       "n_scored": 212.0,
+       "bucket": "2026-07"
+      }
+     ],
+     "start": "2026-07-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 111.0,
+      "mixed": 17.0,
+      "negative": 33.0,
+      "neutral": 51.0
+     },
+     "n_comments": 212.0,
+     "shares": {
+      "positive": "0.5236",
+      "mixed": "0.0802",
+      "negative": "0.1557",
+      "neutral": "0.2406"
+     },
+     "complete": true,
+     "end": "2026-07-31",
+     "bucket": "month",
+     "n_scored": 212.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-07-01",
+    "trend": null,
+    "quoted_feedback_ids": [],
+    "end": "2026-07-31"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "item_id": "p08",
+   "source": "parse_set",
+   "category": "examples",
+   "question": "Show me some negative comments from last month.",
+   "request": {
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": true,
+    "example_label": "negative",
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment from 2026-07-01 to 2026-07-31 (inclusive, UTC), as of 2026-08-30.\n212 comments: positive 111 (52.4%), neutral 51 (24.1%), negative 33 (15.6%), mixed 17 (8.0%).\n2 comments (0.9%) are low-confidence and flagged for review.\nExample negative comments, quoted as written:\n- [negative, confidence 0.9950] \"Technician showed up over two hours late without any heads-up call or update sent to our office desk.\" (feedback 7065, 2026-07-12, the Northeast)\n- [negative, confidence 0.9949] \"How did a routine security camera replacement end up with a cracked mounting bracket and a severed power line that nobody bothered to fix before leaving?\" (feedback 7182, 2026-07-31, the Central region)\n- [negative, confidence 0.9948] \"did anyone read the arrival window we confirmed last week? someone finally showed up ninety minutes late to check the security cameras without leaving any paperwork behind.\" (feedback 7030, 2026-07-07, the West)",
+   "answer": {
+    "request": {
+     "example_label": "negative",
+     "want_trend": false,
+     "region": null,
+     "bucket": "month",
+     "start": "2026-07-01",
+     "unsupported": null,
+     "want_examples": true,
+     "end": "2026-07-31"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": null,
+     "buckets": [
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 111.0,
+        "mixed": 17.0,
+        "negative": 33.0,
+        "neutral": 51.0
+       },
+       "n_scored": 212.0,
+       "bucket": "2026-07"
+      }
+     ],
+     "start": "2026-07-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 111.0,
+      "mixed": 17.0,
+      "negative": 33.0,
+      "neutral": 51.0
+     },
+     "n_comments": 212.0,
+     "shares": {
+      "positive": "0.5236",
+      "mixed": "0.0802",
+      "negative": "0.1557",
+      "neutral": "0.2406"
+     },
+     "complete": true,
+     "end": "2026-07-31",
+     "bucket": "month",
+     "n_scored": 212.0
+    },
+    "range_assumed": false,
+    "examples": [
+     {
+      "submitted_at": "2026-07-12T04:08:00Z",
+      "feedback_id": 7065.0,
+      "flagged": false,
+      "confidence": "0.9950",
+      "feedback_text": "Technician showed up over two hours late without any heads-up call or update sent to our office desk.",
+      "label": "negative",
+      "region": "northeast"
+     },
+     {
+      "submitted_at": "2026-07-31T03:38:00Z",
+      "feedback_id": 7182.0,
+      "flagged": false,
+      "confidence": "0.9949",
+      "feedback_text": "How did a routine security camera replacement end up with a cracked mounting bracket and a severed power line that nobody bothered to fix before leaving?",
+      "label": "negative",
+      "region": "central"
+     },
+     {
+      "submitted_at": "2026-07-07T17:04:00Z",
+      "feedback_id": 7030.0,
+      "flagged": false,
+      "confidence": "0.9948",
+      "feedback_text": "did anyone read the arrival window we confirmed last week? someone finally showed up ninety minutes late to check the security cameras without leaving any paperwork behind.",
+      "label": "negative",
+      "region": "west"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "start": "2026-07-01",
+    "trend": null,
+    "quoted_feedback_ids": [
+     7065.0,
+     7182.0,
+     7030.0
+    ],
+    "end": "2026-07-31"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "item_id": "p09",
+   "source": "parse_set",
+   "category": "examples",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "request": {
+    "start": "2026-06-01",
+    "end": "2026-06-30",
+    "region": "west",
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": true,
+    "example_label": "mixed",
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the West from 2026-06-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n45 comments: positive 22 (48.9%), neutral 12 (26.7%), negative 8 (17.8%), mixed 3 (6.7%).\n1 comments (2.2%) are low-confidence and flagged for review.\nExample mixed comments, quoted as written:\n- [mixed, confidence 0.9917] \"switch port dead still after check, but overall site walk was helpful.\" (feedback 6759, 2026-06-02, the West)\n- [mixed, confidence 0.9840] \"Late arrival, quick switch replacement.\" (feedback 6855, 2026-06-12, the West)\n- [mixed, confidence 0.9615] \"Earlier this week during the access point upgrade, everything went sideways at first, but now the wireless coverage across the warehouse floor is actually performing better than expected.\" (feedback 6787, 2026-06-05, the West)",
+   "answer": {
+    "request": {
+     "example_label": "mixed",
+     "want_trend": false,
+     "region": "west",
+     "bucket": "month",
+     "start": "2026-06-01",
+     "unsupported": null,
+     "want_examples": true,
+     "end": "2026-06-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "west",
+     "buckets": [
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 22.0,
+        "mixed": 3.0,
+        "negative": 8.0,
+        "neutral": 12.0
+       },
+       "n_scored": 45.0,
+       "bucket": "2026-06"
+      }
+     ],
+     "start": "2026-06-01",
+     "flagged_count": 1.0,
+     "counts": {
+      "positive": 22.0,
+      "mixed": 3.0,
+      "negative": 8.0,
+      "neutral": 12.0
+     },
+     "n_comments": 45.0,
+     "shares": {
+      "positive": "0.4889",
+      "mixed": "0.0667",
+      "negative": "0.1778",
+      "neutral": "0.2667"
+     },
+     "complete": true,
+     "end": "2026-06-30",
+     "bucket": "month",
+     "n_scored": 45.0
+    },
+    "range_assumed": false,
+    "examples": [
+     {
+      "submitted_at": "2026-06-02T06:47:00Z",
+      "feedback_id": 6759.0,
+      "flagged": false,
+      "confidence": "0.9917",
+      "feedback_text": "switch port dead still after check, but overall site walk was helpful.",
+      "label": "mixed",
+      "region": "west"
+     },
+     {
+      "submitted_at": "2026-06-12T17:35:00Z",
+      "feedback_id": 6855.0,
+      "flagged": false,
+      "confidence": "0.9840",
+      "feedback_text": "Late arrival, quick switch replacement.",
+      "label": "mixed",
+      "region": "west"
+     },
+     {
+      "submitted_at": "2026-06-05T14:10:00Z",
+      "feedback_id": 6787.0,
+      "flagged": false,
+      "confidence": "0.9615",
+      "feedback_text": "Earlier this week during the access point upgrade, everything went sideways at first, but now the wireless coverage across the warehouse floor is actually performing better than expected.",
+      "label": "mixed",
+      "region": "west"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "start": "2026-06-01",
+    "trend": null,
+    "quoted_feedback_ids": [
+     6759.0,
+     6855.0,
+     6787.0
+    ],
+    "end": "2026-06-30"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p10",
+   "agent": "sentiment",
+   "item_id": "p10",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "What's sentiment for our largest account?",
+   "request": {
+    "start": null,
+    "end": null,
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": "account"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "Sentiment can't be broken down by account. I can report customer feedback sentiment over a date range, for all sites or one region (Northeast, Southeast, Central or West), as a trend by month or quarter, and quote example comments.",
+   "answer": null,
+   "parsed_request": {
+    "want_trend": false,
+    "example_label": null,
+    "region": null,
+    "bucket": "month",
+    "start": null,
+    "unsupported": "account",
+    "want_examples": false,
+    "end": null
+   }
+  },
+  {
+   "base_id": "sentiment:p11",
+   "agent": "sentiment",
+   "item_id": "p11",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "Which technicians get the most negative feedback this year?",
+   "request": {
+    "start": "2026-01-01",
+    "end": "2026-08-30",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": "technician"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "Sentiment can't be broken down by technician. I can report customer feedback sentiment over a date range, for all sites or one region (Northeast, Southeast, Central or West), as a trend by month or quarter, and quote example comments.",
+   "answer": null,
+   "parsed_request": {
+    "want_trend": false,
+    "example_label": null,
+    "region": null,
+    "bucket": "month",
+    "start": "2026-01-01",
+    "unsupported": "technician",
+    "want_examples": false,
+    "end": "2026-08-30"
+   }
+  },
+  {
+   "base_id": "sentiment:p12",
+   "agent": "sentiment",
+   "item_id": "p12",
+   "source": "parse_set",
+   "category": "unsupported",
+   "question": "How does sentiment differ between repair and install jobs?",
+   "request": {
+    "start": null,
+    "end": null,
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": "service_type"
+   },
+   "kind": "decline",
+   "error_code": "not_supported",
+   "text": "Sentiment can't be broken down by service type. I can report customer feedback sentiment over a date range, for all sites or one region (Northeast, Southeast, Central or West), as a trend by month or quarter, and quote example comments.",
+   "answer": null,
+   "parsed_request": {
+    "want_trend": false,
+    "example_label": null,
+    "region": null,
+    "bucket": "month",
+    "start": null,
+    "unsupported": "service_type",
+    "want_examples": false,
+    "end": null
+   }
+  },
+  {
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "item_id": "p13",
+   "source": "parse_set",
+   "category": "ambiguous_date",
+   "question": "What did customers think in the spring?",
+   "request": {
+    "start": "2026-03-01",
+    "end": "2026-05-31",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment from 2026-03-01 to 2026-05-31 (inclusive, UTC), as of 2026-08-30.\n705 comments: positive 360 (51.1%), neutral 173 (24.5%), negative 126 (17.9%), mixed 46 (6.5%).\n4 comments (0.6%) are low-confidence and flagged for review.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": false,
+     "region": null,
+     "bucket": "month",
+     "start": "2026-03-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-05-31"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": null,
+     "buckets": [
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 110.0,
+        "mixed": 13.0,
+        "negative": 38.0,
+        "neutral": 50.0
+       },
+       "n_scored": 211.0,
+       "bucket": "2026-03"
+      },
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 117.0,
+        "mixed": 14.0,
+        "negative": 47.0,
+        "neutral": 64.0
+       },
+       "n_scored": 242.0,
+       "bucket": "2026-04"
+      },
+      {
+       "flagged_count": 1.0,
+       "counts": {
+        "positive": 133.0,
+        "mixed": 19.0,
+        "negative": 41.0,
+        "neutral": 59.0
+       },
+       "n_scored": 252.0,
+       "bucket": "2026-05"
+      }
+     ],
+     "start": "2026-03-01",
+     "flagged_count": 4.0,
+     "counts": {
+      "positive": 360.0,
+      "mixed": 46.0,
+      "negative": 126.0,
+      "neutral": 173.0
+     },
+     "n_comments": 705.0,
+     "shares": {
+      "positive": "0.5106",
+      "mixed": "0.0652",
+      "negative": "0.1787",
+      "neutral": "0.2454"
+     },
+     "complete": true,
+     "end": "2026-05-31",
+     "bucket": "month",
+     "n_scored": 705.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-03-01",
+    "trend": null,
+    "quoted_feedback_ids": [],
+    "end": "2026-05-31"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "item_id": "p14",
+   "source": "parse_set",
+   "category": "ambiguous_date",
+   "question": "How was sentiment in August?",
+   "request": {
+    "start": "2025-08-01",
+    "end": "2025-08-31",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": false,
+    "example_label": null,
+    "unsupported": null
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment from 2025-08-01 to 2025-08-31 (inclusive, UTC), as of 2026-08-30.\n194 comments: positive 92 (47.4%), neutral 42 (21.7%), negative 42 (21.7%), mixed 18 (9.3%).\n2 comments (1.0%) are low-confidence and flagged for review.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": false,
+     "region": null,
+     "bucket": "month",
+     "start": "2025-08-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2025-08-31"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": null,
+     "buckets": [
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 92.0,
+        "mixed": 18.0,
+        "negative": 42.0,
+        "neutral": 42.0
+       },
+       "n_scored": 194.0,
+       "bucket": "2025-08"
+      }
+     ],
+     "start": "2025-08-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 92.0,
+      "mixed": 18.0,
+      "negative": 42.0,
+      "neutral": 42.0
+     },
+     "n_comments": 194.0,
+     "shares": {
+      "positive": "0.4742",
+      "mixed": "0.0928",
+      "negative": "0.2165",
+      "neutral": "0.2165"
+     },
+     "complete": true,
+     "end": "2025-08-31",
+     "bucket": "month",
+     "n_scored": 194.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2025-08-01",
+    "trend": null,
+    "quoted_feedback_ids": [],
+    "end": "2025-08-31"
+   },
+   "parsed_request": null
+  },
+  {
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "item_id": "A1",
+   "source": "owner",
+   "category": "anchor",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "request": {
+    "metric": "first_time_fix_rate",
+    "region": "northeast",
+    "start": "2026-04-01",
+    "end": "2026-06-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For the northeast region, the first-time fix rate was 98.81% from 2026-04-01 to 2026-06-30 (inclusive, UTC), based on 503 completed requests: 497 needed no return visit.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": null,
+     "metric": "first_time_fix_rate",
+     "account_name": null,
+     "end": "2026-06-30",
+     "region": "northeast",
+     "start": "2026-04-01"
+    },
+    "figures": {
+     "region": "northeast",
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-06-30",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 503.0,
+     "technician_id": null,
+     "start": "2026-04-01",
+     "numerator": 497.0,
+     "metric": "first_time_fix_rate",
+     "technician_name": null,
+     "rate": "0.9881"
+    },
+    "range_assumed": false,
+    "end": "2026-06-30",
+    "as_of": "2026-08-30",
+    "start": "2026-04-01"
+   },
+   "parsed_request": null,
+   "anchor_for": [
+    "O1a",
+    "O1b"
+   ]
+  },
+  {
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "item_id": "A2",
+   "source": "owner",
+   "category": "anchor",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "request": {
+    "slice": "total",
+    "period_start": "2026-11-02",
+    "period_end": "2026-11-30",
+    "want_history": false
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Forecast of total request volume, 5 weeks from 2026-11-02 to 2026-12-06 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-11-02: about 175 requests (80% range 152-201)\n- Week of 2026-11-09: about 172 requests (80% range 150-198)\n- Week of 2026-11-16: about 169 requests (80% range 147-195)\n- Week of 2026-11-23: about 165 requests (80% range 143-190)\n- Week of 2026-11-30: about 161 requests (80% range 139-185)\nTotal over these 5 weeks: about 842 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.",
+   "answer": {
+    "request": {
+     "period_start": "2026-11-02",
+     "slice": "total",
+     "unsupported": null,
+     "horizon_weeks": null,
+     "want_history": false,
+     "period_end": "2026-11-30"
+    },
+    "history": [],
+    "weeks": [
+     {
+      "lo95": 140.82269625461717,
+      "band": "5-13",
+      "hi95": 216.36793219117027,
+      "horizon": 10.0,
+      "point": 174.55519354690304,
+      "hi80": 200.86870953793456,
+      "served": true,
+      "lo80": 151.68871082154553,
+      "week_start": "2026-11-02"
+     },
+     {
+      "lo95": 138.99068749735687,
+      "band": "5-13",
+      "hi95": 213.5937114456544,
+      "horizon": 11.0,
+      "point": 172.30071618813304,
+      "hi80": 198.28669568580787,
+      "served": true,
+      "lo80": 149.72026588200603,
+      "week_start": "2026-11-09"
+     },
+     {
+      "lo95": 136.37225861771444,
+      "band": "5-13",
+      "hi95": 209.6043343149256,
+      "horizon": 12.0,
+      "point": 169.06867387718196,
+      "hi80": 194.57767237809094,
+      "served": true,
+      "lo80": 146.90388746683064,
+      "week_start": "2026-11-16"
+     },
+     {
+      "lo95": 133.13792710660195,
+      "band": "5-13",
+      "hi95": 204.66125615156903,
+      "horizon": 13.0,
+      "point": 165.07021355487848,
+      "hi80": 189.98445272836872,
+      "served": true,
+      "lo80": 143.423185485664,
+      "week_start": "2026-11-23"
+     },
+     {
+      "lo95": 129.488662202682,
+      "band": "14-26",
+      "hi95": 199.07211226433458,
+      "horizon": 14.0,
+      "point": 160.55398313019458,
+      "hi80": 184.79281944621897,
+      "served": true,
+      "lo80": 139.49449754714612,
+      "week_start": "2026-11-30"
+     }
+    ],
+    "as_of": "2026-08-30",
+    "range_assumed": false,
+    "trained_through": "2026-08-30",
+    "year_end_weeks": [],
+    "period_total": 841.5487802972912,
+    "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+    "requested_last_week": "2026-11-30",
+    "bands": {
+     "5-13": {
+      "shown_error": 5.488484131615858,
+      "served": true
+     },
+     "14-26": {
+      "shown_error": 11.491661356128652,
+      "served": true
+     }
+    },
+    "requested_first_week": "2026-11-02",
+    "beyond_horizon_weeks": 0.0
+   },
+   "parsed_request": null,
+   "anchor_for": [
+    "O2"
+   ]
+  },
+  {
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "item_id": "A3",
+   "source": "owner",
+   "category": "anchor",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "request": {
+    "region": "west",
+    "start": "2026-04-01",
+    "end": "2026-06-30",
+    "bucket": "quarter",
+    "want_trend": false,
+    "want_examples": false
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the West from 2026-04-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n136 comments: positive 65 (47.8%), neutral 37 (27.2%), negative 21 (15.4%), mixed 13 (9.6%).\n2 comments (1.5%) are low-confidence and flagged for review.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": false,
+     "region": "west",
+     "bucket": "quarter",
+     "start": "2026-04-01",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-06-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "west",
+     "buckets": [
+      {
+       "flagged_count": 2.0,
+       "counts": {
+        "positive": 65.0,
+        "mixed": 13.0,
+        "negative": 21.0,
+        "neutral": 37.0
+       },
+       "n_scored": 136.0,
+       "bucket": "2026-Q2"
+      }
+     ],
+     "start": "2026-04-01",
+     "flagged_count": 2.0,
+     "counts": {
+      "positive": 65.0,
+      "mixed": 13.0,
+      "negative": 21.0,
+      "neutral": 37.0
+     },
+     "n_comments": 136.0,
+     "shares": {
+      "positive": "0.4779",
+      "mixed": "0.0956",
+      "negative": "0.1544",
+      "neutral": "0.2721"
+     },
+     "complete": true,
+     "end": "2026-06-30",
+     "bucket": "quarter",
+     "n_scored": 136.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-04-01",
+    "trend": null,
+    "quoted_feedback_ids": [],
+    "end": "2026-06-30"
+   },
+   "parsed_request": null,
+   "anchor_for": [
+    "O3a",
+    "O3b"
+   ]
+  },
+  {
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "item_id": "A4a",
+   "source": "owner",
+   "category": "anchor",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": "technician",
+    "region": "west",
+    "start": "2026-08-01",
+    "end": "2026-08-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For the west region, SLA compliance was 85.51% from 2026-08-01 to 2026-08-30 (inclusive, UTC), based on 69 dispatched requests: 59 completed within their SLA window. By technician: no technician has at least 20 cases to rank. 12 technicians left out of the ranking for fewer than 20 cases; all are in the data.",
+   "answer": {
+    "request": {
+     "group_by": "technician",
+     "technician_name": null,
+     "metric": "sla_compliance",
+     "account_name": null,
+     "end": "2026-08-30",
+     "region": "west",
+     "start": "2026-08-01"
+    },
+    "figures": {
+     "region": "west",
+     "account_name": null,
+     "groups": [
+      {
+       "group_id": 2.0,
+       "group": "Hana Rossi",
+       "rate": "0.0000",
+       "denominator": 1.0,
+       "numerator": 0.0
+      },
+      {
+       "group_id": 20.0,
+       "group": "Carla Fischer",
+       "rate": "0.7273",
+       "denominator": 11.0,
+       "numerator": 8.0
+      },
+      {
+       "group_id": 3.0,
+       "group": "Priya Kim",
+       "rate": "0.8182",
+       "denominator": 11.0,
+       "numerator": 9.0
+      },
+      {
+       "group_id": 8.0,
+       "group": "Rafael Young",
+       "rate": "0.8750",
+       "denominator": 8.0,
+       "numerator": 7.0
+      },
+      {
+       "group_id": 25.0,
+       "group": "Zoe Kowalski",
+       "rate": "0.8889",
+       "denominator": 9.0,
+       "numerator": 8.0
+      },
+      {
+       "group_id": 23.0,
+       "group": "Leo Alvarez",
+       "rate": "0.9000",
+       "denominator": 10.0,
+       "numerator": 9.0
+      },
+      {
+       "group_id": 15.0,
+       "group": "Maya Ibrahim",
+       "rate": "0.9286",
+       "denominator": 14.0,
+       "numerator": 13.0
+      },
+      {
+       "group_id": 26.0,
+       "group": "Jamal Brooks",
+       "rate": "1.0000",
+       "denominator": 1.0,
+       "numerator": 1.0
+      },
+      {
+       "group_id": 10.0,
+       "group": "Jin Young",
+       "rate": "1.0000",
+       "denominator": 1.0,
+       "numerator": 1.0
+      },
+      {
+       "group_id": 11.0,
+       "group": "Luis Castillo",
+       "rate": "1.0000",
+       "denominator": 1.0,
+       "numerator": 1.0
+      },
+      {
+       "group_id": 30.0,
+       "group": "Sam Nakamura",
+       "rate": "1.0000",
+       "denominator": 1.0,
+       "numerator": 1.0
+      },
+      {
+       "group_id": 7.0,
+       "group": "Uma Young",
+       "rate": "1.0000",
+       "denominator": 1.0,
+       "numerator": 1.0
+      }
+     ],
+     "group_count": 12.0,
+     "truncated": false,
+     "end": "2026-08-30",
+     "account_id": null,
+     "group_by": "technician",
+     "denominator": 69.0,
+     "technician_id": null,
+     "start": "2026-08-01",
+     "numerator": 59.0,
+     "metric": "sla_compliance",
+     "technician_name": null,
+     "rate": "0.8551"
+    },
+    "range_assumed": false,
+    "end": "2026-08-30",
+    "as_of": "2026-08-30",
+    "start": "2026-08-01"
+   },
+   "parsed_request": null,
+   "anchor_for": [
+    "O4a"
+   ]
+  },
+  {
+   "base_id": "owner:A4b",
+   "agent": "reporting",
+   "item_id": "A4b",
+   "source": "owner",
+   "category": "anchor",
+   "question": "What was the single-job technician's SLA compliance in the Southwest this month?",
+   "request": {
+    "metric": "sla_compliance",
+    "technician_name": "Hana Rossi",
+    "region": "west",
+    "start": "2026-08-01",
+    "end": "2026-08-30"
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "As of 2026-08-30: For Hana Rossi in the west region, SLA compliance was 0.00% from 2026-08-01 to 2026-08-30 (inclusive, UTC), based on 1 dispatched request: 0 completed within their SLA window. That is too few to compare reliably.",
+   "answer": {
+    "request": {
+     "group_by": null,
+     "technician_name": "Hana Rossi",
+     "metric": "sla_compliance",
+     "account_name": null,
+     "end": "2026-08-30",
+     "region": "west",
+     "start": "2026-08-01"
+    },
+    "figures": {
+     "region": "west",
+     "account_name": null,
+     "groups": null,
+     "group_count": null,
+     "truncated": false,
+     "end": "2026-08-30",
+     "account_id": null,
+     "group_by": null,
+     "denominator": 1.0,
+     "technician_id": 2.0,
+     "start": "2026-08-01",
+     "numerator": 0.0,
+     "metric": "sla_compliance",
+     "technician_name": "Hana Rossi",
+     "rate": "0.0000"
+    },
+    "range_assumed": false,
+    "end": "2026-08-30",
+    "as_of": "2026-08-30",
+    "start": "2026-08-01"
+   },
+   "parsed_request": null,
+   "anchor_for": [
+    "O4b"
+   ]
+  },
+  {
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "item_id": "A5",
+   "source": "owner",
+   "category": "anchor",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "request": {
+    "region": "west",
+    "start": "2026-08-17",
+    "end": "2026-08-30",
+    "bucket": "month",
+    "want_trend": true
+   },
+   "kind": "answer",
+   "error_code": null,
+   "text": "Customer feedback sentiment in the West from 2026-08-17 to 2026-08-30 (inclusive, UTC), as of 2026-08-30.\n9 comments: positive 4 (44.4%), neutral 2 (22.2%), negative 1 (11.1%), mixed 2 (22.2%).\n0 comments (0.0%) are low-confidence and flagged for review.\nA trend needs at least two periods; this range has fewer than two months with comments.",
+   "answer": {
+    "request": {
+     "example_label": null,
+     "want_trend": true,
+     "region": "west",
+     "bucket": "month",
+     "start": "2026-08-17",
+     "unsupported": null,
+     "want_examples": false,
+     "end": "2026-08-30"
+    },
+    "summary": {
+     "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+     "region": "west",
+     "buckets": [
+      {
+       "flagged_count": 0.0,
+       "counts": {
+        "positive": 4.0,
+        "mixed": 2.0,
+        "negative": 1.0,
+        "neutral": 2.0
+       },
+       "n_scored": 9.0,
+       "bucket": "2026-08"
+      }
+     ],
+     "start": "2026-08-17",
+     "flagged_count": 0.0,
+     "counts": {
+      "positive": 4.0,
+      "mixed": 2.0,
+      "negative": 1.0,
+      "neutral": 2.0
+     },
+     "n_comments": 9.0,
+     "shares": {
+      "positive": "0.4444",
+      "mixed": "0.2222",
+      "negative": "0.1111",
+      "neutral": "0.2222"
+     },
+     "complete": true,
+     "end": "2026-08-30",
+     "bucket": "month",
+     "n_scored": 9.0
+    },
+    "range_assumed": false,
+    "examples": [],
+    "as_of": "2026-08-30",
+    "start": "2026-08-17",
+    "trend": {
+     "z": null,
+     "earlier_buckets": [],
+     "latest_bucket": null,
+     "earlier_negative": null,
+     "verdict": "needs two periods",
+     "latest_n": null,
+     "p_value": null,
+     "earlier_n": null,
+     "latest_negative": null,
+     "small_sample": false
+    },
+    "quoted_feedback_ids": [],
+    "end": "2026-08-30"
+   },
+   "parsed_request": null,
+   "anchor_for": [
+    "O5"
+   ]
+  }
+ ],
+ "excluded": []
+}

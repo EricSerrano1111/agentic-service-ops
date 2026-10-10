@@ -53,7 +53,10 @@ from schemas import (
 BASE = "http://agent.test"
 JULY = (dt.date(2026, 7, 1), dt.date(2026, 7, 31))
 QUESTION = "How many incidents were reported last month?"
-TEXT = "As of 2026-08-30: 172 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC)."
+TEXT = (
+    "As of 2026-08-30: 172 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): "
+    "25 high, 54 medium, 93 low severity."
+)
 COUNTS = {"low": 93, "medium": 54, "high": 25}
 
 

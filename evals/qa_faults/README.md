@@ -13,6 +13,7 @@ interpretation client that always says `faithful`.
 | `base.py` | builds the clean base answers from the three parse sets and the owner's anchors, no parse call. |
 | `run.py` | controls, then every fault's cases through QA's verification code. |
 | `report.py`, `report_format.md` | the tables, fixed in advance. |
+| `compare.py` | measurement 1 against measurement 2 (ADR-092), appended to measurement 2's report. |
 
 ```
 .venv\Scripts\python evals/qa_faults/base.py --out evals/results/qa_faults/<date>

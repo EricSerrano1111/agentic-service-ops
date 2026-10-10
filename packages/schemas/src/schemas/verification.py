@@ -17,12 +17,14 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-#: What the user is told about verification. `verified`: QA passed it. `not_checked`: the
-#: request ended before a check ran (a deadline, the cost cap, or a check that had already
-#: failed). No specialist's answer is `not_checked` merely for want of a check any more.
-#: `unavailable`: QA was needed and could not run, so the answer is never shown as verified.
-#: `not_applicable`: no specialist answered (a routing decline, a split or a clarification).
-QaStatus = Literal["verified", "not_checked", "unavailable", "not_applicable"]
+#: What the user is told about verification. `verified`: QA passed it. `failed`: QA ran and
+#: the answer did not pass (a figures check failed, or the interpretation check failed and the
+#: re-asks ran out); the answer is not shown (ADR-092). `not_checked`: the request ended before
+#: any check ran (a deadline, the cost cap, a routing failure). No specialist's answer is
+#: `not_checked` merely for want of a check. `unavailable`: QA was needed and could not run, so
+#: the answer is never shown as verified. `not_applicable`: no specialist answered (a routing
+#: decline, a split or a clarification).
+QaStatus = Literal["verified", "failed", "not_checked", "unavailable", "not_applicable"]
 
 CheckClass = Literal["figures", "interpretation"]
 VerifiedDomain = Literal["reporting", "forecast", "sentiment"]

@@ -149,7 +149,8 @@ class AskResponse(BaseModel):
     warning: str | None = None
     unavailable_capability: str | None = None
     #: Whether the verification agent checked this answer (ADR-089, ADR-090): `verified`;
-    #: `not_checked` (the request ended before a check ran); `unavailable` (QA was needed and
+    #: `failed` (QA ran and the answer did not pass); `not_checked` (the request ended before
+    #: any check ran); `unavailable` (QA was needed and
     #: could not run); `not_applicable` (no specialist answered). Every specialist is checked.
     qa_status: QaStatus = "not_applicable"
 
@@ -168,6 +169,8 @@ class AskResponse(BaseModel):
             raise ValueError("only a specialist's answer or decline can be verified")
         if self.qa_status == "unavailable" and not degraded:
             raise ValueError("only a degraded result can say QA was unavailable")
+        if self.qa_status == "failed" and not degraded:
+            raise ValueError("only a degraded result can say QA failed the answer")
         return self
 
 
@@ -288,6 +291,7 @@ class RequestState:
     downstream_usd: float = 0.0  # what the specialists report back
     decision: Any = None  # the routing decision, once made
     prompt_version: str = ""
+    qa_failed: bool = False  # QA ran and failed an answer of this request (ADR-092)
 
     @property
     def total_usd(self) -> float:
@@ -449,7 +453,7 @@ def create_app(
             unavailable_capability=(
                 d.capability if d.trigger in ("dependency", "qa_unavailable") else None
             ),
-            qa_status=qa_status_for(d),
+            qa_status=qa_status_for(d, state.qa_failed),
             route={} if state.decision is None else state.decision.model_dump(mode="json"),
             prompt_version=state.prompt_version,
             trace_id=state.trace_id,
@@ -692,6 +696,7 @@ def create_app(
             )
             if verdict.verdict == "pass":
                 return pass_through(attempt, spec, respond, "verified")
+            state.qa_failed = True
             if verdict.figures_failed or retries >= settings.max_qa_retry_attempts:
                 raise DegradedResult("qa_failed", failed_checks=failed)
             retries += 1

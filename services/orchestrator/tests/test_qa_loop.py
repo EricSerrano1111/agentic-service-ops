@@ -149,7 +149,7 @@ def test_a_figures_failure_is_degraded_at_once_with_no_second_ask(monkeypatch):
     hop = Hop(qa=lambda n: verdict_task(failing_verdict("figures_match_database")))
     body = ask(routed(monkeypatch, "reporting", hop)).json()
     assert body["outcome"] == "degraded" and body["escalate"] is True
-    assert body["qa_status"] == "not_checked" and body["unavailable_capability"] is None
+    assert body["qa_status"] == "failed" and body["unavailable_capability"] is None
     assert "failed verification (checks: figures_match_database)" in body["warning"]
     assert "172" not in body["answer"]  # the failed answer is not shown
     assert len(hop.calls) == 1 and len(hop.qa_calls) == 1
@@ -203,7 +203,7 @@ def test_the_reviewer_note_is_capped_before_it_is_sent(monkeypatch):
 def test_two_re_asks_then_degraded_with_the_failed_answer_hidden(monkeypatch):
     hop = Hop(qa=lambda n: verdict_task(interpretation_fail()))
     body = ask(routed(monkeypatch, "reporting", hop)).json()
-    assert body["outcome"] == "degraded" and body["qa_status"] == "not_checked"
+    assert body["outcome"] == "degraded" and body["qa_status"] == "failed"
     assert "interpretation_matches_question" in body["warning"]
     assert len(hop.calls) == 3 and len(hop.qa_calls) == 3  # one ask and two re-asks
     assert "172" not in body["answer"] and "Not verified" not in body["answer"]
@@ -329,6 +329,8 @@ def test_a_deadline_that_runs_out_between_asks_hides_the_failed_answer(monkeypat
     assert body["outcome"] == "degraded" and "Time limit reached" in body["warning"]
     assert len(hop.calls) == 1 and len(hop.qa_calls) == 1
     assert "172" not in body["answer"] and "Not verified" not in body["answer"]
+    # QA ran and failed the answer before the clock ran out: `failed`, not `not_checked`
+    assert body["qa_status"] == "failed"
 
 
 def test_the_cap_stops_the_loop_before_the_qa_hop_and_shows_the_unverified_answer(monkeypatch):
@@ -383,7 +385,7 @@ def test_a_sentiment_figures_failure_is_degraded_at_once(monkeypatch):
     hop = sentiment_hop(qa=lambda n: verdict_task(failing_verdict("rating_contradiction")))
     body = ask(routed(monkeypatch, "sentiment", hop)).json()
     assert body["outcome"] == "degraded" and "rating_contradiction" in body["warning"]
-    assert body["qa_status"] == "not_checked" and body["sentiment"] is None
+    assert body["qa_status"] == "failed" and body["sentiment"] is None
     assert len(hop.calls) == 1 and len(hop.qa_calls) == 1
 
 
@@ -504,3 +506,18 @@ def test_an_advisory_interpretation_failure_is_logged_and_neither_fails_nor_retr
         "interpretation_matches_question"
     ]
     assert not [x for x in logged if x["msg"] == "qa retry"]
+
+
+def test_qa_status_is_failed_only_on_a_degraded_result():
+    """ADR-092: `failed` means QA ran and the answer did not pass; it is never on an answer."""
+    from orchestrator.app import AskResponse
+
+    with pytest.raises(ValueError):
+        AskResponse(
+            answer="x",
+            outcome="answered",
+            route={},
+            prompt_version="v",
+            trace_id="t",
+            qa_status="failed",
+        )
