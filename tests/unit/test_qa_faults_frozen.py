@@ -9,6 +9,7 @@ from a hand-made results file.
 from __future__ import annotations
 
 import datetime as dt
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -18,9 +19,19 @@ import yaml
 QA_FAULTS = Path(__file__).resolve().parents[2] / "evals" / "qa_faults"
 sys.path.insert(0, str(QA_FAULTS))
 
-import faults as F  # noqa: E402
-import generate as G  # noqa: E402
-import report  # noqa: E402
+
+def _load(name: str):
+    """Under a unique name: `generate` is also the data generator's module name."""
+    spec = importlib.util.spec_from_file_location(f"qa_faults_{name}", QA_FAULTS / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+F = _load("faults")
+G = _load("generate")
+report = _load("report")
 
 CATALOGUE = yaml.safe_load((QA_FAULTS / "catalogue_v1.yaml").read_text(encoding="utf-8"))
 FAULTS = {f["id"]: f for f in CATALOGUE["faults"]}

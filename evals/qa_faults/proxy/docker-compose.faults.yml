@@ -1,0 +1,37 @@
+# TEST ONLY. Not used in normal runs. Puts a fault-injecting proxy between the orchestrator and
+# the reporting agent for the loop demonstration (Prompt N, section 6):
+#
+#   FAULT=R01 docker compose -f docker-compose.yml -f evals/qa_faults/proxy/docker-compose.faults.yml up -d --build
+#   FAULT=NONE docker compose -f docker-compose.yml -f evals/qa_faults/proxy/docker-compose.faults.yml up -d fault_proxy orchestrator
+#
+# FAULT=NONE passes answers through unchanged.
+services:
+  fault_proxy:
+    build:
+      context: .
+      dockerfile: services/agent_reporting/Dockerfile
+    command: ["python", "/faults/proxy.py"]
+    volumes:
+      - ./evals/qa_faults/proxy:/faults:ro
+    environment:
+      UPSTREAM_URL: http://agent_reporting:8001/
+      PROXY_PUBLIC_URL: http://fault_proxy:8001/
+      FAULT: ${FAULT:-NONE}
+    expose:
+      - "8001"
+    depends_on:
+      agent_reporting:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  orchestrator:
+    environment:
+      AGENT_REPORTING_URL: http://fault_proxy:8001
+    depends_on:
+      fault_proxy:
+        condition: service_healthy

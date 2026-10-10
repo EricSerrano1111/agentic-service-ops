@@ -100,6 +100,9 @@
 | 086 | Region and account filters on the reporting metrics, `find_account`, and the parse gate (resolves L-62) | Accepted |
 | 087 | The QA agent's checks; the sentiment rating cross-check rule, pre-registered (extends ADR-055 and ADR-056) | Accepted |
 | 088 | The verification loop, one request deadline, circuit breaker values and the per-request cost cap (supersedes ADR-055 in part; fixes ADR-077's open values) | Accepted |
+| 089 | The QA agent for reporting and forecast, the verification contract and the loop | Accepted |
+| 090 | QA checks for sentiment answers; `not_checked` no longer stands for "no check yet" | Accepted |
+| 091 | The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate (extends ADR-055 and ADR-087) | Accepted |
 
 ---
 
@@ -2847,3 +2850,51 @@ training grants.
 - Every specialist's answers now go through QA. `verified` means the figures are correct for the request as parsed (L-74); for sentiment it also means the quotes are real and the rating cross-check did not fail.
 - Open points for the owner are listed in L-77 (the flag rule at the rounding edge) and L-79 (what the ADRs left to the code).
 **Rulings applied (2026-10-09, owner; the entry above is unchanged):** (1) *Flags (L-77):* strict, except that when `|stored confidence − τ| ≤ 0.00005` either flag is accepted; QA's `flags_consistent` now says exactly that, tested on both sides of the band (19 database cases) and written into §6 rule 5. A Sprint 6 option, storing the unrounded confidence, is recorded. (2) *Trend (L-79):* the latest non-empty bucket stands, the answer must name the compared buckets and QA checks them in the data and the text; `z = 0, p = 1` stands and QA requires "no clear change" then. (3) *Quotes:* selection is checked. The agent's rule is fixed (the first three of: in the set, of the asked label, highest stored confidence, ties by lowest `feedback_id`); it is written into §6 rule 7 and QA enforces it as a new check inside `quotes_valid` (`quotes_not_the_top_by_confidence`). This supersedes the entry's statement that which comments are quoted is not checked. (4) The single decline reason and "a comment is a row with text" stand. (5) L-78: a Sprint 5 item is added to run the real-data suites on Cloud SQL after the predictions backfill. Offline: 2,195 unit and service tests, 1,124 integration tests and ruff are green, and the 28 real-data cases still pass with the selection rule on. No live calls.
+
+### ADR-091 — The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate
+*Date: 2026-10-10. Extends ADR-055 and ADR-087. Supersedes nothing. No model was called by the measurement; the loop demonstration used 5 of 10 budgeted live calls.*
+
+**Decision:**
+
+**What is measured.** Whether QA's checks fail an answer that is wrong. Real specialist answers are built without a parse call (the item's *expected* parsed request goes to the real specialist through the real A2A SDK and the real tool servers, in process), a fault is applied, and the mutated answer goes straight to QA's verification code with the real checks and the real local database. QA's interpretation client is a fake that always says `faithful`: the interpretation check is advisory (L-74) and never changes a verdict, so the harness does not call a model and the misparse class reports that gap as a number.
+
+**Freezing rule.** The catalogue, the case generator, the seed (20261010), the mutation module and `report_format.md` were committed together before any QA verdict existed: commit `b5ad1f4` at 2026-10-10 12:32:45 CDT. The first QA run followed. Nothing in `catalogue_v1.yaml`, `faults.py`, `generate.py` or `report_format.md` changed afterwards (their SHA-256 is in `results.json`). The mutations were run once with no QA before the commit (`mutation_check.json`) to find mutations that were not schema-valid or changed nothing; no verdict was seen. Misses are findings, not tuned away: a fix goes in a separate PR that re-runs the same frozen catalogue and seed and is reported as a second measurement beside this one.
+
+**Base answers and controls.** 28 reporting, 14 forecast and 14 sentiment parse-set items plus the owner's six anchor questions gave 47 answers and 15 declines (none excluded); the harness's 62 clean answers are also controls that QA must pass.
+
+**The catalogue (v1).** 47 faults drafted by the assistant that built QA, in five classes: injected (R01-R14 reporting, F01-F08 forecast, S01-S03, S05-S10 and S12 sentiment), database (S04 flag inconsistent outside the band, S11 `complete` on a partial answer; both inside a transaction that is always rolled back), rating contradictions (K05 to K80: 0.5, 1, 2, 4 and 8% of the covered set, answers with n >= 100, seeded flips of consistent predictions), and consistent misparse (MR1-3, MF1-2, MS1-3: a wrong month, region, metric, slice or label with figures correct for the wrong request; expected `known_gap`). The rating rule's prediction (ADR-087: n >= 20 and P(X >= x | n, 0.01) < 0.01) was computed and written into the catalogue before the run. Each fault ran on up to 10 applicable base answers, taken in a seeded order; a base answer the mutation could not be made on was skipped with its reason (35 skips) and not replaced by hand.
+
+**Owner-selected, AI-co-written faults** (stated in the catalogue, this entry and the results): the owner chose five scenarios and their expected outcomes; the assistant co-wrote the wording and the concrete mutations. They are not independent of the project's design the way faults the owner wrote alone would be, and are reported apart from both the assistant-drafted faults and any owner-written ones. The owner ruled variants (1a and 1b, 3a and 3b) and the translations (East to northeast, Southwest and Northwest to west; volume and the total slice for technician capacity; a region and period for a job type; the trailing 90 days for the widened range).
+
+**Results (2026-10-10, `evals/results/qa_faults/2026-10-10/report.md`):**
+
+| | faults | cases | caught | 95% Wilson |
+|---|---|---|---|---|
+| Reporting (assistant-drafted, expected caught) | 14 | 104 | 104 | 96.4-100% |
+| Forecast | 8 | 43 | 39 | 78.4-96.3% (90.7%) |
+| Sentiment | 12 | 76 | 76 | 95.2-100% |
+| **Total** | **34** | **223** | **219 (98.2%)** | **95.5-99.3%** |
+
+Every caught case was caught by a check the catalogue named. Faults are not cases: 34 faults, 223 cases (at most 10 each).
+- **False alarms: 1 of 62 controls**, reporting (1 of 31): `reporting:f09`, "SLA compliance for Summit Distribution in the west last month", a correct answer with a zero denominator. QA's text check requires the numerator `0` to be stated, and the text says "no dispatched requests ... no SLA figure" (L-81).
+- **Misses: 4 of 223.** All F08 (a text figure that differs from the data part), forecast: in `f05` the changed figure (62) is the ceiling of the true 61.07, which the check accepts as the same figure; in `f14`, `f04` and `f02` the changed figure equals another number the answer already states (another week's point or a range bound), and the check compares the set of stated numbers, not which figure sits where (L-82).
+- **Rating sensitivity:** QA agrees with the pre-registered rule in 50 of 50 cases. Caught: 0/10 at 0.5%, 0/10 at 1%, 1/10 at 2%, 8/10 at 4%, 10/10 at 8% (covered n 122-1,055). The rule is reliable above about 4%, and below that it depends on n; this is its sensitivity, not a threshold that was tuned.
+- **Known gaps:** consistent misparse 0 of 71 caught (reporting 0/30, forecast 0/19, sentiment 0/22; 95% Wilson 0-5.1% overall). Expected, now a number (L-74).
+- **Owner-selected:** 1a, 1b, 3a and 3b caught in every case (4/4, 4/4, 10/10, 10/10; the owner's exact questions included); 4a and 4b passed (0/1 and 0/1: the known gap held, QA does not check the presentation of small samples, L-84); 5 passed 0/10 (the known gap held); **2 passed 0/6, although the owner expected `caught`** (QA cannot see a wrong point forecast, L-83; stated before the run in the catalogue's translation). 3a reached a positive share of 65-70% (88% is unreachable by flipping 1-2 star comments only); 3b reached 88.0-88.4%; both at contradiction rates of 20-33%.
+- **Other readings.** F04 (`period_total` not the sum) was caught only by the shared contract's validator (`answer_malformed`, 6 of 6), so QA's own `forecast_arithmetic` total check was not exercised by it; F01 fired `forecast_arithmetic` as well as the serving check in 3 of 4. R09 (range shifted in the data only) fired `range_matches_request` and not the figures check. The database was unchanged after every one of 90 database cases and over the whole run (row counts and the predictions' checksum).
+
+**Loop demonstration (5 of 10 live calls):** a fault-injecting proxy (a test-only container in `evals/qa_faults/proxy/docker-compose.faults.yml`, not used in normal runs) between the orchestrator and the reporting agent applied R01 to the real answer to "How many incidents were reported in July 2026?" (54 became 55). The ask came back `outcome: degraded`, `escalate: true`, the warning naming `figures_match_database`, the answer not shown, one reporting task (no retry, ADR-088), `qa_status: not_checked` (the meaning kept for requests that ended before a check passed, ADR-090); 2 live calls (routing and parse; a figures failure skips the interpretation call). The same question with the proxy passing through came back `answered`, 54 incidents, `qa_status: verified`; 3 live calls (the third is the advisory interpretation call).
+
+**What the numbers do not show.**
+- The catalogue is not blind: most of it was written by the assistant that built QA, which knows what QA checks. A catch rate of 98.2% on those faults is an upper bound on what an adversary or an independent reviewer would find, not an estimate of it. The owner-selected faults are the partial exception, and they are where the misses and the known gaps appeared.
+- The faults are injected into the answer, after the specialist. Faults a specialist's own code produces (a wrong query, a wrong parse) are covered only through the consistent-misparse class and the controls.
+- 62 controls and 71 misparse cases are small; the Wilson intervals say how small.
+
+**Context:**
+- ADR-055 and ADR-056 promised a measurable catch rate; ADR-087 pre-registered the rating rule and said no result, including this phase's catch rate, would change it. It was not changed.
+
+**Consequences:**
+- The Sprint 4 goal's "measurable catch rate" is met (sprint log): 98.2% on assistant-drafted caught-expected faults, with the false alarm, the four misses, the owner's forecast fault and the misparse gap reported beside it.
+- Three items are not harness items but findings: the zero-figure false alarm (L-81) is a bug that would degrade a correct answer; the text check's set comparison and rounding tolerance (L-82) is a design weakness; a wrong point forecast is invisible to QA (L-83) and needs an owner decision, not a patch. A fix for L-81 and L-82 is a separate PR that re-runs this catalogue and seed.
+- Offline: 2,208 unit and service tests, 1,124 integration tests and ruff are green. The harness needs the local database, the stored predictions and the `volume_v2` artifact, so it is not in CI.
+
