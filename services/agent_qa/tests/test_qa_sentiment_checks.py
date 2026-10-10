@@ -87,6 +87,7 @@ class World:
         self.quotes = quotes or {}
         self.rating = rating
         self.inconsistent = inconsistent
+        self.top: list[int] = []  # what §6 rule 7 says is quoted, fixed when the answer is built
 
     def source(self) -> FakeSource:
         return FakeSource(
@@ -96,6 +97,7 @@ class World:
             sentiment_quotes=lambda version, ids: {
                 i: self.quotes[i] for i in ids if i in self.quotes
             },
+            sentiment_top_quotes=lambda *args: self.top,
             sentiment_rating_counts=self.rating,
         )
 
@@ -111,6 +113,9 @@ class World:
             [CountRow(*r) for r in self.rows],
         )
         examples = [example(i, self.quotes[i]) for i in quoted]
+        honest = [i for i, f in self.quotes.items() if request.example_label in (None, f["label"])]
+        honest.sort(key=lambda i: (-float(self.quotes[i]["confidence"]), i))
+        self.top = honest[:3] if request.want_examples else []
         answer = SentimentAnswer(
             request=request,
             start=start,
@@ -374,7 +379,7 @@ REQUEST_WITH_QUOTES = SentimentRequest(
 QUOTES = {1: quote(1), 2: quote(2, text="Rude on the phone, 3 times."), 3: quote(3)}
 
 
-def quoted_answer(quoted=(1, 2), request=REQUEST_WITH_QUOTES, quotes=None, **world):
+def quoted_answer(quoted=(1, 2, 3), request=REQUEST_WITH_QUOTES, quotes=None, **world):
     w = World(rows=FLAT, quotes=QUOTES if quotes is None else quotes, **world)
     answer, text = w.answer(request, quoted=quoted)
     return w, answer, text
@@ -387,7 +392,7 @@ def test_valid_quotes_pass_and_digits_in_a_comment_are_not_figures():
 
 
 def test_no_quotes_are_fine_when_none_match():
-    w, answer, text = quoted_answer(quoted=())
+    w, answer, text = quoted_answer(quoted=(), quotes={9: quote(9, label="positive")})
     assert "none match" in text
     assert failed(w.check(answer, text)) == set()
 
@@ -571,3 +576,82 @@ def test_a_quote_from_another_region_is_outside_a_regional_set():
     world.quotes = {1: quote(1) | {"region": "central"}}
     checks = world.check(answer, text)
     assert "quote_outside_the_set" in next(c.detail for c in checks if c.code == "quotes_valid")
+
+
+# ------------------------------------------------------------------ which comments are quoted
+
+RANKED = {
+    1: quote(1) | {"confidence": "0.9900"},
+    2: quote(2) | {"confidence": "0.9876"},
+    3: quote(3) | {"confidence": "0.9876"},  # ties with 2: the lower id comes first
+    4: quote(4) | {"confidence": "0.9500"},
+    5: quote(5, label="positive") | {"confidence": "0.9999"},  # the wrong label never ranks
+}
+
+
+def ranked(quoted):
+    w = World(rows=FLAT, quotes=RANKED)
+    answer, text = w.answer(REQUEST_WITH_QUOTES, quoted=quoted)
+    return w, answer, text
+
+
+def test_the_quotes_are_the_top_three_by_confidence_then_lowest_id_for_the_asked_label():
+    w, answer, text = ranked((1, 2, 3))
+    assert w.top == [1, 2, 3] and failed(w.check(answer, text)) == set()
+
+
+@pytest.mark.parametrize(
+    "quoted",
+    [(1, 2, 4), (1, 3, 2), (2, 1, 3), (1, 2), (1,), (4, 3, 2), (1, 2, 3, 4)],
+)
+def test_any_other_selection_or_order_is_caught(quoted):
+    w, answer, text = ranked((1, 2, 3))
+    w.top = [1, 2, 3]
+    other = w.answer(REQUEST_WITH_QUOTES, quoted=quoted)[0] if len(quoted) <= 3 else None
+    if other is None:  # more than three cannot be built; build the contract-breaking one by hand
+        other = answer.model_construct(
+            **{
+                **dict(answer),
+                "examples": [example(i, RANKED[i]) for i in quoted],
+                "quoted_feedback_ids": list(quoted),
+            }
+        )
+    w.top = [1, 2, 3]
+    checks = w.check(other, text)
+    assert "quotes_not_the_top_by_confidence" in next(
+        (c.detail for c in checks if c.code == "quotes_valid"), ""
+    )
+
+
+def test_selection_uses_the_label_the_question_asked_for():
+    request = SentimentRequest(
+        start=dt.date(2026, 8, 1), end=dt.date(2026, 8, 30), want_examples=True
+    )
+    w = World(rows=FLAT, quotes=RANKED)
+    answer, text = w.answer(request, quoted=(5, 1, 2))  # no label asked: the 0.9999 positive leads
+    assert w.top == [5, 1, 2] and failed(w.check(answer, text)) == set()
+
+
+# ---------------------------------------------------- the compared bucket and nothing to test
+
+
+def test_the_text_must_name_the_compared_buckets():
+    w = World()
+    answer, text = w.answer()
+    assert "Latest month, 2026-08:" in text and "2026-03 to 2026-07:" in text
+    assert "text_matches_data" in failed(w.check(answer, text.replace("2026-08:", "2026-07:")))
+    assert "text_matches_data" in failed(
+        w.check(answer, text.replace("2026-03 to 2026-07:", "2026-04 to 2026-07:"))
+    )
+
+
+def test_nothing_to_test_must_read_no_clear_change():
+    rows = [("positive", "2026-07", 30, 0), ("positive", "2026-08", 30, 0)]  # no negatives at all
+    w = World(rows=rows)
+    answer, text = w.answer()
+    t = answer.trend
+    assert (t.z, t.p_value, t.verdict) == (0.0, 1.0, "no clear change")
+    assert failed(w.check(answer, text)) == set()
+    bad = answer.model_copy(update={"trend": t.model_copy(update={"verdict": "rose"})})
+    detail = next(c.detail for c in w.check(bad, text) if c.code == "trend_matches")
+    assert "nothing_to_test_must_be_no_clear_change" in detail

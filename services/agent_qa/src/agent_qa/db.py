@@ -21,6 +21,8 @@ from sqlalchemy.engine import URL
 from .config import Settings
 
 SEVERITIES = ("low", "medium", "high")
+#: Half a rounding step of the stored 4-place confidence (§6, "Sentiment answers", rule 5).
+FLAG_BAND = 0.00005
 UNATTRIBUTED = "unattributed"
 
 
@@ -103,6 +105,16 @@ class Source(Protocol):
     ) -> int: ...
 
     def sentiment_quotes(self, version: str, ids: list[int]) -> dict[int, dict[str, Any]]: ...
+
+    def sentiment_top_quotes(
+        self,
+        version: str,
+        lo: dt.datetime,
+        hi: dt.datetime,
+        region: str | None,
+        label: str | None,
+        limit: int,
+    ) -> list[int]: ...
 
     def sentiment_rating_counts(
         self, version: str, lo: dt.datetime, hi: dt.datetime, region: str | None
@@ -446,12 +458,20 @@ class PostgresSource:
         return [(r[0], r[1], int(r[2]), int(r[3])) for r in rows]
 
     def sentiment_inconsistent_flags(self, version, lo, hi, region, tau) -> int:
+        """Predictions whose flag disagrees with `confidence < tau` (§6 rule 5): strictly, except
+        inside half a rounding step of the stored 4-place confidence of tau, where either flag is
+        accepted because the decision was made before rounding."""
         source, where = self._sentiment_set(region, scored=True)
         return int(
             self._rows(
                 f"SELECT count(*) FROM {source} WHERE {where}"
-                " AND p.flagged <> (p.confidence < :tau)",
-                {**self._sentiment_params(version, lo, hi, region), "tau": tau},
+                " AND p.flagged <> (p.confidence < :tau)"
+                " AND abs(p.confidence - CAST(:tau AS numeric)) > CAST(:band AS numeric)",
+                {
+                    **self._sentiment_params(version, lo, hi, region),
+                    "tau": tau,
+                    "band": FLAG_BAND,
+                },
             )[0][0]
         )
 
@@ -481,6 +501,21 @@ class PostgresSource:
             }
             for r in rows
         }
+
+    def sentiment_top_quotes(self, version, lo, hi, region, label, limit) -> list[int]:
+        """The comments §6 rule 7 says are quoted: in the set, of the asked label if any, highest
+        stored confidence first, ties by the lowest feedback id."""
+        source, where = self._sentiment_set(region, scored=True)
+        params = self._sentiment_params(version, lo, hi, region) | {"limit": limit}
+        if label is not None:
+            where += " AND p.predicted_label = :label"
+            params["label"] = label
+        rows = self._rows(
+            f"SELECT f.feedback_id FROM {source} WHERE {where}"
+            " ORDER BY p.confidence DESC, f.feedback_id ASC LIMIT :limit",
+            params,
+        )
+        return [int(r[0]) for r in rows]
 
     def sentiment_rating_counts(self, version, lo, hi, region) -> tuple[int, int]:
         """(covered, contradictions) of ADR-087's rating cross-check over the scored set."""

@@ -673,7 +673,7 @@ now written; they record the planning decisions above.*
 *2026-10-09, phase 4c (this PR, `feat/qa-sentiment`): QA checks for sentiment answers (ADR-090), and `not_checked` no longer stands for "no check yet".*
 - *Rules first: data dictionary §6 "Sentiment answers" (`276d59a`, 19:48 CDT), then the code. QA's `sentiment.py` is written from it with no import of `mcp_feedback`, `agent_sentiment` or any model code; τ and the model version come from the committed manifest file.*
 - *Real data: 15 cases against the real feedback server plus a rolled-back partial-coverage case; the full-window rating cross-check is n = 4,715, x = 7 and passes. End to end: 12 of 12 live calls (a trend, a quotes question, an account decline and a reporting regression, all `verified`).*
-- *For the owner: L-77 (the flag rule is exact on stored values; the stored confidence is rounded) and L-79 (what the ADRs left to the agent's code, including that the sentiment parse reports one decline reason, so "the first reason that applies" has no order to check) need rulings.*
+- *For the owner: L-77 and L-79 needed rulings. **Ruled and applied 2026-10-09** (see ADR-090's dated note): the flag check has a 0.00005 band, the compared bucket is named and checked, nothing-to-test must read no clear change, and quote selection is a written, enforced rule.*
 *Planned sequence update (2026-10-08): the deploy window is done. The reporting filters (L-62) start next, from about 2026-10-09; then QA; the fault-injection harness last.*
 *For `06` (due 2026-11-08), not written there: the window's failures are material for its production-support write-up: a create-body field the API rejects, a reserved path (`/healthz`) that hides the IAM boundary, identity-token minting in Cloud Build, IAM propagation delay (a new invoker binding took over a minute), and a revision failing its readiness probe while the database was stopped.*
 
@@ -778,6 +778,7 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [ ] Run the real-data QA suites on Cloud SQL after the sentiment predictions backfill there (`tests/integration/test_qa_sentiment_agrees.py` and the sentiment figures suites): locally they need the stored predictions, so CI skips them (L-78). *Added 2026-10-09.*
 - [ ] A second interpretation-gate attempt for QA's check (L-74), **only on an owner-written set** of question and parsed-request pairs, with a new pre-registered gate; the 84 assistant-drafted pairs have been used to judge `qa_interp_v1` and `v2` and can't confirm a third prompt. Review the 13 rejected correct pairs listed in L-74 first. *Added 2026-10-09.*
 - [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.* The tie order for rate breakdowns changed too (L-72 ruling 2: worse rate, then the larger denominator, then the name), so a golden item that expects a particular group in the top 25 of a tied breakdown may differ. *Added 2026-10-09.*
 - [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
@@ -823,6 +824,7 @@ now written; they record the planning decisions above.*
 
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
+- [ ] Option: store the unrounded confidence in `sentiment_predictions` (a new column or a wider type, with its migration and a backfill), so the flag check can be exact instead of banded at 0.00005 (L-77). *Added 2026-10-09.*
 - [ ] A log-based alert on `outcome=degraded`: a degraded answer is HTTP 200, so Cloud Run's error metrics never count it (ADR-088, ADR-089).
 - [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
 - [ ] A separate `verify-caller` service account holding the orchestrator invoker, so building and calling are separate identities (ADR-085).

@@ -283,6 +283,12 @@ class Checker:
                     problems.append(key)
             elif got[key] != value:
                 problems.append(key)
+        if (
+            exp.get("z") == 0.0
+            and exp.get("p_value") == 1.0
+            and got["verdict"] != "no clear change"
+        ):
+            problems.append("nothing_to_test_must_be_no_clear_change")
         if exp["verdict"] == "needs two periods" and any(
             got[k] not in (None, [], False) for k in got if k != "verdict"
         ):
@@ -303,6 +309,15 @@ class Checker:
         ids = [e.feedback_id for e in examples]
         if len(set(ids)) != len(ids):
             problems.append("a_comment_quoted_twice")
+        expected = (
+            self.src.sentiment_top_quotes(
+                self.manifest.version, lo, hi, req.region, req.example_label, MAX_QUOTES
+            )
+            if req.want_examples
+            else []
+        )
+        if ids != expected:
+            problems.append("quotes_not_the_top_by_confidence")
         facts = self.src.sentiment_quotes(self.manifest.version, ids)
         for e in examples:
             fact = facts.get(e.feedback_id)
@@ -347,6 +362,7 @@ class Checker:
     def _check_text(self, answer: SentimentAnswer, want: Figures, text: str) -> CheckResult:
         allowed: set[str] = {str(MIN_N)}
         required: list[set[str]] = []
+        compared: list[str] = []
         names: list[str] = [b["bucket"] for b in want.buckets]
         dates = {answer.start.isoformat(), answer.end.isoformat(), answer.as_of.isoformat()}
 
@@ -382,12 +398,19 @@ class Checker:
                 add_share(rate_string(x, n))
             allowed.add(f"{t['p_value']:.4f}")
             required.append({f"{t['p_value']:.4f}"})
+            # The answer names the buckets it compared (§6 rule 6).
+            span = t["earlier_buckets"][0] + (
+                "" if len(t["earlier_buckets"]) == 1 else f" to {t['earlier_buckets'][-1]}"
+            )
+            compared = [f"{t['latest_bucket']}:", span + ":"]
         for e in answer.examples:
             names.append(e.feedback_text)
             add_int(e.feedback_id)
             allowed.add(e.confidence)
             dates.add(e.submitted_at.date().isoformat())
         problems = textcheck.compare(text, allowed, required, names)
+        if compared and not all(part in text for part in compared):
+            problems.append("text_does_not_name_the_compared_buckets")
         stated = set(re.findall(r"\b\d{4}-\d{2}-\d{2}\b", textcheck.strip_names(text, names)))
         if not stated <= dates:
             problems.append("text_states_another_date")

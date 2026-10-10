@@ -253,9 +253,12 @@ async def test_the_default_trend_over_the_window_is_a_real_comparison(world, mon
     assert answer.trend.latest_bucket == "2026-08" and answer.trend.earlier_buckets[0] == "2026-03"
 
 
-async def test_a_flagged_only_quotes_case_passes_and_a_swapped_flag_is_caught(world, monkeypatch):
-    """The agent never asks for flagged-only comments, but the server can return them; QA's quote
-    rule must hold for them too. Built by hand from the server's own flagged-only examples."""
+async def test_flagged_only_quotes_are_valid_comments_but_not_the_selection_rule(
+    world, monkeypatch
+):
+    """The agent never asks for flagged-only comments, though the server can return them. They
+    are real, in-set, correctly described comments, so QA's validity checks accept them; the
+    selection rule (§6 rule 7: the three with the highest confidence) does not, and QA says so."""
     request = SentimentRequest(start=D(2025, 1, 1), end=D(2025, 12, 31), want_examples=True)
     answer, _ = await world.ask(request, monkeypatch)
     flagged = await world.call(
@@ -268,12 +271,28 @@ async def test_a_flagged_only_quotes_case_passes_and_a_swapped_flag_is_caught(wo
     built = answer.model_copy(
         update={"examples": quoted, "quoted_feedback_ids": [e.feedback_id for e in quoted]}
     )
-    text_ = render_answer(built)
-    assert failed(world.checker.check_answer(built, text_)) == {}
+    detail = failed(world.checker.check_answer(built, render_answer(built)))["quotes_valid"]
+    assert detail == "quotes_not_the_top_by_confidence"  # and nothing else is wrong with them
     swapped = built.model_copy(
         update={"examples": [quoted[0].model_copy(update={"flagged": False}), *quoted[1:]]}
     )
-    assert "quotes_valid" in failed(world.checker.check_answer(swapped, render_answer(swapped)))
+    detail = failed(world.checker.check_answer(swapped, render_answer(swapped)))["quotes_valid"]
+    assert "quote_details_differ" in detail
+
+
+async def test_the_agents_selection_is_the_top_three_by_confidence_then_lowest_id(
+    world, monkeypatch
+):
+    for label in (None, "negative", "mixed"):
+        request = SentimentRequest(
+            start=D(2025, 1, 1), end=D(2025, 12, 31), want_examples=True, example_label=label
+        )
+        answer, _ = await world.ask(request, monkeypatch)
+        lo, hi = utc_bounds(D(2025, 1, 1), D(2025, 12, 31))
+        top = world.qa.sentiment_top_quotes(MANIFEST.version, lo, hi, None, label, 3)
+        assert answer.quoted_feedback_ids == top and len(top) == 3
+        confidences = [float(e.confidence) for e in answer.examples]
+        assert confidences == sorted(confidences, reverse=True)
 
 
 async def test_perturbed_figures_texts_and_quotes_are_caught_on_real_data(world, monkeypatch):

@@ -106,6 +106,9 @@ class FakeSource:
     def sentiment_quotes(self, version, ids):
         return self._get("sentiment_quotes", version, ids)
 
+    def sentiment_top_quotes(self, version, lo, hi, region, label, limit):
+        return self._get("sentiment_top_quotes", version, lo, hi, region, label, limit)
+
     def sentiment_rating_counts(self, version, lo, hi, region):
         return self._get("sentiment_rating_counts", version, lo, hi, region)
 
