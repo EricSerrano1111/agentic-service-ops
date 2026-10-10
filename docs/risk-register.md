@@ -85,6 +85,8 @@
 
 **Update 2026-10-01 (ADR-063):** Gold labels are now held only by offline roles: `app_eval` (validation and evaluation) and `app_train` (training). `app_qa` can no longer read `sentiment_labels` or `generation_parameters`, so the runtime QA check cannot lean on gold labels; at answer time it rests on the rating cross-check (ADR-055), whose optimism on this data is L-24. Training is also barred from `rating` by grant, so the cross-check stays independent of the trained model too. Status stays Mitigating.
 
+**Update 2026-10-10 (ADR-091, fault injection):** The sentiment path was measured against injected faults. Twelve assistant-drafted sentiment faults were caught 76 of 76 (counts, shares, flags, trend, quotes, coverage, text), and the owner's sarcasm fault (rating contradictions at 20-33% of the covered set) was caught 20 of 20 by the rating cross-check. The cross-check is the only independent signal on the label itself, and its sensitivity is now known: against the pre-registered rule it caught 0 of 10 at 0.5% and 1% contradictions, 1 of 10 at 2%, 8 of 10 at 4% and 10 of 10 at 8% (answers of 122 to 1,055 comments), agreeing with the rule in all 50 cases. So a modest shift in sentiment that leaves ratings roughly aligned is not caught, by construction (L-24, ADR-087). The catalogue is not blind (L-85). Status stays Mitigating.
+
 ### R-05 — QA retry loop cost or latency runaway
 **Description:** Multi-agent systems with a verify-and-revise loop can fan out token usage and wall-clock time quickly if unbounded.
 **Mitigation:** Bounded at 2 retries with escalation on final failure (ADR-022); per-run cost caps and model tiering already specified in the budget plan.
@@ -94,6 +96,8 @@
 **Update 2026-09-25 (Sprint 1 boundary review):** Reviewed, no change. Likelihood normalised Low-Medium → Medium.
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change.
+
+**Update 2026-10-10 (ADR-091, loop demonstration):** A figures failure injected through a test-only proxy ended the request at the first verdict: one reporting task, no retry, the degraded result at list price $0.000948 (routing and parse; the interpretation call is skipped on a figures failure). The same question verified cost $0.001604 against the $0.02 cap. The interpretation retry, the path that multiplies calls, still cannot run because the check is advisory (L-74), so the loop's worst case is not exercised by live traffic. Status stays Mitigating; the trigger is when `QA_INTERP_MODE=enforce` is ever turned on.
 
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.

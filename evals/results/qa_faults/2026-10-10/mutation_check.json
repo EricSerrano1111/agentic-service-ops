@@ -1,0 +1,7363 @@
+{
+ "catalogue": "catalogue_v1.yaml",
+ "seed": 20261010,
+ "started_utc": "2026-10-10T17:29:27Z",
+ "qa_ran": false,
+ "controls": [],
+ "cases": [
+  {
+   "case_id": "R01|reporting:d02",
+   "fault_id": "R01",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:f09",
+   "fault_id": "R01",
+   "base_id": "reporting:f09",
+   "agent": "reporting",
+   "question": "SLA compliance for Summit Distribution in the west last month",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:q01",
+   "fault_id": "R01",
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "question": "What was the incident rate last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:f05",
+   "fault_id": "R01",
+   "base_id": "reporting:f05",
+   "agent": "reporting",
+   "question": "How many incidents did Cedar Ridge Retail have last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:f10",
+   "fault_id": "R01",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:c02",
+   "fault_id": "R01",
+   "base_id": "reporting:c02",
+   "agent": "reporting",
+   "question": "Break down last month's incidents by severity.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:f04",
+   "fault_id": "R01",
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "question": "SLA compliance for the northeast region in 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|owner:A4a",
+   "fault_id": "R01",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|reporting:f02",
+   "fault_id": "R01",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R01|owner:A1",
+   "fault_id": "R01",
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R02|reporting:q01",
+   "fault_id": "R02",
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "question": "What was the incident rate last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:d01",
+   "fault_id": "R02",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:m03",
+   "fault_id": "R02",
+   "base_id": "reporting:m03",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate in 2025?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:f03",
+   "fault_id": "R02",
+   "base_id": "reporting:f03",
+   "agent": "reporting",
+   "question": "What's the incident rate in the central region?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:f04",
+   "fault_id": "R02",
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "question": "SLA compliance for the northeast region in 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:m01",
+   "fault_id": "R02",
+   "base_id": "reporting:m01",
+   "agent": "reporting",
+   "question": "What was our SLA compliance last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:f02",
+   "fault_id": "R02",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:f06",
+   "fault_id": "R02",
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:m02",
+   "fault_id": "R02",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R02|reporting:q02",
+   "fault_id": "R02",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|owner:A4a",
+   "fault_id": "R03",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:t01",
+   "fault_id": "R03",
+   "base_id": "reporting:t01",
+   "agent": "reporting",
+   "question": "What is Ben Okafor's first-time fix rate this year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:d01",
+   "fault_id": "R03",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:d02",
+   "fault_id": "R03",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:f06",
+   "fault_id": "R03",
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:q01",
+   "fault_id": "R03",
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "question": "What was the incident rate last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:m02",
+   "fault_id": "R03",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:f09",
+   "fault_id": "R03",
+   "base_id": "reporting:f09",
+   "agent": "reporting",
+   "question": "SLA compliance for Summit Distribution in the west last month",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|owner:A4b",
+   "fault_id": "R03",
+   "base_id": "owner:A4b",
+   "agent": "reporting",
+   "question": "What was the single-job technician's SLA compliance in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R03|reporting:q02",
+   "fault_id": "R03",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 16
+  },
+  {
+   "case_id": "R04|reporting:m02",
+   "fault_id": "R04",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:f10",
+   "fault_id": "R04",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:d02",
+   "fault_id": "R04",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:c03",
+   "fault_id": "R04",
+   "base_id": "reporting:c03",
+   "agent": "reporting",
+   "question": "Which incident types were reported most often in the past 30 days?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:q02",
+   "fault_id": "R04",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:d01",
+   "fault_id": "R04",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:c01",
+   "fault_id": "R04",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|owner:A4a",
+   "fault_id": "R04",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R04|reporting:c02",
+   "fault_id": "R04",
+   "base_id": "reporting:c02",
+   "agent": "reporting",
+   "question": "Break down last month's incidents by severity.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:c01",
+   "fault_id": "R05",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:d02",
+   "fault_id": "R05",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:m02",
+   "fault_id": "R05",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:c02",
+   "fault_id": "R05",
+   "base_id": "reporting:c02",
+   "agent": "reporting",
+   "question": "Break down last month's incidents by severity.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:c03",
+   "fault_id": "R05",
+   "base_id": "reporting:c03",
+   "agent": "reporting",
+   "question": "Which incident types were reported most often in the past 30 days?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:d01",
+   "fault_id": "R05",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:f10",
+   "fault_id": "R05",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|owner:A4a",
+   "fault_id": "R05",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R05|reporting:q02",
+   "fault_id": "R05",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:d02",
+   "fault_id": "R06",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:q02",
+   "fault_id": "R06",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:c01",
+   "fault_id": "R06",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:d01",
+   "fault_id": "R06",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:c02",
+   "fault_id": "R06",
+   "base_id": "reporting:c02",
+   "agent": "reporting",
+   "question": "Break down last month's incidents by severity.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:c03",
+   "fault_id": "R06",
+   "base_id": "reporting:c03",
+   "agent": "reporting",
+   "question": "Which incident types were reported most often in the past 30 days?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:f10",
+   "fault_id": "R06",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|owner:A4a",
+   "fault_id": "R06",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R06|reporting:m02",
+   "fault_id": "R06",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "R07|reporting:d02",
+   "fault_id": "R07",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {
+    "flipped_group": "west"
+   },
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "R07|reporting:d01",
+   "fault_id": "R07",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {
+    "flipped_group": "billing_dispute"
+   },
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "R08|reporting:f10",
+   "fault_id": "R08",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:f09",
+   "fault_id": "R08",
+   "base_id": "reporting:f09",
+   "agent": "reporting",
+   "question": "SLA compliance for Summit Distribution in the west last month",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|owner:A4b",
+   "fault_id": "R08",
+   "base_id": "owner:A4b",
+   "agent": "reporting",
+   "question": "What was the single-job technician's SLA compliance in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:f01",
+   "fault_id": "R08",
+   "base_id": "reporting:f01",
+   "agent": "reporting",
+   "question": "How many incidents were reported in the west last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:t01",
+   "fault_id": "R08",
+   "base_id": "reporting:t01",
+   "agent": "reporting",
+   "question": "What is Ben Okafor's first-time fix rate this year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:f02",
+   "fault_id": "R08",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:f04",
+   "fault_id": "R08",
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "question": "SLA compliance for the northeast region in 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:f03",
+   "fault_id": "R08",
+   "base_id": "reporting:f03",
+   "agent": "reporting",
+   "question": "What's the incident rate in the central region?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|reporting:f06",
+   "fault_id": "R08",
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R08|owner:A4a",
+   "fault_id": "R08",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "R09|reporting:q02",
+   "fault_id": "R09",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-04-01",
+     "2026-04-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:f01",
+   "fault_id": "R09",
+   "base_id": "reporting:f01",
+   "agent": "reporting",
+   "question": "How many incidents were reported in the west last month?",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-06-01",
+     "2026-06-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:f04",
+   "fault_id": "R09",
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "question": "SLA compliance for the northeast region in 2025",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2025-02-01",
+     "2026-01-31"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:f03",
+   "fault_id": "R09",
+   "base_id": "reporting:f03",
+   "agent": "reporting",
+   "question": "What's the incident rate in the central region?",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-06-01",
+     "2026-06-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|owner:A4a",
+   "fault_id": "R09",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-07-01",
+     "2026-07-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:c01",
+   "fault_id": "R09",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-06-01",
+     "2026-06-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:d01",
+   "fault_id": "R09",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-06-01",
+     "2026-07-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:m02",
+   "fault_id": "R09",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-05-01",
+     "2026-07-31"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|reporting:f02",
+   "fault_id": "R09",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-05-01",
+     "2026-07-31"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R09|owner:A1",
+   "fault_id": "R09",
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "status": "run",
+   "note": {
+    "shifted_to": [
+     "2026-05-01",
+     "2026-07-31"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:f05",
+   "fault_id": "R10",
+   "base_id": "reporting:f05",
+   "agent": "reporting",
+   "question": "How many incidents did Cedar Ridge Retail have last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:q01",
+   "fault_id": "R10",
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "question": "What was the incident rate last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:c03",
+   "fault_id": "R10",
+   "base_id": "reporting:c03",
+   "agent": "reporting",
+   "question": "Which incident types were reported most often in the past 30 days?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:f04",
+   "fault_id": "R10",
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "question": "SLA compliance for the northeast region in 2025",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:d01",
+   "fault_id": "R10",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:m01",
+   "fault_id": "R10",
+   "base_id": "reporting:m01",
+   "agent": "reporting",
+   "question": "What was our SLA compliance last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|owner:A1",
+   "fault_id": "R10",
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:f06",
+   "fault_id": "R10",
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:c01",
+   "fault_id": "R10",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R10|reporting:d02",
+   "fault_id": "R10",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "R11|reporting:f08",
+   "fault_id": "R11",
+   "base_id": "reporting:f08",
+   "agent": "reporting",
+   "question": "Incident rate for Acme Corp last month",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:r17",
+   "fault_id": "R11",
+   "base_id": "reporting:r17",
+   "agent": "reporting",
+   "question": "Is Sarah's average resolution time improving over the last two weeks?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:t03",
+   "fault_id": "R11",
+   "base_id": "reporting:t03",
+   "agent": "reporting",
+   "question": "What was Marcus's SLA compliance in July 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:f07",
+   "fault_id": "R11",
+   "base_id": "reporting:f07",
+   "agent": "reporting",
+   "question": "What is the first-time fix rate for Silver Creek over the past 30 days?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:f12",
+   "fault_id": "R11",
+   "base_id": "reporting:f12",
+   "agent": "reporting",
+   "question": "How many incidents were reported in the Midwest in Q2 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:r15",
+   "fault_id": "R11",
+   "base_id": "reporting:r15",
+   "agent": "reporting",
+   "question": "How is Dave doing with meeting his appointment windows?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:f11",
+   "fault_id": "R11",
+   "base_id": "reporting:f11",
+   "agent": "reporting",
+   "question": "What was SLA compliance in Texas last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R11|reporting:t02",
+   "fault_id": "R11",
+   "base_id": "reporting:t02",
+   "agent": "reporting",
+   "question": "How many incidents were attributed to Priya last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 8
+  },
+  {
+   "case_id": "R12|reporting:f12",
+   "fault_id": "R12",
+   "base_id": "reporting:f12",
+   "agent": "reporting",
+   "question": "How many incidents were reported in the Midwest in Q2 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 3
+  },
+  {
+   "case_id": "R12|reporting:r17",
+   "fault_id": "R12",
+   "base_id": "reporting:r17",
+   "agent": "reporting",
+   "question": "Is Sarah's average resolution time improving over the last two weeks?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 3
+  },
+  {
+   "case_id": "R12|reporting:f11",
+   "fault_id": "R12",
+   "base_id": "reporting:f11",
+   "agent": "reporting",
+   "question": "What was SLA compliance in Texas last month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 3
+  },
+  {
+   "case_id": "R13|reporting:d02",
+   "fault_id": "R13",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "R13|reporting:d01",
+   "fault_id": "R13",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "R14|reporting:d01",
+   "fault_id": "R14",
+   "base_id": "reporting:d01",
+   "agent": "reporting",
+   "question": "Which incident types are driving the most repeat visits this quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "R14|reporting:d02",
+   "fault_id": "R14",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "F01|forecast:f04",
+   "fault_id": "F01",
+   "base_id": "forecast:f04",
+   "agent": "forecast",
+   "question": "Forecast install requests for the next 10 weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|owner:A2",
+   "fault_id": "F01",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f01",
+   "fault_id": "F01",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f08",
+   "fault_id": "F01",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f02",
+   "fault_id": "F01",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f14",
+   "fault_id": "F01",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f07",
+   "fault_id": "F01",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f06",
+   "fault_id": "F01",
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f03",
+   "fault_id": "F01",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f05",
+   "fault_id": "F01",
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "question": "What will repair volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F01|forecast:f13",
+   "fault_id": "F01",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "skipped",
+   "reason": "every shown week is served",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f02",
+   "fault_id": "F02",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f03",
+   "fault_id": "F02",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f01",
+   "fault_id": "F02",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f08",
+   "fault_id": "F02",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "skipped",
+   "reason": "no band is shown",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f13",
+   "fault_id": "F02",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f14",
+   "fault_id": "F02",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|owner:A2",
+   "fault_id": "F02",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f05",
+   "fault_id": "F02",
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "question": "What will repair volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f07",
+   "fault_id": "F02",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f04",
+   "fault_id": "F02",
+   "base_id": "forecast:f04",
+   "agent": "forecast",
+   "question": "Forecast install requests for the next 10 weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F02|forecast:f06",
+   "fault_id": "F02",
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f02",
+   "fault_id": "F03",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f06",
+   "fault_id": "F03",
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "status": "skipped",
+   "reason": "no served week",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f13",
+   "fault_id": "F03",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|owner:A2",
+   "fault_id": "F03",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f08",
+   "fault_id": "F03",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "skipped",
+   "reason": "no served week",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f03",
+   "fault_id": "F03",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f04",
+   "fault_id": "F03",
+   "base_id": "forecast:f04",
+   "agent": "forecast",
+   "question": "Forecast install requests for the next 10 weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f01",
+   "fault_id": "F03",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f14",
+   "fault_id": "F03",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f05",
+   "fault_id": "F03",
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "question": "What will repair volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F03|forecast:f07",
+   "fault_id": "F03",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F04|forecast:f13",
+   "fault_id": "F04",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {
+    "schema_rejects": true
+   },
+   "prediction": null,
+   "attribute_applicable": 6
+  },
+  {
+   "case_id": "F04|owner:A2",
+   "fault_id": "F04",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {
+    "schema_rejects": true
+   },
+   "prediction": null,
+   "attribute_applicable": 6
+  },
+  {
+   "case_id": "F04|forecast:f07",
+   "fault_id": "F04",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {
+    "schema_rejects": true
+   },
+   "prediction": null,
+   "attribute_applicable": 6
+  },
+  {
+   "case_id": "F04|forecast:f01",
+   "fault_id": "F04",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {
+    "schema_rejects": true
+   },
+   "prediction": null,
+   "attribute_applicable": 6
+  },
+  {
+   "case_id": "F04|forecast:f02",
+   "fault_id": "F04",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {
+    "schema_rejects": true
+   },
+   "prediction": null,
+   "attribute_applicable": 6
+  },
+  {
+   "case_id": "F04|forecast:f03",
+   "fault_id": "F04",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {
+    "schema_rejects": true
+   },
+   "prediction": null,
+   "attribute_applicable": 6
+  },
+  {
+   "case_id": "F05|forecast:f08",
+   "fault_id": "F05",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "F05|forecast:f07",
+   "fault_id": "F05",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "F06|forecast:f02",
+   "fault_id": "F06",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 1
+  },
+  {
+   "case_id": "F07|forecast:f03",
+   "fault_id": "F07",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "F07|forecast:f14",
+   "fault_id": "F07",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "F08|forecast:f05",
+   "fault_id": "F08",
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "question": "What will repair volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f14",
+   "fault_id": "F08",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f04",
+   "fault_id": "F08",
+   "base_id": "forecast:f04",
+   "agent": "forecast",
+   "question": "Forecast install requests for the next 10 weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f13",
+   "fault_id": "F08",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f06",
+   "fault_id": "F08",
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "status": "skipped",
+   "reason": "no served week",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f07",
+   "fault_id": "F08",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f03",
+   "fault_id": "F08",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|owner:A2",
+   "fault_id": "F08",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f01",
+   "fault_id": "F08",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f08",
+   "fault_id": "F08",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "skipped",
+   "reason": "no served week",
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "F08|forecast:f02",
+   "fault_id": "F08",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "S01|owner:A5",
+   "fault_id": "S01",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p04",
+   "fault_id": "S01",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p06",
+   "fault_id": "S01",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p14",
+   "fault_id": "S01",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p13",
+   "fault_id": "S01",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p08",
+   "fault_id": "S01",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p05",
+   "fault_id": "S01",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p09",
+   "fault_id": "S01",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p02",
+   "fault_id": "S01",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S01|sentiment:p07",
+   "fault_id": "S01",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p07",
+   "fault_id": "S02",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p06",
+   "fault_id": "S02",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p09",
+   "fault_id": "S02",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p02",
+   "fault_id": "S02",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p01",
+   "fault_id": "S02",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p03",
+   "fault_id": "S02",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p05",
+   "fault_id": "S02",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|owner:A5",
+   "fault_id": "S02",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p04",
+   "fault_id": "S02",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S02|sentiment:p13",
+   "fault_id": "S02",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p01",
+   "fault_id": "S03",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p07",
+   "fault_id": "S03",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p09",
+   "fault_id": "S03",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|owner:A3",
+   "fault_id": "S03",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p14",
+   "fault_id": "S03",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p03",
+   "fault_id": "S03",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p05",
+   "fault_id": "S03",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|owner:A5",
+   "fault_id": "S03",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p08",
+   "fault_id": "S03",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S03|sentiment:p04",
+   "fault_id": "S03",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p02",
+   "fault_id": "S04",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 7517
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|owner:A5",
+   "fault_id": "S04",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 7360
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p07",
+   "fault_id": "S04",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 7125
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p09",
+   "fault_id": "S04",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 6859
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p05",
+   "fault_id": "S04",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 6359
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p06",
+   "fault_id": "S04",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 6386
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p01",
+   "fault_id": "S04",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 7107
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p03",
+   "fault_id": "S04",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 4413
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p08",
+   "fault_id": "S04",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 7196
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S04|sentiment:p04",
+   "fault_id": "S04",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "flipped_feedback_id": 6620
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S05|owner:A5",
+   "fault_id": "S05",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "no trend comparison",
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S05|sentiment:p01",
+   "fault_id": "S05",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S05|sentiment:p03",
+   "fault_id": "S05",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S05|sentiment:p04",
+   "fault_id": "S05",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S05|sentiment:p02",
+   "fault_id": "S05",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S06|owner:A5",
+   "fault_id": "S06",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "no p-value",
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S06|sentiment:p03",
+   "fault_id": "S06",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S06|sentiment:p04",
+   "fault_id": "S06",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S06|sentiment:p02",
+   "fault_id": "S06",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S06|sentiment:p01",
+   "fault_id": "S06",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S07|owner:A5",
+   "fault_id": "S07",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "no comparison to mislabel",
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S07|sentiment:p04",
+   "fault_id": "S07",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S07|sentiment:p02",
+   "fault_id": "S07",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S07|sentiment:p03",
+   "fault_id": "S07",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S07|sentiment:p01",
+   "fault_id": "S07",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 5
+  },
+  {
+   "case_id": "S08|sentiment:p09",
+   "fault_id": "S08",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "S08|sentiment:p08",
+   "fault_id": "S08",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "S09|sentiment:p09",
+   "fault_id": "S09",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "replaced_with": 6803
+   },
+   "prediction": null,
+   "attribute_applicable": 1
+  },
+  {
+   "case_id": "S10|sentiment:p08",
+   "fault_id": "S10",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "replaced_with": 7047
+   },
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "S10|sentiment:p09",
+   "fault_id": "S10",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "no fourth comment in the set",
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "S11|sentiment:p03",
+   "fault_id": "S11",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p02",
+   "fault_id": "S11",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p01",
+   "fault_id": "S11",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|owner:A3",
+   "fault_id": "S11",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {
+    "removed": 34
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p04",
+   "fault_id": "S11",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p06",
+   "fault_id": "S11",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|owner:A5",
+   "fault_id": "S11",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {
+    "removed": 2
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p14",
+   "fault_id": "S11",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p08",
+   "fault_id": "S11",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "removed": 40
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S11|sentiment:p09",
+   "fault_id": "S11",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "removed": 11
+   },
+   "prediction": null,
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p13",
+   "fault_id": "S12",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p09",
+   "fault_id": "S12",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p14",
+   "fault_id": "S12",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|owner:A5",
+   "fault_id": "S12",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p06",
+   "fault_id": "S12",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p01",
+   "fault_id": "S12",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p03",
+   "fault_id": "S12",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p04",
+   "fault_id": "S12",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p05",
+   "fault_id": "S12",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "S12|sentiment:p08",
+   "fault_id": "S12",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p06",
+   "fault_id": "K05",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "covered_n": 1055,
+    "contradictions": 5,
+    "flipped": 4,
+    "contradiction_rate": 0.00474
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1055,
+    "x": 5,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p14",
+   "fault_id": "K05",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "covered_n": 122,
+    "contradictions": 1,
+    "flipped": 0,
+    "contradiction_rate": 0.0082
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 122,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p02",
+   "fault_id": "K05",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "covered_n": 263,
+    "contradictions": 1,
+    "flipped": 0,
+    "contradiction_rate": 0.0038
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 263,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p04",
+   "fault_id": "K05",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "covered_n": 175,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00571
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 175,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p13",
+   "fault_id": "K05",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "covered_n": 436,
+    "contradictions": 2,
+    "flipped": 1,
+    "contradiction_rate": 0.00459
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 436,
+    "x": 2,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p08",
+   "fault_id": "K05",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00763
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p07",
+   "fault_id": "K05",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00763
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p03",
+   "fault_id": "K05",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "covered_n": 402,
+    "contradictions": 2,
+    "flipped": 0,
+    "contradiction_rate": 0.00498
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 402,
+    "x": 2,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p05",
+   "fault_id": "K05",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "covered_n": 445,
+    "contradictions": 2,
+    "flipped": 2,
+    "contradiction_rate": 0.00449
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 445,
+    "x": 2,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|owner:A3",
+   "fault_id": "K05",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "skipped",
+   "reason": "covered n = 76 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p09",
+   "fault_id": "K05",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "covered n = 28 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K05|sentiment:p01",
+   "fault_id": "K05",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "covered_n": 144,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00694
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 144,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|owner:A5",
+   "fault_id": "K10",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "covered n = 5 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p14",
+   "fault_id": "K10",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "covered_n": 122,
+    "contradictions": 1,
+    "flipped": 0,
+    "contradiction_rate": 0.0082
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 122,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p01",
+   "fault_id": "K10",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "covered_n": 144,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00694
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 144,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p08",
+   "fault_id": "K10",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00763
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p05",
+   "fault_id": "K10",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "covered_n": 445,
+    "contradictions": 4,
+    "flipped": 4,
+    "contradiction_rate": 0.00899
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 445,
+    "x": 4,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p09",
+   "fault_id": "K10",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "covered n = 28 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p02",
+   "fault_id": "K10",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "covered_n": 263,
+    "contradictions": 3,
+    "flipped": 2,
+    "contradiction_rate": 0.01141
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 263,
+    "x": 3,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|owner:A3",
+   "fault_id": "K10",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "skipped",
+   "reason": "covered n = 76 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p03",
+   "fault_id": "K10",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "covered_n": 402,
+    "contradictions": 4,
+    "flipped": 2,
+    "contradiction_rate": 0.00995
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 402,
+    "x": 4,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p07",
+   "fault_id": "K10",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 1,
+    "flipped": 1,
+    "contradiction_rate": 0.00763
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 1,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p13",
+   "fault_id": "K10",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "covered_n": 436,
+    "contradictions": 4,
+    "flipped": 3,
+    "contradiction_rate": 0.00917
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 436,
+    "x": 4,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p04",
+   "fault_id": "K10",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "covered_n": 175,
+    "contradictions": 2,
+    "flipped": 2,
+    "contradiction_rate": 0.01143
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 175,
+    "x": 2,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K10|sentiment:p06",
+   "fault_id": "K10",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "covered_n": 1055,
+    "contradictions": 11,
+    "flipped": 10,
+    "contradiction_rate": 0.01043
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1055,
+    "x": 11,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p13",
+   "fault_id": "K20",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "covered_n": 436,
+    "contradictions": 9,
+    "flipped": 8,
+    "contradiction_rate": 0.02064
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 436,
+    "x": 9,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p01",
+   "fault_id": "K20",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "covered_n": 144,
+    "contradictions": 3,
+    "flipped": 3,
+    "contradiction_rate": 0.02083
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 144,
+    "x": 3,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p09",
+   "fault_id": "K20",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "covered n = 28 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p14",
+   "fault_id": "K20",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "covered_n": 122,
+    "contradictions": 2,
+    "flipped": 1,
+    "contradiction_rate": 0.01639
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 122,
+    "x": 2,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p06",
+   "fault_id": "K20",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "covered_n": 1055,
+    "contradictions": 21,
+    "flipped": 20,
+    "contradiction_rate": 0.01991
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1055,
+    "x": 21,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p08",
+   "fault_id": "K20",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 3,
+    "flipped": 3,
+    "contradiction_rate": 0.0229
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 3,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p04",
+   "fault_id": "K20",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "covered_n": 175,
+    "contradictions": 4,
+    "flipped": 4,
+    "contradiction_rate": 0.02286
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 175,
+    "x": 4,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|owner:A3",
+   "fault_id": "K20",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "skipped",
+   "reason": "covered n = 76 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p05",
+   "fault_id": "K20",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "covered_n": 445,
+    "contradictions": 9,
+    "flipped": 9,
+    "contradiction_rate": 0.02022
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 445,
+    "x": 9,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p02",
+   "fault_id": "K20",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "covered_n": 263,
+    "contradictions": 5,
+    "flipped": 4,
+    "contradiction_rate": 0.01901
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 263,
+    "x": 5,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p07",
+   "fault_id": "K20",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 3,
+    "flipped": 3,
+    "contradiction_rate": 0.0229
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 3,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K20|sentiment:p03",
+   "fault_id": "K20",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "covered_n": 402,
+    "contradictions": 8,
+    "flipped": 6,
+    "contradiction_rate": 0.0199
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 402,
+    "x": 8,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p08",
+   "fault_id": "K40",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 5,
+    "flipped": 5,
+    "contradiction_rate": 0.03817
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 5,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p14",
+   "fault_id": "K40",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "covered_n": 122,
+    "contradictions": 5,
+    "flipped": 4,
+    "contradiction_rate": 0.04098
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 122,
+    "x": 5,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p01",
+   "fault_id": "K40",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "covered_n": 144,
+    "contradictions": 6,
+    "flipped": 6,
+    "contradiction_rate": 0.04167
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 144,
+    "x": 6,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p13",
+   "fault_id": "K40",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "covered_n": 436,
+    "contradictions": 17,
+    "flipped": 16,
+    "contradiction_rate": 0.03899
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 436,
+    "x": 17,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|owner:A5",
+   "fault_id": "K40",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "covered n = 5 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p02",
+   "fault_id": "K40",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "covered_n": 263,
+    "contradictions": 11,
+    "flipped": 10,
+    "contradiction_rate": 0.04183
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 263,
+    "x": 11,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p09",
+   "fault_id": "K40",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "covered n = 28 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p04",
+   "fault_id": "K40",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "covered_n": 175,
+    "contradictions": 7,
+    "flipped": 7,
+    "contradiction_rate": 0.04
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 175,
+    "x": 7,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p05",
+   "fault_id": "K40",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "covered_n": 445,
+    "contradictions": 18,
+    "flipped": 18,
+    "contradiction_rate": 0.04045
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 445,
+    "x": 18,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p06",
+   "fault_id": "K40",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "covered_n": 1055,
+    "contradictions": 42,
+    "flipped": 41,
+    "contradiction_rate": 0.03981
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1055,
+    "x": 42,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p03",
+   "fault_id": "K40",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "covered_n": 402,
+    "contradictions": 16,
+    "flipped": 14,
+    "contradiction_rate": 0.0398
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 402,
+    "x": 16,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K40|sentiment:p07",
+   "fault_id": "K40",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 5,
+    "flipped": 5,
+    "contradiction_rate": 0.03817
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 5,
+    "predicted_caught": false
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p03",
+   "fault_id": "K80",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "covered_n": 402,
+    "contradictions": 32,
+    "flipped": 30,
+    "contradiction_rate": 0.0796
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 402,
+    "x": 32,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p08",
+   "fault_id": "K80",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 10,
+    "flipped": 10,
+    "contradiction_rate": 0.07634
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 10,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|owner:A5",
+   "fault_id": "K80",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "covered n = 5 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p07",
+   "fault_id": "K80",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "covered_n": 131,
+    "contradictions": 10,
+    "flipped": 10,
+    "contradiction_rate": 0.07634
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 131,
+    "x": 10,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p05",
+   "fault_id": "K80",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "covered_n": 445,
+    "contradictions": 36,
+    "flipped": 36,
+    "contradiction_rate": 0.0809
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 445,
+    "x": 36,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p14",
+   "fault_id": "K80",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "covered_n": 122,
+    "contradictions": 10,
+    "flipped": 9,
+    "contradiction_rate": 0.08197
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 122,
+    "x": 10,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p09",
+   "fault_id": "K80",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "covered n = 28 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p02",
+   "fault_id": "K80",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "covered_n": 263,
+    "contradictions": 21,
+    "flipped": 20,
+    "contradiction_rate": 0.07985
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 263,
+    "x": 21,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p01",
+   "fault_id": "K80",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "covered_n": 144,
+    "contradictions": 12,
+    "flipped": 12,
+    "contradiction_rate": 0.08333
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 144,
+    "x": 12,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p13",
+   "fault_id": "K80",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "covered_n": 436,
+    "contradictions": 35,
+    "flipped": 34,
+    "contradiction_rate": 0.08028
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 436,
+    "x": 35,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p06",
+   "fault_id": "K80",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "covered_n": 1055,
+    "contradictions": 84,
+    "flipped": 83,
+    "contradiction_rate": 0.07962
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1055,
+    "x": 84,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|owner:A3",
+   "fault_id": "K80",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "skipped",
+   "reason": "covered n = 76 is under 100",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "K80|sentiment:p04",
+   "fault_id": "K80",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "covered_n": 175,
+    "contradictions": 14,
+    "flipped": 14,
+    "contradiction_rate": 0.08
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 175,
+    "x": 14,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MR1|reporting:c03",
+   "fault_id": "MR1",
+   "base_id": "reporting:c03",
+   "agent": "reporting",
+   "question": "Which incident types were reported most often in the past 30 days?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": "incident_type",
+     "technician_name": null,
+     "start": "2026-07-01",
+     "end": "2026-07-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:m04",
+   "fault_id": "MR1",
+   "base_id": "reporting:m04",
+   "agent": "reporting",
+   "question": "How many incidents have been reported this year?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": null,
+     "technician_name": null,
+     "start": "2025-12-01",
+     "end": "2026-07-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:f06",
+   "fault_id": "MR1",
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": null,
+     "technician_name": null,
+     "region": null,
+     "account_name": "Meridian Foods",
+     "start": "2026-02-01",
+     "end": "2026-04-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:d02",
+   "fault_id": "MR1",
+   "base_id": "reporting:d02",
+   "agent": "reporting",
+   "question": "Are repeat visits concentrated in any region in the first half of 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "repeat_visit_drivers",
+     "group_by": "region",
+     "technician_name": null,
+     "start": "2026-02-01",
+     "end": "2026-07-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:f05",
+   "fault_id": "MR1",
+   "base_id": "reporting:f05",
+   "agent": "reporting",
+   "question": "How many incidents did Cedar Ridge Retail have last month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": null,
+     "technician_name": null,
+     "region": null,
+     "account_name": "Cedar Ridge Retail",
+     "start": "2026-06-01",
+     "end": "2026-06-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|owner:A4b",
+   "fault_id": "MR1",
+   "base_id": "owner:A4b",
+   "agent": "reporting",
+   "question": "What was the single-job technician's SLA compliance in the Southwest this month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "technician_name": "Hana Rossi",
+     "region": "west",
+     "start": "2026-07-01",
+     "end": "2026-07-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:q02",
+   "fault_id": "MR1",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": "service_type",
+     "technician_name": null,
+     "start": "2026-04-01",
+     "end": "2026-04-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:m01",
+   "fault_id": "MR1",
+   "base_id": "reporting:m01",
+   "agent": "reporting",
+   "question": "What was our SLA compliance last month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": null,
+     "technician_name": null,
+     "start": "2026-06-01",
+     "end": "2026-06-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:m02",
+   "fault_id": "MR1",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": "region",
+     "technician_name": null,
+     "start": "2026-05-01",
+     "end": "2026-07-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR1|reporting:m03",
+   "fault_id": "MR1",
+   "base_id": "reporting:m03",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate in 2025?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "first_time_fix_rate",
+     "group_by": null,
+     "technician_name": null,
+     "start": "2025-02-01",
+     "end": "2026-01-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 23
+  },
+  {
+   "case_id": "MR2|reporting:f02",
+   "fault_id": "MR2",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "first_time_fix_rate",
+     "group_by": null,
+     "technician_name": null,
+     "region": "central",
+     "account_name": null,
+     "start": "2026-04-01",
+     "end": "2026-06-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:f04",
+   "fault_id": "MR2",
+   "base_id": "reporting:f04",
+   "agent": "reporting",
+   "question": "SLA compliance for the northeast region in 2025",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": null,
+     "technician_name": null,
+     "region": "southeast",
+     "account_name": null,
+     "start": "2025-01-01",
+     "end": "2025-12-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|owner:A4b",
+   "fault_id": "MR2",
+   "base_id": "owner:A4b",
+   "agent": "reporting",
+   "question": "What was the single-job technician's SLA compliance in the Southwest this month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "technician_name": "Hana Rossi",
+     "region": "northeast",
+     "start": "2026-08-01",
+     "end": "2026-08-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|owner:A4a",
+   "fault_id": "MR2",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": "technician",
+     "region": "northeast",
+     "start": "2026-08-01",
+     "end": "2026-08-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:q02",
+   "fault_id": "MR2",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": "service_type",
+     "technician_name": null,
+     "start": "2026-03-01",
+     "end": "2026-03-31",
+     "region": "northeast"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:f10",
+   "fault_id": "MR2",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": "account",
+     "technician_name": null,
+     "region": "northeast",
+     "account_name": null,
+     "start": "2025-01-01",
+     "end": "2025-12-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:q01",
+   "fault_id": "MR2",
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "question": "What was the incident rate last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": null,
+     "technician_name": null,
+     "start": "2026-04-01",
+     "end": "2026-06-30",
+     "region": "northeast"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:f03",
+   "fault_id": "MR2",
+   "base_id": "reporting:f03",
+   "agent": "reporting",
+   "question": "What's the incident rate in the central region?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": null,
+     "technician_name": null,
+     "region": "west",
+     "account_name": null,
+     "start": null,
+     "end": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:c01",
+   "fault_id": "MR2",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": "account",
+     "technician_name": null,
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "region": "northeast"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR2|reporting:f09",
+   "fault_id": "MR2",
+   "base_id": "reporting:f09",
+   "agent": "reporting",
+   "question": "SLA compliance for Summit Distribution in the west last month",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": null,
+     "technician_name": null,
+     "region": "northeast",
+     "account_name": "Summit Distribution",
+     "start": "2026-07-01",
+     "end": "2026-07-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 20
+  },
+  {
+   "case_id": "MR3|reporting:f10",
+   "fault_id": "MR3",
+   "base_id": "reporting:f10",
+   "agent": "reporting",
+   "question": "Break down the west region's incidents by account for 2025",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": "account",
+     "technician_name": null,
+     "region": "west",
+     "account_name": null,
+     "start": "2025-01-01",
+     "end": "2025-12-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:q01",
+   "fault_id": "MR3",
+   "base_id": "reporting:q01",
+   "agent": "reporting",
+   "question": "What was the incident rate last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": null,
+     "technician_name": null,
+     "start": "2026-04-01",
+     "end": "2026-06-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:t01",
+   "fault_id": "MR3",
+   "base_id": "reporting:t01",
+   "agent": "reporting",
+   "question": "What is Ben Okafor's first-time fix rate this year?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "group_by": null,
+     "technician_name": "Ben Okafor",
+     "start": "2026-01-01",
+     "end": "2026-08-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:q02",
+   "fault_id": "MR3",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "first_time_fix_rate",
+     "group_by": "service_type",
+     "technician_name": null,
+     "start": "2026-03-01",
+     "end": "2026-03-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|owner:A1",
+   "fault_id": "MR3",
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "sla_compliance",
+     "region": "northeast",
+     "start": "2026-04-01",
+     "end": "2026-06-30"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:f01",
+   "fault_id": "MR3",
+   "base_id": "reporting:f01",
+   "agent": "reporting",
+   "question": "How many incidents were reported in the west last month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": null,
+     "technician_name": null,
+     "region": "west",
+     "account_name": null,
+     "start": "2026-07-01",
+     "end": "2026-07-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:f03",
+   "fault_id": "MR3",
+   "base_id": "reporting:f03",
+   "agent": "reporting",
+   "question": "What's the incident rate in the central region?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_count",
+     "group_by": null,
+     "technician_name": null,
+     "region": "central",
+     "account_name": null,
+     "start": null,
+     "end": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:f05",
+   "fault_id": "MR3",
+   "base_id": "reporting:f05",
+   "agent": "reporting",
+   "question": "How many incidents did Cedar Ridge Retail have last month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": null,
+     "technician_name": null,
+     "region": null,
+     "account_name": "Cedar Ridge Retail",
+     "start": "2026-07-01",
+     "end": "2026-07-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:c01",
+   "fault_id": "MR3",
+   "base_id": "reporting:c01",
+   "agent": "reporting",
+   "question": "Incident counts by account for July 2026",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "incident_rate",
+     "group_by": "account",
+     "technician_name": null,
+     "start": "2026-07-01",
+     "end": "2026-07-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MR3|reporting:f06",
+   "fault_id": "MR3",
+   "base_id": "reporting:f06",
+   "agent": "reporting",
+   "question": "What was SLA compliance for Meridian Foods in Q1 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "metric": "first_time_fix_rate",
+     "group_by": null,
+     "technician_name": null,
+     "region": null,
+     "account_name": "Meridian Foods",
+     "start": "2026-01-01",
+     "end": "2026-03-31"
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 21
+  },
+  {
+   "case_id": "MF1|forecast:f01",
+   "fault_id": "MF1",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2026-10-01",
+     "period_end": "2026-10-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f06",
+   "fault_id": "MF1",
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "maintenance",
+     "horizon_weeks": null,
+     "period_start": "2026-12-01",
+     "period_end": "2026-12-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f08",
+   "fault_id": "MF1",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2027-05-01",
+     "period_end": "2027-07-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f05",
+   "fault_id": "MF1",
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "question": "What will repair volume look like next month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "repair",
+     "horizon_weeks": null,
+     "period_start": "2026-10-01",
+     "period_end": "2026-10-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f03",
+   "fault_id": "MF1",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2027-01-01",
+     "period_end": "2027-01-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f13",
+   "fault_id": "MF1",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2027-02-01",
+     "period_end": "2027-02-28",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f07",
+   "fault_id": "MF1",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2027-02-01",
+     "period_end": "2028-01-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|owner:A2",
+   "fault_id": "MF1",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "total",
+     "period_start": "2026-12-02",
+     "period_end": "2026-12-31",
+     "want_history": false
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF1|forecast:f14",
+   "fault_id": "MF1",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "repair",
+     "horizon_weeks": null,
+     "period_start": "2026-11-01",
+     "period_end": "2027-01-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 9
+  },
+  {
+   "case_id": "MF2|forecast:f06",
+   "fault_id": "MF2",
+   "base_id": "forecast:f06",
+   "agent": "forecast",
+   "question": "How many maintenance jobs should we plan for in November?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "repair",
+     "horizon_weeks": null,
+     "period_start": "2026-11-01",
+     "period_end": "2026-11-30",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f02",
+   "fault_id": "MF2",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "inspection",
+     "horizon_weeks": 8,
+     "period_start": null,
+     "period_end": null,
+     "want_history": true,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f07",
+   "fault_id": "MF2",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "inspection",
+     "horizon_weeks": null,
+     "period_start": "2027-01-01",
+     "period_end": "2027-12-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f08",
+   "fault_id": "MF2",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "inspection",
+     "horizon_weeks": null,
+     "period_start": "2027-04-01",
+     "period_end": "2027-06-30",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f05",
+   "fault_id": "MF2",
+   "base_id": "forecast:f05",
+   "agent": "forecast",
+   "question": "What will repair volume look like next month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "upgrade",
+     "horizon_weeks": null,
+     "period_start": "2026-09-01",
+     "period_end": "2026-09-30",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|owner:A2",
+   "fault_id": "MF2",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "inspection",
+     "period_start": "2026-11-02",
+     "period_end": "2026-11-30",
+     "want_history": false
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f14",
+   "fault_id": "MF2",
+   "base_id": "forecast:f14",
+   "agent": "forecast",
+   "question": "Will repair volume pick up over the coming quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "upgrade",
+     "horizon_weeks": null,
+     "period_start": "2026-10-01",
+     "period_end": "2026-12-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f13",
+   "fault_id": "MF2",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "inspection",
+     "horizon_weeks": null,
+     "period_start": "2027-01-01",
+     "period_end": "2027-01-31",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f01",
+   "fault_id": "MF2",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "inspection",
+     "horizon_weeks": null,
+     "period_start": "2026-09-01",
+     "period_end": "2026-09-30",
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MF2|forecast:f04",
+   "fault_id": "MF2",
+   "base_id": "forecast:f04",
+   "agent": "forecast",
+   "question": "Forecast install requests for the next 10 weeks.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "slice": "maintenance",
+     "horizon_weeks": 10,
+     "period_start": null,
+     "period_end": null,
+     "want_history": false,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 11
+  },
+  {
+   "case_id": "MS1|sentiment:p05",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-05-01",
+     "end": "2026-07-31",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p03",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2025-02-01",
+     "end": "2026-01-31",
+     "region": "southeast",
+     "bucket": "quarter",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p14",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2025-09-01",
+     "end": "2025-09-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p04",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-04-01",
+     "end": "2026-07-31",
+     "region": "northeast",
+     "bucket": "month",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p09",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "mixed",
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|owner:A3",
+   "fault_id": "MS1",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "region": "west",
+     "start": "2026-05-01",
+     "end": "2026-07-31",
+     "bucket": "quarter",
+     "want_trend": false,
+     "want_examples": false
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p02",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2025-12-01",
+     "end": "2026-07-30",
+     "region": "central",
+     "bucket": "month",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p08",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-01",
+     "end": "2026-06-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "negative",
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p07",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-01",
+     "end": "2026-06-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS1|sentiment:p06",
+   "fault_id": "MS1",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2025-12-01",
+     "end": "2026-07-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 12
+  },
+  {
+   "case_id": "MS2|sentiment:p14",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2025-08-01",
+     "end": "2025-08-31",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|owner:A5",
+   "fault_id": "MS2",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "region": "northeast",
+     "start": "2026-08-17",
+     "end": "2026-08-30",
+     "bucket": "month",
+     "want_trend": true
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p05",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-04-01",
+     "end": "2026-06-30",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p03",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2025-01-01",
+     "end": "2025-12-31",
+     "region": "central",
+     "bucket": "quarter",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p04",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-03-01",
+     "end": "2026-06-30",
+     "region": "southeast",
+     "bucket": "month",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|owner:A3",
+   "fault_id": "MS2",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "region": "northeast",
+     "start": "2026-04-01",
+     "end": "2026-06-30",
+     "bucket": "quarter",
+     "want_trend": false,
+     "want_examples": false
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p09",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-01",
+     "end": "2026-06-30",
+     "region": "northeast",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "mixed",
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p07",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p08",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "negative",
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS2|sentiment:p13",
+   "fault_id": "MS2",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-03-01",
+     "end": "2026-05-31",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "MS3|sentiment:p09",
+   "fault_id": "MS3",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-01",
+     "end": "2026-06-30",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "neutral",
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "MS3|sentiment:p08",
+   "fault_id": "MS3",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "mixed",
+     "unsupported": null
+    }
+   },
+   "prediction": null,
+   "attribute_applicable": 2
+  },
+  {
+   "case_id": "O1a|owner:A1",
+   "fault_id": "O1a",
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "status": "run",
+   "note": {
+    "rate": "1.0000"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1a|reporting:t01",
+   "fault_id": "O1a",
+   "base_id": "reporting:t01",
+   "agent": "reporting",
+   "question": "What is Ben Okafor's first-time fix rate this year?",
+   "status": "run",
+   "note": {
+    "rate": "1.0000"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1a|reporting:m03",
+   "fault_id": "O1a",
+   "base_id": "reporting:m03",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate in 2025?",
+   "status": "run",
+   "note": {
+    "rate": "1.0000"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1a|reporting:f02",
+   "fault_id": "O1a",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {
+    "rate": "1.0000"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1b|owner:A1",
+   "fault_id": "O1b",
+   "base_id": "owner:A1",
+   "agent": "reporting",
+   "question": "What was our first-time fix rate across the East region last quarter?",
+   "status": "run",
+   "note": {
+    "rate": "0.8926"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1b|reporting:t01",
+   "fault_id": "O1b",
+   "base_id": "reporting:t01",
+   "agent": "reporting",
+   "question": "What is Ben Okafor's first-time fix rate this year?",
+   "status": "run",
+   "note": {
+    "rate": "0.8788"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1b|reporting:f02",
+   "fault_id": "O1b",
+   "base_id": "reporting:f02",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate for the southeast region in Q2 2026?",
+   "status": "run",
+   "note": {
+    "rate": "0.9314"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O1b|reporting:m03",
+   "fault_id": "O1b",
+   "base_id": "reporting:m03",
+   "agent": "reporting",
+   "question": "What was the first-time fix rate in 2025?",
+   "status": "run",
+   "note": {
+    "rate": "0.8981"
+   },
+   "prediction": null,
+   "attribute_applicable": 4
+  },
+  {
+   "case_id": "O2|owner:A2",
+   "fault_id": "O2",
+   "base_id": "owner:A2",
+   "agent": "forecast",
+   "question": "What technician capacity do we need across all regions for the next 4 weeks?",
+   "status": "run",
+   "note": {
+    "flattened": [
+     "2026-11-23",
+     "2026-11-30"
+    ],
+    "level": 171.97
+   },
+   "prediction": null,
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O2|forecast:f08",
+   "fault_id": "O2",
+   "base_id": "forecast:f08",
+   "agent": "forecast",
+   "question": "Forecast requests for Q2 2027.",
+   "status": "skipped",
+   "reason": "fewer than three served weeks",
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O2|forecast:f02",
+   "fault_id": "O2",
+   "base_id": "forecast:f02",
+   "agent": "forecast",
+   "question": "Forecast total requests for the next 8 weeks, compared with recent weeks.",
+   "status": "run",
+   "note": {
+    "flattened": [
+     "2026-10-12",
+     "2026-10-19"
+    ],
+    "level": 161.97
+   },
+   "prediction": null,
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O2|forecast:f07",
+   "fault_id": "O2",
+   "base_id": "forecast:f07",
+   "agent": "forecast",
+   "question": "What will volume be next year?",
+   "status": "run",
+   "note": {
+    "flattened": [
+     "2027-02-15",
+     "2027-02-22"
+    ],
+    "level": 134.45
+   },
+   "prediction": null,
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O2|forecast:f13",
+   "fault_id": "O2",
+   "base_id": "forecast:f13",
+   "agent": "forecast",
+   "question": "How many requests should we expect in January?",
+   "status": "run",
+   "note": {
+    "flattened": [
+     "2027-01-18",
+     "2027-01-25"
+    ],
+    "level": 137.43
+   },
+   "prediction": null,
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O2|forecast:f01",
+   "fault_id": "O2",
+   "base_id": "forecast:f01",
+   "agent": "forecast",
+   "question": "What will request volume look like next month?",
+   "status": "run",
+   "note": {
+    "flattened": [
+     "2026-09-21",
+     "2026-09-28"
+    ],
+    "level": 157.84
+   },
+   "prediction": null,
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O2|forecast:f03",
+   "fault_id": "O2",
+   "base_id": "forecast:f03",
+   "agent": "forecast",
+   "question": "How busy will December be?",
+   "status": "run",
+   "note": {
+    "flattened": [
+     "2026-12-21",
+     "2026-12-28"
+    ],
+    "level": 153.4
+   },
+   "prediction": null,
+   "attribute_applicable": 7
+  },
+  {
+   "case_id": "O3a|owner:A3",
+   "fault_id": "O3a",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {
+    "flipped": 23,
+    "low_star_flipped": 23,
+    "positive_share": "0.6471",
+    "covered_n": 84,
+    "contradictions": 23,
+    "contradiction_rate": 0.2738,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 84,
+    "x": 23,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p06",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "flipped": 306,
+    "low_star_flipped": 306,
+    "positive_share": "0.6910",
+    "covered_n": 1138,
+    "contradictions": 307,
+    "contradiction_rate": 0.2698,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1138,
+    "x": 307,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p09",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "only 45 scored comments in the set",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p01",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "flipped": 40,
+    "low_star_flipped": 40,
+    "positive_share": "0.6639",
+    "covered_n": 156,
+    "contradictions": 40,
+    "contradiction_rate": 0.2564,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 156,
+    "x": 40,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|owner:A5",
+   "fault_id": "O3a",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "only 9 scored comments in the set",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p03",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "flipped": 115,
+    "low_star_flipped": 115,
+    "positive_share": "0.6767",
+    "covered_n": 422,
+    "contradictions": 117,
+    "contradiction_rate": 0.2773,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 422,
+    "x": 117,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p08",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p08",
+   "agent": "sentiment",
+   "question": "Show me some negative comments from last month.",
+   "status": "run",
+   "note": {
+    "flipped": 34,
+    "low_star_flipped": 34,
+    "positive_share": "0.6840",
+    "covered_n": 145,
+    "contradictions": 34,
+    "contradiction_rate": 0.2345,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 145,
+    "x": 34,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p02",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "flipped": 69,
+    "low_star_flipped": 69,
+    "positive_share": "0.6772",
+    "covered_n": 281,
+    "contradictions": 70,
+    "contradiction_rate": 0.2491,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 281,
+    "x": 70,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p04",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "flipped": 47,
+    "low_star_flipped": 47,
+    "positive_share": "0.6690",
+    "covered_n": 187,
+    "contradictions": 47,
+    "contradiction_rate": 0.2513,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 187,
+    "x": 47,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p13",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "flipped": 122,
+    "low_star_flipped": 122,
+    "positive_share": "0.6837",
+    "covered_n": 466,
+    "contradictions": 123,
+    "contradiction_rate": 0.2639,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 466,
+    "x": 123,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p14",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "flipped": 43,
+    "low_star_flipped": 43,
+    "positive_share": "0.6959",
+    "covered_n": 134,
+    "contradictions": 44,
+    "contradiction_rate": 0.3284,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 134,
+    "x": 44,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3a|sentiment:p07",
+   "fault_id": "O3a",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "flipped": 34,
+    "low_star_flipped": 34,
+    "positive_share": "0.6840",
+    "covered_n": 145,
+    "contradictions": 34,
+    "contradiction_rate": 0.2345,
+    "reached_88": false
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 145,
+    "x": 34,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|owner:A3",
+   "fault_id": "O3b",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {
+    "flipped": 55,
+    "low_star_flipped": 23,
+    "positive_share": "0.8824",
+    "covered_n": 107,
+    "contradictions": 23,
+    "contradiction_rate": 0.215,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 107,
+    "x": 23,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p13",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "flipped": 261,
+    "low_star_flipped": 122,
+    "positive_share": "0.8809",
+    "covered_n": 559,
+    "contradictions": 123,
+    "contradiction_rate": 0.22,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 559,
+    "x": 123,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p02",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p02",
+   "agent": "sentiment",
+   "question": "Did negative feedback in the Central region rise this year, month by month?",
+   "status": "run",
+   "note": {
+    "flipped": 159,
+    "low_star_flipped": 69,
+    "positive_share": "0.8804",
+    "covered_n": 341,
+    "contradictions": 70,
+    "contradiction_rate": 0.2053,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 341,
+    "x": 70,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p03",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "flipped": 244,
+    "low_star_flipped": 115,
+    "positive_share": "0.8811",
+    "covered_n": 505,
+    "contradictions": 117,
+    "contradiction_rate": 0.2317,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 505,
+    "x": 117,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p04",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "flipped": 107,
+    "low_star_flipped": 47,
+    "positive_share": "0.8826",
+    "covered_n": 220,
+    "contradictions": 47,
+    "contradiction_rate": 0.2136,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 220,
+    "x": 47,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|owner:A5",
+   "fault_id": "O3b",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "skipped",
+   "reason": "only 9 scored comments in the set",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p06",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "flipped": 628,
+    "low_star_flipped": 306,
+    "positive_share": "0.8801",
+    "covered_n": 1343,
+    "contradictions": 307,
+    "contradiction_rate": 0.2286,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 1343,
+    "x": 307,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p14",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "flipped": 79,
+    "low_star_flipped": 43,
+    "positive_share": "0.8814",
+    "covered_n": 156,
+    "contradictions": 44,
+    "contradiction_rate": 0.2821,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 156,
+    "x": 44,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p09",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "skipped",
+   "reason": "only 45 scored comments in the set",
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p07",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p07",
+   "agent": "sentiment",
+   "question": "What was feedback sentiment like in July?",
+   "status": "run",
+   "note": {
+    "flipped": 76,
+    "low_star_flipped": 34,
+    "positive_share": "0.8821",
+    "covered_n": 169,
+    "contradictions": 34,
+    "contradiction_rate": 0.2012,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 169,
+    "x": 34,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p01",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "flipped": 93,
+    "low_star_flipped": 40,
+    "positive_share": "0.8838",
+    "covered_n": 193,
+    "contradictions": 40,
+    "contradiction_rate": 0.2073,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 193,
+    "x": 40,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O3b|sentiment:p05",
+   "fault_id": "O3b",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "flipped": 271,
+    "low_star_flipped": 124,
+    "positive_share": "0.8811",
+    "covered_n": 574,
+    "contradictions": 124,
+    "contradiction_rate": 0.216,
+    "reached_88": true
+   },
+   "prediction": {
+    "rule": "n >= 20 and P(X >= x | n, 0.01) < 0.01",
+    "n": 574,
+    "x": 124,
+    "predicted_caught": true
+   },
+   "database_unchanged": true,
+   "database_before": {
+    "sentiment_predictions": 7521,
+    "service_feedback": 7521,
+    "service_requests": 20230,
+    "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+   },
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O4a|owner:A4a",
+   "fault_id": "O4a",
+   "base_id": "owner:A4a",
+   "agent": "reporting",
+   "question": "Which technician had the highest SLA compliance rate in the Southwest this month?",
+   "status": "run",
+   "note": {
+    "groups_under_20": 12
+   },
+   "prediction": null,
+   "attribute_applicable": 3
+  },
+  {
+   "case_id": "O4a|reporting:m02",
+   "fault_id": "O4a",
+   "base_id": "reporting:m02",
+   "agent": "reporting",
+   "question": "Show the incident rate by region for Q2 2026.",
+   "status": "skipped",
+   "reason": "no group under 20 cases",
+   "attribute_applicable": 3
+  },
+  {
+   "case_id": "O4a|reporting:q02",
+   "fault_id": "O4a",
+   "base_id": "reporting:q02",
+   "agent": "reporting",
+   "question": "SLA compliance by service type in March",
+   "status": "skipped",
+   "reason": "no group under 20 cases",
+   "attribute_applicable": 3
+  },
+  {
+   "case_id": "O4b|owner:A4b",
+   "fault_id": "O4b",
+   "base_id": "owner:A4b",
+   "agent": "reporting",
+   "question": "What was the single-job technician's SLA compliance in the Southwest this month?",
+   "status": "run",
+   "note": {},
+   "prediction": null,
+   "attribute_applicable": 1
+  },
+  {
+   "case_id": "O5|owner:A5",
+   "fault_id": "O5",
+   "base_id": "owner:A5",
+   "agent": "sentiment",
+   "question": "Is customer sentiment trending down in the Northwest region after the new firmware rollout?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "region": "west",
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "bucket": "month",
+     "want_trend": true
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p06",
+   "fault_id": "O5",
+   "base_id": "sentiment:p06",
+   "agent": "sentiment",
+   "question": "What's customer sentiment this year?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p13",
+   "fault_id": "O5",
+   "base_id": "sentiment:p13",
+   "agent": "sentiment",
+   "question": "What did customers think in the spring?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p04",
+   "fault_id": "O5",
+   "base_id": "sentiment:p04",
+   "agent": "sentiment",
+   "question": "Is customer sentiment in the Northeast getting worse from March to June 2026?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": "northeast",
+     "bucket": "month",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p03",
+   "fault_id": "O5",
+   "base_id": "sentiment:p03",
+   "agent": "sentiment",
+   "question": "Compare sentiment in the Southeast quarter by quarter over 2025.",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": "southeast",
+     "bucket": "quarter",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p05",
+   "fault_id": "O5",
+   "base_id": "sentiment:p05",
+   "agent": "sentiment",
+   "question": "How did customers feel last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|owner:A3",
+   "fault_id": "O5",
+   "base_id": "owner:A3",
+   "agent": "sentiment",
+   "question": "How positive is customer feedback for the West region last quarter?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "region": "west",
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "bucket": "quarter",
+     "want_trend": false,
+     "want_examples": false
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p14",
+   "fault_id": "O5",
+   "base_id": "sentiment:p14",
+   "agent": "sentiment",
+   "question": "How was sentiment in August?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p01",
+   "fault_id": "O5",
+   "base_id": "sentiment:p01",
+   "agent": "sentiment",
+   "question": "Is sentiment trending down in the West?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": true,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  },
+  {
+   "case_id": "O5|sentiment:p09",
+   "fault_id": "O5",
+   "base_id": "sentiment:p09",
+   "agent": "sentiment",
+   "question": "Can you quote a few mixed comments from the West in June?",
+   "status": "run",
+   "note": {
+    "wrong_request": {
+     "start": "2026-06-02",
+     "end": "2026-08-30",
+     "region": "west",
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": true,
+     "example_label": "mixed",
+     "unsupported": null
+    },
+    "implied_window": [
+     "2026-08-17",
+     "2026-08-30"
+    ]
+   },
+   "prediction": null,
+   "attribute_applicable": 13
+  }
+ ],
+ "fault_summary": {
+  "R01": {
+   "applicable_bases": 23,
+   "cases_run": 10
+  },
+  "R02": {
+   "applicable_bases": 16,
+   "cases_run": 10
+  },
+  "R03": {
+   "applicable_bases": 16,
+   "cases_run": 10
+  },
+  "R04": {
+   "applicable_bases": 9,
+   "cases_run": 9
+  },
+  "R05": {
+   "applicable_bases": 9,
+   "cases_run": 9
+  },
+  "R06": {
+   "applicable_bases": 9,
+   "cases_run": 9
+  },
+  "R07": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "R08": {
+   "applicable_bases": 12,
+   "cases_run": 10
+  },
+  "R09": {
+   "applicable_bases": 23,
+   "cases_run": 10
+  },
+  "R10": {
+   "applicable_bases": 23,
+   "cases_run": 10
+  },
+  "R11": {
+   "applicable_bases": 8,
+   "cases_run": 8
+  },
+  "R12": {
+   "applicable_bases": 3,
+   "cases_run": 3
+  },
+  "R13": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "R14": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "F01": {
+   "applicable_bases": 11,
+   "cases_run": 4
+  },
+  "F02": {
+   "applicable_bases": 11,
+   "cases_run": 10
+  },
+  "F03": {
+   "applicable_bases": 11,
+   "cases_run": 9
+  },
+  "F04": {
+   "applicable_bases": 6,
+   "cases_run": 6
+  },
+  "F05": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "F06": {
+   "applicable_bases": 1,
+   "cases_run": 1
+  },
+  "F07": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "F08": {
+   "applicable_bases": 11,
+   "cases_run": 9
+  },
+  "S01": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "S02": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "S03": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "S04": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "S05": {
+   "applicable_bases": 5,
+   "cases_run": 4
+  },
+  "S06": {
+   "applicable_bases": 5,
+   "cases_run": 4
+  },
+  "S07": {
+   "applicable_bases": 5,
+   "cases_run": 4
+  },
+  "S08": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "S09": {
+   "applicable_bases": 1,
+   "cases_run": 1
+  },
+  "S10": {
+   "applicable_bases": 2,
+   "cases_run": 1
+  },
+  "S11": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "S12": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "K05": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "K10": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "K20": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "K40": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "K80": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "MR1": {
+   "applicable_bases": 23,
+   "cases_run": 10
+  },
+  "MR2": {
+   "applicable_bases": 20,
+   "cases_run": 10
+  },
+  "MR3": {
+   "applicable_bases": 21,
+   "cases_run": 10
+  },
+  "MF1": {
+   "applicable_bases": 9,
+   "cases_run": 9
+  },
+  "MF2": {
+   "applicable_bases": 11,
+   "cases_run": 10
+  },
+  "MS1": {
+   "applicable_bases": 12,
+   "cases_run": 10
+  },
+  "MS2": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "MS3": {
+   "applicable_bases": 2,
+   "cases_run": 2
+  },
+  "O1a": {
+   "applicable_bases": 4,
+   "cases_run": 4
+  },
+  "O1b": {
+   "applicable_bases": 4,
+   "cases_run": 4
+  },
+  "O2": {
+   "applicable_bases": 7,
+   "cases_run": 6
+  },
+  "O3a": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "O3b": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  },
+  "O4a": {
+   "applicable_bases": 3,
+   "cases_run": 1
+  },
+  "O4b": {
+   "applicable_bases": 1,
+   "cases_run": 1
+  },
+  "O5": {
+   "applicable_bases": 13,
+   "cases_run": 10
+  }
+ },
+ "database_before": {
+  "sentiment_predictions": 7521,
+  "service_feedback": 7521,
+  "service_requests": 20230,
+  "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+ },
+ "database_after": {
+  "sentiment_predictions": 7521,
+  "service_feedback": 7521,
+  "service_requests": 20230,
+  "predictions_md5": "4f40e1929e5c9d7dc865aca893ecb665"
+ },
+ "database_unchanged": true
+}

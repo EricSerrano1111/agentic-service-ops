@@ -1,0 +1,439 @@
+# QA fault catalogue v1 (ADR-091). FROZEN before the first measurement run.
+#
+# Authorship, stated plainly:
+#   - assistant-drafted faults (R*, F*, S*, K*, M*): written by the assistant that built QA, who
+#     knows what QA checks. They are NOT blind.
+#   - owner-selected, AI-co-written faults (O*): the owner chose the scenarios and the expected
+#     outcomes; the assistant co-wrote the wording and the concrete mutations. They are NOT
+#     independent of the project's design the way faults the owner wrote alone would be.
+#   Results report these three groups separately.
+#
+# Fields: id; agent; class (injected | database | rating | misparse | owner); description;
+# mutation (what changes); expected (caught | known_gap); expected_checks (the check codes that
+# should fire; "any" when the owner named none); reason (for known_gap).
+version: 1
+seed: 20261010
+max_cases_per_fault: 10
+controls: every clean base answer is also a control; QA must pass it (a failure is a false alarm).
+selection: >
+  Per fault, the base answers whose attributes make it applicable are ordered by a shuffle
+  seeded with "20261010:<fault id>"; owner faults put their anchor (the owner's exact
+  question) first. The harness takes the first 10 for which the mutation can be made;
+  a base answer it cannot be made on is recorded as skipped, with the reason, and is not replaced
+  by a hand-picked one.
+rating_rule:
+  source: ADR-087
+  statement: "fails when n >= 20 and P(X >= x | n, p0 = 0.01) < 0.01, one-sided exact binomial"
+  p0: 0.01
+  alpha: 0.01
+  # smallest failing x for each covered n (computed when this file was written)
+  threshold_x_by_n:
+    100: 5
+    150: 6
+    200: 7
+    250: 8
+    300: 9
+    400: 10
+    500: 12
+    750: 15
+    1000: 19
+    1500: 26
+    2000: 32
+    3000: 44
+    5000: 68
+    7500: 97
+  levels:        # contradiction rate -> the rule's prediction, for example n
+    # target contradictions x = max(existing x0, round(rate * n)); caught iff x >= threshold
+
+    K05:
+      rate: 0.005
+      predicted_caught_by_n:
+        100: {x: 0, caught: false}
+        150: {x: 1, caught: false}
+        200: {x: 1, caught: false}
+        300: {x: 2, caught: false}
+        500: {x: 2, caught: false}
+        1000: {x: 5, caught: false}
+        2000: {x: 10, caught: false}
+        5000: {x: 25, caught: false}
+    K10:
+      rate: 0.01
+      predicted_caught_by_n:
+        100: {x: 1, caught: false}
+        150: {x: 2, caught: false}
+        200: {x: 2, caught: false}
+        300: {x: 3, caught: false}
+        500: {x: 5, caught: false}
+        1000: {x: 10, caught: false}
+        2000: {x: 20, caught: false}
+        5000: {x: 50, caught: false}
+    K20:
+      rate: 0.02
+      predicted_caught_by_n:
+        100: {x: 2, caught: false}
+        150: {x: 3, caught: false}
+        200: {x: 4, caught: false}
+        300: {x: 6, caught: false}
+        500: {x: 10, caught: false}
+        1000: {x: 20, caught: true}
+        2000: {x: 40, caught: true}
+        5000: {x: 100, caught: true}
+    K40:
+      rate: 0.04
+      predicted_caught_by_n:
+        100: {x: 4, caught: false}
+        150: {x: 6, caught: true}
+        200: {x: 8, caught: true}
+        300: {x: 12, caught: true}
+        500: {x: 20, caught: true}
+        1000: {x: 40, caught: true}
+        2000: {x: 80, caught: true}
+        5000: {x: 200, caught: true}
+    K80:
+      rate: 0.08
+      predicted_caught_by_n:
+        100: {x: 8, caught: true}
+        150: {x: 12, caught: true}
+        200: {x: 16, caught: true}
+        300: {x: 24, caught: true}
+        500: {x: 40, caught: true}
+        1000: {x: 80, caught: true}
+        2000: {x: 160, caught: true}
+        5000: {x: 400, caught: true}
+
+anchors:   # the owner's exact questions; base answers built like any other, listed first for their faults
+  - id: A1
+    agent: reporting
+    faults: [O1a, O1b]
+    question: "What was our first-time fix rate across the East region last quarter?"
+    request: {metric: first_time_fix_rate, region: northeast, start: "2026-04-01", end: "2026-06-30"}
+    translation: "East -> northeast; last quarter = 2026-04-01 to 2026-06-30 (as-of 2026-08-30)"
+  - id: A2
+    agent: forecast
+    faults: [O2]
+    question: "What technician capacity do we need across all regions for the next 4 weeks?"
+    request: {slice: total, period_start: "2026-11-02", period_end: "2026-11-30", want_history: false}
+    translation: >
+      The forecast is request volume, not technician capacity, and has no region breakdown, so
+      the total slice; the five weeks of November 2026 are used so that the late-November weeks
+      (horizons 13 and 14, both served) are shown.
+  - id: A3
+    agent: sentiment
+    faults: [O3a, O3b]
+    question: "How positive is customer feedback for the West region last quarter?"
+    request: {region: west, start: "2026-04-01", end: "2026-06-30", bucket: quarter, want_trend: false, want_examples: false}
+    translation: "job type -> region and period (sentiment declines service-type breakdowns); Southwest -> west"
+  - id: A4a
+    agent: reporting
+    faults: [O4a]
+    question: "Which technician had the highest SLA compliance rate in the Southwest this month?"
+    request: {metric: sla_compliance, group_by: technician, region: west, start: "2026-08-01", end: "2026-08-30"}
+    translation: "Southwest -> west; this month = August 2026 to the as-of date"
+  - id: A4b
+    agent: reporting
+    faults: [O4b]
+    question: "What was the single-job technician's SLA compliance in the Southwest this month?"
+    request: "resolved at build time: a technician with exactly one SLA case in the west in August 2026 (a group of A4a's answer with denominator 1, lowest id, full name resolving to one technician)"
+    translation: "the literal removal of the marking on a single-technician answer with n < 20"
+  - id: A5
+    agent: sentiment
+    faults: [O5]
+    question: "Is customer sentiment trending down in the Northwest region after the new firmware rollout?"
+    request: {region: west, start: "2026-08-17", end: "2026-08-30", bucket: month, want_trend: true}
+    translation: >
+      Northwest -> west. No rollout date exists in the system; the implied window is taken as
+      the last 14 days (2026-08-17 to 2026-08-30). This is the CORRECT reading; the fault
+      replaces it with the trailing 90 days (2026-06-02 to 2026-08-30).
+
+faults:
+  # ------------------------------------------------------------------ reporting (assistant-drafted)
+  - {id: R01, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a count off by 1",
+     mutation: "incident counts: incident_count +1 and one severity bucket +1 (+1 on the first group when the groups sum to the count); rate metrics: numerator +1 with the rate recomputed; repeat drivers: overall repeated +1 with its rate recomputed. Text re-rendered."}
+  - {id: R02, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a rate's last digit changed",
+     mutation: "the 4-place rate string's last digit +1 (mod 10); counts left alone. Text re-rendered."}
+  - {id: R03, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a denominator off by 1",
+     mutation: "denominator +1 (jobs +1 for repeat drivers) with the rate recomputed. Text re-rendered."}
+  - {id: R04, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "one group dropped",
+     mutation: "the last listed group removed; group_count unchanged, truncated set so the list looks cut. Text re-rendered."}
+  - {id: R05, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "two groups' order swapped",
+     mutation: "the first two listed groups exchanged. Text re-rendered."}
+  - {id: R06, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "the full group count wrong",
+     mutation: "group_count +1 and truncated set. Text re-rendered."}
+  - {id: R07, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a 'too few' flag flipped",
+     mutation: "repeat drivers: the first group whose `compared` flag can be flipped and stay schema-valid (stands_out cleared when flipped to not compared). The `compared` flag is the 'at least 20 jobs' marking in the data part. Text re-rendered."}
+  - {id: R08, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a filter silently dropped (figures from the unfiltered set while the request still names the filter)",
+     mutation: "the reporting agent is asked the same question without its technician/account/region filter; those figures replace the filtered ones, with the filter's labels kept so the data part stays schema-valid. Text re-rendered."}
+  - {id: R09, agent: reporting, class: injected, expected: caught, expected_checks: [range_matches_request, figures_match_database],
+     description: "a range shifted by a month in the data only",
+     mutation: "start, end and the figures are those of the same range one month later (one earlier when that passes the window); the request and the text keep the original range."}
+  - {id: R10, agent: reporting, class: injected, expected: caught, expected_checks: [text_matches_data],
+     description: "a figure in the text that differs from the data part",
+     mutation: "text only: the headline figure (count, percentage or rate) changed by one in its last place."}
+  - {id: R11, agent: reporting, class: injected, expected: caught, expected_checks: [decline_no_figures],
+     description: "a decline that carries a figure",
+     mutation: "text only: the sentence 'There were 4,821 incidents in that period.' appended to a decline."}
+  - {id: R12, agent: reporting, class: injected, expected: caught, expected_checks: [decline_matches_reason],
+     description: "a decline stating the wrong reason (not the first that applies)",
+     mutation: "text only: the agent's own message for a different decline reason replaces the decline text (not_supported declines)."}
+  - {id: R13, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a Fisher p-value changed",
+     mutation: "repeat drivers: the first group with a p-value gets 1 - p (or p + 0.2 when 1 - p is within 0.05 of p). Text re-rendered."}
+  - {id: R14, agent: reporting, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a standout flag flipped",
+     mutation: "repeat drivers: the first compared group's stands_out flipped. Text re-rendered."}
+  # ------------------------------------------------------------------ forecast (assistant-drafted)
+  - {id: F01, agent: forecast, class: injected, expected: caught, expected_checks: [serving_matches_manifest],
+     description: "numbers shown for an unserved slice-band",
+     mutation: "the first unserved week gets point 1000, 80% range 800-1200, 95% range 700-1300 and its band is marked served. Text re-rendered."}
+  - {id: F02, agent: forecast, class: injected, expected: caught, expected_checks: [serving_matches_manifest],
+     description: "a shown error that differs from the manifest",
+     mutation: "the first band's shown_error +1.0 percentage point. Text re-rendered."}
+  - {id: F03, agent: forecast, class: injected, expected: caught, expected_checks: [forecast_arithmetic],
+     description: "an interval that doesn't contain its point",
+     mutation: "the first served week's lo80 set to point + 1. Text re-rendered."}
+  - {id: F04, agent: forecast, class: injected, expected: caught, expected_checks: [forecast_arithmetic, answer_malformed],
+     description: "a total that isn't the sum of its weeks",
+     mutation: "period_total +1.0, built without the contract's validator (the shared contract rejects this shape, so QA may meet it as a malformed answer first; both codes count as the expected check). Text re-rendered."}
+  - {id: F05, agent: forecast, class: injected, expected: caught, expected_checks: [weeks_match_request],
+     description: "a horizon over 26 weeks",
+     mutation: "an answer whose request reaches beyond 26 weeks reports beyond_horizon_weeks = 0, so it claims every requested week is covered by the 26 shown. Text re-rendered."}
+  - {id: F06, agent: forecast, class: injected, expected: caught, expected_checks: [history_matches_database],
+     description: "a history week changed",
+     mutation: "the last history week's count +1. Text re-rendered."}
+  - {id: F07, agent: forecast, class: injected, expected: caught, expected_checks: [year_end_caveat],
+     description: "the year-end caveat removed where it is required",
+     mutation: "text only: the sentence about the holiday adjustment removed."}
+  - {id: F08, agent: forecast, class: injected, expected: caught, expected_checks: [text_matches_data],
+     description: "a text figure that differs from the data part",
+     mutation: "text only: the first served week's point forecast in the text +1."}
+  # ------------------------------------------------------------------ sentiment (assistant-drafted)
+  - {id: S01, agent: sentiment, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a label count changed",
+     mutation: "the first non-zero label count +1. Text re-rendered."}
+  - {id: S02, agent: sentiment, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "a share changed",
+     mutation: "the first non-null share's last digit +1. Text re-rendered."}
+  - {id: S03, agent: sentiment, class: injected, expected: caught, expected_checks: [figures_match_database],
+     description: "the flagged count changed",
+     mutation: "flagged_count +1. Text re-rendered."}
+  - {id: S04, agent: sentiment, class: database, expected: caught, expected_checks: [flags_consistent],
+     description: "one stored prediction's flag inconsistent with tau outside the band",
+     mutation: "inside a rolled-back transaction, one prediction in the answer's set whose confidence is more than 0.0001 from tau has its flag inverted; the specialist then answers from that database."}
+  - {id: S05, agent: sentiment, class: injected, expected: caught, expected_checks: [trend_matches],
+     description: "a trend verdict flipped",
+     mutation: "rose <-> fell, no clear change -> rose. Text re-rendered."}
+  - {id: S06, agent: sentiment, class: injected, expected: caught, expected_checks: [trend_matches],
+     description: "a trend p-value changed",
+     mutation: "p -> 1 - p (or p + 0.2 when 1 - p is within 0.05 of p). Text re-rendered."}
+  - {id: S07, agent: sentiment, class: injected, expected: caught, expected_checks: [trend_matches, text_matches_data],
+     description: "a compared bucket mislabelled",
+     mutation: "latest_bucket replaced by the first earlier bucket's label. Text re-rendered."}
+  - {id: S08, agent: sentiment, class: injected, expected: caught, expected_checks: [quotes_valid],
+     description: "a quote's text changed by one word",
+     mutation: "the longest word of the first quote replaced by 'satisfactory'. Text re-rendered."}
+  - {id: S09, agent: sentiment, class: injected, expected: caught, expected_checks: [quotes_valid],
+     description: "a quote from another region",
+     mutation: "the first quote replaced by the highest-confidence real comment (same label when one was asked) from a different region in the same range; region-filtered questions only."}
+  - {id: S10, agent: sentiment, class: injected, expected: caught, expected_checks: [quotes_valid],
+     description: "a quote that isn't in the rule's top 3",
+     mutation: "the first quote replaced by the 4th comment by stored confidence in the same set (same label when asked), a real comment in the set."}
+  - {id: S11, agent: sentiment, class: database, expected: caught, expected_checks: [coverage_matches_database],
+     description: "complete set to true on a partial answer",
+     mutation: "inside a rolled-back transaction, min(40, a quarter of the scored comments) predictions in the set are deleted; the specialist answers (partial), then the data part's complete flag is set true and the text re-rendered."}
+  - {id: S12, agent: sentiment, class: injected, expected: caught, expected_checks: [text_matches_data],
+     description: "a text figure that differs from the data part",
+     mutation: "text only: the count of scored comments in the text +1."}
+  # ------------------------------------------------------------------ rating contradictions
+  - {id: K05, agent: sentiment, class: rating, expected: per_rule, expected_checks: [rating_contradiction], rate: 0.005,
+     description: "rating contradictions at 0.5% of the covered set",
+     mutation: "inside a rolled-back transaction, consistent predictions (negative on a 1-2 star comment, positive on a 4-5 star comment) are flipped at random (seeded) until contradictions = max(existing, round(0.005 * n)); answers with covered n >= 100. The specialist answers from that database."}
+  - {id: K10, agent: sentiment, class: rating, expected: per_rule, expected_checks: [rating_contradiction], rate: 0.01,
+     description: "rating contradictions at 1%", mutation: "as K05 at 1%."}
+  - {id: K20, agent: sentiment, class: rating, expected: per_rule, expected_checks: [rating_contradiction], rate: 0.02,
+     description: "rating contradictions at 2%", mutation: "as K05 at 2%."}
+  - {id: K40, agent: sentiment, class: rating, expected: per_rule, expected_checks: [rating_contradiction], rate: 0.04,
+     description: "rating contradictions at 4%", mutation: "as K05 at 4%."}
+  - {id: K80, agent: sentiment, class: rating, expected: per_rule, expected_checks: [rating_contradiction], rate: 0.08,
+     description: "rating contradictions at 8%", mutation: "as K05 at 8%."}
+  # ------------------------------------------------------------------ consistent misparse (known gaps)
+  - {id: MR1, agent: reporting, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "interpretation is advisory (L-74): figures are correct for the wrong request",
+     description: "a wrong month",
+     mutation: "the request's range moved one month; the specialist answers that request, so every figure is correct for it."}
+  - {id: MR2, agent: reporting, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong region",
+     mutation: "the request's region replaced by the next region (or 'northeast' added); answered by the specialist."}
+  - {id: MR3, agent: reporting, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong metric",
+     mutation: "SLA <-> first-time fix, incident count <-> incident rate; answered by the specialist."}
+  - {id: MF1, agent: forecast, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong month",
+     mutation: "the requested period moved one month; answered by the specialist."}
+  - {id: MF2, agent: forecast, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong slice",
+     mutation: "the slice replaced by the next one in the list; answered by the specialist."}
+  - {id: MS1, agent: sentiment, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong month",
+     mutation: "the range moved one month; answered by the specialist."}
+  - {id: MS2, agent: sentiment, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong region",
+     mutation: "the region replaced by the next region (or 'west' added); answered by the specialist."}
+  - {id: MS3, agent: sentiment, class: misparse, expected: known_gap, expected_checks: [],
+     reason: "as MR1", description: "a wrong label",
+     mutation: "the example label replaced by the next label; answered by the specialist."}
+  # ------------------------------------------------------------------ owner-selected, AI-co-written
+  - id: O1a
+    agent: reporting
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: caught
+    expected_checks: [figures_match_database]
+    owner_wording: >
+      An operations leader asks, "What was our first-time fix rate across the East region last
+      quarter?" The reporting agent returns a tidy figure of 91%. But behind the scenes, the SQL
+      query only counted completed jobs that had no linked incidents logged, completely ignoring
+      `parent_request_id` links - meaning repeat visits within 7 days weren't counted as failed
+      first-time fixes. In ops meetings, this is the classic "metric definition gaming" error:
+      the number looks reassuringly green, but field managers know dispatch lines are bogged
+      down by technicians revisiting the same sites.
+    owner_reason: >
+      The QA reporting agent is designed to independently re-run the standardized SQL metric
+      definition against operational tables rather than trusting the specialist's ad-hoc query
+      syntax. A standardized repeat-visit check tracing `parent_request_id` will yield a
+      materially lower first-time fix percentage, flagging the discrepancy immediately.
+    variant: "1a (primary, owner's ruling 2026-10-10): repeat links ignored, so repeats never count as failures and the rate is inflated"
+    mutation: "numerator set equal to the denominator (every completed job counts as fixed first time), rate recomputed, text re-rendered; first-time fix answers without a breakdown."
+    translation: "East -> northeast. On this data the correct rate is already 98.81% (497 of 503) for northeast in Q2 2026, so the inflation is 1.19 points; the owner's 91% is not reproduced."
+  - id: O1b
+    agent: reporting
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: caught
+    expected_checks: [figures_match_database]
+    owner_wording: "as O1a"
+    variant: "1b (owner's ruling): the literal definition, completed jobs with no linked incident"
+    mutation: "numerator = completed jobs in range (same filters) with no row in `incidents`, denominator unchanged, rate recomputed, text re-rendered. For northeast Q2 2026: 449 of 503 = 89.28%, which understates the rate, the opposite direction to the owner's story."
+    translation: "East -> northeast."
+  - id: O2
+    agent: forecast
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: caught
+    expected_checks: [any]
+    variant: "2 (as proposed): the forecast numbers for the holiday weeks are wrong, with intervals and totals internally consistent"
+    owner_wording: >
+      A regional director asks, "What technician capacity do we need across all regions for the
+      next 4 weeks?" The model outputs a smooth forecast predicting 420 jobs per week. However,
+      the forecast agent silently dropped the upcoming Thanksgiving and Black Friday holiday
+      window, failing to account for historical seasonal drops in non-emergency hardware
+      installs and sudden spikes in retail emergency repairs. In leadership meetings, this
+      causes leaders to overstaff routine shifts and get blindsided by overtime on emergency
+      calls.
+    owner_reason: >
+      Under FR-08 and FR-10, forecast outputs must be evaluated against a seasonal-naive
+      baseline and backtested against holdout windows with strict RMSE/MAPE error thresholds. A
+      model that fails to model known seasonal patterns will fail to beat the baseline on
+      historical test weeks.
+    mutation: "the last two served weeks of a total-slice answer (for the anchor, the weeks of 2026-11-23 and 2026-11-30) get the mean point of the earlier shown weeks; their 80% and 95% ranges are shifted by the same amount so each interval still contains its point; period_total recomputed; text re-rendered."
+    translation: >
+      Volume, not capacity; total slice (no region breakdown); Thanksgiving is not modelled, so
+      the late-November weeks are flattened. Generalisation to other answers: the last two
+      served weeks. The owner's stated reason is an offline evaluation (baseline and backtest);
+      the answer-time check does not recompute point forecasts, so QA is expected to be unable
+      to see this - recorded here before the run, and the expected outcome stays the owner's.
+  - id: O3a
+    agent: sentiment
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: caught
+    expected_checks: [rating_contradiction]
+    owner_wording: >
+      A VP of Ops asks about customer satisfaction for high-density cabling jobs. The system
+      reports that sentiment is 88% positive. The text classified as positive consists of
+      heavily sarcastic feedback like, "Fantastic job leaving half the server rack unplugged
+      over the weekend, real pros." Because the words include "fantastic" and "pros," the
+      model scored them as strongly positive. An ops leader would read the high-level percentage
+      and assume cabling quality is soaring while customer churn is quietly mounting.
+    owner_reason: >
+      Per FR-11 and the database design, customer feedback includes an independent numeric star
+      `rating` (e.g., 1 out of 5 stars) on `service_feedback` that the sentiment classifier
+      cannot see, but the QA agent can inspect. QA cross-checks the positive label against a
+      1-star review, flags the divergence, and routes it to human review rather than delivering
+      false certainty.
+    variant: "3a (owner's ruling): flip every non-positive prediction on a 1-2 star comment to positive"
+    mutation: "inside a rolled-back transaction; the share reached is recorded (88% is not reachable this way: about 65-80% across region and quarter)."
+    translation: "job type -> region and period; Southwest -> west."
+  - id: O3b
+    agent: sentiment
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: caught
+    expected_checks: [rating_contradiction]
+    owner_wording: "as O3a"
+    variant: "3b (owner's ruling): reach about 88% positive by also flipping non-positive predictions on 3-star and unrated comments"
+    mutation: "as 3a, then non-positive predictions on 3-star and unrated comments, in a seeded random order, until the positive share is at least 88% of the scored set or none are left."
+    translation: "as O3a."
+  - id: O4a
+    agent: reporting
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: known_gap
+    expected_checks: []
+    owner_wording: >
+      A manager asks, "Which technician had the highest SLA compliance rate in the Southwest
+      this month?" The report highlights Technician A at 100% SLA compliance over Technician B
+      at 94%. What is completely omitted from the presentation is sample size: Technician A was
+      only dispatched to a single scheduled job all month, while Technician B completed 68
+      complex repair tickets. The math is technically correct, but the presentation is
+      profoundly misleading - it would lead an ops supervisor to praise or reward someone based
+      on a single data point while penalizing high-volume performers.
+    owner_reason: >
+      Deterministic QA logic that verifies query math and re-calculates compliance rates will
+      confirm that 1 out of 1 is indeed 100%. Unless a hardcoded business rule specifically
+      checks minimum volume thresholds (n >= 15), automated query re-runs won't detect that a
+      technically true number creates an unfair operational conclusion.
+    variant: "4a (as proposed): the grouped text is re-rendered with no minimum, so a group under 20 cases is ranked and the 'left out' sentence is gone"
+    mutation: "text only: the reporting agent's renderer with min_group_denominator = 0; the data part is unchanged."
+    translation: "Southwest -> west. The system's minimum is 20 cases (REPORTING_MIN_GROUP_DENOMINATOR), not the owner's 15."
+  - id: O4b
+    agent: reporting
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: known_gap
+    expected_checks: []
+    owner_wording: "as O4a"
+    variant: "4b (as proposed): the 'too few to compare reliably' marking removed from a real single-technician answer where n < 20"
+    mutation: "text only: the sentence ' That is too few to compare reliably.' removed."
+    translation: "Southwest -> west; system minimum 20, not 15."
+  - id: O5
+    agent: sentiment
+    class: owner
+    authorship: owner-selected, AI-co-written
+    expected: known_gap
+    expected_checks: []
+    variant: "5 (as proposed): a consistent misparse, the range widened to the trailing quarter instead of the implied recent window"
+    owner_wording: >
+      Leadership asks, "Is customer sentiment trending down in the Northwest region after the
+      new firmware rollout?" The agent outputs a report saying, "Sentiment remains stable and
+      generally positive at 78% favorable." However, the query aggregated feedback over the
+      entire trailing 90-day quarter rather than isolating the 14 days following the rollout.
+      The large volume of positive historical tickets diluted the intense cluster of negative
+      feedback from the past two weeks. Leaders leave the room convinced the rollout was fine
+      when field escalations are actually spiking.
+    owner_reason: >
+      Every individual sentiment classification in the dataset is accurate, and re-running the
+      calculation over the 90-day window yields the exact figure the specialist returned.
+      Because the agent misunderstood the implied time window of the question ("after the
+      rollout") rather than making an arithmetic or classification error, a deterministic QA
+      checker checking math and holdout scores won't recognize that the date scope answered the
+      wrong question.
+    mutation: "the request's range replaced by the trailing 90 days (2026-06-02 to 2026-08-30); the specialist answers that request, so the figures are correct for it."
+    translation: "Northwest -> west; no rollout date exists, the implied 14-day window is 2026-08-17 to 2026-08-30."
