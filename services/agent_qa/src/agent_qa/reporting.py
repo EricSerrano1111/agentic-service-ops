@@ -22,14 +22,13 @@ from schemas import (
     DATASET_WINDOW_END,
     DATASET_WINDOW_START,
     CheckResult,
-    IncidentRateResult,
     IncidentSummary,
     RepeatDriversResult,
     ReportingAnswer,
     ReportingRequest,
 )
 
-from . import names, textcheck
+from . import names, slots, textcheck
 from .config import Settings
 from .db import UNATTRIBUTED, GroupRow, Source, utc_bounds
 from .repeats import Drivers, compute
@@ -365,69 +364,11 @@ class Checker:
     # ------------------------------------------------------------------ text
 
     def _check_text(self, answer: ReportingAnswer, text: str) -> CheckResult:
-        f = answer.figures
-        allowed: set[str] = {"100", str(self.settings.min_group_denominator), "20"}
-        required: list[set[str]] = []
-        labels: list[str] = []
-
-        def add_int(*values: int) -> None:
-            for v in values:
-                allowed.update(textcheck.int_forms(v))
-
-        def add_rate(rate: str | None, share: bool) -> set[str]:
-            forms: set[str] = set()
-            if rate is not None:
-                forms = {textcheck.percent(rate)} if share else {rate}
-                allowed.update(forms)
-            return forms
-
-        labels += [
-            getattr(f, "technician_name", None) or "",
-            getattr(f, "account_name", None) or "",
-        ]
-        if isinstance(f, IncidentSummary):
-            add_int(f.incident_count, f.by_severity.low, f.by_severity.medium, f.by_severity.high)
-            required.append(textcheck.int_forms(f.incident_count))
-            if f.groups is not None:
-                add_int(f.group_count, len(f.groups), max(0, f.group_count - TEXT_GROUPS))
-                for g in f.groups:
-                    add_int(g.count)
-                    labels.append(g.group)
-        elif isinstance(f, RepeatDriversResult):
-            add_int(f.overall.jobs, f.overall.repeated, f.group_count, len(f.groups))
-            add_int(max(0, f.group_count - TEXT_GROUPS), 5)
-            add_rate(f.overall.rate, True)
-            if f.overall.jobs:
-                required.append(textcheck.int_forms(f.overall.repeated))
-                required.append(add_rate(f.overall.rate, True))
-            left_out = 0
-            for g in f.groups:
-                labels.append(g.group)
-                add_int(g.this.jobs, g.this.repeated, g.rest.jobs, g.rest.repeated)
-                add_rate(g.this.rate, True)
-                add_rate(g.rest.rate, True)
-                left_out += g.this.jobs < self.settings.min_group_denominator
-            add_int(left_out)
-            for t in (f.any_other_incident, f.no_other_incident):
-                if t is not None:
-                    add_int(t.jobs, t.repeated)
-                    add_rate(t.rate, True)
-        else:
-            share = not isinstance(f, IncidentRateResult)
-            add_int(f.numerator, f.denominator)
-            required.append(textcheck.int_forms(f.numerator))
-            if f.rate is not None:
-                required.append(add_rate(f.rate, share))
-            if f.groups is not None:
-                add_int(f.group_count, len(f.groups))
-                left_out = 0
-                for g in f.groups:
-                    labels.append(g.group)
-                    add_int(g.numerator, g.denominator)
-                    add_rate(g.rate, share)
-                    left_out += g.denominator < self.settings.min_group_denominator
-                add_int(left_out)
-        problems = textcheck.compare(text, allowed, required, labels)
+        """The text's numbers, by position (§6 "Answer text"): each is one slot of the verified
+        figures, formatted by its rounding rule. QA's minimum is the rule's 20, not a setting."""
+        expected, names, marking = slots.reporting(answer)
+        problems = slots.compare(text, expected, names)
+        problems += slots.small_sample_problems(marking, text)
         dates = set(re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text))
         if not dates <= {d.isoformat() for d in (answer.start, answer.end, answer.as_of)}:
             problems.append("text_states_another_date")

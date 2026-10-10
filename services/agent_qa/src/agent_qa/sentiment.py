@@ -31,7 +31,7 @@ from schemas import (
     SentimentRequest,
 )
 
-from . import textcheck
+from . import slots, textcheck
 from .config import Settings
 from .db import Source, utc_bounds
 from .reporting import bad, result
@@ -360,55 +360,27 @@ class Checker:
     # ------------------------------------------------------------------ the text
 
     def _check_text(self, answer: SentimentAnswer, want: Figures, text: str) -> CheckResult:
-        allowed: set[str] = {str(MIN_N)}
-        required: list[set[str]] = []
-        compared: list[str] = []
+        """The text's numbers, by position (§6 "Answer text"), against QA's own recomputation;
+        quoted comment text and bucket names are not numbers."""
         names: list[str] = [b["bucket"] for b in want.buckets]
         dates = {answer.start.isoformat(), answer.end.isoformat(), answer.as_of.isoformat()}
-
-        def add_int(*values: int) -> None:
-            for v in values:
-                allowed.add(str(v))
-
-        def add_share(share: str | None) -> set[str]:
-            pct = percent_one_decimal(share)
-            forms = set() if pct is None else {pct}
-            allowed.update(forms)
-            return forms
-
-        add_int(want.n_scored, want.n_comments, want.flagged, *want.counts.values())
-        if want.n_scored:
-            required.append({str(want.n_scored)})
-            for label in SENTIMENT_LABELS:
-                required.append({str(want.counts[label])})
-            for share in want.shares().values():
-                add_share(share)
-            required.append({percent_one_decimal(rate_string(want.flagged, want.n_scored))})
-            add_share(rate_string(want.flagged, want.n_scored))
-        if not want.complete:
-            required.append({str(want.n_comments)})
+        trend = None
+        compared: list[str] = []
         if answer.trend is not None and answer.trend.latest_n is not None:
-            t = expected_trend(want)
-            add_int(t["latest_n"], t["latest_negative"], t["earlier_n"], t["earlier_negative"])
-            names += [t["latest_bucket"], *t["earlier_buckets"]]
-            for n, x in (
-                (t["latest_n"], t["latest_negative"]),
-                (t["earlier_n"], t["earlier_negative"]),
-            ):
-                add_share(rate_string(x, n))
-            allowed.add(f"{t['p_value']:.4f}")
-            required.append({f"{t['p_value']:.4f}"})
+            trend = expected_trend(want)
+            # the p-value shown is the data part's (checked against QA's by `trend_matches`)
+            trend = {**trend, "p_value": answer.trend.p_value}
+            names += [trend["latest_bucket"], *trend["earlier_buckets"]]
             # The answer names the buckets it compared (§6 rule 6).
-            span = t["earlier_buckets"][0] + (
-                "" if len(t["earlier_buckets"]) == 1 else f" to {t['earlier_buckets'][-1]}"
+            span = trend["earlier_buckets"][0] + (
+                "" if len(trend["earlier_buckets"]) == 1 else f" to {trend['earlier_buckets'][-1]}"
             )
-            compared = [f"{t['latest_bucket']}:", span + ":"]
+            compared = [f"{trend['latest_bucket']}:", span + ":"]
+        quotes = [(e.confidence, e.feedback_id) for e in answer.examples]
         for e in answer.examples:
             names.append(e.feedback_text)
-            add_int(e.feedback_id)
-            allowed.add(e.confidence)
             dates.add(e.submitted_at.date().isoformat())
-        problems = textcheck.compare(text, allowed, required, names)
+        problems = slots.compare(text, slots.sentiment(want, trend, quotes), names)
         if compared and not all(part in text for part in compared):
             problems.append("text_does_not_name_the_compared_buckets")
         stated = set(re.findall(r"\b\d{4}-\d{2}-\d{2}\b", textcheck.strip_names(text, names)))

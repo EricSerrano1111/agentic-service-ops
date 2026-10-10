@@ -72,7 +72,10 @@ def checker(**canned) -> Checker:
     return Checker(FakeSource(**canned), SETTINGS)
 
 
-TEXT = "As of 2026-08-30: 172 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC)."
+TEXT = (
+    "As of 2026-08-30: 172 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): "
+    "25 high, 54 medium, 93 low severity."
+)
 
 
 # --------------------------------------------------------------------------- the request rules
