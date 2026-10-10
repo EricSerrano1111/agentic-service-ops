@@ -353,21 +353,66 @@ def test_the_cap_counts_qas_cost_and_stops_a_re_ask(monkeypatch):
     assert "172" not in body["answer"]  # the failed answer stays hidden
 
 
-# --------------------------------------------------------------------------- not verified yet
+# --------------------------------------------------------------------------- sentiment (ADR-090)
 
 
-def test_sentiment_is_not_checked_and_says_so(monkeypatch):
+def sentiment_hop(**kwargs):
     from test_orchestrator import SENTIMENT_ANSWER, _task
 
-    sentiment = _task(
+    answer = _task(
         parts=[new_text_part("Customer feedback sentiment ..."), new_data_part(SENTIMENT_ANSWER)]
     )
-    hop = Hop(lambda n: sentiment)
+    return Hop(lambda n: answer, **kwargs)
+
+
+def test_a_sentiment_answer_goes_through_the_loop_and_is_verified(monkeypatch):
+    from test_orchestrator import SENTIMENT_ANSWER
+
+    hop = sentiment_hop()
     body = ask(routed(monkeypatch, "sentiment", hop)).json()
-    assert body["outcome"] == "answered" and body["qa_status"] == "not_checked"
-    assert body["answer"].rstrip().endswith("not yet checked by the verification agent.")
-    assert "Not verified:" in body["answer"]
-    assert hop.qa_calls == []
+    assert body["outcome"] == "answered" and body["qa_status"] == "verified"
+    assert "Not verified" not in body["answer"] and "not yet checked" not in body["answer"]
+    [call] = hop.qa_calls
+    assert call["data"]["domain"] == "sentiment" and call["data"]["kind"] == "answer"
+    sent = call["data"]["answer"]  # the specialist's payload, validated and re-dumped
+    assert sent["summary"]["counts"] == SENTIMENT_ANSWER["summary"]["counts"]
+    assert sent["summary"]["n_scored"] == SENTIMENT_ANSWER["summary"]["n_scored"]
+
+
+def test_a_sentiment_figures_failure_is_degraded_at_once(monkeypatch):
+    hop = sentiment_hop(qa=lambda n: verdict_task(failing_verdict("rating_contradiction")))
+    body = ask(routed(monkeypatch, "sentiment", hop)).json()
+    assert body["outcome"] == "degraded" and "rating_contradiction" in body["warning"]
+    assert body["qa_status"] == "not_checked" and body["sentiment"] is None
+    assert len(hop.calls) == 1 and len(hop.qa_calls) == 1
+
+
+def test_a_sentiment_decline_is_sent_to_qa_with_the_parsed_request(monkeypatch):
+    parsed = {"unsupported": "account", "bucket": "month", "want_trend": False}
+    hop = Hop(
+        lambda n: declined("not_supported", "Sentiment can't be broken down by account.", parsed)
+    )
+    body = ask(routed(monkeypatch, "sentiment", hop)).json()
+    assert body["outcome"] == "not_available" and body["qa_status"] == "verified"
+    [call] = hop.qa_calls
+    assert call["data"]["domain"] == "sentiment" and call["data"]["parsed_request"] == parsed
+
+
+def test_qa_being_down_leaves_a_sentiment_answer_unverified_and_marked(monkeypatch):
+    hop = sentiment_hop(qa=lambda n: httpx.ConnectError("refused"))
+    body = ask(routed(monkeypatch, "sentiment", hop)).json()
+    assert body["outcome"] == "degraded" and body["qa_status"] == "unavailable"
+    assert "Not verified: Customer feedback sentiment" in body["answer"]
+
+
+@pytest.mark.parametrize("route", ["reporting", "forecast", "sentiment"])
+def test_not_checked_is_never_emitted_for_an_answer_that_was_returned(monkeypatch, route):
+    """`not_checked` now means a request that ended before a check ran; an answer or decline that
+    comes back as such is `verified`, whichever specialist made it."""
+    hop = sentiment_hop() if route == "sentiment" else specialist_hop(route)
+    body = ask(routed(monkeypatch, route, hop)).json()
+    assert body["outcome"] == "answered" and body["qa_status"] == "verified"
+    assert hop.qa_calls  # QA was asked
 
 
 @pytest.mark.parametrize("route", ["out_of_scope", "multi_domain", "ambiguous"])

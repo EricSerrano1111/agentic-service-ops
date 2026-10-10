@@ -22,6 +22,7 @@ from .db import PostgresSource, Source, make_engine
 from .executor import QAExecutor
 from .forecast import Manifest
 from .interpretation import InterpretationLLM, Interpreter
+from .sentiment import SentimentManifest
 from .verify import Verifier
 
 log = logging.getLogger("agent_qa")
@@ -32,6 +33,7 @@ def create_app(
     llm: InterpretationLLM | None = None,
     source: Source | None = None,
     manifest: Manifest | None = None,
+    sentiment_manifest: SentimentManifest | None = None,
 ) -> FastAPI:
     card = build_agent_card(settings.public_url)
     src = source if source is not None else PostgresSource(make_engine(settings))
@@ -39,6 +41,9 @@ def create_app(
         src,
         settings,
         manifest if manifest is not None else Manifest.load(settings.manifest_path),
+        sentiment_manifest
+        if sentiment_manifest is not None
+        else SentimentManifest.load(settings.sentiment_manifest_path),
         Interpreter(llm if llm is not None else LLMClient.from_env("qa")),
     )
     handler = DefaultRequestHandler(

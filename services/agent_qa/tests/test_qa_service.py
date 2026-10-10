@@ -32,7 +32,15 @@ from fastapi.testclient import TestClient
 from google.protobuf.json_format import MessageToDict
 from llm import LLMBreakerOpen, LLMOutputInvalid, LLMRateLimited, LLMRequestError, LLMUnavailable
 from pydantic import ValidationError
-from qa_fakes import ADVISORY, AS_OF, SETTINGS, FakeLLM, FakeSource, manifest
+from qa_fakes import (
+    ADVISORY,
+    AS_OF,
+    SETTINGS,
+    FakeLLM,
+    FakeSource,
+    manifest,
+    sentiment_manifest,
+)
 from schemas import (
     IncidentSummary,
     ReportingAnswer,
@@ -84,7 +92,13 @@ def request_data(**fields) -> dict:
 
 def app_for(llm=None, source=None):
     source = source if source is not None else FakeSource(severity_counts=COUNTS)
-    return create_app(SETTINGS, llm or FakeLLM(), source=source, manifest=manifest()), source
+    return create_app(
+        SETTINGS,
+        llm or FakeLLM(),
+        source=source,
+        manifest=manifest(),
+        sentiment_manifest=sentiment_manifest(),
+    ), source
 
 
 async def send(app, parts=None, metadata=None, data=None):
@@ -376,7 +390,7 @@ async def test_a_malformed_deadline_is_never_trusted(bad):
         [new_text_part("x"), new_data_part([1, 2, 3])],
         [new_text_part("x"), new_data_part("a string")],
         [new_text_part("x"), new_data_part({})],
-        [new_text_part("x"), new_data_part(request_data(domain="sentiment"))],
+        [new_text_part("x"), new_data_part(request_data(domain="payroll"))],
         [new_text_part("x"), new_data_part(request_data(kind="decline"))],
         [new_text_part("x"), new_data_part(request_data(extra="field"))],
         [new_text_part("x"), new_data_part(request_data(question=""))],
@@ -548,7 +562,9 @@ def test_the_verdict_contract_ties_the_verdict_to_its_checks():
 
 def advisory_app(llm, source=None):
     source = source if source is not None else FakeSource(severity_counts=COUNTS)
-    return create_app(ADVISORY, llm, source=source, manifest=manifest()), source
+    return create_app(
+        ADVISORY, llm, source=source, manifest=manifest(), sentiment_manifest=sentiment_manifest()
+    ), source
 
 
 def test_the_shipped_default_is_advisory_and_the_mode_is_validated(monkeypatch):

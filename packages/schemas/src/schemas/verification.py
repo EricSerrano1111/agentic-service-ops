@@ -17,14 +17,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-#: What the user is told about verification. `verified`: QA passed it. `not_checked`: no QA
-#: check exists for this answer yet (sentiment until M2) or the request ended before one ran.
+#: What the user is told about verification. `verified`: QA passed it. `not_checked`: the
+#: request ended before a check ran (a deadline, the cost cap, or a check that had already
+#: failed). No specialist's answer is `not_checked` merely for want of a check any more.
 #: `unavailable`: QA was needed and could not run, so the answer is never shown as verified.
 #: `not_applicable`: no specialist answered (a routing decline, a split or a clarification).
 QaStatus = Literal["verified", "not_checked", "unavailable", "not_applicable"]
 
 CheckClass = Literal["figures", "interpretation"]
-VerifiedDomain = Literal["reporting", "forecast"]
+VerifiedDomain = Literal["reporting", "forecast", "sentiment"]
 Kind = Literal["answer", "decline"]
 
 CODE_PATTERN = r"^[a-z0-9_]{1,64}$"

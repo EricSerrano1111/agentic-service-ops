@@ -28,10 +28,6 @@ FORECAST = "forecast"
 QA = "verification (QA)"
 ROUTING = "routing"
 
-#: Appended to an answer no QA check exists for yet (sentiment, until M2): the user is told
-#: plainly that it was not verified (ADR-089).
-NOT_VERIFIED_LINE = "Not verified: sentiment answers are not yet checked by the verification agent."
-
 _CODE = re.compile(r"^[a-z0-9_]{1,64}$")
 MAX_CODES = 10
 

@@ -23,7 +23,7 @@ from typing import Any, Literal, Protocol
 from llm import LLMResult
 from llm.prompts import Prompt, load_prompt
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
-from schemas import MAX_GUIDANCE_CHARS, ForecastRequest, ReportingRequest
+from schemas import MAX_GUIDANCE_CHARS, ForecastRequest, ReportingRequest, SentimentRequest
 
 log = logging.getLogger("agent_qa")
 
@@ -111,6 +111,42 @@ def reading_forecast(request: ForecastRequest, as_of: dt.date) -> str:
         "none_named": request.horizon_weeks is None and request.period_start is None,
         "show_recent_history": request.want_history,
         "unsupported": request.unsupported,
+        "as_of": as_of.isoformat(),
+    }
+    return json.dumps(reading, indent=1)
+
+
+def reading_sentiment(
+    request: SentimentRequest,
+    start: dt.date | None,
+    end: dt.date | None,
+    bucket: str,
+    assumed: bool,
+    as_of: dt.date,
+) -> str:
+    """The sentiment reading the model judges (advisory, L-74): the route, the parsed request
+    and the range it ended up with. No figure, no answer text and no comment ever goes in."""
+    if start is None:
+        date_range: Any = None
+    else:
+        date_range = {
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "source": (
+                "none named in the question; the system's default for this kind of question"
+                if assumed
+                else "named"
+            ),
+        }
+    reading = {
+        "route": "sentiment",
+        "region": request.region,
+        "date_range": date_range,
+        "bucket": bucket,
+        "wants_trend": request.want_trend,
+        "wants_example_comments": request.want_examples,
+        "example_comment_label": request.example_label,
+        "unsupported_breakdown": request.unsupported,
         "as_of": as_of.isoformat(),
     }
     return json.dumps(reading, indent=1)

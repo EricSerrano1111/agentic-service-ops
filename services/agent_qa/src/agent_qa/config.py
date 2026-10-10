@@ -20,6 +20,7 @@ from common import database_host
 from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
 
 DEFAULT_MANIFEST = Path("/app/artifacts/volume_v2.manifest.json")
+DEFAULT_SENTIMENT_MANIFEST = Path("/app/artifacts/bert_v1.manifest.json")
 #: `advisory`: the interpretation check is logged and reported on the verdict but never fails
 #: an answer or triggers a retry. `enforce`: a failed check fails the verdict. The default is
 #: advisory because neither interpretation prompt passed its gate (ADR-089, L-74).
@@ -48,6 +49,10 @@ class Settings:
     db_user: str
     db_password: str = ""
     manifest_path: Path = DEFAULT_MANIFEST
+    #: The sentiment model's committed manifest: its SHA-256 is the `model_version` of the
+    #: predictions to read, and its calibrated threshold is τ (ADR-066). Read as a file, never
+    #: through model code.
+    sentiment_manifest_path: Path = DEFAULT_SENTIMENT_MANIFEST
     window_start: dt.date = DATASET_WINDOW_START
     window_end: dt.date = DATASET_WINDOW_END
     #: Relative dates resolve against this, never the wall clock (ADR-050); the same variable
@@ -85,6 +90,9 @@ class Settings:
             db_user=_required("DB_ROLE_QA_USER"),
             db_password=_required("DB_ROLE_QA_PASSWORD"),
             manifest_path=Path(env("QA_MANIFEST_PATH") or DEFAULT_MANIFEST),
+            sentiment_manifest_path=Path(
+                env("QA_SENTIMENT_MANIFEST_PATH") or DEFAULT_SENTIMENT_MANIFEST
+            ),
             as_of=dt.date.fromisoformat(
                 env("REPORTING_AS_OF_DATE") or DATASET_WINDOW_END.isoformat()
             ),
