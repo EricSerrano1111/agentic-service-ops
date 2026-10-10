@@ -896,11 +896,15 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix:** a separate PR: require a stated number only when the figure is non-zero or the text prints it, with a test for every zero-denominator and zero-count form. That PR re-runs the same frozen catalogue and seed and reports a second measurement beside the first.
 - **Recorded in:** ADR-091; `evals/results/qa_faults/2026-10-10/` (control `reporting:f09`).
 
+**Update 2026-10-10 (resolved by ADR-092).** The headline-number requirement is removed; a zero-denominator answer's slots are what data dictionary §6 "Answer text" rule 3 lists, per metric. Measurement 2 (the same frozen catalogue and seed): control `reporting:f09` passes, 0 of 62 controls fail. Tests for each metric's zero case.
+
 ### L-82 — QA's text check compares sets of numbers and tolerates the neighbouring whole number (2026-10-10)
 - **What:** The text check collects every number the text states and requires each to be one the answer supports and the headline numbers to appear. It does not check which figure is stated where, and a figure shown rounded to a whole number accepts floor, ceiling and round. A text that states one week's forecast as another week's, or a point one above its rounded value, passes. 4 of 9 forecast text-figure faults (F08) were missed: one by the rounding tolerance, three because the changed figure equalled another figure the answer states.
 - **Why accepted:** For now; the data part is checked exactly, and a text that disagrees with it by one in a figure the answer also states elsewhere is rare. The reporting and sentiment text faults (R10, S12) were caught in 20 of 20.
 - **Fix:** a separate PR: compare the text against the template's own rendering of the verified data part for forecasts (a positional check), or at least bind each stated figure to its week; keep the tolerance only where the rendering rounds. Re-run the frozen catalogue as a second measurement.
 - **Recorded in:** ADR-091; `evals/results/qa_faults/2026-10-10/report.md` section 4.
+
+**Update 2026-10-10 (resolved by ADR-092).** The text check is positional against §6's slot lists and rounding rules, with no tolerance. Measurement 2: the four forecast text-figure misses are caught (F08 9 of 9, was 5 of 9), and no case caught in measurement 1 passes. Measurement 2 is the same catalogue the fixes were designed against, so it shows the fixes work on those cases, not that QA catches unseen text faults.
 
 ### L-83 — QA cannot see a wrong point forecast (2026-10-10)
 - **What:** QA checks that a forecast's weeks are the weeks asked for, that each interval contains its point, that a total is the sum, that served flags and shown errors equal the `volume_v2` manifest, the year-end caveat and the history. It does not recompute the model's numbers and has no seasonal baseline at answer time. The owner's fault 2 (the holiday weeks flattened, intervals and totals consistent) passed 0 of 6, with the owner's expected outcome `caught` and the reason given there, a baseline and backtest comparison, being an offline evaluation. This was stated in the catalogue before the run.
@@ -908,11 +912,18 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (owner decision, Sprint 5 or 6 option):** a plausibility check at answer time, for example each shown week within a stated band around the seasonal-naive value, with its own false-alarm rate measured. This is new scope and is not started.
 - **Recorded in:** ADR-091; catalogue fault O2.
 
+**Update 2026-10-10 (split, records only, ADR-092).**
+- **(a) Altered forecast numbers in an answer.** This is what the owner's fault 2 mutation did: served points and ranges changed with arithmetic kept consistent. An answer-time check can catch it. The deployed model is deterministic, so QA could re-implement the prediction from the manifest's stored coefficients and require every served number to match. That checks the answer against the model and does not predict the future, so it is consistent with ADR-055. It is a build decision, not started: a Sprint 5 decision item (build it or not); the owner leans towards building it, as the condition for "QA verifies forecasts" meaning more than arithmetic.
+- **(b) A model that does not know a holiday** (the story of fault 2). Answer-time QA cannot catch this; it belongs to offline evaluation. The holdout contains no November, and ADR-070's unvalidated year-end caveat applies.
+- Fault 2 as injected is (a); its owner-stated reason is (b). Measurement 2 still passes it 0 of 6.
+
 ### L-84 — QA does not check how a small sample is presented (2026-10-10)
 - **What:** The reporting text ranks groups of at least 20 cases and marks a single filtered figure under 20 as "too few to compare reliably" (ADR-073, ADR-086). QA checks the figures and the numbers in the text, not that marking or ranking rule. Re-rendering a grouped answer with no minimum so that a one-job technician heads the list (4a), and removing the marking from a single-technician answer with one case (4b), both passed (0 of 1 each; the cases are few because few base answers have a group or filter under 20). The owner's expected outcome was `known_gap`, and it held. The owner's threshold was 15; the system's is 20.
 - **Why accepted:** The data part carries every group and its counts, so the information is present; the presentation rule is a template property. Both known gaps were expected.
 - **Fix (option):** check the template's presentation rules in QA (the minimum for ranking, the marking) by rendering the verified data part and comparing; this is the same mechanism as the L-82 fix.
 - **Recorded in:** ADR-091; catalogue faults O4a and O4b.
+
+**Update 2026-10-10 (resolved by ADR-092).** §6 rule 4 states the small-sample marking and the ranking minimum (20, the rule's value, not a setting), and QA enforces both. Measurement 2: owner faults 4a and 4b, recorded as expectation `known_gap`, are caught (1 of 1 each; the expectation is not rewritten). The cases are few because few base answers have a group or filter under 20. The owner's threshold was 15 and the system's is 20.
 
 ### L-85 — The catch rate is measured on faults drafted by the assistant that built QA (2026-10-10)
 - **What:** 47 of the catalogue's fault definitions were written by the assistant that wrote QA's checks and know what they test; the five owner-selected faults were co-written with it. The 98.2% (219 of 223) is therefore the share of faults the checks' author thought of that the checks catch, and an upper bound on what an independent reviewer would find. Where the owner chose the scenario (faults 1 to 5), one of the three expected-caught faults (2) was not caught, and the three expected known gaps held.
@@ -920,3 +931,4 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (option):** a Sprint 5 or 6 set of faults written by the owner alone in plain words, applied by the same harness and reported separately.
 - **Recorded in:** ADR-091; `evals/qa_faults/catalogue_v1.yaml`.
 
+**Update 2026-10-10 (ADR-092, measurement 2).** Both measurements are upper bounds. Measurement 2 (223 of 223, 100%) re-ran the same catalogue after fixes that were designed from measurement 1's misses, so it is the weaker evidence of the two: it shows the fixes work on the cases they were written for. It is not an estimate of how QA does on faults nobody has thought of, and it does not add a blind fault. An owner-written set remains the Sprint 5 or 6 option above.

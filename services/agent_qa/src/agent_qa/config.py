@@ -58,8 +58,6 @@ class Settings:
     #: Relative dates resolve against this, never the wall clock (ADR-050); the same variable
     #: the specialists read, so QA and the specialists agree on "today".
     as_of: dt.date = DATASET_WINDOW_END
-    #: The reporting agent's presentation minimum for a ranked group (the text check needs it).
-    min_group_denominator: int = 20
     #: Server-side cap on any one query.
     statement_timeout_ms: int = 10_000
     connect_timeout_s: int = 5
@@ -82,7 +80,6 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         env = os.environ.get
-        d = cls.__dataclass_fields__
         return cls(
             db_host=database_host(),
             db_port=int(env("POSTGRES_PORT", "5432")),
@@ -95,9 +92,6 @@ class Settings:
             ),
             as_of=dt.date.fromisoformat(
                 env("REPORTING_AS_OF_DATE") or DATASET_WINDOW_END.isoformat()
-            ),
-            min_group_denominator=int(
-                env("REPORTING_MIN_GROUP_DENOMINATOR") or d["min_group_denominator"].default
             ),
             statement_timeout_ms=int(env("QA_DB_STATEMENT_TIMEOUT_MS", "10000")),
             interp_timeout_s=float(env("QA_INTERP_TIMEOUT_S", "30")),

@@ -24,7 +24,7 @@ from typing import Any
 
 from schemas import CheckResult, ForecastAnswer, ForecastRequest
 
-from . import textcheck
+from . import slots
 from .config import Settings
 from .db import Source
 from .reporting import bad, result
@@ -273,26 +273,9 @@ class Checker:
         return result("history_matches_database", problems)
 
     def _text(self, a: ForecastAnswer, text: str) -> CheckResult:
-        allowed: set[str] = {str(HORIZON_CAP), "80"}  # "80% range"
-        required: list[set[str]] = []
-        n = len(a.weeks) + a.beyond_horizon_weeks
-        for value in (n, len(a.weeks), a.beyond_horizon_weeks):
-            allowed.add(str(value))
-        for w in a.weeks:
-            if w.served:
-                for x in (w.point, w.lo80, w.hi80):
-                    allowed |= textcheck.approx_forms(x)
-                required.append(textcheck.approx_forms(w.point))
-        if a.period_total is not None:
-            allowed |= textcheck.approx_forms(a.period_total)
-            required.append(textcheck.approx_forms(a.period_total))
-        for band, verdict in a.bands.items():
-            allowed.add(textcheck.one_decimal(verdict.shown_error))
-            required.append({textcheck.one_decimal(verdict.shown_error)})
-            allowed.update(re.findall(r"\d+", band))  # "5-13 weeks ahead"
-        for h in a.history:
-            allowed.add(str(h.count))
-        problems = textcheck.compare(text, allowed, required)
+        """The text's numbers, by position (§6 "Answer text"): each is one slot of the data
+        part, rounded by its rule: whole requests to nearest, ties to even; errors to one place."""
+        problems = slots.compare(text, slots.forecast(a), [])
         dates = set(re.findall(r"\b\d{4}-\d{2}-\d{2}\b", text))
         shown = {w.week_start for w in a.weeks} | {h.week_start for h in a.history}
         known = shown | {
