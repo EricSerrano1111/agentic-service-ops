@@ -104,6 +104,7 @@
 | 090 | QA checks for sentiment answers; `not_checked` no longer stands for "no check yet" | Accepted |
 | 091 | The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate (extends ADR-055 and ADR-087) | Accepted |
 | 092 | QA fixes from the fault injection: answer text by position, zero denominators, small samples, `qa_status: failed`, and measurement 2 (extends ADR-091) | Accepted |
+| 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted |
 
 ---
 
@@ -2941,4 +2942,38 @@ Every caught case was caught by a check the catalogue named. Faults are not case
 - L-81, L-82 and L-84 are resolved. L-83 is split (records only): (a) altered forecast numbers are checkable at answer time, a Sprint 5 decision item; (b) a model that does not know a holiday is an offline evaluation matter.
 - `qa_status: failed` is a new value in the response contract; clients that matched `not_checked` for a failed verification must match `failed` (none exist yet).
 - Offline: 2,241 unit and service tests, 1,124 integration tests (the QA-versus-tools agreement cases pass with the real renderers' text) and ruff are green.
+
+**Note 2026-10-10 (Sprint 4 close; the entry above is unchanged): how frozen-artifact hashes are computed from now on.** `.gitattributes` pins the fault-injection catalogue and the other frozen evaluation inputs (the parse, routing and interpretation sets, and the golden set by path only) to LF line endings, so the working tree equals the committed blob in every checkout. A hash is recorded two ways: the file SHA-256 over those LF bytes and the git blob hash (`git hash-object`). `git add --renormalize` changed nothing in the index (every committed blob was already LF); only the working-tree copies of some files were rewritten from CRLF to LF. For the four frozen files of measurement 1 and 2:
+
+| file | SHA-256 (LF bytes) | git blob (first 12) |
+|---|---|---|
+| `evals/qa_faults/catalogue_v1.yaml` | `7d370d57ba82...` | `b6843127edaf` |
+| `evals/qa_faults/faults.py` | `1859f4101273...` | `caf226977592` |
+| `evals/qa_faults/generate.py` | `2409bb162abe...` | `46bf6c5ed440` |
+| `evals/qa_faults/report_format.md` | `c92bdfcc075c...` | `fb18dbb219e7` |
+
+The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.json` recorded the SHA-256 of the *working-tree* bytes, which for `catalogue_v1.yaml` and `faults.py` were the CRLF bytes (`7f70ae62a444...`, `8153e5766685...`); those two values are not the LF hashes above. That is the whole of the discrepancy: the content is the same.
+
+### ADR-093 — Sprint calendar re-baselined at the Sprint 4 close (supersedes ADR-082's sprint dates only)
+*Date: 2026-10-10. Supersedes ADR-082's sprint dates only; ADR-082's rules carry forward. Nothing about scope changes.*
+
+**Decision:**
+- **Sprint 4 closed on 2026-10-10, day 5** of a sprint planned as 2026-10-06 to 10-25.
+- **Sprint 5 runs 2026-10-12 to 10-25. Sprint 6 runs 2026-10-26 to 11-08. The buffer is 2026-11-09 to 12-05.** The final date, 2026-12-05, is unchanged.
+- **ADR-082's rules carry forward:** the buffer stays buffer; scope expansion is decided at the **Sprint 5 close**, under the working agreement, and only if genuinely ahead; each re-baseline is an ADR.
+- **The academic dates are the course's and do not move.** `05` (due 11-01) now falls in Sprint 6, in its first week; `06` (due 11-08) falls on Sprint 6's last day and benefits from the full Sprint 5 deploy. The weekly status reports continue through the week ending 11-22 (the owner's).
+
+**Context:**
+- Sprint 4's goal was met on day 5 (with stated limits: ADR-091, ADR-092). ADR-082 reserved the buffer decision for this close. The decision is to pull Sprints 5 and 6 forward and keep the larger buffer whole, rather than spend the freed time on scope.
+
+**Alternatives considered:**
+- *Keep ADR-082's dates.* Rejected: it leaves the 10-12 to 10-25 fortnight with no sprint and wastes the pull-forward the sprint earned.
+- *Use the freed time for scope now.* Rejected: ADR-082 puts that decision at a sprint close under the working agreement, and the largest open quality gap (the interpretation check, 0 of 71 misparses caught, L-74) is a Sprint 5 job on owner-written sets, not new capability.
+- *Plan Sprint 5 in this ADR.* Rejected: the planned list is unchanged and is confirmed in `sprint-log.md`; full planning is the next session's work.
+
+**Consequences:**
+- `architecture.md` §10 and the Sprint 5 and 6 headings in `sprint-log.md` carry the new dates, each marked "re-baselined, ADR-093".
+- The buffer grows from 13 days to 27 days; R-10 moves from Open to Monitoring.
+- Sprint 5 is the same two weeks of work at the same size, two weeks earlier; the risk is that it is heavy (the UI, a full deploy, the held-out routing eval and the owner writing time), so R-10's review trigger stays at every retro.
+- **Post-submission divergence (carry to the evaluation report):** `03`'s calendar, already on the list from ADR-082, differs again; `03` is Eric's to edit and nothing was changed.
 
