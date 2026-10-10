@@ -329,6 +329,12 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 | Runtime LLM | Gemini API free tier; separate spend-capped paid project (ADR-041) for corpus generation (done, ~$1.40), the Sprint 5 Pro-for-QA test and paid eval runs | ~$1.40 spent; Pro test ~$20–30 incl. thinking tokens, drawn from buffer |
 | Buffer | Overruns, a stronger QA model, demo-day headroom | ~$40 |
 
+**Paid eval runs, priced 2026-10-10 (Sprint 4 close).** Source: https://ai.google.dev/gemini-api/docs/pricing, read 2026-10-10. Paid tier, standard, USD per 1M tokens: `gemini-3.5-flash-lite` $0.30 input and $2.50 output (thinking tokens billed as output); `gemini-3.1-pro-preview` $2.00 input and $12.00 output for prompts up to 200k tokens. The client's own logged cost matches the Flash-Lite rates.
+- **Measured per call, at those prices:** routing 596 input and 41 output tokens on average over 54 calls of the `route_v3` runs on `routing_v2` (about $0.00028); on 2026-10-10 a routed and parsed reporting question cost $0.00094 and a verified one, adding QA's advisory interpretation call, $0.0016 (the parse about $0.00065 and the interpretation call about $0.00066).
+- **A full routing eval run:** the held-out set is assumed to be 50 questions, run k=3 = 150 requests. Routing only: about $0.04. End to end, every question answered (routing, parse and the advisory interpretation call, 450 calls): about $0.24 at most, because declines, ambiguous and multi-domain questions stop before the specialist. With a margin for retries and a few longer questions, **about $0.30**.
+- **The Pro-for-QA test (ADR-029, optional, buffer only):** the ~$20-30 ceiling stands as the budget. A check at the prices above puts one interpretation call at about $0.0035 on the Pro preview, so a 252-call gate run is about $1 before extra thinking tokens: the ceiling is a bound, not an expectation.
+- **Total for the planned paid evaluation:** about $0.30 for the routing run plus the Pro test's ceiling, so at most about $30, drawn from the buffer line above.
+
 **The Cloud SQL timing is the key move.** An always-on managed Postgres instance running all 12 weeks would consume roughly a third of the budget for no benefit during local development. Develop against Docker Postgres, migrate to Cloud SQL when deployment work actually begins (the Sprint 4 reporting slice, ADR-045; storage bills while the instance is stopped), and keep the schema migration path (Alembic) identical for both so the switch is trivial.
 
 ### Runaway-cost guardrails
@@ -348,17 +354,17 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 Every sprint ends with a **demoable increment** and a **sprint review + retro entry** in `sprint-log.md`. Academic deliverables are interleaved, not bolted on at the end. Risk register is reviewed and updated every sprint boundary.
 
-**Calendar.** Sprint 1 started Monday 2026-09-14. **Re-baselined 2026-10-08 (ADR-082): Sprint 4 runs 2026-10-06 to 10-25, Sprints 5 and 6 follow, and 2026-11-23 to 12-05 is buffer.** **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.
+**Calendar.** Sprint 1 started Monday 2026-09-14. **Re-baselined 2026-10-08 (ADR-082) and again at the Sprint 4 close on 2026-10-10 (ADR-093): Sprint 4 closed on day 5, Sprint 5 runs 2026-10-12 to 10-25, Sprint 6 runs 10-26 to 11-08, and 2026-11-09 to 12-05 is buffer.** **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.
 
 | Sprint | Dates | Academic deliverables due |
 |---|---|---|
 | 1 | 2026-09-14 to 09-27 | `01-proposal-business-case.md` (09-27) — complete; weekly status report |
 | 2 | 2026-09-28 to 10-11 | `02-requirements-analysis.md` (10-04) — completed early, in Sprint 1; weekly status reports |
 | 3 | planned 2026-10-12 to 10-25; closed early, 2026-10-04 (final 10-05) | `03-planning-management.md` and `04-design-solution-architecture.md` (both due 10-18, submitted); `05` drafted |
-| 4 | 2026-10-06 to 10-25 (three weeks; re-baselined, ADR-082) | Weekly status reports |
-| 5 | 2026-10-26 to 11-08 (re-baselined, ADR-082) | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports |
-| 6 | 2026-11-09 to 11-22 (re-baselined, ADR-082) | Weekly status reports (the last covers the week ending 11-22) |
-| Buffer | 2026-11-23 to 12-05 | Final submission (12-05): presentation plus the completed project (ADR-044) |
+| 4 | 2026-10-06 to 10-25 (three weeks; re-baselined, ADR-082); **closed 2026-10-10, day 5 (ADR-093)** | Weekly status reports (`05` and `06` fall in Sprint 6) |
+| 5 | 2026-10-12 to 10-25 (re-baselined, ADR-093) | Weekly status reports |
+| 6 | 2026-10-26 to 11-08 (re-baselined, ADR-093) | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports (the last covers the week ending 11-22, the course's date) |
+| Buffer | 2026-11-09 to 12-05 (re-baselined, ADR-093) | Final submission (12-05): presentation plus the completed project (ADR-044) |
 
 ### Sprint 1 (weeks 1–2, 2026-09-14 to 09-27) — Foundation
 **Increment:** Synthetic data generator producing validated, signal-bearing data; queryable locally.
@@ -394,21 +400,21 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 - Minimal Cloud Run deploy of the reporting slice (orchestrator and `agent_reporting` with `mcp_incidents` as its sidecar) with Cloud SQL, pulled forward to 2026-10-12 to 10-14 and timeboxed to 3 days; revision-serving check; stop rule at the end of 10-14 per ADR-045 and ADR-078. The deploy comes first in Sprint 4, then the QA build
 - **Academic:** weekly status reports (`05` and `06` fall in Sprint 5)
 
-### Sprint 5 (weeks 9–10, 2026-10-26 to 11-08; re-baselined, ADR-082) — Interface & evaluation
+### Sprint 5 (2026-10-12 to 10-25; re-baselined, ADR-093) — Interface & evaluation
 **Increment:** Deployed system with a working UI; routing accuracy reported with failure analysis.
 - Routing eval harness + failure-case analysis
 - FastAPI gateway + thin React UI (a static export served by the gateway, ADR-080)
 - Extend deployment to all services; complete Cloud SQL migration; **verify revision promotion on every deploy**
-- **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08); weekly status reports
+- **Academic:** weekly status reports (`05` and `06` fall in Sprint 6)
 
-### Sprint 6 (2026-11-09 to 11-22; re-baselined, ADR-082) — Hardening & delivery
+### Sprint 6 (2026-10-26 to 11-08; re-baselined, ADR-093) — Hardening & delivery
 **Increment:** Production-grade checklist closed out; demo rehearsed.
 - Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
 - Production-grade checklist (§7) audited item by item
 - Evaluation report (`docs/evaluation-report.md`) from the Sprint 5 eval runs, presentation, demo rehearsal (ADR-044)
-- **Academic:** weekly status reports (the last covers the week ending 11-22). The final submission (2026-12-05) falls in the buffer.
+- **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08, Sprint 6's last day); weekly status reports (the last covers the week ending 11-22, the course's date). The final submission (2026-12-05) falls in the buffer.
 
-**Buffer, 2026-11-23 to 12-05 (ADR-082).** Under ADR-082 Sprint 6 is planned hardening and delivery work, and the buffer is the two weeks after it. The buffer stays buffer: using it for scope is decided at the Sprint 4 close under the working agreement, never by default. Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) still requires being genuinely ahead at the Sprint 4 boundary.
+**Buffer, 2026-11-09 to 12-05 (re-baselined, ADR-093; ADR-082 set the earlier dates).** Sprint 6 is planned hardening and delivery work, and the buffer is the almost four weeks after it. The buffer stays buffer: using it for scope is decided at the **Sprint 5 close** under the working agreement, never by default. Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) still requires being genuinely ahead at the Sprint 5 boundary.
 
 ---
 

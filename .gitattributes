@@ -1,3 +1,15 @@
+# Frozen evaluation inputs (Sprint 4 close, ADR-093; found by ADR-092's hash mismatch): LF in every
+# checkout, so a file's SHA-256 equals its git blob's bytes on Windows (core.autocrlf) and in CI
+# alike. The golden set is named by path only. The specific "-text" lines further down (the hashed
+# golden files, splits and manifests) come later and so still win: those stay byte-for-byte.
+evals/golden/** text eol=lf
+evals/qa_faults/** text eol=lf
+evals/qa_interp/*.jsonl text eol=lf
+evals/routing/*.jsonl text eol=lf
+evals/routing/*.csv text eol=lf
+evals/reporting_parse/*.jsonl text eol=lf
+evals/forecast_parse/*.jsonl text eol=lf
+evals/sentiment_parse/*.jsonl text eol=lf
 # Hashed artifacts: stored and checked out byte-for-byte, never line-ending converted,
 # so the SHA-256 in a split manifest or the test ledger matches on Windows (core.autocrlf) and in CI alike.
 ml/sentiment/splits/*.csv -text

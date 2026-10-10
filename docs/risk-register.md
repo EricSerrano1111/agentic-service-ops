@@ -23,7 +23,7 @@
 | R-07 | Data | Synthetic generator produces a degenerate distribution | Medium | High | Monitoring |
 | R-08 | Compliance | Schema/data drifts toward resembling employer's real system | Low | High | Mitigating |
 | R-09 | Academic | Course rubric diverges from the assumed deliverable plan | Medium | High | Monitoring |
-| R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Open |
+| R-10 | Schedule | Sprint 6 buffer erodes from earlier slippage | Medium | High | Monitoring |
 | R-11 | External / Budget | Vendor pricing or model access changes mid-project | Medium | Medium | Open |
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
@@ -31,6 +31,7 @@
 | R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Mitigating |
 | R-16 | Evaluation | Evaluation validity: small, partly non-blind development sets and run-to-run variance make measured differences possibly noise | High | Medium | Open |
 | R-17 | Technical / Environment | Local environment memory exhaustion (WSL/Docker) | High | Medium | Open |
+| R-18 | Verification / Evaluation | Misinterpreted questions pass as verified | Medium | High | Open |
 
 ---
 
@@ -47,6 +48,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** The reviewer question is answered in the Sprint 2 retro (`sprint-log.md`): tests built from the author's assumptions passed while the code was wrong, and assistant-written instructions asserted repo state without checking it. The routing eval harness now exists (`evals/routing/run_seed.py`, three runs per evaluation, ADR-054). Status stays Mitigating.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. The reviewer question is answered in the Sprint 4 retro: QA was first built to accept every answer where §6 was silent (L-72), and that was caught at the owner's review, not by CI or process. Fault injection and the owner's own faults now stand in for part of a reviewer's judgment, and the owner's faults found what the assistant's did not (4a, 4b, 2). Status stays Mitigating.
+
 ### R-02 — Runtime budget depends on unconfirmed credit coverage
 **Description:** The cost plan assumes Google AI student credits cover Gemini runtime inference for all five agents across 12 weeks. Coverage and expiry haven't been confirmed.
 **Mitigation:** Confirm in Sprint 1 — this is a named open item, not an assumption to defer. `packages/llm/` keeps every agent provider-agnostic, so a swap to another provider is a config change if credits fall short.
@@ -61,6 +64,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Paid spend this sprint, computed from the eval result files in `evals/results/`: $0.0370 at list prices, from the two `gemini-3.7-flash` routing runs on the paid key (seed_v1 on 2026-09-26, $0.0201; routing_v1 on 2026-09-30, $0.0169). Every other run used the free key. This is a list-price estimate, not billing data, and it covers only calls recorded in the eval result files. No cap was hit and no budget alert fired. Status stays Mitigating.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. No paid model call was made in Sprint 4: the deploy window, the interpretation gate, the end-to-end runs and the loop checks used the free key. GCP billing for 2026-10-01 to 10-09 was $0.29 gross and $0.08 net (owner, Billing), covering the deploy window and storage. The Sprint 4 item that prices a full routing eval run is done: about $0.30 for 150 end-to-end requests at paid Flash-Lite list prices, with the Pro-for-QA test's ~$20-30 as a ceiling (architecture §9; official pricing page read 2026-10-10). Status stays Mitigating.
+
 ### R-03 — Cloud Run build/deploy decoupling
 **Description:** A prior academic project hit successful Cloud Builds that didn't produce active Cloud Run revisions — a decoupled build/deploy pipeline. Same deployment target, same failure mode plausible.
 **Mitigation:** Wire an explicit Cloud Build trigger → deploy step rather than an image push alone; verify revision promotion immediately on the first Sprint 5 deploy rather than waiting until later to check.
@@ -73,6 +78,8 @@
 **Update 2026-10-05 (ADR-078):** The slice deploy is pulled forward to 2026-10-12 to 10-14, with the stop rule at the end of 10-14. The 2026-11-02 to 11-04 dates above are superseded; the post-deploy check and the consequence of the stop rule are unchanged. Status stays Open.
 
 **Update 2026-10-08 (deploy window, ADR-084):** **Not realised.** The pipeline built, deployed and verified its own revision on day one: build 5a181fa1 (commit `1a3f1e3`) produced `ops-orchestrator-00004-c6f` and `ops-reporting-00004-5kz`, each at 100% traffic, and its `verify.py` step passed every check. The failure mode this risk names, a successful build with no active revision, did not occur. Two nearby problems did: a merge to `main` while the database was stopped produced a revision that failed its readiness probe (no traffic moved, L-65), and the pipeline deploys before it verifies, so a revision that fails verification keeps serving (L-64). Status: Open to Monitoring; it closes after the Sprint 5 deploy of all services.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** Not realised in the reporting-slice deploy (2026-10-08; see that update). Monitoring until the Sprint 5 deploy of every service, which re-runs the revision check; the trigger is disabled between windows (ADR-083). Status stays Monitoring.
 
 ### R-04 — Sentiment task has weak natural verifiability
 **Description:** Unlike reporting (deterministic) or forecasting (standard backtest metrics), sentiment has no natural ground truth. A QA check that just re-runs the same model is circular and proves nothing.
@@ -87,6 +94,8 @@
 
 **Update 2026-10-10 (ADR-091, fault injection):** The sentiment path was measured against injected faults. Twelve assistant-drafted sentiment faults were caught 76 of 76 (counts, shares, flags, trend, quotes, coverage, text), and the owner's sarcasm fault (rating contradictions at 20-33% of the covered set) was caught 20 of 20 by the rating cross-check. The cross-check is the only independent signal on the label itself, and its sensitivity is now known: against the pre-registered rule it caught 0 of 10 at 0.5% and 1% contradictions, 1 of 10 at 2%, 8 of 10 at 4% and 10 of 10 at 8% (answers of 122 to 1,055 comments), agreeing with the rule in all 50 cases. So a modest shift in sentiment that leaves ratings roughly aligned is not caught, by construction (L-24, ADR-087). The catalogue is not blind (L-85). Status stays Mitigating.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Confirmed. The 2026-10-10 update above (ADR-091: sentiment faults caught 76 of 76, the rating rule's sensitivity measured and matching its pre-registration, the owner's sarcasm fault caught 20 of 20) stands, and ADR-092 changed nothing in it. The weakness the register named is still there: a shift the ratings do not show is not caught, by construction (L-24). Status stays Mitigating.
+
 ### R-05 — QA retry loop cost or latency runaway
 **Description:** Multi-agent systems with a verify-and-revise loop can fan out token usage and wall-clock time quickly if unbounded.
 **Mitigation:** Bounded at 2 retries with escalation on final failure (ADR-022); per-run cost caps and model tiering already specified in the budget plan.
@@ -98,6 +107,8 @@
 **Update 2026-09-30 (Sprint 2 boundary review):** Reviewed, no change.
 
 **Update 2026-10-10 (ADR-091, loop demonstration):** A figures failure injected through a test-only proxy ended the request at the first verdict: one reporting task, no retry, the degraded result at list price $0.000948 (routing and parse; the interpretation call is skipped on a figures failure). The same question verified cost $0.001604 against the $0.02 cap. The interpretation retry, the path that multiplies calls, still cannot run because the check is advisory (L-74), so the loop's worst case is not exercised by live traffic. Status stays Mitigating; the trigger is when `QA_INTERP_MODE=enforce` is ever turned on.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** Confirmed. The 2026-10-10 update above stands. The interpretation re-ask, the path that multiplies calls, is built and tested but cannot run live while the check is advisory (L-74), so the worst case is still untested on real traffic; the trigger is the day `QA_INTERP_MODE=enforce` is turned on. Status stays Mitigating.
 
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
@@ -111,6 +122,8 @@
 **Update 2026-09-26 (checkpoint 2):** Met on 2026-09-26, ahead of 2026-10-07. An LLM-routed, LLM-parsed question is answered end to end in docker-compose: all six checkpoint e2e assertions passed (routing to reporting, "last month" parsed to July 2026 per ADR-050, figures equal to independent SQL as `app_qa`, the trace id in all three services, the out-of-scope decline, and the sentiment "not available yet" answer). The sentiment assertion passed on a rerun after a provider 503 (R-15). The first run had failed on a configuration error, not on A2A: `gemini-3.7-flash` rejected thinking level `minimal` (ADR-049). Status stays Open until the Sprint 2 retro, which reviews this risk explicitly.
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Did not materialise. Status: Open → Closed. Evidence: both checkpoints were met early (the skeleton hop 2026-09-25 against 10-02; the LLM-classified question 2026-09-26 against 10-07), and SDK friction was low: protobuf float coercion of A2A data parts, the `message/send` → `SendMessage` rename, and the MCP 2.x API changes. The SDK fallback was not needed. Hours per layer were planned but not logged, so there is no time-per-layer figure behind "low"; the evidence is the checkpoint dates. Reopen trigger: wiring A2A into the sentiment or forecast agent takes more than one day of plumbing.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. The QA agent, the verification loop and the fault-injection proxy were all built over A2A in five days with no protocol friction recorded. Stays Closed; the reopen trigger has not fired.
 
 ### R-07 — Synthetic generator produces a degenerate distribution
 **Description:** Random or careless generation could produce a sentiment mix that's not realistic, a forecast signal that isn't recoverable, or an incident rate that doesn't resemble a real business — quietly invalidating every downstream metric.
@@ -127,6 +140,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Only `locations` changed, gaining the `region` column (ADR-051). The dataset hash changed, and `locations` with `region` removed hashes identically before and after, as recorded in ADR-051. `validate.py` passed 67/67 after the change (the previous 66 plus the region check). The feedback corpus is unaffected. Status stays Monitoring.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed, no change. Sprint 4 queried the same 20,230-request dataset throughout, and on Cloud SQL the 67 validation checks ran unchanged with the same corpus hash, seed and row counts (2026-10-08). Status stays Monitoring.
+
 ### R-08 — Schema or data drifts toward resembling employer's real system
 **Description:** The original draft schema showed signs of being modeled too closely on a real production system. The underlying pull toward "use what I already know" doesn't disappear just because the initial fields were corrected.
 **Mitigation:** ADR-012 and ADR-013 establish the discipline; any new field added later should be sourced from general field-service domain principles, checked against this standard before being added, not copied from familiarity.
@@ -135,6 +150,8 @@
 **Update 2026-09-25 (Sprint 1 boundary review):** Sprint 1's new fields (`sentiment_labels.hard_case_type`, `sentiment_labels.corpus_id`, the `world` and `feedback` `param_group` values) are generator internals, not modelled on any real system. Check passes; status stays Mitigating.
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Sprint 2's new field, `locations.region` (ADR-051), is a generic geography: the customer site's region, derived from its state by one committed mapping. Check passes; status stays Mitigating.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed, no change. The fault catalogue's scenarios (an East region, a firmware rollout) were translated to the synthetic schema and name nothing from the employer's system. Status stays Mitigating.
 
 ### R-09 — Course rubric diverges from the assumed deliverable plan
 **Description:** The academic deliverable sequencing in `architecture.md` §10 is a reasonable guess at typical capstone requirements, not a confirmed match to the actual rubric.
@@ -153,6 +170,8 @@
 
 **Update 2026-09-30 (rubric checks):** Eric confirms he checked the rubrics for `03` and `04` before drafting them, so both rubric checks are done. The remaining exposure is the rubrics for `05` and `06`, checked when their drafting starts. Status stays Monitoring.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. The course's dates are unchanged. ADR-093 moves `05` (due 11-01) into Sprint 6's first week and `06` (due 11-08) onto its last day, and the weekly reports still run through 11-22. `03`'s calendar now differs from the plan twice (ADR-082, ADR-093); the divergence is on the list for the evaluation report. Status stays Monitoring.
+
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
 **Mitigation:** Treat any missed sprint goal as an immediate scope conversation at that sprint's retro, not something to "catch up on later." Scope expansion is only considered if genuinely ahead, per the working agreement.
@@ -168,6 +187,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Likelihood High → Medium. Sprint 2's engineering finished 2026-09-30, eleven days before the sprint's end, and two Sprint 3 items moved earlier: `04` is drafted and the labelled routing set is done. Sprint 3 still carries two agents (sentiment and forecast, with MCP servers #2 and #3), the golden set and `05`, plus the two items deferred from Sprint 2. Status stays Open.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** The buffer has grown, not eroded. Sprint 4's goal was met on day 5 of a planned 20 days (2026-10-06 to 10-25), ADR-093 pulls Sprints 5 and 6 forward, and the buffer goes from 2026-11-23 to 12-05 (13 days) to 2026-11-09 to 12-05 (27 days). The Sprint 5 workload is unchanged and heavy (the UI, the full deploy, the held-out routing eval, owner writing time), so the review trigger stays at every retro. Status: Open to Monitoring.
+
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).
 **Mitigation:** Provider-agnostic LLM interface (ADR-006) keeps a provider swap mechanically cheap; GCP budget alerts at $50/$80 serve as an early warning regardless of root cause.
@@ -179,6 +200,8 @@
 
 **Update 2026-09-30 (free-tier limits):** The Gemini free-tier limits in use (ADR-029: Flash-Lite 15 RPM / 250K TPM / 500 RPD; Flash models 5 RPM / 20 RPD; no free Pro quota) were last verified in AI Studio on 2026-09-22. Re-verify them before any deliverable that states them.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. The official pricing page was read on 2026-10-10: paid Flash-Lite $0.30 input and $2.50 output per 1M tokens, which is what the client's logged costs use, so no change. The free-tier limits (ADR-029) were not re-verified in AI Studio this sprint and must be before any deliverable states them. No budget alert has fired. Status stays Open.
+
 ### R-12 — MCP/A2A ecosystem churn breaks a dependency
 **Description:** Both protocols are new and moving fast — MCP had its largest spec revision to date in July 2026. An SDK update mid-project could introduce breaking changes.
 **Mitigation:** Pin SDK versions at project start; don't chase spec updates mid-build. The project targets the 2026-07-28 MCP spec and A2A v1.0 as documented in `architecture.md` §3 — treat that as fixed unless a specific reason forces an upgrade.
@@ -189,6 +212,8 @@
 **Update 2026-09-25 (walking skeleton):** Pinned exactly: `mcp==2.2.0` and `a2a-sdk==1.1.5`. Both spec targets are confirmed from the installed packages and the release notes: the MCP SDK's `LATEST_PROTOCOL_VERSION` is `2026-07-28`, observed as the negotiated version, and the A2A SDK's `PROTOCOL_VERSION_CURRENT` is `1.0`. Evidence and the A2A subset used are in ADR-047. One naming change from the planning docs: v1.0's JSON-RPC method is `SendMessage`, where `message/send` is the v0.3 name. Every other dependency is pinned by `uv.lock`, which CI and the service images install from (ADR-047). Status: Open → Mitigating.
 
 **Update 2026-09-30 (Sprint 2 boundary review):** Both SDKs stay pinned at those versions, and the lock file covers everything else. Status stays Mitigating.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. `mcp==2.2.0` and `a2a-sdk==1.1.5` are unchanged; the SDK's DEBUG logging of a bearer token (L-63) was handled in our code, not by an upgrade. Status stays Mitigating.
 
 ### R-13 — Generated comments don't match their requested sentiment
 **Description:** `feedback_text` is LLM-generated to a requested label (ADR-030), and `sentiment_labels.true_sentiment` records that request, not a verified reading of the text. Comments that drift from their label would make the sentiment model's accuracy look worse than it is — the model gets marked wrong for reading the text correctly. Hard cases can fail the other way: sarcasm an LLM writes on request is often obvious, so "hard" comments may be easier than labeled and inflate hard-case accuracy.
@@ -205,6 +230,8 @@
 
 **Update 2026-09-30 (Sprint 2 boundary review):** No change. The trigger is the sentiment agent in Sprint 3.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** Reviewed, no change. Fault injection made no claim about the labels: its sarcasm fault (owner fault 3) acts on stored predictions and ratings, not on the generated text. Status stays Mitigating.
+
 ### R-14 — Environment parity: verified only against local Docker Postgres
 *Added 2026-09-25.*
 **Description:** Every migration, grant and load so far has run only against local Docker Postgres, connected as a true superuser. Cloud SQL provides `cloudsqlsuperuser`, not SUPERUSER, so the roles migration (role creation, grants, the `PUBLIC` revokes of ADR-025) is unverified on the deployment target and may fail or behave differently there.
@@ -217,6 +244,8 @@
 **Update 2026-10-05 (ADR-078):** The deploy that triggers the review moves to 2026-10-12 to 10-14 (was 2026-11-02 to 11-04). Status stays Open.
 
 **Update 2026-10-08 (deploy window, ADR-084):** **Not realised.** On Cloud SQL (PostgreSQL 16, Enterprise, `cloudsqlsuperuser`, not a true superuser), all nine migrations ran unchanged on the first attempt (27 s), including the roles migration, the `PUBLIC` revokes and the column grants. `alembic check` was clean, the loader and the 67 validation checks ran unchanged with the same corpus hash, seed and row counts as local, and the grants integration suite passed (882 passed, 1 skipped, the skip being `test_golden_oracles`, which needs stored predictions). The only difference was an operational one: the micro tier's `max_connections=25` default, which the test-suite pool leak exhausted (L-66); raised to 60. Status: Open to Monitoring; the full migration in Sprint 5 (all services, `sentiment_predictions`) remains the last unverified step.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** Not realised in the reporting-slice deploy (2026-10-08; see that update). Monitoring until the Sprint 5 deploy of every service, the first time the sentiment predictions backfill and the volume artifact run on Cloud SQL. Status stays Monitoring.
 
 ### R-15 — Provider capacity: free-tier 503s on the orchestrator's model
 *Added 2026-09-26.*
@@ -234,12 +263,16 @@
 
 **Update 2026-10-08 (deploy window):** **Not hit.** The window made 7 live free-tier calls, all through `verify.py` check 6, and none returned a 503 or a rate-limit error. Status stays Mitigating; one window is too little to call it.
 
+**Update 2026-10-10 (Sprint 4 boundary review):** No 503 is recorded in the sprint log or its notes for Sprint 4's live calls (the deploy window, the gate and end-to-end runs and the two loop checks, all on the free key). One sprint is too little to call it. Status stays Mitigating.
+
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
 **Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.
 **Likelihood / Impact:** High / Medium. **Status:** Open.
 **Mitigation:** A held-out routing set never used to revise a prompt (Sprint 5); three runs per evaluation with the range and the flipping questions reported (ADR-054); limitations logged in `docs/evaluation-report.md`.
 **Review trigger:** The Sprint 5 evaluation runs.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** New evidence, and it points the same way. The interpretation gate was judged on assistant-drafted pairs (L-69, L-74): both prompts failed, and the 84 pairs are now used up as a confirmation set. The fault catalogue is not blind (L-85), and consistent misparses were caught 0 of 71, so the QA numbers are upper bounds on what an independent reviewer would find. Measurement 2 (223 of 223) is the weaker of the two measurements: the fixes were designed from measurement 1's misses (ADR-092). Mitigation: the owner-written sets in Sprint 5 (held-out routing, a fresh FR-03 set, a fresh interpretation set, an option for owner-written faults). Status stays Open, likelihood High.
 
 ### R-17 — Local environment memory exhaustion (WSL/Docker)
 *Added 2026-10-05, from the owner's Sprint 3 final retro review.*
@@ -255,6 +288,19 @@ The same steps are in the README's "Local environment recovery". Check the memor
 **Review trigger:** The Sprint 4 close.
 **Update 2026-10-08:** 2026-10-05, owner-verified: `.wslconfig` has `memory=6GB` and `autoMemoryReclaim=dropcache`; Docker disk image at `D:\DockerData\DockerDesktopWSL`. The first two mitigations above are now verified rather than unverified, and the memory cap's value is recorded. The stop-the-stack and restart-Windows steps remain owner practice. Status stays Open.
 **Update 2026-10-08 (incident):** The R-17 failure occurred during the Sprint 4 phase 1 work. A full-stack `docker compose up -d --build` left stale containers in `Dead` and `Created` states (and `removal already in progress` errors), and the compose build ran past 10 minutes. They had to be force-removed before a second `up` brought all eight containers healthy. No data was lost (Postgres stayed up). This is the first recorded dated incident; earlier ones have no dates (see the Description). Status stays Open; the Sprint 4 close review stands.
+
+**Update 2026-10-10 (Sprint 4 boundary review):** **The review trigger was this close.** One dated incident is recorded (2026-10-08, a full-stack `docker compose up -d --build` that left stale `Dead` and `Created` containers and ran past 10 minutes), and the first two mitigations are verified (`memory=6GB`, `autoMemoryReclaim=dropcache`, Docker data on `D:`). Observed on 2026-10-10, during the fault-injection loop demonstration: a full-stack `docker compose up -d --build` (the Postgres container showed `Dead`, others `Created`) took about 10 minutes and then came up healthy with no intervention and no data loss. **Recorded as a probable recurrence** of the 2026-10-08 incident: the same symptom, memory not measured. **Owner (2026-10-10):** no memory incidents on 2026-10-08 to 10-10 beyond the 10-08 incident. Status stays Open, likelihood High. **Mitigation added:** on recurrence, capture `docker stats` and the host's memory before recovering, so the next incident is measured, not inferred.
+
+### R-18 — Misinterpreted questions pass as verified
+*Added 2026-10-10 (Sprint 4 boundary review).*
+**Description:** QA recomputes the figures for the request the specialist *parsed*; whether the parse matches the question is the interpretation check's job, and that check is advisory (L-74). A wrong month, region, metric, slice or label therefore returns an answer whose figures are right for the wrong question, marked `verified`. Users and the evaluation can read `verified` as "answered correctly".
+**Likelihood / Impact:** Medium / High. **Status:** Open. It is a risk, not only a limitation, because the harm is a confident wrong answer to an operations leader, and the label that is meant to prevent that is the one carrying it.
+**Evidence:** consistent misparses were caught 0 of 71 in the fault injection (reporting 0/30, forecast 0/19, sentiment 0/22; the owner's trailing-quarter case 0/10), measurement 1 and measurement 2 alike (ADR-091, ADR-092). The interpretation gate failed twice on assistant-drafted pairs and ships advisory (L-74). The catalogue's misparses are blunt and assistant-drafted, so the real rate is probably worse, not better (L-85).
+**Mitigation:**
+- Every answer states its range and filters, so the user can check what was asked (ADR-050, ADR-086); `verified` is documented as "the figures are correct for the request as parsed" (L-74, FR-09 to FR-11).
+- An interpretation-gate reattempt on an owner-written set in Sprint 5, with a new pre-registered gate.
+- For forecasts, an answer-time check that served numbers equal the model's own prediction (L-83(a)) narrows what a wrong parse can hide; it does not catch the parse itself.
+**Review trigger:** The Sprint 5 interpretation-gate reattempt; every sprint retro.
 
 ---
 
