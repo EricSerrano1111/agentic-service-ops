@@ -6,7 +6,7 @@ Local only, never in CI. Run with the stack up, the dataset loaded and the store
 place:
 
     $env:RUN_E2E=1; $env:RUN_LIVE_LLM=1
-    .venv\Scripts\python -m pytest tests/e2e/test_qa_sentiment_e2e.py -v -rs -s
+    .venv\\Scripts\\python -m pytest tests/e2e/test_qa_sentiment_e2e.py -v -rs -s
 
 Checks: a trend question (FR-07's own example), a question asking for example comments, and an
 account breakdown (a decline) each come back `qa_status: verified`, QA's log showing a pass with
