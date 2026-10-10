@@ -824,6 +824,7 @@ now written; they record the planning decisions above.*
 
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
+- [ ] Option: when a sentiment question asks for example comments without a label, quote one comment per leading label, or the trend's label for a trend question, instead of the top three by confidence (which skew to the majority label, usually positive, L-80); change §6 rule 7 and QA's check together. *Added 2026-10-09.*
 - [ ] Option: store the unrounded confidence in `sentiment_predictions` (a new column or a wider type, with its migration and a backfill), so the flag check can be exact instead of banded at 0.00005 (L-77). *Added 2026-10-09.*
 - [ ] A log-based alert on `outcome=degraded`: a degraded answer is HTTP 200, so Cloud Run's error metrics never count it (ADR-088, ADR-089).
 - [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
