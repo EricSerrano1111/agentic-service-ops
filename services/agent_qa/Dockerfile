@@ -26,6 +26,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY --from=build /app/.venv /app/.venv
 
 COPY ml/forecast/artifacts/volume_v2.manifest.json /app/artifacts/volume_v2.manifest.json
+# The sentiment model's manifest: its hash is the predictions' model_version, its threshold τ.
+# A JSON file only: no weights and no model code (ADR-090).
+COPY ml/sentiment/artifacts/bert_v1.manifest.json /app/artifacts/bert_v1.manifest.json
 
 RUN useradd --system --uid 10001 app
 USER app

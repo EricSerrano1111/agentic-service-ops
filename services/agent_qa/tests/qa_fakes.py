@@ -14,6 +14,7 @@ from llm import LLMResult
 
 REPO = Path(__file__).resolve().parents[3]
 MANIFEST_PATH = REPO / "ml" / "forecast" / "artifacts" / "volume_v2.manifest.json"
+SENTIMENT_MANIFEST_PATH = REPO / "ml" / "sentiment" / "artifacts" / "bert_v1.manifest.json"
 AS_OF = dt.date(2026, 8, 30)
 SETTINGS = Settings(
     db_host="x",
@@ -41,6 +42,12 @@ ACCOUNTS = [
 
 def manifest() -> Manifest:
     return Manifest.load(MANIFEST_PATH)
+
+
+def sentiment_manifest():
+    from agent_qa.sentiment import SentimentManifest
+
+    return SentimentManifest.load(SENTIMENT_MANIFEST_PATH)
 
 
 class FakeSource:
@@ -86,6 +93,24 @@ class FakeSource:
 
     def weekly_counts(self, slice_, first_week, last_week):
         return self._get("weekly_counts", slice_, first_week, last_week)
+
+    def sentiment_coverage(self, version, lo, hi, region):
+        return self._get("sentiment_coverage", version, lo, hi, region)
+
+    def sentiment_buckets(self, version, lo, hi, region, bucket):
+        return self._get("sentiment_buckets", version, lo, hi, region, bucket)
+
+    def sentiment_inconsistent_flags(self, version, lo, hi, region, tau):
+        return self._get("sentiment_inconsistent_flags", version, lo, hi, region, tau)
+
+    def sentiment_quotes(self, version, ids):
+        return self._get("sentiment_quotes", version, ids)
+
+    def sentiment_top_quotes(self, version, lo, hi, region, label, limit):
+        return self._get("sentiment_top_quotes", version, lo, hi, region, label, limit)
+
+    def sentiment_rating_counts(self, version, lo, hi, region):
+        return self._get("sentiment_rating_counts", version, lo, hi, region)
 
 
 def row(label, numerator, denominator=0, group_id=None, key=None):

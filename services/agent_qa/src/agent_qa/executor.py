@@ -175,6 +175,10 @@ class QAExecutor(AgentExecutor):
                     "verdict": verdict.verdict,
                     "failed_checks": [c.code for c in verdict.failed],
                     "advisory_failed": [c.code for c in verdict.advisories if not c.passed],
+                    # The rating cross-check line (n, x, p0, result): QA's own counts, no text.
+                    "rating_check": next(
+                        (c.detail for c in verdict.checks if c.code == "rating_contradiction"), None
+                    ),
                 },
             )
 

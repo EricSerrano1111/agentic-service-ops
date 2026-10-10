@@ -19,11 +19,13 @@ from schemas import (
     ForecastRequest,
     ReportingAnswer,
     ReportingRequest,
+    SentimentAnswer,
+    SentimentRequest,
     Verdict,
     VerificationRequest,
 )
 
-from . import forecast, reporting
+from . import forecast, reporting, sentiment
 from .config import Settings
 from .db import Source
 from .interpretation import (
@@ -32,6 +34,7 @@ from .interpretation import (
     guidance_for,
     reading_forecast,
     reading_reporting,
+    reading_sentiment,
 )
 
 log = logging.getLogger("agent_qa")
@@ -50,12 +53,14 @@ class Verifier:
         src: Source,
         settings: Settings,
         manifest: forecast.Manifest,
+        sentiment_manifest: sentiment.SentimentManifest,
         interpreter: Interpreter,
     ) -> None:
         self.settings = settings
         self.interpreter = interpreter
         self.reporting = reporting.Checker(src, settings)
         self.forecast = forecast.Checker(src, settings, manifest)
+        self.sentiment = sentiment.Checker(src, settings, sentiment_manifest)
 
     async def verify(self, req: VerificationRequest, *, trace_id: str | None) -> Verdict:
         if req.kind == "answer":
@@ -137,14 +142,22 @@ class Verifier:
     # ------------------------------------------------------------------ parsing the input
 
     def _parse_answer(self, req: VerificationRequest):
-        model = ReportingAnswer if req.domain == "reporting" else ForecastAnswer
+        model = {
+            "reporting": ReportingAnswer,
+            "forecast": ForecastAnswer,
+            "sentiment": SentimentAnswer,
+        }[req.domain]
         try:
             return model.model_validate(req.answer)
         except ValidationError:
             return None
 
     def _parse_request(self, req: VerificationRequest):
-        model = ReportingRequest if req.domain == "reporting" else ForecastRequest
+        model = {
+            "reporting": ReportingRequest,
+            "forecast": ForecastRequest,
+            "sentiment": SentimentRequest,
+        }[req.domain]
         try:
             return model.model_validate(req.parsed_request or {})
         except ValidationError:
@@ -155,6 +168,8 @@ class Verifier:
     def _answer_checks(self, req: VerificationRequest, parsed) -> list[CheckResult]:
         if req.domain == "reporting":
             return self.reporting.check_answer(parsed, req.text)
+        if req.domain == "sentiment":
+            return self.sentiment.check_answer(parsed, req.text)
         return self.forecast.check_answer(parsed, req.text)
 
     def _decline_checks(self, req: VerificationRequest, request) -> list[CheckResult]:
@@ -169,6 +184,8 @@ class Verifier:
                     detail="not a decline code QA knows",
                 )
             ]
+        if req.domain == "sentiment":
+            return self.sentiment.check_decline(request, req.text)
         return self.forecast.check_decline(request, req.text)
 
     def _reading_of(self, req: VerificationRequest) -> str:
@@ -179,8 +196,27 @@ class Verifier:
                 return reading_reporting(
                     parsed.request, parsed.start, parsed.end, parsed.range_assumed, as_of
                 )
+            if req.domain == "sentiment":
+                return reading_sentiment(
+                    parsed.request,
+                    parsed.start,
+                    parsed.end,
+                    parsed.summary.bucket,
+                    parsed.range_assumed,
+                    as_of,
+                )
             return reading_forecast(parsed.request, as_of)
         request = self._parse_request(req)
+        if req.domain == "sentiment":
+            named = request.start is not None
+            return reading_sentiment(
+                request,
+                request.start if named else None,
+                request.end if named else None,
+                request.bucket,
+                False,
+                as_of,
+            )
         if req.domain == "reporting":
             named = request.start is not None
             return reading_reporting(

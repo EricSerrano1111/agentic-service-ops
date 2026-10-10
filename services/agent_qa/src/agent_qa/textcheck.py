@@ -33,7 +33,9 @@ def strip_names(text: str, names: Iterable[str]) -> str:
 
 def numbers_in(text: str, names: Iterable[str] = ()) -> list[str]:
     """The numbers the text states, commas removed ("1,234" -> "1234")."""
-    text = _ADR.sub(" ", _DATE.sub(" ", strip_names(text, names)))
+    # Names last: a bucket name such as 2026-03 sits inside the date 2026-03-01 and must not be
+    # taken out of it first.
+    text = strip_names(_ADR.sub(" ", _DATE.sub(" ", text)), names)
     found = []
     for token in _NUMBER.findall(text):
         found.append(token.rstrip(",").replace(",", ""))

@@ -71,9 +71,13 @@ agents are built:
    prompt is treated as a prompt-injection surface (as "Still to write" already notes).
    **As built (2026-10-09, ADR-089):** QA's interpretation call sees the user's question and
    the parsed request as structured fields, never the answer text, a figure or a quoted
-   comment, and only reporting and forecast answers are checked. The sentiment check, with
-   each quote replaced by its ID, is still to come; until then a sentiment answer is
-   returned `not_checked` and says so, so this guarantee holds as stated.
+   comment. **Sentiment (2026-10-09, ADR-090):** QA's interpretation call for a sentiment
+   answer sees the route, the as-of date and the parsed request, and nothing else: no answer
+   text, no figure and no comment. QA reads `feedback_text` only to compare a quote with the
+   original, inside its deterministic checks. So this guarantee holds as stated: no comment
+   reaches a model. Evidence: `test_no_comment_text_and_no_figure_reaches_the_language_model_or_the_logs`
+   (a canary comment is absent from the model's recorded input and from every log line) and
+   `test_a_comments_text_is_selected_in_one_place_only_and_never_leaves_the_checks`.
 10. **`mcp_volume` never returns forecast numbers for a slice-band the manifest marks
     unserved, and the forecast path carries no customer text.** The server reads the
     `volume_v2` manifest's ADR-071 serving table and puts a week's point and ranges in
@@ -210,14 +214,14 @@ on them (guarantee 2).
 | Control | Status | Evidence |
 |---|---|---|
 | Customer comments are untrusted and are never sent to a language model. They reach only the fine-tuned classifier, whose output is one of four labels, and answers are rendered from templates (guarantee 9; ADR-046, ADR-068). | Built | `test_examples_are_requested_with_limit_3_and_never_reach_the_llm`; `test_examples_are_quoted_verbatim_with_label_and_confidence`; compose gives `mcp_feedback` no model key (`test_mcp_feedback_holds_no_model_key_or_setting`). |
-| QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Planned, M2 (the sentiment check) | Guarantee 9 above. For reporting and forecast the call sees only the question and the parsed request (`test_a_reading_never_contains_a_figure_only_the_parsed_request`, `test_the_model_sees_the_question_and_the_reading_and_no_figures`). |
+| QA's interpretation call receives the answer with each quote replaced by its ID, not the quotes; quotes are checked mechanically against the database. | Built for all three specialists (ADR-090): the call gets no answer text at all, only the parsed request; quotes are checked against the database | Guarantee 9 above. For reporting and forecast the call sees only the question and the parsed request (`test_a_reading_never_contains_a_figure_only_the_parsed_request`, `test_the_model_sees_the_question_and_the_reading_and_no_figures`). |
 | QA's interpretation call is contained: no tool, closed output schema, deterministic checks first, a note capped at 300 characters that reaches a specialist only as a labelled, untrusted, 500-character-capped reviewer note, never logged. | Built (2026-10-09, ADR-089) | `test_the_model_output_schema_is_closed`, `test_a_question_that_tries_to_rewrite_the_rules_changes_nothing_deterministic`, `test_the_models_free_text_is_confined_to_the_note` (`test_qa_service.py`); `tests/unit/test_reviewer_note.py`; `test_a_reviewer_note_is_appended_to_the_parse_input_under_its_label`, `test_the_note_is_capped_at_500_characters_and_stripped_of_control_characters`, `test_the_note_is_never_logged` (reporting), the forecast equivalents; `test_the_reviewer_note_is_capped_before_it_is_sent`, `test_loop_decisions_are_logged_without_the_note_or_the_question` (orchestrator). |
 | The question is rendered into the prompt as data: one pass, values inserted literally, so template-looking text can't raise or be rewritten. | Built (2026-10-04) | `tests/unit/test_prompt_rendering.py`; the per-service `test_*template_syntax*` tests named below. |
 | The question is delimited in every routing and parsing prompt and declared data, not instructions; it is limited to 2,000 characters. | Built | All ten prompt files (`route_v1` to `route_v5`, `parse_v1` to `parse_v3`, and the sentiment and forecast `parse_v1`) carry the line; `AskRequest` (`max_length=2000`). No test asserts the prompt line. |
 | Model output is structured and validated: the call sets the response schema from the typed model, the reply is parsed against it, and an invalid reply fails with no repair and no default route or range. | Built | `packages/llm` `transport.py` and `client.py`; `test_invalid_parse_output_fails_and_never_guesses_a_range`, `test_unclear_question_asks_to_rephrase`. |
 | No tools are exposed to a model, and automatic function calling is disabled. The agent's code picks the tool from the parsed metric (ADR-046). | Built | `packages/llm` `transport.py` (`automatic_function_calling` disabled); `test_each_metric_calls_its_own_tool`. |
 | Model output is never executed: parsed values only select among fixed code paths. | Built | By search, no `eval`, `exec` or subprocess call in `services/` or `packages/`. |
-| QA checks that the parsed request matches the question. | **Built as advisory only** for reporting and forecast (2026-10-09, ADR-089): the check runs and is logged and reported on the verdict, but it failed its gate twice (`evals/qa_interp/`, `evals/results/qa_interp/`) and does not fail an answer (`QA_INTERP_MODE=advisory`, L-74). Sentiment is `not_checked` until M2. | `test_an_advisory_interpretation_failure_is_reported_but_never_fails_the_answer`, `test_in_advisory_mode_a_model_failure_does_not_withhold_the_verdict` (`test_qa_service.py`). So a wrong parse is still not blocked downstream. |
+| QA checks that the parsed request matches the question. | **Built as advisory only** for reporting, forecast and sentiment (2026-10-09, ADR-089, ADR-090): the check runs and is logged and reported on the verdict, but it failed its gate twice (`evals/qa_interp/`, `evals/results/qa_interp/`) and does not fail an answer (`QA_INTERP_MODE=advisory`, L-74). Sentiment gets the same call on the parsed request alone. | `test_an_advisory_interpretation_failure_is_reported_but_never_fails_the_answer`, `test_in_advisory_mode_a_model_failure_does_not_withhold_the_verdict` (`test_qa_service.py`). So a wrong parse is still not blocked downstream. |
 
 **What an injected question could still achieve.** A wrong route or wrong parameters: another
 specialist, another period, region, metric or technician, or a decline. The data returned stays

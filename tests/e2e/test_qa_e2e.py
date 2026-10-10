@@ -1,19 +1,19 @@
 """Phase 4b end-to-end checks (ADR-089): verified answers through the whole stack, then QA stopped.
 
-Calls Gemini through the running stack on the free key. The budget is 20 calls: each reporting
-or forecast question is one routing call, one parse call and one QA interpretation call (3),
-the sentiment question is a routing and a parse call (2), and the question asked with QA
-stopped is routing and parse (2): 13 expected, 20 allowed. Local only, never in CI. Run with
-the stack up and the dataset loaded:
+Calls Gemini through the running stack on the free key. The budget is 20 calls: each answered
+question is one routing call, one parse call and one QA interpretation call (3), and the
+question asked with QA stopped is routing and parse (2): 14 expected, 20 allowed. Local only,
+never in CI. Run with the stack up and the dataset loaded:
 
     $env:RUN_E2E=1; $env:RUN_LIVE_LLM=1
     .venv\\Scripts\\python -m pytest tests/e2e/test_qa_e2e.py -v -rs -s
 
-Checks, in order: a reporting question, a region-filtered reporting question and a forecast
-question each come back `qa_status: verified` with QA's own log saying every check passed for
-that trace; the sentiment question comes back `not_checked` with the visible "not verified"
-line; then with `agent_qa` stopped one question gets the degraded result with `qa_status:
-unavailable` and the unverified answer marked as such, never verified.
+Checks, in order: a reporting question, a region-filtered reporting question, a forecast
+question and a sentiment question each come back `qa_status: verified` with QA's own log saying
+every check passed for that trace (sentiment was `not_checked` under M1; see
+`test_qa_sentiment_e2e.py` for the sentiment checks in detail); then with `agent_qa` stopped
+one question gets the degraded result with `qa_status: unavailable` and the unverified answer
+marked as such, never verified.
 """
 
 from __future__ import annotations
@@ -88,13 +88,8 @@ def test_verified_answers_then_qa_stopped_gives_the_degraded_result():
     body = verified(FORECAST, "forecast")
     print(f"forecast: verified, {len(body['forecast']['weeks'])} weeks")
 
-    response = ask(SENTIMENT)
-    assert response.status_code == 200, response.text
-    body = response.json()
-    assert body["outcome"] == "answered" and body["qa_status"] == "not_checked"
-    assert body["answer"].rstrip().endswith("not yet checked by the verification agent.")
-    assert line_for("agent_qa", body["trace_id"], "task received") is None  # QA was not asked
-    print("sentiment: not_checked, with the not-verified line")
+    body = verified(SENTIMENT, "sentiment")
+    print("sentiment: verified (ADR-090)")
 
     compose("stop", "agent_qa")
     try:

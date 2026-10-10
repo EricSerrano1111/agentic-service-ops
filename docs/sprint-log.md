@@ -670,6 +670,10 @@ now written; they record the planning decisions above.*
 - *End to end (13 of 20 live calls): a reporting, a region-filtered and a forecast question came back `qa_status: verified`; sentiment came back `not_checked` with the not-verified line; with `agent_qa` stopped, one ask returned the degraded result with `qa_status: unavailable`. 207 live calls in all (budget 450).*
 - *For the owner: seven definition gaps QA hit while checking against §6 were listed in L-72. **Ruled 2026-10-09 and fixed:** all seven are rules in data dictionary §6, the incidents tools changed for the tie order and the name words, and QA enforces one reading of each (no tolerance left).*
 - *For the owner, `05-test-scenarios.md` (yours to edit, not edited here): scenarios that expect an HTTP error when an agent is down, or when the model is rate-limited or out of quota, now get the degraded result instead (HTTP 200, `outcome: degraded`, `escalate: true`, a warning naming the capability, and for routing `routing`). They need rewording to that result. A QA-checked answer carries `qa_status`; a sentiment answer says it is not verified.*
+*2026-10-09, phase 4c (this PR, `feat/qa-sentiment`): QA checks for sentiment answers (ADR-090), and `not_checked` no longer stands for "no check yet".*
+- *Rules first: data dictionary §6 "Sentiment answers" (`276d59a`, 19:48 CDT), then the code. QA's `sentiment.py` is written from it with no import of `mcp_feedback`, `agent_sentiment` or any model code; τ and the model version come from the committed manifest file.*
+- *Real data: 15 cases against the real feedback server plus a rolled-back partial-coverage case; the full-window rating cross-check is n = 4,715, x = 7 and passes. End to end: 12 of 12 live calls (a trend, a quotes question, an account decline and a reporting regression, all `verified`).*
+- *For the owner: L-77 and L-79 needed rulings. **Ruled and applied 2026-10-09** (see ADR-090's dated note): the flag check has a 0.00005 band, the compared bucket is named and checked, nothing-to-test must read no clear change, and quote selection is a written, enforced rule.*
 *Planned sequence update (2026-10-08): the deploy window is done. The reporting filters (L-62) start next, from about 2026-10-09; then QA; the fault-injection harness last.*
 *For `06` (due 2026-11-08), not written there: the window's failures are material for its production-support write-up: a create-body field the API rejects, a reserved path (`/healthz`) that hides the IAM boundary, identity-token minting in Cloud Build, IAM propagation delay (a new invoker binding took over a minute), and a revision failing its readiness probe while the database was stopped.*
 
@@ -680,17 +684,17 @@ now written; they record the planning decisions above.*
 - [x] Region and account filters on the reporting tools, with a `parse_v3` update and a parse eval re-run (L-62). Built before QA, so QA's recompute is written against the filtered tools.
   *2026-10-05: added. 05 TS-01-A, TS-02-C and TS-05-B depend on it.*
   *2026-10-08: done (ADR-086, PR `feat/reporting-filters`). `region` and `account_id` filters on the four incident tools, `find_account`, `parse_v4` (the agent's default) and the clarification reasons `account_not_found` and `account_ambiguous`. Evidence: 90 integration tests against raw SQL as `app_eval` (the filtered figure equals its group's row, every metric, every region, all 50 accounts, combinations); the parse gate passed on the first candidate (`parse_v3` 15/16 in each of 3 runs, `parse_v4` 15/16 on the old items and 12/12 on the new in each of 3 runs, both unsupported areas declined in all 3), 134 of 220 calls; one end-to-end filtered question matched SQL. L-62 resolved; L-67 to L-69 recorded.*
-- [ ] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
+- [x] QA agent (ADR-055, ADR-056) — own-SQL re-check (reporting); input history, arithmetic and a per-slice lookup of the stored backtest error, not a per-request backtest run (forecast); star-rating cross-check, comment-set and confidence-flag checks (sentiment); one LLM call checks interpretation
   - [x] Reporting: every figure recomputed with QA's own SQL, declines checked, text checked.
     *2026-10-09: done (ADR-089). `services/agent_qa`, `tests/integration/test_qa_agrees_with_tools.py` (100 cases against the loaded database), `tests/unit/test_qa_independence.py`; one overall and one region-filtered question verified end to end.*
   - [x] Forecast: weeks, arithmetic, the manifest's serving table and shown errors, the year-end caveat, history, text.
     *2026-10-09: done (ADR-089). `services/agent_qa/tests/test_qa_forecast_checks.py`; one forecast question verified end to end.*
-  - [ ] Sentiment: rating cross-check, comment-set and confidence-flag checks (phase M2).
-    *2026-10-09: not started. Sentiment answers return `not_checked` with a visible not-verified line (L-73).*
+  - [x] Sentiment: rating cross-check, comment-set and confidence-flag checks (phase M2).
+    *2026-10-09: done (ADR-090). Coverage, counts, shares, buckets, flags, the trend, quotes, declines and text recomputed by QA from the written §6 rules; the rating cross-check at ADR-087's rule on every sentiment verdict; sentiment answers are `verified` and the temporary not-verified line is gone (L-73 resolved). 15 real-data cases equal the real feedback server; one trend, one quotes question, one decline and one reporting regression ran end to end (12 live calls).*
   - [x] The interpretation call and its gate.
     *2026-10-09: built and measured; the gate failed twice and the check ships advisory (L-74, ADR-089).*
-  - [ ] Sentiment contradiction thresholds set under a stop rule (ADR-055).
-    *2026-10-09: the rule is fixed in ADR-087 and the baseline measured; the check itself is phase M2.*
+  - [x] Sentiment contradiction thresholds set under a stop rule (ADR-055).
+    *2026-10-09: the rule was fixed in ADR-087 before the baseline was measured (n = 4,715, x = 7, p0 = 0.01) and is applied unchanged by QA (ADR-090); the full-window check passes.*
 - [x] Bounded retry loop (max 2), escalation path on final failure — owned by the orchestrator (ADR-055)
   *2026-10-09: done (ADR-089). Interpretation failures re-ask the specialist with QA's note, up to 2 times; a figures failure is never retried; the deadline and cost cap hold across it. 41 loop tests. With the interpretation check advisory (L-74) no running request is re-asked yet.*
 - [x] Circuit breaker, one per outbound dependency (the Gemini provider interface; each A2A client), built with the per-request deadline (ADR-077; NFR-4)
@@ -774,8 +778,9 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [ ] Run the real-data QA suites on Cloud SQL after the sentiment predictions backfill there (`tests/integration/test_qa_sentiment_agrees.py` and the sentiment figures suites): locally they need the stored predictions, so CI skips them (L-78). *Added 2026-10-09.*
 - [ ] A second interpretation-gate attempt for QA's check (L-74), **only on an owner-written set** of question and parsed-request pairs, with a new pre-registered gate; the 84 assistant-drafted pairs have been used to judge `qa_interp_v1` and `v2` and can't confirm a third prompt. Review the 13 rejected correct pairs listed in L-74 first. *Added 2026-10-09.*
-- [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.*
+- [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.* The tie order for rate breakdowns changed too (L-72 ruling 2: worse rate, then the larger denominator, then the name), so a golden item that expects a particular group in the top 25 of a tied breakdown may differ. *Added 2026-10-09.*
 - [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
 - [ ] FR-03 (ambiguous questions not force-routed) is open (L-58, ADR-075, ADR-076). Any
@@ -819,6 +824,8 @@ now written; they record the planning decisions above.*
 
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
+- [ ] Option: when a sentiment question asks for example comments without a label, quote one comment per leading label, or the trend's label for a trend question, instead of the top three by confidence (which skew to the majority label, usually positive, L-80); change §6 rule 7 and QA's check together. *Added 2026-10-09.*
+- [ ] Option: store the unrounded confidence in `sentiment_predictions` (a new column or a wider type, with its migration and a backfill), so the flag check can be exact instead of banded at 0.00005 (L-77). *Added 2026-10-09.*
 - [ ] A log-based alert on `outcome=degraded`: a degraded answer is HTTP 200, so Cloud Run's error metrics never count it (ADR-088, ADR-089).
 - [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
 - [ ] A separate `verify-caller` service account holding the orchestrator invoker, so building and calling are separate identities (ADR-085).

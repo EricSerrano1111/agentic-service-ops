@@ -21,6 +21,8 @@ from sqlalchemy.engine import URL
 from .config import Settings
 
 SEVERITIES = ("low", "medium", "high")
+#: Half a rounding step of the stored 4-place confidence (§6, "Sentiment answers", rule 5).
+FLAG_BAND = 0.00005
 UNATTRIBUTED = "unattributed"
 
 
@@ -87,6 +89,36 @@ class Source(Protocol):
     def weekly_counts(
         self, slice_: str, first_week: dt.date, last_week: dt.date
     ) -> dict[dt.date, int]: ...
+
+    # ---- sentiment (data dictionary §6, "Sentiment answers")
+
+    def sentiment_coverage(
+        self, version: str, lo: dt.datetime, hi: dt.datetime, region: str | None
+    ) -> tuple[int, int]: ...
+
+    def sentiment_buckets(
+        self, version: str, lo: dt.datetime, hi: dt.datetime, region: str | None, bucket: str
+    ) -> list[tuple[str, str, int, int]]: ...
+
+    def sentiment_inconsistent_flags(
+        self, version: str, lo: dt.datetime, hi: dt.datetime, region: str | None, tau: float
+    ) -> int: ...
+
+    def sentiment_quotes(self, version: str, ids: list[int]) -> dict[int, dict[str, Any]]: ...
+
+    def sentiment_top_quotes(
+        self,
+        version: str,
+        lo: dt.datetime,
+        hi: dt.datetime,
+        region: str | None,
+        label: str | None,
+        limit: int,
+    ) -> list[int]: ...
+
+    def sentiment_rating_counts(
+        self, version: str, lo: dt.datetime, hi: dt.datetime, region: str | None
+    ) -> tuple[int, int]: ...
 
 
 def make_engine(settings: Settings) -> Engine:
@@ -374,3 +406,126 @@ class PostgresSource:
             params,
         )
         return {r.wk: int(r.n) for r in rows}
+
+    # ------------------------------------------------------------------ sentiment answers
+
+    @staticmethod
+    def _sentiment_set(region: str | None, scored: bool) -> tuple[str, str]:
+        """FROM and WHERE for the comment set (§6, "Sentiment answers", rule 1): feedback with
+        text, submitted in [:lo, :hi), in the site's region when one is given; `scored` also
+        requires a prediction for :version."""
+        source = (
+            "service_feedback f"
+            " JOIN service_requests r ON r.request_id = f.request_id"
+            " JOIN locations l ON l.location_id = r.location_id"
+        )
+        if scored:
+            source += (
+                " JOIN sentiment_predictions p ON p.feedback_id = f.feedback_id"
+                " AND p.model_version = :version"
+            )
+        where = "f.feedback_text IS NOT NULL AND f.submitted_at >= :lo AND f.submitted_at < :hi"
+        if region is not None:
+            where += " AND l.region = :region"
+        return source, where
+
+    def _sentiment_params(self, version, lo, hi, region) -> dict[str, Any]:
+        params: dict[str, Any] = {"version": version, "lo": lo, "hi": hi}
+        if region is not None:
+            params["region"] = region
+        return params
+
+    def sentiment_coverage(self, version, lo, hi, region) -> tuple[int, int]:
+        params = self._sentiment_params(version, lo, hi, region)
+        source, where = self._sentiment_set(region, scored=False)
+        n_comments = self._rows(f"SELECT count(*) FROM {source} WHERE {where}", params)[0][0]
+        source, where = self._sentiment_set(region, scored=True)
+        n_scored = self._rows(f"SELECT count(*) FROM {source} WHERE {where}", params)[0][0]
+        return int(n_comments), int(n_scored)
+
+    def sentiment_buckets(self, version, lo, hi, region, bucket):
+        """(label, bucket, scored, flagged) for every label and calendar bucket (UTC) that
+        holds at least one scored comment."""
+        picture = "YYYY-MM" if bucket == "month" else 'YYYY-"Q"Q'
+        source, where = self._sentiment_set(region, scored=True)
+        label = "to_char(timezone('UTC', f.submitted_at), :picture)"
+        rows = self._rows(
+            f"SELECT p.predicted_label, {label} AS b, count(*) AS n,"
+            f" count(*) FILTER (WHERE p.flagged) AS flagged FROM {source} WHERE {where}"
+            f" GROUP BY p.predicted_label, {label}",
+            {**self._sentiment_params(version, lo, hi, region), "picture": picture},
+        )
+        return [(r[0], r[1], int(r[2]), int(r[3])) for r in rows]
+
+    def sentiment_inconsistent_flags(self, version, lo, hi, region, tau) -> int:
+        """Predictions whose flag disagrees with `confidence < tau` (§6 rule 5): strictly, except
+        inside half a rounding step of the stored 4-place confidence of tau, where either flag is
+        accepted because the decision was made before rounding."""
+        source, where = self._sentiment_set(region, scored=True)
+        return int(
+            self._rows(
+                f"SELECT count(*) FROM {source} WHERE {where}"
+                " AND p.flagged <> (p.confidence < :tau)"
+                " AND abs(p.confidence - CAST(:tau AS numeric)) > CAST(:band AS numeric)",
+                {
+                    **self._sentiment_params(version, lo, hi, region),
+                    "tau": tau,
+                    "band": FLAG_BAND,
+                },
+            )[0][0]
+        )
+
+    def sentiment_quotes(self, version, ids):
+        """The stored facts about each quoted id that exists: its time, site region, text and
+        (for `version`, if scored) label, confidence and flag. Scope is the caller's to judge."""
+        if not ids:
+            return {}
+        rows = self._rows(
+            "SELECT f.feedback_id, f.submitted_at, l.region, f.feedback_text,"
+            " p.predicted_label, p.confidence, p.flagged"
+            " FROM service_feedback f"
+            " JOIN service_requests r ON r.request_id = f.request_id"
+            " JOIN locations l ON l.location_id = r.location_id"
+            " LEFT JOIN sentiment_predictions p ON p.feedback_id = f.feedback_id"
+            " AND p.model_version = :version WHERE f.feedback_id = ANY(:ids)",
+            {"version": version, "ids": list(ids)},
+        )
+        return {
+            int(r[0]): {
+                "submitted_at": r[1],
+                "region": r[2],
+                "text": r[3],
+                "label": r[4],
+                "confidence": None if r[5] is None else format(r[5], ".4f"),
+                "flagged": r[6],
+            }
+            for r in rows
+        }
+
+    def sentiment_top_quotes(self, version, lo, hi, region, label, limit) -> list[int]:
+        """The comments §6 rule 7 says are quoted: in the set, of the asked label if any, highest
+        stored confidence first, ties by the lowest feedback id."""
+        source, where = self._sentiment_set(region, scored=True)
+        params = self._sentiment_params(version, lo, hi, region) | {"limit": limit}
+        if label is not None:
+            where += " AND p.predicted_label = :label"
+            params["label"] = label
+        rows = self._rows(
+            f"SELECT f.feedback_id FROM {source} WHERE {where}"
+            " ORDER BY p.confidence DESC, f.feedback_id ASC LIMIT :limit",
+            params,
+        )
+        return [int(r[0]) for r in rows]
+
+    def sentiment_rating_counts(self, version, lo, hi, region) -> tuple[int, int]:
+        """(covered, contradictions) of ADR-087's rating cross-check over the scored set."""
+        source, where = self._sentiment_set(region, scored=True)
+        row = self._rows(
+            "SELECT count(*) FILTER (WHERE f.rating IS NOT NULL"
+            " AND p.predicted_label IN ('positive', 'negative')),"
+            " count(*) FILTER (WHERE (p.predicted_label = 'positive' AND f.rating <= 2)"
+            " OR (p.predicted_label = 'negative' AND f.rating >= 4))"
+            f" FROM {source} WHERE {where}",
+            self._sentiment_params(version, lo, hi, region),
+        )[0]
+        return int(row[0]), int(row[1])

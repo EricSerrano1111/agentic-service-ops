@@ -57,7 +57,6 @@ from .auth import AgentAuthError, IdTokenProvider
 from .config import Settings
 from .degraded import (
     FORECAST,
-    NOT_VERIFIED_LINE,
     QA,
     REPORTING,
     ROUTING,
@@ -149,9 +148,9 @@ class AskResponse(BaseModel):
     escalate: bool = False
     warning: str | None = None
     unavailable_capability: str | None = None
-    #: Whether the verification agent checked this answer (ADR-089): `verified`; `not_checked`
-    #: (no check exists yet, as for sentiment, or the request ended first); `unavailable`
-    #: (QA was needed and could not run); `not_applicable` (no specialist answered).
+    #: Whether the verification agent checked this answer (ADR-089, ADR-090): `verified`;
+    #: `not_checked` (the request ended before a check ran); `unavailable` (QA was needed and
+    #: could not run); `not_applicable` (no specialist answered). Every specialist is checked.
     qa_status: QaStatus = "not_applicable"
 
     @model_validator(mode="after")
@@ -305,7 +304,6 @@ class Specialist:
     extract: Callable[[Task], tuple[str, BaseModel]]
     field: str  # the AskResponse field the payload goes in
     clarify: bool = False  # does it return name-clarification codes (reporting)?
-    verified: bool = False  # does QA check its answers (ADR-089)?
 
 
 def create_app(
@@ -337,7 +335,6 @@ def create_app(
             extract_answer,
             "reporting",
             clarify=True,
-            verified=True,
         ),
         "sentiment": Specialist(
             "sentiment",
@@ -356,7 +353,6 @@ def create_app(
             breaker("forecast"),
             extract_forecast_answer,
             "forecast",
-            verified=True,
         ),
     }
     qa_spec = Specialist(
@@ -654,11 +650,8 @@ def create_app(
                 task_id=exc.task_id,
                 qa_status=qa_status,
             )
-        text = attempt.text
-        if not spec.verified:
-            text += "\n\n" + NOT_VERIFIED_LINE
         return respond(
-            text,
+            attempt.text,
             "answered",
             **{spec.field: attempt.payload.model_dump(mode="json")},
             task_id=attempt.task.id,
@@ -679,8 +672,6 @@ def create_app(
             attempt = await run_specialist(spec, question, state, base, guidance)
             if isinstance(attempt, JSONResponse):
                 return attempt
-            if not spec.verified:
-                return pass_through(attempt, spec, respond, "not_checked")
             try:
                 verdict = await verify(spec, question, attempt, state)
             except DegradedResult as d:
