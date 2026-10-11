@@ -856,15 +856,19 @@ now written; they record the planning decisions above.*
 **Planned:**
 - [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
 - [ ] Held-out routing set (never used to revise a prompt), written by Eric
+  *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `routing_heldout_v1` (`evals/generated/`).*
 - [ ] Run the real-data QA suites on Cloud SQL after the sentiment predictions backfill there (`tests/integration/test_qa_sentiment_agrees.py` and the sentiment figures suites): locally they need the stored predictions, so CI skips them (L-78). *Added 2026-10-09.*
 - [ ] A second interpretation-gate attempt for QA's check (L-74), **only on an owner-written set** of question and parsed-request pairs, with a new pre-registered gate; the 84 assistant-drafted pairs have been used to judge `qa_interp_v1` and `v2` and can't confirm a third prompt. Review the 13 rejected correct pairs listed in L-74 first. *Added 2026-10-09.*
+  *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `interp_fresh_v1`; the pairs are built from `intent` at the freeze, not yet.*
 - [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.* The tie order for rate breakdowns changed too (L-72 ruling 2: worse rate, then the larger denominator, then the name), so a golden item that expects a particular group in the top 25 of a tied breakdown may differ. *Added 2026-10-09.*
 - [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
+  *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `parse_filters_v1` (optional, 12 filtered items).*
 - [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
 - [ ] FR-03 (ambiguous questions not force-routed) is open (L-58, ADR-075, ADR-076). Any
   reattempt needs a new owner-written fresh set: `fr03_fresh_v1` has now been used to
   judge `route_v5` and can't confirm a revision made after seeing its results.
   *Added 2026-10-04.*
+  *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `fr03_fresh_v2`.*
 - [ ] Rating cross-check sensitivity: flip a few percent of ratings to mimic real-world rating/text disagreement; report the QA catch rate with and without (L-24).
   *2026-10-10 (owner correction): still open. This item flips **ratings** (real-world rating/text disagreement with a correct classifier) and tests **false alarms** on correct answers, that is, whether the p0 = 1% floor is enough. The fault injection (ADR-091, K05 to K80) flipped **predictions** (classifier errors) and tested the **catch** side only: contradictions at 0.5, 1, 2, 4 and 8% of the covered set were caught 0/10, 0/10, 1/10, 8/10 and 10/10, matching the pre-registered rule in all 50 cases. That is evidence for the catch side; it says nothing about false alarms when the classifier is right and the ratings disagree.*
 - [ ] QA model comparison (Flash-Lite vs `gemini-3.1-pro-preview`): optional, buffer only (ADR-056).
@@ -878,6 +882,7 @@ now written; they record the planning decisions above.*
 - [ ] Trace ID in web-server access logs (carried from Sprint 4, 2026-10-10): an access-log middleware in all seven servers and a trace-ID header on the A2A and MCP clients, with its own short ADR when built. Sprint 6 observability depends on it. *Source: the Sprint 4 backlog item of 2026-10-08.*
 - [ ] Decision: build or not an answer-time check that every served forecast number equals the model's own prediction, re-implemented in QA from the manifest's stored coefficients (L-83(a); a check against the model, not a prediction, so consistent with ADR-055). The owner leans towards building it, as the condition for "QA verifies forecasts" meaning more than arithmetic. *Source: ADR-092, L-83.*
 - [ ] Schedule owner writing time for three sets: the held-out routing set (above), a fresh FR-03 set and a fresh interpretation set. *Source: the Sprint 4 retro, change 4.*
+  *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). The sets were written by an independent model instead (capacity), so no owner writing time is needed for them; the skim is the owner's part.*
 - [ ] Option: owner-written faults added to QA's fault catalogue and reported apart from the assistant-drafted ones (L-85). *Source: ADR-091, ADR-092.*
   - *2026-10-10 (Sprint 4 close): the re-enabled trigger excludes `**/*.md`, so a docs-only merge deploys nothing. Source: the Sprint 4 close.*
 

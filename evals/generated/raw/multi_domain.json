@@ -1,0 +1,182 @@
+[
+  {
+    "id": "MD-01",
+    "category": "multi_domain",
+    "question": "What was our FTF rate last month, and what is the sentiment looking like in customer comments?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "The question explicitly combines operations reporting (first-time fix rate) and customer sentiment (comment tone)."
+  },
+  {
+    "id": "MD-02",
+    "category": "multi_domain",
+    "question": "Give me last quarter's SLA compliance for Westgate Foods and how many repairs we expect next month.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "The user explicitly asks for past SLA reporting alongside future repair request volume forecasts."
+  },
+  {
+    "id": "MD-03",
+    "category": "multi_domain",
+    "question": "How are customer comments trending in the West, and how many service requests are projected over the next 4 weeks?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "forecast"],
+    "intent": null,
+    "rationale": "The question explicitly pairs sentiment trends from customer reviews with a multi-week volume forecast."
+  },
+  {
+    "id": "MD-04",
+    "category": "multi_domain",
+    "question": "Need the quality incident count for Northeast year to date, plus the sentiment breakdown of their feedback.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Explicitly requests past incident metrics alongside customer sentiment mix for the Northeast region."
+  },
+  {
+    "id": "MD-05",
+    "category": "multi_domain",
+    "question": "Can I get our SLA % for July 2026 and the expected weekly volume for installs across the next 8 weeks?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Combines a past operational metric (SLA compliance) with a forward-looking volume forecast."
+  },
+  {
+    "id": "MD-06",
+    "category": "multi_domain",
+    "question": "Show me negative comment trends since Q1 and how many jobs we are projecting per week through next quarter.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "forecast"],
+    "intent": null,
+    "rationale": "Asks both for customer sentiment trend data and future service request projections."
+  },
+  {
+    "id": "MD-07",
+    "category": "multi_domain",
+    "question": "What's our incident rate this month, what are clients saying in reviews, and how many calls are forecast next week?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "sentiment", "forecast"],
+    "intent": null,
+    "rationale": "Explicitly requests measures spanning all three functional areas: incident rate, feedback tone, and weekly volume forecast."
+  },
+  {
+    "id": "MD-08",
+    "category": "multi_domain",
+    "question": "Did Ironwood Manufacturing meet SLA last quarter and what did they say in their recent written comments?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Combines SLA compliance reporting with customer comment sentiment analysis for a specific account."
+  },
+  {
+    "id": "MD-09",
+    "category": "multi_domain",
+    "question": "Pull the first-time fix rate for Central region year to date and the forecast for maintenance jobs over the next 6 weeks.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Asks explicitly for a past performance figure (FTF rate) and an upcoming maintenance volume forecast."
+  },
+  {
+    "id": "MD-10",
+    "category": "multi_domain",
+    "question": "Are bad comments rising in Southeast, and how many total quality incidents did they log in the past 30 days?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "reporting"],
+    "intent": null,
+    "rationale": "Combines sentiment trend analysis with past quality incident reporting."
+  },
+  {
+    "id": "MD-11",
+    "category": "multi_domain",
+    "question": "Give me the FTF % for Elena Nakamura last month and the overall demand forecast for the next 2 weeks.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Inquires about technician historical reporting alongside future service request volume."
+  },
+  {
+    "id": "MD-12",
+    "category": "multi_domain",
+    "question": "Show me a breakdown of customer sentiment this quarter along with our incident rate per 100 jobs.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "reporting"],
+    "intent": null,
+    "rationale": "Explicitly requests sentiment mix metrics and an operational incident rate in the same query."
+  },
+  {
+    "id": "MD-13",
+    "category": "multi_domain",
+    "question": "What's our projected volume for upgrade jobs next month, and how did SLA % look for upgrades in Q2 2026?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["forecast", "reporting"],
+    "intent": null,
+    "rationale": "Spans both volume forecasting and past SLA compliance reporting for upgrade work."
+  },
+  {
+    "id": "MD-14",
+    "category": "multi_domain",
+    "question": "Any sample negative comments from Pinecrest Manufacturing Group, and did we hit our promised service windows for them last month?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "reporting"],
+    "intent": null,
+    "rationale": "Explicitly seeks written comment examples (sentiment) and SLA compliance (reporting) for an account."
+  },
+  {
+    "id": "MD-15",
+    "category": "multi_domain",
+    "question": "I need the SLA compliance rate for Central this month, plus the projected weekly inspection volume for the next 12 weeks.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Directly requests operations performance figures combined with future inspection request forecast data."
+  },
+  {
+    "id": "MD-16",
+    "category": "multi_domain",
+    "question": "Can you share the sentiment breakdown of recent comments and how many visits we expect to handle per week next month?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "forecast"],
+    "intent": null,
+    "rationale": "Combines customer comment sentiment mix with upcoming service volume forecasting."
+  },
+  {
+    "id": "MD-17",
+    "category": "multi_domain",
+    "question": "How many quality incidents did Meridian Manufacturing have YTD, and what are their reviews saying?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Combines quality incident reporting with customer sentiment analysis."
+  },
+  {
+    "id": "MD-18",
+    "category": "multi_domain",
+    "question": "Show SLA % and FTF rate for last quarter, and provide the request volume forecast for the next 4 weeks.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Explicitly includes both past operations performance metrics and an operational volume forecast."
+  },
+  {
+    "id": "MD-19",
+    "category": "multi_domain",
+    "question": "What's the positive vs negative split on feedback in Northeast, and what is our incident count there for August?",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["sentiment", "reporting"],
+    "intent": null,
+    "rationale": "Asks for customer sentiment distribution together with an incident count from operational reporting."
+  },
+  {
+    "id": "MD-20",
+    "category": "multi_domain",
+    "question": "Provide our Q2 incident rate, summary of customer comments, and the weekly volume forecast for the next 10 weeks.",
+    "expected_route": "multi_domain",
+    "candidate_areas": ["reporting", "sentiment", "forecast"],
+    "intent": null,
+    "rationale": "Explicitly prompts for measures from reporting, sentiment, and forecast domains in a single question."
+  }
+]

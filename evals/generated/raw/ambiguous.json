@@ -1,0 +1,272 @@
+[
+  {
+    "id": "AMB-01",
+    "category": "ambiguous",
+    "question": "How are things going with Ironwood Manufacturing LLC?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "The question names no measure, making it unclear whether it seeks past operational performance figures or customer sentiment for the account."
+  },
+  {
+    "id": "AMB-02",
+    "category": "ambiguous",
+    "question": "How is West doing this quarter?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Asking broadly how a region is doing could reasonably refer to operational metrics like SLA and incidents or customer comment sentiment."
+  },
+  {
+    "id": "AMB-03",
+    "category": "ambiguous",
+    "question": "Give me a quick status update on Silver Creek Foods Inc.",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "A general status request for an account could refer to past SLA/incident performance or recent customer feedback."
+  },
+  {
+    "id": "AMB-04",
+    "category": "ambiguous",
+    "question": "What's the outlook for Central region?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment", "forecast"],
+    "intent": null,
+    "rationale": "Outlook could imply forward-looking demand forecasting, recent operational trends, or customer sentiment trends."
+  },
+  {
+    "id": "AMB-05",
+    "category": "ambiguous",
+    "question": "How's the Southeast shaping up?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment", "forecast"],
+    "intent": null,
+    "rationale": "The open-ended phrasing could ask about upcoming volume expectations or current operational and sentiment performance."
+  },
+  {
+    "id": "AMB-06",
+    "category": "ambiguous",
+    "question": "Any problems with Meridian Manufacturing LLC lately?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Problems could mean operational issues like missed SLAs and quality incidents, or negative customer comments."
+  },
+  {
+    "id": "AMB-07",
+    "category": "ambiguous",
+    "question": "How did we do last month overall?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Asking how the company did overall without specifying a measure could refer to reporting metrics or customer sentiment mix."
+  },
+  {
+    "id": "AMB-08",
+    "category": "ambiguous",
+    "question": "What should I know about Bluewater Hospitality Partners?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "A completely unspecific inquiry about an account could target performance reporting figures or customer feedback."
+  },
+  {
+    "id": "AMB-09",
+    "category": "ambiguous",
+    "question": "How is repair work looking?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Could refer to past operational performance on repairs or the upcoming repair request volume forecast."
+  },
+  {
+    "id": "AMB-10",
+    "category": "ambiguous",
+    "question": "Can you give me an overview of Northeast for Q2 2026?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "An overview of a region for a past quarter could consist of operational KPIs or customer feedback sentiment."
+  },
+  {
+    "id": "AMB-11",
+    "category": "ambiguous",
+    "question": "How satisfied is Pinecrest Manufacturing Group?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Satisfaction could be inferred through written comment sentiment or operational success measures like SLA and FTF rates."
+  },
+  {
+    "id": "AMB-12",
+    "category": "ambiguous",
+    "question": "What's going on with upgrades?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "The vague phrasing could target historical upgrade quality/SLA metrics or projected upgrade volume."
+  },
+  {
+    "id": "AMB-13",
+    "category": "ambiguous",
+    "question": "Check up on Redstone Logistics Co. for me",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Without a specific measure, this could refer to account incident/SLA records or account customer comments."
+  },
+  {
+    "id": "AMB-14",
+    "category": "ambiguous",
+    "question": "How are our installs performing?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Performance could be evaluated via operational metrics (incident rate, first-time fix) or customer comment sentiment."
+  },
+  {
+    "id": "AMB-15",
+    "category": "ambiguous",
+    "question": "What's the situation in Central over the past 4 weeks?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Asking for the situation in a region without a metric leaves both reporting and sentiment as plausible interpretations."
+  },
+  {
+    "id": "AMB-16",
+    "category": "ambiguous",
+    "question": "How do things look for next month?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Could be asking for a future volume forecast or loosely confusing upcoming scheduling with recent performance."
+  },
+  {
+    "id": "AMB-17",
+    "category": "ambiguous",
+    "question": "Is Westgate Foods Partners happy with our service?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Happiness could be answered through customer sentiment analysis or quality and SLA track records."
+  },
+  {
+    "id": "AMB-18",
+    "category": "ambiguous",
+    "question": "What is the trend for inspections?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Trend could mean past operational quality/SLA trends over time or future inspection demand projections."
+  },
+  {
+    "id": "AMB-19",
+    "category": "ambiguous",
+    "question": "How has Clearview Hospitality Inc. been doing lately?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "No specific measure is requested for the account, making operational reporting and sentiment equally plausible."
+  },
+  {
+    "id": "AMB-20",
+    "category": "ambiguous",
+    "question": "Any red flags in Southeast right now?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Red flags could signify spikes in quality incidents and SLA misses, or rising negative customer comments."
+  },
+  {
+    "id": "AMB-21",
+    "category": "ambiguous",
+    "question": "How are we tracking year to date?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Asking how the company is tracking without naming a KPI spans operational performance metrics and customer sentiment trends."
+  },
+  {
+    "id": "AMB-22",
+    "category": "ambiguous",
+    "question": "What's happening with Brightpath Foods Inc.?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Lacks any specific measure, plausible for either operational reporting history or written customer reviews."
+  },
+  {
+    "id": "AMB-23",
+    "category": "ambiguous",
+    "question": "How is maintenance work looking for the next 4 weeks?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["forecast", "reporting"],
+    "intent": null,
+    "rationale": "While asking about future weeks strongly suggests a volume forecast, it could also be read as asking about forward scheduling performance."
+  },
+  {
+    "id": "AMB-24",
+    "category": "ambiguous",
+    "question": "What's the health of the Pinecrest Hospitality Holdings account?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Account health can be measured through operational reliability (SLA, incident rate) or customer sentiment."
+  },
+  {
+    "id": "AMB-25",
+    "category": "ambiguous",
+    "question": "How are customer relations in Northeast?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Could refer directly to customer comment sentiment or to service delivery KPIs like SLA compliance."
+  },
+  {
+    "id": "AMB-26",
+    "category": "ambiguous",
+    "question": "Give me an update on West region.",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "An open-ended regional update leaves the choice between reporting metrics and sentiment open."
+  },
+  {
+    "id": "AMB-27",
+    "category": "ambiguous",
+    "question": "How did Silver Creek Retail Group go last quarter?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Names an account and a period but no metric, so it could target operational figures or sentiment."
+  },
+  {
+    "id": "AMB-28",
+    "category": "ambiguous",
+    "question": "What does the demand look like compared to our quality lately?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "forecast"],
+    "intent": null,
+    "rationale": "Could be asking to compare future demand forecasting with past incident rates, or general service volume trends versus quality."
+  },
+  {
+    "id": "AMB-29",
+    "category": "ambiguous",
+    "question": "How are jobs going in Central?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "Does not specify whether to assess job success via SLA/FTF/incidents or customer feedback comments."
+  },
+  {
+    "id": "AMB-30",
+    "category": "ambiguous",
+    "question": "How's Bluewater Energy Inc. doing?",
+    "expected_route": "ambiguous",
+    "candidate_areas": ["reporting", "sentiment"],
+    "intent": null,
+    "rationale": "A general question about an account without naming any measure fits both operational reporting and sentiment analysis."
+  }
+]

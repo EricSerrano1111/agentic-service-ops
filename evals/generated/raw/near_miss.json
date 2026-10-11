@@ -1,0 +1,227 @@
+[
+  {
+    "id": "NM-01",
+    "category": "near_miss",
+    "question": "What was Kara Tran's total overtime hours last month?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Staffing, hours worked, and technician overtime are explicitly out of scope."
+  },
+  {
+    "id": "NM-02",
+    "category": "near_miss",
+    "question": "How much revenue did we bill Meridian Manufacturing LLC year to date?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Billing and revenue figures for accounts are outside the assistant's supported areas."
+  },
+  {
+    "id": "NM-03",
+    "category": "near_miss",
+    "question": "Are we running low on replacement compressor parts in the Central region warehouse?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Inventory and parts management fall under the out-of-scope exclusions."
+  },
+  {
+    "id": "NM-04",
+    "category": "near_miss",
+    "question": "What's the phone number and site contact for Ironwood Manufacturing LLC?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Customer contact details are designated as out of scope."
+  },
+  {
+    "id": "NM-05",
+    "category": "near_miss",
+    "question": "What was our average labor cost per completed repair job in Q2 2026?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Financial metrics including labor and job costs are strictly out of scope."
+  },
+  {
+    "id": "NM-06",
+    "category": "near_miss",
+    "question": "Can you show me Luis Castillo's shift schedule for next week?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Technician scheduling and shifts are explicitly outside the scope of operations reporting."
+  },
+  {
+    "id": "NM-07",
+    "category": "near_miss",
+    "question": "Did Westgate Foods Partners pay their outstanding invoice from July 2026?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Invoices and customer payments are out of scope."
+  },
+  {
+    "id": "NM-08",
+    "category": "near_miss",
+    "question": "Projected billing revenue across all regions for the next 12 weeks?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Future revenue projections remain out of scope because financial topics cannot be forecasted by this tool."
+  },
+  {
+    "id": "NM-09",
+    "category": "near_miss",
+    "question": "What is our current hourly billing rate for emergency upgrade jobs?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Service pricing and hourly billing rates are excluded from the tool."
+  },
+  {
+    "id": "NM-10",
+    "category": "near_miss",
+    "question": "How many spare valves did Hana Olsen consume over the past 30 days?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Parts tracking and technician material consumption are out of scope."
+  },
+  {
+    "id": "NM-11",
+    "category": "near_miss",
+    "question": "What is Elena Nakamura's current base salary and bonus rate?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Technician compensation and payroll are completely out of scope."
+  },
+  {
+    "id": "NM-12",
+    "category": "near_miss",
+    "question": "How much profit margin did we make on inspections in the Northeast this quarter?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Profitability and margin analysis are financial matters outside the assistant's boundaries."
+  },
+  {
+    "id": "NM-13",
+    "category": "near_miss",
+    "question": "Who is the primary facilities manager listed for Bluewater Energy Inc.?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Customer account contacts and directory information are out of scope."
+  },
+  {
+    "id": "NM-14",
+    "category": "near_miss",
+    "question": "Forecast technician staffing headcounts needed in the West for the next 4 weeks.",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Staffing needs and headcount planning are out of scope even when phrased as a forecast."
+  },
+  {
+    "id": "NM-15",
+    "category": "near_miss",
+    "question": "Total travel mileage logged by Rafael Young over the past 2 weeks?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Vehicle mileage and fleet travel telemetry are not supported performance metrics."
+  },
+  {
+    "id": "NM-16",
+    "category": "near_miss",
+    "question": "Are there any pending warranty claims filed by Pinecrest Manufacturing Group?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Warranty accounting and legal claims fall outside the operational reporting domain."
+  },
+  {
+    "id": "NM-17",
+    "category": "near_miss",
+    "question": "Average van fuel expenses per technician last month in the Southeast?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Operating expenses like vehicle fuel are financial details not tracked by the system."
+  },
+  {
+    "id": "NM-18",
+    "category": "near_miss",
+    "question": "How many safety certifications does Nadia Hayes currently hold?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Technician credentials and HR records are out of scope."
+  },
+  {
+    "id": "NM-19",
+    "category": "near_miss",
+    "question": "What discount rate was applied to the Clearview Hospitality Inc. service contract?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Contract terms, pricing, and discount structures are excluded."
+  },
+  {
+    "id": "NM-20",
+    "category": "near_miss",
+    "question": "Can I see the dispatch calendar for all maintenance jobs tomorrow?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Real-time dispatch schedules and technician calendars are out of scope."
+  },
+  {
+    "id": "NM-21",
+    "category": "near_miss",
+    "question": "How much did we spend on subcontractor fees in Central region year to date?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Subcontractor costs and corporate expenditures are outside the three operational domains."
+  },
+  {
+    "id": "NM-22",
+    "category": "near_miss",
+    "question": "Forecast our total parts inventory expenditure for next quarter.",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Forecasting an out-of-scope topic such as parts expenditure remains out of scope."
+  },
+  {
+    "id": "NM-23",
+    "category": "near_miss",
+    "question": "Did Lina Olsen turn in her expense receipts for last week's travel?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Employee expense reports and reimbursements are out of scope."
+  },
+  {
+    "id": "NM-24",
+    "category": "near_miss",
+    "question": "What's the renewal date on Brightpath Foods Inc.'s master service agreement?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Legal contract dates and account administrative terms are out of scope."
+  },
+  {
+    "id": "NM-25",
+    "category": "near_miss",
+    "question": "How many days of paid time off does Wen Olsen have left this year?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Technician PTO balances and HR benefits data are out of scope."
+  }
+]

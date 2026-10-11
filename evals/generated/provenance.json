@@ -1,0 +1,276 @@
+{
+  "model": "gemini-3.8-flash",
+  "seed": 20261012,
+  "created": "2026-10-11T14:18:17+00:00",
+  "settings": {
+    "mode": "paid",
+    "thinking_level_sent": "low",
+    "temperature": "not sent (the model's default)",
+    "request_timeout_s": 300.0,
+    "client_request_cap": 15,
+    "spend_cap_usd": 2.0,
+    "input_per_m": 0.75,
+    "output_per_m": 3.75,
+    "price_source": "https://ai.google.dev/gemini-api/docs/pricing",
+    "price_as_of": "2026-10-11",
+    "output": "JSON array via response_json_schema (array of objects), no per-item validation"
+  },
+  "hashes": {
+    "brief_sha256": "adb65551b2c7b0057a55c077906ccc741ba1986a0503d91574738cfbf0611a67",
+    "filled_brief_sha256": "a6187d20cc5c5ff022dc3be57db0ba6156eedb666af0efc4bafcb719c3b802a0",
+    "schema_json_sha256": "49004645017ca4d3f06291c1ed0fc130c93747522da4b3ccb8032618aff7c510"
+  },
+  "calls": [
+    {
+      "kind": "models.list",
+      "date": "2026-10-11",
+      "requests": 1,
+      "via": "google-genai SDK directly, not packages/llm",
+      "cost_usd": 0.0,
+      "outcome": "ok"
+    },
+    {
+      "kind": "generate",
+      "category": "clear_reporting",
+      "count_requested": 25,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2255,
+      "output_tokens": 6274,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2255,
+          "visible_output_tokens": 6274,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.025219,
+      "latency_s": 38.006,
+      "outcome": "ok",
+      "raw_file": "clear_reporting.json",
+      "raw_sha256": "adf069878d20bda08eebc60b7e7fb1c837cf11792461f9da9816d401d325f774",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "clear_sentiment",
+      "count_requested": 20,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2255,
+      "output_tokens": 3382,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2255,
+          "visible_output_tokens": 3382,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.014374,
+      "latency_s": 24.714,
+      "outcome": "ok",
+      "raw_file": "clear_sentiment.json",
+      "raw_sha256": "7ed070725c9720a5c607a5dd3ec0638c98c9342249fe78cc799d71dccb5eb6e9",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "clear_forecast",
+      "count_requested": 20,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2255,
+      "output_tokens": 4987,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2255,
+          "visible_output_tokens": 4987,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.020393,
+      "latency_s": 30.267,
+      "outcome": "ok",
+      "raw_file": "clear_forecast.json",
+      "raw_sha256": "8ca35462bdaa983a4bfac146fccdfb48f9942ee575033f354e584c0a932e37ff",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "underspecified",
+      "count_requested": 20,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2255,
+      "output_tokens": 2889,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2255,
+          "visible_output_tokens": 2889,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.012525,
+      "latency_s": 21.611,
+      "outcome": "ok",
+      "raw_file": "underspecified.json",
+      "raw_sha256": "a280e9681e623d9ff9d019c9a87b9c4f3a7aeaaa8cde0c19beb8665109fc384f",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "ambiguous",
+      "count_requested": 30,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2253,
+      "output_tokens": 2983,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2253,
+          "visible_output_tokens": 2983,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.012876,
+      "latency_s": 22.959,
+      "outcome": "ok",
+      "raw_file": "ambiguous.json",
+      "raw_sha256": "7a04690c164f9dd1c50e7fb696cddb230ab82a7402c6510e6d044ab8bb422a00",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "multi_domain",
+      "count_requested": 20,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2255,
+      "output_tokens": 2219,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2255,
+          "visible_output_tokens": 2219,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.010012,
+      "latency_s": 16.305,
+      "outcome": "ok",
+      "raw_file": "multi_domain.json",
+      "raw_sha256": "171cb8cd851f44832e20eec11e2c4dcc7fc04a9ea54d273a4a0f22ff02a11401",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "out_of_scope",
+      "count_requested": 15,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2257,
+      "output_tokens": 1498,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2257,
+          "visible_output_tokens": 1498,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.00731,
+      "latency_s": 11.29,
+      "outcome": "ok",
+      "raw_file": "out_of_scope.json",
+      "raw_sha256": "b7b0eca146f4b08ebfddafed904b731636a96459f11592fccb1db643236b9d92",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "near_miss",
+      "count_requested": 25,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2255,
+      "output_tokens": 2408,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2255,
+          "visible_output_tokens": 2408,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.010721,
+      "latency_s": 18.109,
+      "outcome": "ok",
+      "raw_file": "near_miss.json",
+      "raw_sha256": "32516561c4d982db1e7a91638756abf4a8c74356c371e01f42e26307b896b362",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "technician",
+      "count_requested": 15,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2253,
+      "output_tokens": 3805,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2253,
+          "visible_output_tokens": 3805,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.015959,
+      "latency_s": 22.878,
+      "outcome": "ok",
+      "raw_file": "technician.json",
+      "raw_sha256": "074fc9fc10fbcbe09108039ff5ea294b0ccc7e7f39bd41d667fd3784fedf906c",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "filtered",
+      "count_requested": 20,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2253,
+      "output_tokens": 3401,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2253,
+          "visible_output_tokens": 3401,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.014443,
+      "latency_s": 22.38,
+      "outcome": "ok",
+      "raw_file": "filtered.json",
+      "raw_sha256": "b6ad901b359077bb5dac69f9aabc98aafa16fd8528e3c1b3b7fba46856017883",
+      "array_of_objects": true
+    },
+    {
+      "kind": "generate",
+      "category": "unsupported_in_area",
+      "count_requested": 15,
+      "attempt": 1,
+      "requests": 1,
+      "input_tokens": 2257,
+      "output_tokens": 3889,
+      "usage_detail": [
+        {
+          "prompt_tokens": 2257,
+          "visible_output_tokens": 3889,
+          "thinking_tokens": 0
+        }
+      ],
+      "cost_usd": 0.016276,
+      "latency_s": 25.84,
+      "outcome": "ok",
+      "raw_file": "unsupported_in_area.json",
+      "raw_sha256": "f69fad8aa9d8c70678e1466bd6c40b5ce990e34ec3f2dcf5998d5d2d80476efa",
+      "array_of_objects": true
+    }
+  ],
+  "spent_usd": 0.160108
+}
