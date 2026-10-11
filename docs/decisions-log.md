@@ -3002,5 +3002,5 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 
 **Consequences:**
 - The sets are weaker than owner-written ones. What they keep is that nobody who tuned the system wrote or saw the questions before the freeze.
-- The generator's temperature is 1.0, set explicitly, because `packages/llm` always sends one and 0.0 would make a batch repetitive; the thinking page states no default temperature (see `evals/generated/plan.md`).
+- The generator runs at the model's default temperature: none is sent (`evals/generated/plan.md`).
 - Sets stay drafts until the owner's skim. Freezing (manifests, hashes, interpretation pairs) is a later step.

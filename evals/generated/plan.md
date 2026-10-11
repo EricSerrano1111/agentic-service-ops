@@ -6,14 +6,18 @@ deviation is reported, not edited in.
 ## Generator and settings
 
 - Model `gemini-3.8-flash`, paid key, through `packages/llm` (`LLM_MODE=paid`).
-- Request cap 16, spend cap $2.00 (`LLM_MAX_REQUESTS=16`, `LLM_MAX_SPEND_USD=2.00`).
+- Budget 16 requests: 1 `models.list` (made directly through the SDK on 2026-10-11, before
+  this plan, so `packages/llm` never counted it) + 11 generation + 4 retry margin. The client's
+  cap is therefore `LLM_MAX_REQUESTS=15`. Spend cap `LLM_MAX_SPEND_USD=2.00`.
+- `LLM_REQUEST_TIMEOUT_S=300`: output is 8 to 9K tokens plus thinking, and the 30 s default
+  would classify a slow response as transient and retry it silently. The script compares
+  `totals.requests` with `totals.calls` after every call and records any hidden retry; a
+  hidden retry spends margin.
 - Thinking level: the client's default for the model, its lowest supported level (ADR-052):
   `low` (the model supports low, medium, high; `minimal` is rejected).
-- Temperature: `packages/llm` always sends `LLM_TEMPERATURE` (default 0.0) and cannot omit
-  it. 0.0 would make 20 to 30 questions per batch repetitive, so `LLM_TEMPERATURE=1.0` is
-  set explicitly. 1.0 is Google's documented default for Gemini 3 models in general; the
-  thinking page read on 2026-10-11 states no temperature, so this is recorded as the
-  closest available equivalent to "the model's default", not as a confirmed default.
+- Temperature: the model's own default. The client's settings carry `temperature`, which the
+  transport passes to the SDK; the script replaces it with `None`, which the SDK leaves out
+  of the request (checked offline: the config dump has no `temperature`). No value is sent.
 - Output: a JSON array. `response_model` is a root model over an array of objects with no
   per-item validation; per-item checks are filter removals.
 - Only a response that is not a parseable JSON array is re-requested, once, from the margin.

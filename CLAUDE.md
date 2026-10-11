@@ -132,6 +132,6 @@ a `docs/decisions/` path.
 
 ## Generated evaluation sets (ADR-094)
 
-`evals/generated/` holds model-written evaluation sets. No prompt-revision session reads it,
-and the same goes for `evals/golden/`: they are for measuring, not for tuning. Filtering only
-removes items; no generated question or label is edited after generation.
+`evals/generated/` holds model-written evaluation sets. No prompt-revision session reads it:
+the sets are for measuring, not for tuning. Filtering only removes items; no generated
+question or label is edited after generation.
