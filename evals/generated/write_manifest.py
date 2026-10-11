@@ -1,6 +1,6 @@
 """Write `manifest.json` for the frozen evaluation sets (ADR-094). Run after the freeze commit.
 
-    .venv\Scripts\python evals/generated/write_manifest.py
+    .venv/Scripts/python evals/generated/write_manifest.py
 
 Records, per file, the SHA-256, the git blob hash and the line count, and the freeze commit's
 hash and time (HEAD when this runs: the commit that holds the final files). The hash test
