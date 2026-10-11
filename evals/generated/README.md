@@ -39,3 +39,14 @@ pool  --seeded ranking-->  sets/<name>.draft.jsonl  +  skim/skim.csv
 
 Drafts only. Freezing (manifest hashes, git blob hashes, interpretation pairs built from
 `intent`) happens after the owner's skim.
+
+## Skim criterion (2026-10-11)
+
+2026-10-11: owner drops at the skim were made on persona grounds: a question a dispatcher or
+call-centre agent would ask, but not a senior operations leader with an overview of the
+business unit (the brief's stated asker). Labels were not changed. The owner hadn't seen any
+system output for these items.
+
+**A selection effect to disclose.** Persona drops may remove the more granular, operational
+questions, which leaves the sets weighted toward broad leadership questions. The failure
+analysis reports the drop count.
