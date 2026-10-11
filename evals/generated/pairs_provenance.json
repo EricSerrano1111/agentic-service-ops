@@ -73,16 +73,16 @@
     "wrong": 23,
     "wrong_by_mutation": {
       "breakdown_change": 3,
-      "filter_drop": 3,
+      "filter_drop": 2,
       "horizon_change": 3,
-      "measure_swap": 2,
-      "name_swap": 0,
+      "measure_swap": 3,
+      "name_swap": 2,
       "period_shift": 3,
-      "region_change": 5,
+      "region_change": 3,
       "work_type_change": 4
     }
   },
-  "plan_commit": "22eeefffad1b716607845ae302a4369475ac03e7",
+  "plan_commit": "3df5de0e7e322a8f5ccec8ce5f4eb652f354acbb",
   "report_only": {
     "date_check_by_reason": {
       "date_check: horizon_weeks differs from the period's weeks ahead": 2,
