@@ -179,3 +179,24 @@ Added for the record: the labels cannot say whether a question asks for recent h
 `want_history` is always `false`; and the items are the ones whose dates the deterministic
 resolver recognised and whose fields have a documented representation, which skews the set
 toward the easier date phrasings and the plainer questions.
+
+## Amendment 2026-10-11: the selection rule (made before any pair was run on a model)
+
+The first build of `build_pairs.py` followed "Selection" above literally and produced **zero**
+`name_swap` pairs although four items could take one: the cyclic pointer reached `name_swap`,
+the last type in the order, only when no earlier type applied. The prompt that set this plan
+asks for every mutation type to appear where it can, so the literal rule did not do its job. It
+is replaced by the rule below; the first build's pairs were discarded, never run on a model, and
+the build's counts are reported with this amendment.
+
+Selection (replaces steps 1 to 3):
+
+1. Eligible items are ordered by (number of applicable types ascending, then
+   `sha256(f"20261013|item:{uid}")` ascending): the most constrained items choose first.
+2. For each item, the applicable type with the **fewest pairs assigned so far** is taken; among
+   equals, the first at or after the cyclic pointer in the fixed type order. The pointer then
+   moves to the type after the one chosen.
+3. Step 4 (the change within a type) and step 5 are unchanged.
+
+The menu, the applicability rules and the mapping are unchanged. The amendment does not look at
+any model's behaviour: no model has seen a pair.

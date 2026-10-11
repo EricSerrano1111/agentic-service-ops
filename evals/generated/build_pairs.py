@@ -501,17 +501,29 @@ def draw(uid: str, mtype: str, changes: list[dict]) -> dict:
 
 
 def round_robin(items: list[dict]) -> dict[str, tuple[str, dict]]:
-    """uid -> (type, change). Pairs_plan.md, "Selection": literal cyclic pointer."""
+    """uid -> (type, change). Pairs_plan.md, "Amendment": the most constrained items choose
+    first, each takes the applicable type with the fewest pairs so far, ties by a cyclic
+    pointer over the fixed type order."""
     pointer = 0
+    counts: Counter = Counter()
     chosen: dict[str, tuple[str, dict]] = {}
-    for row in sorted(items, key=lambda r: rank(f"item:{r['uid']}")):
-        ev = row["_eval"]
+
+    def order_key(row: dict) -> tuple:
+        n = sum(1 for t in TYPES if row["_eval"]["applicable"][t])
+        return (n, rank(f"item:{row['uid']}"))
+
+    for row in sorted(items, key=order_key):
+        app = row["_eval"]["applicable"]
+        options = [t for t in TYPES if app[t]]
+        fewest = min(counts[t] for t in options)
+        tied = {t for t in options if counts[t] == fewest}
         for step in range(len(TYPES)):
             mtype = TYPES[(pointer + step) % len(TYPES)]
-            if ev["applicable"][mtype]:
-                chosen[row["uid"]] = (mtype, draw(row["uid"], mtype, ev["applicable"][mtype]))
-                pointer = (pointer + step + 1) % len(TYPES)
+            if mtype in tied:
                 break
+        chosen[row["uid"]] = (mtype, draw(row["uid"], mtype, app[mtype]))
+        counts[mtype] += 1
+        pointer = (TYPES.index(mtype) + 1) % len(TYPES)
     return chosen
 
 

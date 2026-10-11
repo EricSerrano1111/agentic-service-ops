@@ -1,0 +1,102 @@
+{
+  "as_of": "2026-08-30",
+  "interp_set": {
+    "draft_size": 24,
+    "final_ids": [
+      "filtered/FIL-18",
+      "filtered/FIL-17",
+      "technician/TECH-08",
+      "technician/TECH-12",
+      "underspecified/UND-19",
+      "underspecified/UND-07",
+      "clear_reporting/CR-25",
+      "underspecified/UND-14",
+      "clear_reporting/CR-02",
+      "clear_sentiment/CS-09",
+      "underspecified/UND-16",
+      "clear_sentiment/CS-14",
+      "clear_sentiment/CS-04",
+      "underspecified/UND-06",
+      "clear_sentiment/CS-01",
+      "underspecified/UND-20",
+      "clear_forecast/CF-19",
+      "clear_forecast/CF-13",
+      "clear_forecast/CF-08",
+      "clear_forecast/CF-16",
+      "clear_forecast/CF-20",
+      "clear_reporting/CR-15",
+      "clear_forecast/CF-15"
+    ],
+    "final_size": 23,
+    "refill": [
+      {
+        "replaces": "clear_reporting/CR-12",
+        "uid": "clear_reporting/CR-15"
+      },
+      {
+        "replaces": "clear_forecast/CF-09",
+        "uid": "clear_forecast/CF-15"
+      }
+    ],
+    "removed": [
+      {
+        "reason": "work_type_filter_no_field",
+        "uid": "clear_reporting/CR-12"
+      },
+      {
+        "reason": "label_without_examples",
+        "uid": "filtered/FIL-16"
+      },
+      {
+        "reason": "forecast_breakdown_undocumented",
+        "uid": "clear_forecast/CF-09"
+      }
+    ],
+    "unfilled_slots": [
+      "filtered/FIL-16"
+    ]
+  },
+  "names": {
+    "accounts": 50,
+    "sha256_of_sorted_lists": "b5d4b5f0a33c4ee525ce12425fe4bacbc5f8ba5e93ca9084aaec6278c49c2794",
+    "source": "accounts.account_name, technicians.full_name as app_eval",
+    "technicians": 32
+  },
+  "pairs": {
+    "by_domain": {
+      "forecast": 7,
+      "reporting": 10,
+      "sentiment": 6
+    },
+    "correct": 23,
+    "items": 23,
+    "wrong": 23,
+    "wrong_by_mutation": {
+      "breakdown_change": 3,
+      "filter_drop": 3,
+      "horizon_change": 3,
+      "measure_swap": 2,
+      "name_swap": 0,
+      "period_shift": 3,
+      "region_change": 5,
+      "work_type_change": 4
+    }
+  },
+  "plan_commit": "22eeefffad1b716607845ae302a4369475ac03e7",
+  "report_only": {
+    "date_check_by_reason": {
+      "date_check: horizon_weeks differs from the period's weeks ahead": 2,
+      "date_check: period_text not recognised": 28,
+      "date_check: stated dates differ from the deterministic resolution": 12
+    },
+    "date_check_exclusions_in_pool": 42,
+    "invented_name_collisions": 0,
+    "invented_name_rationales": 5,
+    "pool_newly_ineligible_by_reason": {
+      "forecast_breakdown_undocumented": 1,
+      "label_without_examples": 2,
+      "work_type_filter_no_field": 7
+    }
+  },
+  "seed": 20261013
+}
