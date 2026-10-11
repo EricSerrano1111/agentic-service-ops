@@ -129,3 +129,9 @@ touching any model.
 folder of per-ADR files. Append new entries to the end of that one file
 using the existing ADR-XXX numbering and format. Never create files under
 a `docs/decisions/` path.
+
+## Generated evaluation sets (ADR-094)
+
+`evals/generated/` holds model-written evaluation sets. No prompt-revision session reads it,
+and the same goes for `evals/golden/`: they are for measuring, not for tuning. Filtering only
+removes items; no generated question or label is edited after generation.

@@ -32,3 +32,11 @@ output_per_m = 12.00
 source = "https://ai.google.dev/gemini-api/docs/pricing"
 as_of = "2026-09-26"
 note = "Prompts up to 200k tokens. No free tier. Sprint 5 Pro-for-QA candidate (ADR-029, ADR-041)."
+
+[models."gemini-3.8-flash"]
+thinking_levels = ["low", "medium", "high"]  # no minimal; default On (medium), docs read 2026-10-11
+input_per_m = 0.75
+output_per_m = 3.75
+source = "https://ai.google.dev/gemini-api/docs/pricing"
+as_of = "2026-10-11"
+note = "Evaluation-set generator (ADR-094), paid key only. Prices hold through 2026-12-31 and double on 2027-01-01 (1.50 input / 7.50 output), per the same page; thinking tokens bill as output. Levels: https://ai.google.dev/gemini-api/docs/thinking, read 2026-10-11."

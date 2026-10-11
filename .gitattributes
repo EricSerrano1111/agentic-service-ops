@@ -25,3 +25,6 @@ evals/golden/oracles.py -text
 evals/golden/golden_v2.jsonl -text
 evals/golden/golden_v2.expected.json -text
 evals/golden/golden_v2.manifest.json -text
+# Generated evaluation sets (ADR-094): LF in every checkout, so the raw-output hashes in
+# provenance.json equal the blob bytes on Windows and in CI alike.
+evals/generated/** text eol=lf
