@@ -40,7 +40,12 @@ def create_app(
     verifier = Verifier(
         src,
         settings,
-        manifest if manifest is not None else Manifest.load(settings.manifest_path),
+        manifest
+        if manifest is not None
+        else Manifest.load(
+            settings.manifest_path,
+            settings.forecast_model_dir if settings.forecast_recompute else None,
+        ),
         sentiment_manifest
         if sentiment_manifest is not None
         else SentimentManifest.load(settings.sentiment_manifest_path),
