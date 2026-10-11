@@ -3,6 +3,15 @@
 Pre-registered before any generation call. Nothing here changes after the first call; a
 deviation is reported, not edited in.
 
+## Brief
+
+`brief_v2.md` is the brief used. It is `brief_v1.md` with one owner-ruled edit (2026-10-11):
+the label bullet "Asks about the future, whatever the measure" is replaced by two bullets, a
+future question about the company's work is `forecast`, and a future question about an
+out-of-scope subject is `out_of_scope` (ADR-094, reference-policy clarification). No other
+wording changed. `brief_v1.md` is superseded and kept. The filled brief is
+`brief_v2.filled.md`. Everything below that says "the brief" means `brief_v2.md`.
+
 ## Generator and settings
 
 - Model `gemini-3.8-flash`, paid key, through `packages/llm` (`LLM_MODE=paid`).

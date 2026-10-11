@@ -10,7 +10,7 @@ disclosure.
 1. **No prompt-revision session reads this directory.** Not the raw output, the filtered pool,
    the drafts or the skim file. The sets exist to measure the system, not to tune it. The only
    readers are the owner (the skim), the evaluation runners, and the freeze step.
-2. **The brief is fixed.** `brief_v1.md` is committed verbatim; only its `{PLACEHOLDERS}` are
+2. **The brief is fixed.** `brief_v2.md` is committed verbatim (`brief_v1.md` is superseded, kept for the record: see ADR-094); only its `{PLACEHOLDERS}` are
    filled, by script, from the database as `app_eval`. Its wording is never edited to match
    the system.
 3. **The generator sees the brief and nothing else:** no project document, prompt, existing
@@ -22,7 +22,7 @@ disclosure.
 ## Pipeline
 
 ```
-brief_v1.md  --fill-->  brief_v1.filled.md  --11 calls-->  raw/<category>.json
+brief_v2.md  --fill-->  brief_v2.filled.md  --11 calls-->  raw/<category>.json
 raw/  --schema, label, duplicate filters-->  filtered/pool.jsonl + filtered/removed.jsonl
 pool  --seeded ranking-->  sets/<name>.draft.jsonl  +  skim/skim.csv
 ```
