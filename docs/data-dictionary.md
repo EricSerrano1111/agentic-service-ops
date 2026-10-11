@@ -424,6 +424,36 @@ Nothing below is new behaviour: it is what the template renderers do, written do
    - (a) A single filtered rate (technician, account and/or region) whose `denominator` is below 20 and whose rate is not null carries the sentence "That is too few to compare reliably."; a filtered rate at or above 20 does not. An incident count, a repeat-driver answer and an unfiltered overall figure carry no such sentence.
    - (b) A breakdown's text ranks only groups at or above 20 cases, worst first, at most 5; says how many groups were left out ("N [dimension]s left out of the ranking for fewer than 20 cases; all are in the data" and, for repeat drivers, "N with fewer than 20 jobs left out of the list") exactly when that number is above 0, the number being QA's own count of groups below 20; and, when no group reaches 20, says "no [dimension] has at least 20 cases to rank". The data part keeps every group.
 
+### Forecast recompute (QA) (rules written 2026-10-11 from ADR-069, ADR-070, ADR-071, ADR-072 and ADR-095, for L-83(a))
+
+QA recomputes the numbers a served forecast carries from the `volume_v2` artifact's stored parameters, with its own code (ADR-095), and requires them to match. It checks the answer against the model; it does not say the model is right (L-83(b)).
+
+**1. The inputs.** For the answer's slice, QA reads that slice's record from the artifact directory: `k`, `year_end`, `params` (the robust fit's coefficients β, in design-matrix order), `scale` (s, the robust MAD scale), `xtwx_inv` (A, the inverse of XᵀWX of the final robust fit), `last_t` and `period`. Every file is verified against the SHA-256 in the manifest's `files` map before use. From the manifest QA reads `trained_on` and `model.interval_z`. A file that is missing or whose hash differs makes QA refuse to start with the check enabled; it is never passed.
+
+**2. The week index.** A shown week with horizon `h` (1 to 26) has index `t = last_t + h`, and starts on `trained_on[0]` plus `t` weeks (Monday, UTC). A week whose start does not equal that is already failed by `week_start_does_not_match_horizon`.
+
+**3. The formulas** (the model of ADR-069 and ADR-070: OLS on the log weekly count, robust refit, median point forecast).
+- *Design vector* `x(t)`: `1`, `t`, then the year-end indicator when `year_end` is true (1 for an ISO week, Monday start, that contains December 25 or January 1; else 0), then `sin(2πjt/P)` and `cos(2πjt/P)` for `j = 1..k`, with `P = period` (52.1775).
+- *Log mean* `μ = x(t)·β`.
+- *Point* (the h-step-ahead median) `= exp(μ)`.
+- *Spread* `se = s · sqrt(1 + x(t)ᵀ A x(t))`.
+- *Interval at level L* `= exp(μ − z_L·se)` to `exp(μ + z_L·se)`, with `z_80 = 1.2815515655446004` and `z_95 = 1.959963984540054` from the manifest.
+- *Period total* `= Σ` of the **unrounded** recomputed points of the weeks shown, rounded once. It is never the sum of rounded weeks ("Answer text", rule 2).
+- *Work-type split:* none. Each service type is its own slice with its own record, recomputed the same way.
+- *Total interval:* none is served (ADR-072: no range is given for a total; a correct one needs simulation). There is nothing to check, so it is recorded as a gap below.
+
+**4. What is compared, and how.** Each *displayed* number is compared after the display rule it already has. The weekly point, the 80% range's two ends and the period total are shown to the nearest whole request, a tie to the even number ("Answer text", rule 2). The answer's value is rounded by that rule and compared with the recomputed value rounded by that rule. `shown_error` is not recomputed: it is the manifest's own value and is checked by `serving_matches_manifest`.
+
+**5. The boundary rule (the one narrow tolerance).** The recompute runs in float64. If a recomputed unrounded value is within 1e-9 relative of a rounding boundary (an exact half), either adjacent whole number passes. There is no other tolerance. The number of times this fires is reported.
+
+**6. Failure.** A mismatch fails the check `forecast_numbers_recomputed` (class `figures`) with fixed wording naming the field, never a value. A failed figures check makes the verdict `fail`, and the orchestrator returns `qa_status: failed` (ADR-092, rule 3), as for the reporting recompute. No new status is introduced.
+
+**7. Gaps, recorded and not checked** (retro change 2; reported in the check's detail as "unchecked", never as passed):
+- *The 95% interval ends* (`lo95`, `hi95`). The data part carries them; no text shows them, so no display rule exists for them. The check does not compare them.
+- *A total interval:* none exists.
+
+**8. Not covered, by design.** A model that misses a holiday (L-83(b)): QA recomputes what the stored model says, so a wrong model gives a matching answer. A misparse (R-18): the figures are recomputed for the request as parsed.
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
