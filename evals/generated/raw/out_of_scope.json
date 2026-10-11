@@ -1,0 +1,137 @@
+[
+  {
+    "id": "OOS-01",
+    "category": "out_of_scope",
+    "question": "What was our total billed revenue from Ironwood Manufacturing last month?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Billing and revenue figures are completely outside the scope of operations reporting, customer sentiment, and volume forecasts."
+  },
+  {
+    "id": "OOS-02",
+    "category": "out_of_scope",
+    "question": "Do we have enough spare compressor valves in inventory for next week's jobs?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Parts and inventory levels are explicitly defined as out of scope."
+  },
+  {
+    "id": "OOS-03",
+    "category": "out_of_scope",
+    "question": "How many hours of overtime did Elena Nakamura log during the past 2 weeks?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Staffing hours, payroll, and technician overtime are out of scope."
+  },
+  {
+    "id": "OOS-04",
+    "category": "out_of_scope",
+    "question": "Can you give me the direct phone number and email for the facility manager at Silver Creek Foods?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Customer contact details are explicitly out of scope."
+  },
+  {
+    "id": "OOS-05",
+    "category": "out_of_scope",
+    "question": "Show me the unpaid invoices for Meridian Manufacturing LLC from Q2.",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Invoicing and accounts receivable are out of scope."
+  },
+  {
+    "id": "OOS-06",
+    "category": "out_of_scope",
+    "question": "What's the hourly labor rate we charge for emergency repairs in the West region?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Pricing and service rates are explicitly out of scope."
+  },
+  {
+    "id": "OOS-07",
+    "category": "out_of_scope",
+    "question": "What is Rafael Young's work shift schedule for this upcoming Thursday?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Technician scheduling and shift rosters are out of scope."
+  },
+  {
+    "id": "OOS-08",
+    "category": "out_of_scope",
+    "question": "What was the average cost of vehicle maintenance across the fleet year to date?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Operating costs and fleet management are out of scope."
+  },
+  {
+    "id": "OOS-09",
+    "category": "out_of_scope",
+    "question": "Who is the primary service competitor for Bluewater Hospitality Partners in the Southeast?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Information regarding competitor companies and market research is out of scope."
+  },
+  {
+    "id": "OOS-10",
+    "category": "out_of_scope",
+    "question": "Did we approve Kara Tran's PTO request for the first week of September?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Staff leave, PTO, and HR management are out of scope."
+  },
+  {
+    "id": "OOS-11",
+    "category": "out_of_scope",
+    "question": "What's the weather forecast for Chicago over the next three days?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "General knowledge queries such as weather forecasts are out of scope."
+  },
+  {
+    "id": "OOS-12",
+    "category": "out_of_scope",
+    "question": "What is the projected gross profit margin across all regions for Q4 2026?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Asking about the future of an excluded subject like financial profit remains out of scope."
+  },
+  {
+    "id": "OOS-13",
+    "category": "out_of_scope",
+    "question": "Which supplier do we buy our commercial filter units from?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Vendor procurement, parts, and external supplier data are out of scope."
+  },
+  {
+    "id": "OOS-14",
+    "category": "out_of_scope",
+    "question": "How much did we spend on technician mileage reimbursements last quarter?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Employee expense reimbursements and payroll costs are out of scope."
+  },
+  {
+    "id": "OOS-15",
+    "category": "out_of_scope",
+    "question": "Are any of our service vans in the Northeast due for an oil change this month?",
+    "expected_route": "out_of_scope",
+    "candidate_areas": [],
+    "intent": null,
+    "rationale": "Internal fleet maintenance and vehicle tracking are out of scope."
+  }
+]

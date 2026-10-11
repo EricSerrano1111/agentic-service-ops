@@ -1,0 +1,287 @@
+{
+  "$defs": {
+    "Intent": {
+      "additionalProperties": false,
+      "properties": {
+        "account_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Account Name"
+        },
+        "area": {
+          "enum": [
+            "reporting",
+            "sentiment",
+            "forecast"
+          ],
+          "title": "Area",
+          "type": "string"
+        },
+        "breakdown": {
+          "anyOf": [
+            {
+              "enum": [
+                "account",
+                "region",
+                "work_type",
+                "technician",
+                "incident_type",
+                "severity",
+                "month",
+                "quarter"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Breakdown"
+        },
+        "examples_requested": {
+          "title": "Examples Requested",
+          "type": "boolean"
+        },
+        "horizon_weeks": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Horizon Weeks"
+        },
+        "measure": {
+          "anyOf": [
+            {
+              "enum": [
+                "incident_count",
+                "incident_rate",
+                "sla_compliance",
+                "first_time_fix_rate",
+                "followup_drivers",
+                "sentiment_mix",
+                "sentiment_trend",
+                "example_comments",
+                "weekly_volume",
+                "other"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measure"
+        },
+        "period_end": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Period End"
+        },
+        "period_start": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Period Start"
+        },
+        "period_stated": {
+          "title": "Period Stated",
+          "type": "boolean"
+        },
+        "period_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Period Text"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "enum": [
+                "northeast",
+                "southeast",
+                "central",
+                "west",
+                "unsupported"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Region"
+        },
+        "sentiment_label": {
+          "anyOf": [
+            {
+              "enum": [
+                "positive",
+                "neutral",
+                "negative",
+                "mixed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sentiment Label"
+        },
+        "technician_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Technician Name"
+        },
+        "work_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "install",
+                "repair",
+                "maintenance",
+                "inspection",
+                "upgrade"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Work Type"
+        }
+      },
+      "required": [
+        "area",
+        "measure",
+        "period_stated",
+        "period_text",
+        "period_start",
+        "period_end",
+        "horizon_weeks",
+        "region",
+        "account_name",
+        "technician_name",
+        "breakdown",
+        "work_type",
+        "sentiment_label",
+        "examples_requested"
+      ],
+      "title": "Intent",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "`intent` is required as a key and may be null.",
+  "properties": {
+    "candidate_areas": {
+      "items": {
+        "enum": [
+          "reporting",
+          "sentiment",
+          "forecast"
+        ],
+        "type": "string"
+      },
+      "title": "Candidate Areas",
+      "type": "array"
+    },
+    "category": {
+      "enum": [
+        "clear_reporting",
+        "clear_sentiment",
+        "clear_forecast",
+        "underspecified",
+        "ambiguous",
+        "multi_domain",
+        "out_of_scope",
+        "near_miss",
+        "technician",
+        "filtered",
+        "unsupported_in_area"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "expected_route": {
+      "enum": [
+        "reporting",
+        "sentiment",
+        "forecast",
+        "multi_domain",
+        "ambiguous",
+        "out_of_scope"
+      ],
+      "title": "Expected Route",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "intent": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Intent"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "question": {
+      "title": "Question",
+      "type": "string"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "category",
+    "question",
+    "expected_route",
+    "candidate_areas",
+    "intent",
+    "rationale"
+  ],
+  "title": "Item",
+  "type": "object"
+}
