@@ -3012,7 +3012,7 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - Sets stay drafts until the owner's skim. Freezing (manifests, hashes, interpretation pairs) is a later step.
 
 ### ADR-095 — QA recomputes served forecast numbers independently (L-83(a))
-*Date: 2026-10-11. Extends ADR-055, ADR-087 and ADR-092; closes L-83(a); supersedes nothing. Pre-registered before any QA code. Prompt T's ADR-095 had not merged when this was written; if it merges first, this entry is renumbered at merge, before anything cites it.*
+*Date: 2026-10-11. Extends ADR-055, ADR-087 and ADR-092; closes L-83(a); supersedes nothing. Pre-registered before any QA code.*
 
 **Decision:**
 - QA reimplements the `volume_v2` prediction from the artifact's stored parameters and requires every number a served forecast **shows** (the weekly point, the 80% range's two ends, the period total) to equal its own value after the display rule of data dictionary §6, "Answer text", rule 2. The formulas, the rounding, the boundary rule and the failure semantics are written in data dictionary §6, "Forecast recompute (QA)".
