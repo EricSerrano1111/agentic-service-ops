@@ -29,7 +29,6 @@ import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Any
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -102,9 +101,9 @@ CITE = {
     "sentiment.example_label": "intent.sentiment_label; §6 sentiment rule 7",
     "sentiment.unsupported": "intent.breakdown; §6 sentiment rule 8",
     "forecast.slice": "intent.work_type; ADR-069 slices; ForecastRequest default total",
-    "forecast.horizon_weeks": "intent.period_text/horizon_weeks; ADR-072; ForecastRequest docstring",
+    "forecast.horizon_weeks": "intent.period_text/horizon_weeks; ADR-072; ForecastRequest",
     "forecast.period": "intent.period_start/end; ADR-072 (a period maps to ISO weeks)",
-    "forecast.unsupported": "intent.region/account_name/technician_name/breakdown; ADR-072 declines",
+    "forecast.unsupported": "intent.region/account/technician/breakdown; ADR-072 declines",
     "forecast.want_history": "no label; ForecastRequest default false (disclosed)",
 }
 MUTATION_CITE = {
@@ -541,6 +540,21 @@ def real_names() -> dict:
     return {"accounts": accounts, "technicians": techs}
 
 
+def make_pair(row, ev, question, role, fields, mutation, cites) -> dict:
+    req = _schema(ev["domain"])(**fields)
+    return {
+        "id": f"{ev['domain'][0]}-{row['uid']}-{'ok' if role == 'correct' else 'bad'}",
+        "source_id": row["uid"],
+        "domain": ev["domain"],
+        "question": question,
+        "request": json.loads(req.model_dump_json()),
+        "role": role,
+        "label": "matches" if role == "correct" else "mismatch",
+        "mutation": mutation,
+        "citations": cites,
+    }
+
+
 # --------------------------------------------------------------------------- main
 
 _INVENTED = re.compile(
@@ -617,23 +631,12 @@ def main() -> int:
         wrong_fields = {**base_fields, **change}
         question = r["item"]["question"]
 
-        def pair(role, fields, mutation, cites):
-            req = _schema(ev["domain"])(**fields)
-            return {
-                "id": f"{ev['domain'][0]}-{r['uid']}-{'ok' if role == 'correct' else 'bad'}",
-                "source_id": r["uid"],
-                "domain": ev["domain"],
-                "question": question,
-                "request": json.loads(req.model_dump_json()),
-                "role": role,
-                "label": "matches" if role == "correct" else "mismatch",
-                "mutation": mutation,
-                "citations": cites,
-            }
-
-        lines.append(pair("correct", base_fields, None, ev["used"]))
+        lines.append(make_pair(r, ev, question, "correct", base_fields, None, ev["used"]))
         lines.append(
-            pair(
+            make_pair(
+                r,
+                ev,
+                question,
                 "wrong",
                 wrong_fields,
                 {"operator": mtype, "change": change},
