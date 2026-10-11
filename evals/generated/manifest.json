@@ -1,0 +1,55 @@
+{
+  "adr": "ADR-094",
+  "freeze_commit": "8ed47771fa084794fe663506ae489339f5db4459",
+  "freeze_time": "2026-10-11T15:04:21-05:00",
+  "note": "Final sets are append-never: a later change is a new version under a new ADR.",
+  "sets": {
+    "evals/generated/sets/fr03_fresh_v2.jsonl": {
+      "git_blob": "f9cb31b896dfe080358e23772828d1157475277c",
+      "lines": 16,
+      "sha256": "ff3dbeba841aab0526590683c232b2115c24e5331a9ab7dc84231956549164de"
+    },
+    "evals/generated/sets/interp_fresh_v1.jsonl": {
+      "git_blob": "72b6a52a0cb48e4c8e15c5385223ac4dcb954626",
+      "lines": 23,
+      "sha256": "c3bd2b02e7e7d27ef78dd9243753846ee6a57bb6e5ae0e2fd2f13bf2562ef950"
+    },
+    "evals/generated/sets/interp_pairs_v1.jsonl": {
+      "git_blob": "ea1a23eb20843a6dbb268b8edb883411eb121276",
+      "lines": 46,
+      "sha256": "b4c1fe9b130e6c7ad63cc5ab79cf846413ff73b17485a5daba075b89101ccde3"
+    },
+    "evals/generated/sets/parse_filters_v1.jsonl": {
+      "git_blob": "318cc1abe64da9aa5b3108658fa6d932e8cb73a9",
+      "lines": 12,
+      "sha256": "642bdb860470531f579d7a714f13201bc2987a729a50bb7b4824684e72588900"
+    },
+    "evals/generated/sets/reserve.jsonl": {
+      "git_blob": "9b274b2d3a98f77f370eca1484c06257513588d9",
+      "lines": 107,
+      "sha256": "b0cfd1f7e2a84bd87b12b86215d079356da69a60d954fb9e5c8482280d006e28"
+    },
+    "evals/generated/sets/routing_heldout_v1.jsonl": {
+      "git_blob": "7aa0c4db9b1663a423dcc00abb8e48ca343f7673",
+      "lines": 50,
+      "sha256": "2df8b3f0620982695f3e124318065b14d3a60b58a9fbf647f100c34cedf90d5c"
+    }
+  },
+  "supporting": {
+    "evals/generated/pairs_plan.md": {
+      "git_blob": "d587d6e15e4ddcdafda3805ea2e8634b2da21b7e",
+      "lines": 202,
+      "sha256": "b4291819f56a3cb2635db6a0f6aa7e6da39bbefd7dd8b25ce629993ddfa33d87"
+    },
+    "evals/generated/pairs_provenance.json": {
+      "git_blob": "c369b63ed3226495c4c6d289d4dc975dc6588c66",
+      "lines": 102,
+      "sha256": "cc6cf5cc5567d2c9b081f9aa7c041d8ffcf40a3f35bfadd98c2020903b868fa2"
+    },
+    "evals/generated/sets/skim_applied.json": {
+      "git_blob": "4f30bc51083dd319b557174ea2cd2ad566a079aa",
+      "lines": 85,
+      "sha256": "df8dbd42d8b9d4a62887e1e217e2e147e333ebd474a7bf96b6ec0afc2014b4e3"
+    }
+  }
+}

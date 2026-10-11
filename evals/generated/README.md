@@ -25,6 +25,7 @@ disclosure.
 brief_v2.md  --fill-->  brief_v2.filled.md  --11 calls-->  raw/<category>.json
 raw/  --schema, label, duplicate filters-->  filtered/pool.jsonl + filtered/removed.jsonl
 pool  --seeded ranking-->  sets/<name>.draft.jsonl  +  skim/skim.csv
+skim + drafts --apply_skim, build_pairs, freeze-->  sets/<name>.jsonl  +  manifest.json
 ```
 
 - `plan.md`: pool counts, filter rules, eligibility, set definitions and the seed, committed
@@ -35,7 +36,48 @@ pool  --seeded ranking-->  sets/<name>.draft.jsonl  +  skim/skim.csv
   hashes, and per-call tokens, cost, latency and outcome.
 - Line endings are pinned to LF (`.gitattributes`) so the raw-output hashes never drift.
 
-## Status
+## Status: frozen (2026-10-11)
 
-Drafts only. Freezing (manifest hashes, git blob hashes, interpretation pairs built from
-`intent`) happens after the owner's skim.
+The sets are final. `manifest.json` records each file's SHA-256, git blob hash and line count
+and the freeze commit; `tests/unit/test_eval_set_manifest.py` recomputes them in the normal
+suite and fails on any difference. Final sets are **append-never**: a later change is a new
+version (`_v2`) under a new ADR, never an edit.
+
+| File | Items | Notes |
+|---|---|---|
+| `sets/routing_heldout_v1.jsonl` | 50 | held-out routing; 3 skim drops replaced |
+| `sets/fr03_fresh_v2.jsonl` | 16 | FR-03 fresh set; 2 skim drops replaced |
+| `sets/interp_fresh_v1.jsonl` | 23 | target 24; one sentiment slot unfilled (no eligible reserve item) |
+| `sets/interp_pairs_v1.jsonl` | 46 | 23 correct + 23 wrong, one per item and role |
+| `sets/parse_filters_v1.jsonl` | 12 | optional, for later reporting-parse changes |
+| `sets/reserve.jsonl` | 107 | everything else, in rank order |
+
+`apply_skim.py` applies the owner's skim (`sets/skim_applied.json`, IDs only), `build_pairs.py`
+builds the pairs from `intent` by the rules of `pairs_plan.md` (`pairs_provenance.json` records
+the name pool's hash, the counts and the interpretation set's removals and refills), and
+`freeze.py` assembles the final files. `pairs_plan.md` was committed before `build_pairs.py`
+existed; its one amendment (the selection rule) was made after a first build gave no
+`name_swap` pairs and before any model saw a pair.
+
+## Interpretation pairs: how they were built
+
+"Correct pairs map the generated labels to request schemas by documented rules. Wrong pairs are
+single, seeded mutations from a menu written by the assistant that built the system. So they
+test the misparse kinds that assistant anticipated, not misparses observed in use."
+
+Every field's mapping is cited to the data dictionary or an ADR in `pairs_plan.md`. A field with
+no documented representation makes its items ineligible. The pair file carries `question`,
+`domain`, `request`, `label` (`matches` or `mismatch`), `role`, `mutation` and `citations`, so
+the existing runner (`evals/qa_interp/run.py`) can read it; its sentiment readings are new to
+that runner. `want_history` is always false because the labels cannot carry it.
+
+## Skim criterion (2026-10-11)
+
+2026-10-11: owner drops at the skim were made on persona grounds: a question a dispatcher or
+call-centre agent would ask, but not a senior operations leader with an overview of the
+business unit (the brief's stated asker). Labels were not changed. The owner hadn't seen any
+system output for these items.
+
+**A selection effect to disclose.** Persona drops may remove the more granular, operational
+questions, which leaves the sets weighted toward broad leadership questions. The failure
+analysis reports the drop count.

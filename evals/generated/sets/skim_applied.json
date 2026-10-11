@@ -1,0 +1,85 @@
+{
+  "order": [
+    "interp_fresh_v1",
+    "fr03_fresh_v2",
+    "routing_heldout_v1",
+    "parse_filters_v1"
+  ],
+  "reserve_removed_n": [],
+  "reserve_used": [
+    "ambiguous/AMB-08",
+    "ambiguous/AMB-10",
+    "ambiguous/AMB-16",
+    "ambiguous/AMB-21",
+    "ambiguous/AMB-23"
+  ],
+  "sets": {
+    "fr03_fresh_v2": {
+      "draft_size": 16,
+      "dropped": [
+        "ambiguous/AMB-06",
+        "ambiguous/AMB-24"
+      ],
+      "final_size": 16,
+      "replacements": [
+        {
+          "replaces": "ambiguous/AMB-06",
+          "skim_covered_slot": true,
+          "uid": "ambiguous/AMB-21"
+        },
+        {
+          "replaces": "ambiguous/AMB-24",
+          "skim_covered_slot": true,
+          "uid": "ambiguous/AMB-08"
+        }
+      ],
+      "unfilled_slots": []
+    },
+    "interp_fresh_v1": {
+      "draft_size": 24,
+      "dropped": [],
+      "final_size": 24,
+      "replacements": [],
+      "unfilled_slots": []
+    },
+    "parse_filters_v1": {
+      "draft_size": 12,
+      "dropped": [],
+      "final_size": 12,
+      "replacements": [],
+      "unfilled_slots": []
+    },
+    "routing_heldout_v1": {
+      "draft_size": 50,
+      "dropped": [
+        "ambiguous/AMB-05",
+        "ambiguous/AMB-13",
+        "ambiguous/AMB-12"
+      ],
+      "final_size": 50,
+      "replacements": [
+        {
+          "replaces": "ambiguous/AMB-05",
+          "skim_covered_slot": true,
+          "uid": "ambiguous/AMB-10"
+        },
+        {
+          "replaces": "ambiguous/AMB-13",
+          "skim_covered_slot": true,
+          "uid": "ambiguous/AMB-16"
+        },
+        {
+          "replaces": "ambiguous/AMB-12",
+          "skim_covered_slot": true,
+          "uid": "ambiguous/AMB-23"
+        }
+      ],
+      "unfilled_slots": []
+    }
+  },
+  "skim": {
+    "N": 5,
+    "Y": 26,
+    "rows": 31
+  }
+}

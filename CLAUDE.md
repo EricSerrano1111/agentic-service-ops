@@ -135,3 +135,7 @@ a `docs/decisions/` path.
 `evals/generated/` holds model-written evaluation sets. No prompt-revision session reads it:
 the sets are for measuring, not for tuning. Filtering only removes items; no generated
 question or label is edited after generation.
+
+## Golden set
+
+No session reads `evals/golden/` except a golden-run prompt that says so explicitly.
