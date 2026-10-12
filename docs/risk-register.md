@@ -32,6 +32,8 @@
 | R-16 | Evaluation | Evaluation validity: small, partly non-blind development sets and run-to-run variance make measured differences possibly noise | High | Medium | Open |
 | R-17 | Technical / Environment | Local environment memory exhaustion (WSL/Docker) | High | Medium | Open |
 | R-18 | Verification / Evaluation | Misinterpreted questions pass as verified | Medium | High | Open |
+| R-19 | Deployment / ML | The sentiment model weights have no path into a Cloud Run image, so `ops-sentiment` cannot start | High | Medium | Open |
+| R-20 | Technical / Deployment | Cloud SQL `max_connections` (60 on `db-f1-micro`) is exceeded by instance fan-out during a rollout | Low | Medium | Open |
 
 ---
 
@@ -109,6 +111,8 @@
 **Update 2026-10-10 (ADR-091, loop demonstration):** A figures failure injected through a test-only proxy ended the request at the first verdict: one reporting task, no retry, the degraded result at list price $0.000948 (routing and parse; the interpretation call is skipped on a figures failure). The same question verified cost $0.001604 against the $0.02 cap. The interpretation retry, the path that multiplies calls, still cannot run because the check is advisory (L-74), so the loop's worst case is not exercised by live traffic. Status stays Mitigating; the trigger is when `QA_INTERP_MODE=enforce` is ever turned on.
 
 **Update 2026-10-10 (Sprint 4 boundary review):** Confirmed. The 2026-10-10 update above stands. The interpretation re-ask, the path that multiplies calls, is built and tested but cannot run live while the check is advisory (L-74), so the worst case is still untested on real traffic; the trigger is the day `QA_INTERP_MODE=enforce` is turned on. Status stays Mitigating.
+
+**Update 2026-10-12 (Prompt U, deploy readiness):** the cold-start measurement is planned in `deploy/RUNBOOK_V.md` step 12: one `/healthz` per service in chain order after 15 minutes idle, then one real question after another 15 minutes, against the 120 s deadline (ADR-034). The chain is now six services deep (gateway, orchestrator, a specialist, QA), each at `min_instances=0`; the sentiment sidecar's start-up hash of 438 MB cannot be measured until R-19 is decided. Nothing has been measured yet.
 
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
@@ -305,6 +309,20 @@ The same steps are in the README's "Local environment recovery". Check the memor
 **Review trigger:** The Sprint 5 interpretation-gate reattempt; every sprint retro.
 **Update 2026-10-11:** the answer-time forecast check named in the mitigation (L-83(a)) is built (ADR-095): QA recomputes served forecast numbers from the stored parameters. Measurement 3 still catches consistent misparses 0 of 71; the check does not catch the parse itself, as stated here.
 **Update 2026-10-12:** the single-screen UI built under ADR-097 shows an "Interpreted as:" line with every answer, and every decline that carries a parsed request: the measure, the resolved dates (and whether they were assumed), the region ("all regions", or "region not recognised"), account or technician, breakdown and forecast horizon (data dictionary §6, "Answer display (UI)"). It is the user's check on a misparse, which the mitigation above relied on the answer text alone to provide. The risk itself is unchanged: the line shows how the question was read, it does not make the reading correct, and `qa_status: verified` is worded "Figures checked for the request as interpreted" (L-74). Status stays Open.
+
+### R-19 — The sentiment model weights have no path into a Cloud Run image
+*Added 2026-10-12 (Prompt U, deploy readiness).*
+**Description:** `mcp_feedback` hash-checks every file its manifest lists, including the 438 MB `model.safetensors`, at start-up and refuses to start if one is missing (ADR-066, ADR-067); it then loads BERT lazily for any comment in range without a stored prediction. The weights are gitignored (`/models/`), and the build trigger builds from git. ADR-062's Cloud Storage path was never built: no bucket exists (read 2026-10-12). A built `mcp-feedback` image therefore cannot start, and `ops-sentiment` cannot serve.
+**Likelihood / Impact:** High (certain as the repo stands) / Medium (one of three specialist routes is unavailable in the deployed system; the other two and QA are unaffected). **Status:** Open.
+**Mitigation:** the `ops-sentiment` definition is written and tested; its image build and deploy are gated behind `_DEPLOY_SENTIMENT=false` and marked BLOCKED in `plan_full.py` and the runbook, so the rest deploys. Until decided, a sentiment question answers "The data service is unavailable right now." Owner's choice: (A) ADR-062 as written: a bucket, a build step that pulls the pinned weights, read access for the build account (about 440 MB plus torch in the image; the start-up hash of 438 MB counts against the 120 s deadline, R-05); or (B) stored predictions only after a complete backfill, which drops on-demand scoring and relaxes the start-up check and needs its own ADR.
+**Review trigger:** the owner's decision; the Prompt V window.
+
+### R-20 — Cloud SQL connection ceiling during a rollout
+*Added 2026-10-12 (Prompt U, ADR-099).*
+**Description:** `ops-db` allows 60 connections. Four services connect, each container's pool is at most 4, and each is limited to 2 instances: 32 at the steady-state worst case, 46 with the reserved and owner sessions budgeted. During a rollout an old and a new revision can both hold instances, a theoretical 78. It is reached only if every instance of both revisions holds its whole pool at once.
+**Likelihood / Impact:** Low (a handful of reviewers; pools open on demand) / Medium (`too many connections` makes the data services fail until instances drain). **Status:** Open.
+**Mitigation:** the arithmetic is in ADR-099 and checked by `tests/unit/test_deploy_full.py` against the definitions and the pool settings in code. The runbook's stop rule is any `too many connections` in a service log.
+**Review trigger:** the Prompt V window.
 
 ---
 

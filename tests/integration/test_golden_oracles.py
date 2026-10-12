@@ -6,9 +6,9 @@ rather than through `forecast_runtime`. The pinned numbers were hand-counted on
 2026-10-02 against the loaded database; CI loads the same deterministic data.
 
 The sentiment check needs the stored `bert_v1` predictions, which CI's database doesn't
-hold (no model runs in CI), and the forecast check needs the `volume_v2` artifact, which is
-gitignored (`/models/`, ADR-062): each skips where its input is absent, as the volume tests
-do, and both run on the development machine.
+hold (no model runs in CI). The forecast check needs the `volume_v2` parameter files, which
+are committed since ADR-098 and so are present in CI as well; it still skips if they are
+absent. The sentiment check runs on the development machine and on Cloud SQL after the backfill.
 """
 
 from __future__ import annotations

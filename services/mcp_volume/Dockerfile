@@ -5,8 +5,8 @@
 # and the committed artifact manifest. No training code: forecasts come from the
 # forecast-runtime package (ADR-062, ADR-072).
 #
-# The model files are NOT baked in locally: compose mounts models/forecast read-only. The
-# manifest is baked in; start-up verifies the mounted files against it.
+# The manifest and the six volume_v2 parameter files are baked in (ADR-098); start-up verifies
+# the files against the manifest and the server refuses to start on a mismatch (ADR-072).
 
 FROM python:3.12-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.12.19 /uv /bin/uv
@@ -26,6 +26,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=build /app/.venv /app/.venv
 COPY ml/forecast/artifacts/volume_v2.manifest.json /app/artifacts/volume_v2.manifest.json
+COPY models/forecast/volume_v2/ /models/forecast/volume_v2/
 
 RUN useradd --system --uid 10001 app
 USER app

@@ -186,21 +186,126 @@ def test_answer_without_warning_leaves_other_text_alone():
     assert answer_without_warning("plain", "other") == "plain"
 
 
-@pytest.mark.parametrize("status", [422, 429, 503, 500, 502])
-def test_an_orchestrator_error_is_passed_on_as_its_user_facing_detail(kit, status):
+UPSTREAM_DETAIL = "http://mcp-incidents:8101 SELECT secret FROM incidents failed: trace 0xBEEF"
+DATA_MSG = "The data service is unavailable right now. Please try again later."
+MAPPED = [
+    ("agent_task_failed", 502, DATA_MSG),
+    ("agent_unavailable", 502, DATA_MSG),
+    ("unclear_question", 422, "I couldn't interpret the question. Please rephrase it."),
+    (
+        "invalid_range",
+        422,
+        "The date range in the question can't be answered. Please check the dates and try again.",
+    ),
+    (
+        "rate_limited",
+        429,
+        "The language model is rate-limited right now. Please try again in about a minute.",
+    ),
+    (
+        "daily_quota_exhausted",
+        503,
+        "The language model's daily quota is used up. It resets at midnight Pacific time.",
+    ),
+    (
+        "model_unavailable",
+        503,
+        "The language model is temporarily unavailable. Please try again shortly.",
+    ),
+    ("internal_error", 500, "Something went wrong on our side. Please try again."),
+]
+
+
+@pytest.mark.parametrize(("code", "status", "message"), MAPPED, ids=[m[0] for m in MAPPED])
+def test_each_known_upstream_error_code_maps_to_one_fixed_message(kit, code, status, message):
     kit.upstream.status = status
-    kit.upstream.body = {
-        "error": "rate_limited",
-        "detail": "The language model is rate-limited right now.",
-        "trace_id": "t",
-    }
+    kit.upstream.body = {"error": code, "detail": UPSTREAM_DETAIL, "trace_id": "t"}
     kit.sign_in()
     r = kit.ask()
     assert r.status_code == status
+    assert r.json() == {"error": code, "detail": message}
+
+
+def test_an_unknown_upstream_code_gets_the_one_generic_message(kit):
+    kit.upstream.status = 502
+    kit.upstream.body = {"error": "made_up_code", "detail": UPSTREAM_DETAIL, "trace_id": "t"}
+    kit.sign_in()
+    r = kit.ask()
+    assert r.status_code == 502
     assert r.json() == {
-        "error": "rate_limited",
-        "detail": "The language model is rate-limited right now.",
+        "error": "upstream_error",
+        "detail": "The service could not answer. Please try again.",
     }
+
+
+def test_a_known_code_on_an_unexpected_status_is_the_generic_message(kit):
+    kit.upstream.status = 418
+    kit.upstream.body = {"error": "rate_limited", "detail": UPSTREAM_DETAIL}
+    kit.sign_in()
+    r = kit.ask()
+    assert r.status_code == 502 and r.json()["error"] == "upstream_error"
+
+
+@pytest.mark.parametrize(
+    "code", [m[0] for m in MAPPED] + ["made_up_code", "x" * 80], ids=lambda c: c[:24]
+)
+def test_no_upstream_detail_string_reaches_the_response(kit, code):
+    kit.upstream.status = 502
+    kit.upstream.body = {"error": code, "detail": UPSTREAM_DETAIL, "trace_id": "t"}
+    kit.sign_in()
+    r = kit.ask()
+    for fragment in ("mcp-incidents", "SELECT", "0xBEEF", "8101", UPSTREAM_DETAIL, "x" * 41):
+        assert fragment not in r.text
+    assert set(r.json()) == {"error", "detail"}
+
+
+def test_the_upstream_detail_is_logged_with_the_trace_id_not_returned(kit):
+    import logging
+
+    class Records(logging.Handler):
+        def __init__(self) -> None:
+            super().__init__(logging.DEBUG)
+            self.records: list[logging.LogRecord] = []
+
+        def emit(self, record: logging.LogRecord) -> None:
+            self.records.append(record)
+
+    handler, logger = Records(), logging.getLogger("gateway")
+    logger.addHandler(handler)
+    previous, was_disabled = logger.level, logger.disabled
+    logger.setLevel(logging.INFO)
+    logger.disabled = False  # a dictConfig in another test can leave it disabled
+    try:
+        kit.upstream.status = 502
+        kit.upstream.body = {
+            "error": "agent_task_failed",
+            "detail": "The incidents query failed.",
+            "trace_id": "trace-123",
+        }
+        kit.sign_in()
+        r = kit.ask()
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(previous)
+        logger.disabled = was_disabled
+    assert "incidents query" not in r.text
+    record = next(x for x in handler.records if x.getMessage() == "ask refused upstream")
+    assert record.upstream_detail == "The incidents query failed."
+    assert record.upstream_trace_id == "trace-123"
+
+
+def test_a_timeout_waiting_for_the_orchestrator_is_a_fixed_504(kit):
+    kit.upstream.raise_error = httpx.ReadTimeout("timed out talking to http://orchestrator:8000")
+    kit.sign_in()
+    r = kit.ask()
+    assert r.status_code == 504
+    assert r.json() == {
+        "error": "deadline_exceeded",
+        "detail": (
+            "The question took too long to answer. Please try again, or ask for a shorter period."
+        ),
+    }
+    assert "orchestrator" not in r.text
 
 
 def test_an_unexpected_upstream_status_is_a_generic_502(kit):  # 418: not one it passes on

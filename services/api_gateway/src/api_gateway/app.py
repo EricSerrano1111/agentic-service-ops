@@ -29,15 +29,43 @@ from .config import Settings
 from .interpret import view
 from .invites import Invite, InviteStore, find_by_id, find_by_token
 from .limits import DailyCap, SlidingWindow
-from .upstream import Orchestrator, OrchestratorUnavailable
+from .upstream import Orchestrator, OrchestratorTimeout, OrchestratorUnavailable
 
 log = logging.getLogger("gateway")
 
 MAX_BODY_BYTES = 4096
 MAX_QUESTION_CHARS = 500
-#: Orchestrator errors passed on to the user (their `detail` is written for the user). 502 is
-#: its "agent task failed / agent unavailable" family, e.g. "The incidents query failed."
-PASS_ON = {422, 429, 500, 502, 503}
+#: Upstream `error` code -> (status, message). The message is the gateway's own fixed sentence;
+#: the orchestrator's `detail` is never shown, it is logged with the trace ID (data dictionary §6,
+#: "Answer display (UI)", rule 5). The status is the upstream's, kept when it is one of these.
+DATA_UNAVAILABLE = "The data service is unavailable right now. Please try again later."
+UPSTREAM_MESSAGES: dict[str, tuple[int, str]] = {
+    "agent_task_failed": (502, DATA_UNAVAILABLE),
+    "agent_unavailable": (502, DATA_UNAVAILABLE),
+    "unclear_question": (422, "I couldn't interpret the question. Please rephrase it."),
+    "invalid_range": (
+        422,
+        "The date range in the question can't be answered. Please check the dates and try again.",
+    ),
+    "rate_limited": (
+        429,
+        "The language model is rate-limited right now. Please try again in about a minute.",
+    ),
+    "daily_quota_exhausted": (
+        503,
+        "The language model's daily quota is used up. It resets at midnight Pacific time.",
+    ),
+    "model_unavailable": (
+        503,
+        "The language model is temporarily unavailable. Please try again shortly.",
+    ),
+    "internal_error": (500, "Something went wrong on our side. Please try again."),
+}
+UNKNOWN_UPSTREAM = "The service could not answer. Please try again."
+DEADLINE_MESSAGE = (
+    "The question took too long to answer. Please try again, or ask for a shorter period."
+)
+LOGGED_DETAIL_CHARS = 300
 HSTS = "max-age=63072000; includeSubDomains"
 
 
@@ -258,6 +286,8 @@ def create_app(
             )
         try:
             status, body = await orchestrator.ask(question)
+        except OrchestratorTimeout:
+            raise Reject(504, "deadline_exceeded", DEADLINE_MESSAGE) from None
         except OrchestratorUnavailable:
             raise Reject(
                 503, "service_unavailable", "The service is temporarily unavailable. Try again."
@@ -270,19 +300,29 @@ def create_app(
                     "invite_label": invite.label,
                     "outcome": body.get("outcome"),
                     "qa_status": body.get("qa_status"),
-                    "trace_id": body.get("trace_id"),
+                    "upstream_trace_id": body.get("trace_id"),
                     "question_chars": len(question),
                 },
             )
             return JSONResponse(view(question, body), headers={"Cache-Control": "no-store"})
-        detail = body.get("detail")
+        code, detail = body.get("error"), body.get("detail")
         log.info(
             "ask refused upstream",
-            extra={"invite_id": invite.id, "status": status, "trace_id": body.get("trace_id")},
+            extra={
+                "invite_id": invite.id,
+                "status": status,
+                "upstream_error": code[:40] if isinstance(code, str) else None,
+                # Logged, never returned: it can be an agent's own task text (L-89).
+                "upstream_detail": (
+                    detail[:LOGGED_DETAIL_CHARS] if isinstance(detail, str) else None
+                ),
+                "upstream_trace_id": body.get("trace_id"),
+            },
         )
-        if status in PASS_ON and isinstance(detail, str) and len(detail) <= 500:
-            raise Reject(status, str(body.get("error", "error"))[:40], detail)
-        raise Reject(502, "upstream_error", "The service could not answer. Please try again.")
+        mapped = UPSTREAM_MESSAGES.get(code) if isinstance(code, str) else None
+        if mapped is not None and mapped[0] == status:
+            raise Reject(status, code, mapped[1])
+        raise Reject(502, "upstream_error", UNKNOWN_UPSTREAM)
 
     app.include_router(api)
 

@@ -495,7 +495,20 @@ Example: `Area: incident reporting · Measure: SLA compliance · Period: 2026-07
 
 **4. Follow-up flag and degraded warning.** When `escalate` is true the UI shows "Sent for follow-up" and the orchestrator's `warning` verbatim. The warning's wording is `degraded.py` `warning_for` (ADR-088): time limit (120 seconds), a dependency unavailable, cost limit, verification unavailable, or "failed verification (checks: …) and is not shown". A response that failed verification never shows its answer figures (ADR-092, rule 3).
 
-**5. Errors.** An orchestrator error with status 422, 429, 500, 502 or 503 (`unclear_question`, `rate_limited`, `daily_quota_exhausted`, `model_unavailable`, `invalid_range`, `internal_error`, `agent_task_failed`, `agent_unavailable`) is shown as its `detail` sentence, which is written for the user. Nothing else from an error (no trace, URL or exception text) reaches the page. Any other upstream status is shown as "The service could not answer. Please try again." The gateway's own refusals: "daily limit reached" (the global daily question cap, ADR-097), "too many questions this hour" (per invite), "The service is temporarily unavailable. Try again." (orchestrator unreachable), "sign-in required" (401).
+**5. Errors (revised 2026-10-12 for L-89: fixed messages; upstream text is never shown).** The orchestrator's error `detail` is *not* shown. The gateway maps the error's `error` code, and only that, to one fixed sentence it owns; the status goes on as it was. Anything it does not recognise gets the generic sentence. The upstream `detail` (which can be an agent's own task text, such as "The incidents query failed.") is written to the log with the trace ID and goes no further. The user-facing `error` value is the mapped code, or `upstream_error` for an unrecognised one, never an upstream string.
+
+| Upstream `error` (status) | User-facing message (fixed) |
+|---|---|
+| `agent_task_failed` (502), `agent_unavailable` (502) | "The data service is unavailable right now. Please try again later." |
+| `unclear_question` (422) | "I couldn't interpret the question. Please rephrase it." |
+| `invalid_range` (422) | "The date range in the question can't be answered. Please check the dates and try again." |
+| `rate_limited` (429) | "The language model is rate-limited right now. Please try again in about a minute." |
+| `daily_quota_exhausted` (503) | "The language model's daily quota is used up. It resets at midnight Pacific time." |
+| `model_unavailable` (503) | "The language model is temporarily unavailable. Please try again shortly." |
+| `internal_error` (500) | "Something went wrong on our side. Please try again." |
+| any other `error`, or any other status | "The service could not answer. Please try again." (502, `upstream_error`) |
+
+The gateway's own refusals, each fixed: "Daily limit reached: this demo answers a fixed number of questions a day. It resets at midnight Pacific time." (the global daily question cap, ADR-097; unchanged), "Too many questions this hour (limit N). Please try again later." (per invite), "The service is temporarily unavailable. Try again." (orchestrator unreachable, 503), "The question took too long to answer. Please try again, or ask for a shorter period." (the gateway's wait for the orchestrator ran out, 504, `deadline_exceeded`), "sign-in required" (401). A deadline the orchestrator itself reached is not an error: it returns the degraded result of rule 4, whose warning is a fixed template (ADR-088).
 
 ### Forecast target — **locked**
 

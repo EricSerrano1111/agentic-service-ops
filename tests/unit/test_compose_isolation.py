@@ -16,7 +16,7 @@ Asserted from `docker compose config`, the resolved configuration Docker actuall
   and the models folder read-only (ADR-067).
 - Only the orchestrator and the QA agent publish a host port among the application services,
   both on loopback (the QA agent so it can be probed from this machine, ADR-089).
-- `agent_qa` gets `app_qa`'s credentials and nothing else, a model key, no models folder.
+- `agent_qa` gets `app_qa`'s credentials and nothing else, a model key, no volumes.
 """
 
 from __future__ import annotations
@@ -201,19 +201,17 @@ def test_mcp_volume_holds_only_app_forecast_credentials_and_no_model_key(compose
     assert [k for k in _env(service) if k.startswith(LLM_PREFIXES)] == []
 
 
-def test_mcp_volume_mounts_only_the_forecast_models_read_only(compose):
-    (mount,) = compose["mcp_volume"]["volumes"]
-    assert (mount["target"], mount.get("read_only")) == ("/models/forecast", True)
+def test_mcp_volume_has_no_volumes(compose):
+    """The volume_v2 parameter files are baked into the image (ADR-098), not mounted."""
+    assert not compose["mcp_volume"].get("volumes")
 
 
-def test_agent_qa_holds_only_app_qa_credentials_and_one_read_only_parameter_folder(compose):
-    """QA has no `models/` folder of its own: it mounts the `volume_v2` parameter files and
-    nothing else, read-only, for the forecast recompute (ADR-095). No sentiment weights."""
+def test_agent_qa_holds_only_app_qa_credentials_and_no_volumes(compose):
+    """QA has no volumes. The `volume_v2` parameter files for the forecast recompute are baked
+    into its image (ADR-098, which ends the interim mount of ADR-095); no sentiment weights."""
     service = compose["agent_qa"]
     assert "env_file" not in service
-    (mount,) = service["volumes"]
-    assert (mount["target"], mount.get("read_only")) == ("/models/forecast/volume_v2", True)
-    assert str(mount["source"]).replace("\\", "/").endswith("models/forecast/volume_v2")
+    assert not service.get("volumes")
     db_vars = {key for key in _env(service) if key.startswith(DB_PREFIXES)}
     assert db_vars == {
         "POSTGRES_HOST",

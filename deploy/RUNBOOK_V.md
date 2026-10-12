@@ -1,0 +1,466 @@
+# Runbook for Prompt V: deploy the full system (ADR-098, ADR-099)
+
+Written 2026-10-12 in Prompt U. **Nothing here has been run against GCP.** Every step has a
+verification command and its expected output. Every `gcloud` command carries `--project`.
+PowerShell, from the repo root, with `.venv` built (`uv sync --locked --all-packages --all-extras`).
+
+```powershell
+$P  = 'a2a-agentic-service-ops-gcp'
+$R  = 'us-central1'
+$N  = '587647038690'                       # project number
+$DB = "${P}:${R}:ops-db"
+$G  = "https://ops-gateway-$N.$R.run.app"  # the gateway; compare with step 5g before inviting anyone
+```
+
+## What is decided and what is not
+
+- **Blocked, owner's call (R-19): `ops-sentiment`.** `mcp-feedback` refuses to start without the 438 MB
+  weights and no image carries them. Until the owner chooses (A) a bucket and a build-time pull
+  (ADR-062 as written) or (B) stored predictions only (a new ADR), the pipeline skips sentiment
+  (`_DEPLOY_SENTIMENT=false`), `plan_full.py` marks its steps BLOCKED, and sentiment questions answer
+  "The data service is unavailable right now." This runbook deploys five of six services.
+- **Unverified: the client-IP rule on Cloud Run** (note under ADR-097). Step 5h measures it.
+- **Prices:** the Google pricing pages could not be read (see Costs); figures there are estimates.
+
+## 0. Pre-flight (before the window; no billing)
+
+| # | Check | Command | Expect |
+|---|---|---|---|
+| 0a | PR reviewed and merged by the owner | `gh pr view feat/deploy-readiness --json state,mergedAt` | `MERGED` |
+| 0b | On main, clean, suites green | `git switch main; git pull; git status --short; .venv\Scripts\python -m pytest tests/unit services -q` | no changes; all pass |
+| 0c | The two images that bake the parameter files build locally | `docker compose build mcp_volume agent_qa` | `Built` for both |
+| 0d | ID token and gcloud identity | `gcloud config get-value account; gcloud auth print-access-token --quiet \| Out-Null; $LASTEXITCODE` | the owner; `0` |
+| 0e | `allUsers` is permitted by org policy | `gcloud resource-manager org-policies describe iam.allowedPolicyMemberDomains --effective --project $P` | `allValues: ALLOW` (read 2026-10-12) |
+| 0f | Trigger exists, disabled | `gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format="value(disabled)"` | `True` |
+
+**Next.js (the out-of-band security release announced for 2026-10-14).** Today's pin is 16.3.8
+(sprint log, 2026-10-12). At the window:
+
+```powershell
+npm view next dist-tags --json                                   # what is `latest`
+Invoke-RestMethod "https://api.github.com/repos/vercel/next.js/security-advisories?per_page=10" |
+  Select-Object ghsa_id, published_at, severity, @{n='patched';e={$_.vulnerabilities.patched_versions}}
+```
+
+- **Released and an advisory names the patched version `X`:** set `"next": "X"` in `web/package.json`,
+  raise the minimum in `web/scripts/check-next-version.mjs`, then
+  `cd web; npm install --package-lock-only; npm ci; npm run build; npm audit --omit=dev --audit-level=high`.
+  Expect `found 0 vulnerabilities`. Commit, push, merge before step 5.
+- **Not released, or no advisory confirms a patched version:** deploy 16.3.8 and record it in the sprint
+  log. A gateway-only redeploy later changes no answer (only `ops-gateway` is rebuilt; the other services'
+  images are unchanged).
+- The sprint log's tag URL `https://nextjs.org/blog/tag/security` is dead (404 on 2026-10-12). The
+  sources used are the GitHub Security Advisories API for `vercel/next.js` and the npm registry; a dated
+  note under that item says so.
+
+## 1. Start `ops-db` (about 5 min)
+
+```powershell
+gcloud sql instances patch ops-db --activation-policy ALWAYS --project $P
+gcloud sql instances describe ops-db --project $P --format="value(state,settings.activationPolicy)"
+```
+
+Expect `RUNNABLE  ALWAYS`. Stop and roll back: nothing to roll back; `--activation-policy NEVER` stops it.
+
+## 2. Secrets (about 5 min)
+
+The session key is generated and piped straight in; it is never written to disk or the repo.
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(48))" |
+  gcloud secrets create gateway-session-key --replication-policy automatic --data-file=- --project $P
+'{"invites": []}' |
+  gcloud secrets create gateway-invites --replication-policy automatic --data-file=- --project $P
+gcloud secrets list --project $P --format="value(name)"
+```
+
+Expect the nine existing names plus `gateway-invites` and `gateway-session-key`. (`plan_full.py` does the
+same two steps, skipping a secret that exists.) Roll back: `gcloud secrets delete <name> --project $P`
+(nothing reads them yet).
+
+## 3. Service accounts and bindings (about 10 min)
+
+```powershell
+.venv\Scripts\python deploy\plan_full.py --dry-run --phases 1,2,3,4,5      # read it first
+.venv\Scripts\python deploy\plan_full.py --phases 1,2,3,4,5                # skips what exists
+gcloud iam service-accounts list --project $P --format="value(email)"
+gcloud secrets get-iam-policy gateway-invites --project $P
+```
+
+Expect `run-sentiment`, `run-forecast`, `run-qa`, `run-gateway` in the list, and `run-gateway` as the
+only accessor of `gateway-invites`. IAM changes take a few minutes to propagate (it took over a minute
+on 2026-10-08): wait before step 5. Roll back: `gcloud iam service-accounts delete <email>`; the
+bindings go with it.
+
+## 4. Backfill `sentiment_predictions` (about 25 min, mostly unattended)
+
+`load.py` truncates predictions, so this follows any data load. It re-scores every comment with the
+local weights (about 8 comments a second, 7,521 comments, about 15 min) and stores them as `app_sentiment`
+for the model version equal to the manifest's SHA-256. It does **not** copy rows from the local database.
+Needs `models\sentiment\bert_v1` locally (present on this machine).
+
+Terminal A (leave open):
+
+```powershell
+cloud-sql-proxy $DB --port 5433
+```
+
+Terminal B:
+
+```powershell
+$env:POSTGRES_HOST = '127.0.0.1'; $env:POSTGRES_PORT = '5433'; $env:POSTGRES_DB = 'service_ops'
+$env:DB_ROLE_SENTIMENT_USER = 'app_sentiment'
+$env:DB_ROLE_SENTIMENT_PASSWORD = (gcloud secrets versions access latest --secret db-role-sentiment-password --project $P)
+$env:MODELS_DIR = 'models/sentiment/bert_v1'; $env:MANIFEST_PATH = 'ml/sentiment/artifacts/bert_v1.manifest.json'
+.venv\Scripts\python -m mcp_feedback.backfill
+```
+
+Expect log lines ending `backfill done ... "complete": true`, exit code 0. Then the check:
+
+```powershell
+$env:DB_ROLE_EVAL_USER = 'app_eval'
+$env:DB_ROLE_EVAL_PASSWORD = (gcloud secrets versions access latest --secret db-role-eval-password --project $P)
+.venv\Scripts\python scripts\predictions_fingerprint.py
+```
+
+**Expected output (recorded locally on 2026-10-12):**
+
+```
+"model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+"rows": 7521,
+"sha256": "a340b82d8af178173afae34cb17bb7f2a1e3a944baa879321f34c4ac137e259f"
+```
+
+The hash covers `feedback_id|label|confidence (4 places)|flagged`, ordered by `feedback_id`, with no
+timestamps. A different count means the cloud data differs from local (rerun README step 8's dataset
+hash check); the same count with a different hash means scoring differs (check the library versions, then
+the model version). **Stop** at either. Unblocks (they skip without stored predictions):
+`tests/integration/test_golden_oracles.py` (sentiment oracle), `test_qa_baseline.py` and
+`test_qa_sentiment_agrees.py`, and the `mcp_feedback` and `agent_sentiment` figure suites.
+Roll back: `DELETE` is not available to `app_sentiment`; rerunning `load.py` truncates the table.
+
+## 5. Deploy (about 45 min, mostly the build)
+
+**5a. Apply the full trigger (still disabled) and check what was imported:**
+
+```powershell
+gcloud builds triggers import --source deploy\trigger_full.yaml --region $R --project $P
+gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format="yaml(disabled,includedFiles,ignoredFiles,substitutions)"
+```
+
+Expect `disabled: true`, the nine `includedFiles` and four `ignoredFiles` of `trigger_full.yaml`, and
+`_DEPLOY_SENTIMENT: 'false'`. If the import rejects the file's format, `describe` the live trigger as
+YAML, copy the new filters and substitutions onto it, and import that.
+
+**5b. One run, with verification skipped (checks 4 and 6 need the invoker bindings, which need the
+services):** if `run` refuses a disabled trigger, enable it first with the command in step 8 (the
+consequence: a merge to `main` then deploys, which is intended while `ops-db` runs).
+
+```powershell
+gcloud builds triggers run deploy-reporting-slice --branch main --region $R --project $P `
+  --substitutions _RUN_VERIFY=false
+gcloud builds list --region $R --project $P --limit 1 --format="value(id,status,substitutions.COMMIT_SHA)"
+```
+
+Expect `SUCCESS` after about 25 to 40 min (nine parallel image builds on `E2_HIGHCPU_8`; the gateway
+build runs `npm ci`, the version check and `npm audit`). Roll back: nothing is serving the new tag yet
+except the two existing services' new revisions; see "Rollback".
+
+**5c. Invoker bindings, now that the services exist:**
+
+```powershell
+.venv\Scripts\python deploy\plan_full.py --phases 6 --skip-deploy
+gcloud run services list --region $R --project $P --format="value(metadata.name)"
+```
+
+Expect `ops-forecast`, `ops-gateway`, `ops-orchestrator`, `ops-qa`, `ops-reporting` (no `ops-sentiment`;
+its two steps print SKIP).
+
+**5d. Who may invoke what:**
+
+```powershell
+foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-qa','ops-forecast') {
+  "== $s"; gcloud run services get-iam-policy $s --region $R --project $P --format="value(bindings.members)"
+}
+```
+
+Expect `allUsers` on `ops-gateway` only; `run-gateway` (and `build-deploy`) on `ops-orchestrator`;
+`run-orchestrator` on the other three. Anything else: stop.
+
+**5e. Every service's serving revision holds 100% of traffic (R-03):**
+
+```powershell
+foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-qa','ops-forecast') {
+  $j = gcloud run services describe $s --region $R --project $P --format=json | ConvertFrom-Json
+  "{0}: ready={1} traffic={2}" -f $s, $j.status.latestReadyRevisionName,
+    (($j.status.traffic | ForEach-Object { "$($_.revisionName)=$($_.percent)" }) -join ',')
+}
+```
+
+Expect, for each, `traffic=<the same revision as ready>=100`, and the image tag on each revision equal to
+the build's `COMMIT_SHA`:
+`gcloud run revisions describe <rev> --region $R --project $P --format="value(spec.containers[].image)"`.
+**Stop and roll back** a service whose ready revision does not hold 100%.
+
+**5f. The sockets and secrets are where ADR-099 says:**
+
+```powershell
+foreach ($s in 'ops-qa','ops-forecast','ops-reporting') {
+  gcloud run services describe $s --region $R --project $P --format=json |
+    ConvertFrom-Json | ForEach-Object { $_.spec.template.spec.containers | ForEach-Object {
+      "{0}/{1}: mounts={2}" -f $s, $_.name, (($_.volumeMounts | ForEach-Object { $_.name }) -join ',') } }
+}
+```
+
+Expect `cloudsql` mounted on `agent-qa`, `mcp-volume` and `mcp-incidents` only.
+
+**5g. The gateway's origin is the URL invites will carry:**
+
+```powershell
+gcloud run services describe ops-gateway --region $R --project $P --format="value(status.url)"
+```
+
+Expect it to equal `$G`. If Cloud Run reports a different host (`...-uc.a.run.app`), set
+`GATEWAY_PUBLIC_ORIGIN` in `deploy/cloudrun/gateway.yaml` to that value, redeploy the gateway only, and
+use that host as `--base-url` below; the `Origin` check refuses any other.
+
+**5h. The client-IP rule (note under ADR-097):**
+
+```powershell
+$body = '{"token":"not-a-real-token"}'
+1..2 | ForEach-Object {
+  try { Invoke-WebRequest -Method Post -Uri "$G/auth/exchange" -ContentType 'application/json' `
+        -Headers @{ Origin = $G; 'X-Forwarded-For' = '203.0.113.7' } -Body $body -UseBasicParsing | Out-Null }
+  catch { "status " + $_.Exception.Response.StatusCode.value__ }
+}
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=ops-gateway AND httpRequest.requestUrl:/auth/exchange" `
+  --limit 2 --project $P --format="value(httpRequest.remoteIp)"
+```
+
+Expect `status 401` twice. `remoteIp` is the connecting address Cloud Run logged. The gateway keys its
+sign-in limit by the last `X-Forwarded-For` entry: if that is the logged `remoteIp` and not `203.0.113.7`,
+the rule holds (add a dated note under ADR-097). If it is `203.0.113.7`, set
+`GATEWAY_TRUSTED_PROXY_HOPS` accordingly and record the fix. Either way it is a stated limit (L-88).
+
+## 6. Verification run from the owner's machine (about 10 min)
+
+```powershell
+$env:PROJECT_ID = $P; $env:PROJECT_NUMBER = $N; $env:REGION = $R
+$env:EXPECTED_IMAGE_TAG = (gcloud builds list --region $R --project $P --limit 1 --format="value(substitutions.COMMIT_SHA)")
+$env:ORCHESTRATOR_SA = "run-orchestrator@$P.iam.gserviceaccount.com"
+$env:REPORTING_SA = "run-reporting@$P.iam.gserviceaccount.com"
+$env:PROBE_SA = "probe-noauth@$P.iam.gserviceaccount.com"
+$env:CLOUD_SQL_INSTANCE_NAME = 'ops-db'
+.venv\Scripts\python deploy\verify.py
+```
+
+Expect `PASS` on every line and exit 0. `verify.py` covers the orchestrator and reporting only (its
+checks 1, 4 and 5 name two services); steps 5d to 5f above are the equivalent for the other three, and
+extending the script is a task after the window. Check 6 makes two free-tier calls.
+
+## 7. Real-data suites on Cloud SQL (L-78) (about 20 min)
+
+With the proxy from step 4 still running:
+
+```powershell
+$env:POSTGRES_HOST = '127.0.0.1'; $env:POSTGRES_PORT = '5433'; $env:POSTGRES_DB = 'service_ops'
+foreach ($r in 'reporting','sentiment','forecast','qa','eval','generator','train') {
+  Set-Item "env:DB_ROLE_$($r.ToUpper())_USER" "app_$r"
+  Set-Item "env:DB_ROLE_$($r.ToUpper())_PASSWORD" (gcloud secrets versions access latest --secret "db-role-$r-password" --project $P)
+}
+$env:REQUIRE_INTEGRATION_DB = '1'
+.venv\Scripts\python -m pytest tests/integration -q -rs
+```
+
+Expect no failures; the skips are the live-model ones only. A skip naming "no stored bert_v1
+predictions" means step 4 did not finish: **stop**. (This suite does not call a model.) Then clear the
+variables: `Get-ChildItem env: | Where-Object Name -like 'DB_ROLE_*' | ForEach-Object { Remove-Item "env:$($_.Name)" }`.
+
+## 8. Enable the trigger (about 3 min)
+
+From this point a merge to `main` that touches an image's inputs deploys all five (six) services.
+
+```powershell
+(Get-Content deploy\trigger_full.yaml) -replace '^disabled: true', 'disabled: false' |
+  Set-Content "$env:TEMP\trigger_enabled.yaml" -Encoding utf8
+gcloud builds triggers import --source "$env:TEMP\trigger_enabled.yaml" --region $R --project $P
+gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format="value(disabled)"
+Remove-Item "$env:TEMP\trigger_enabled.yaml"
+```
+
+Expect `False` (the field prints empty or `False` when enabled; `True` means still disabled). Check that
+a docs-only change cannot deploy: open a one-line change to `docs/sprint-log.md` as a PR, merge it, and
+confirm no new build: `gcloud builds list --region $R --project $P --limit 1` shows the same id as
+before. (The filter itself is tested offline in `tests/unit/test_deploy_trigger.py`.) Disable again:
+repeat with `disabled: true`.
+
+## 9. Invites (about 10 min)
+
+```powershell
+$S = "projects/$N/secrets/gateway-invites"
+.venv\Scripts\python scripts\invites.py --secret $S create --label owner-laptop --days 14 --base-url $G
+.venv\Scripts\python scripts\invites.py --secret $S create --label owner-phone  --days 14 --base-url $G
+.venv\Scripts\python scripts\invites.py --secret $S create --label test         --days 1  --base-url $G
+.venv\Scripts\python scripts\invites.py --secret $S list
+```
+
+Each `create` prints its link once (`$G/#invite=...`); copy them to a password manager, never the repo.
+Expect `list` to show three `active` rows and no hash. Roll back: `scripts\invites.py --secret $S revoke --id <id>`.
+
+## 10. Valid, expired and revoked (about 10 min)
+
+A helper for the three checks (the token is the part after `#invite=`):
+
+```powershell
+function Test-Invite($link) {
+  $t = $link.Split('#invite=')[1]
+  $b = @{ token = $t } | ConvertTo-Json -Compress
+  try { (Invoke-WebRequest -Method Post -Uri "$G/auth/exchange" -ContentType 'application/json' `
+        -Headers @{ Origin = $G } -Body $b -UseBasicParsing).StatusCode }
+  catch { $_.Exception.Response.StatusCode.value__ }
+}
+Test-Invite '<the test invite link>'                  # valid: 200
+```
+
+- **Expired:** create one that lapses in about 90 seconds, wait, then test:
+  `scripts\invites.py --secret $S create --label expired --days 0.001 --base-url $G`, wait 2 minutes,
+  `Test-Invite '<link>'` expects `401`. (`--days 0` is refused by the script on purpose.)
+- **Revoked:** `scripts\invites.py --secret $S revoke --id <the test invite's id>`, wait 70 seconds (the
+  Secret Manager read is cached up to 60), `Test-Invite '<the test link>'` expects `401`, and a session
+  cookie from before the revoke is refused on `/api/session` within the same window.
+- A valid exchange sets `__Host-session` (`Secure; HttpOnly; SameSite=Strict`); the body of a failed one is
+  identical for expired, unknown and malformed tokens.
+
+## 11. Three smoke questions in the deployed UI (about 15 min; about 9 free-tier calls)
+
+Open the owner's link in a browser. The Prompt T list was not in the repository, so these three stand
+in; replace them with Prompt T's if different:
+
+1. `What was SLA compliance in the Northeast last month?`. Expect "Interpreted as:" with the area
+   (incident reporting), measure, `2026-07-01 to 2026-07-31` and Northeast; "Figures checked for the
+   request as interpreted."; no follow-up flag. (The local run took 8.9 s warm, 3 model calls.)
+2. `How many service requests should we expect over the next 4 weeks?`. Expect a forecast answer, the
+   area "volume forecast", and a verification line (QA recomputes the served numbers on `ops-qa`).
+3. `Is customer sentiment trending down in the West?`. **Expect, while R-19 is open, "The data service is
+   unavailable right now. Please try again later."** and nothing else (no URL or exception text). After
+   the owner decides R-19 and sentiment deploys, it should answer with a trend and "no clear change" or
+   a significant move.
+
+Stop and roll back the gateway if any answer shows upstream text, a stack trace or an `Interpreted as:`
+line that does not match the question.
+
+## 12. Cold-start timings after 15 minutes idle (about 45 min elapsed, 5 min of work)
+
+R-05: the 120 s request deadline against a cold chain (gateway, orchestrator, then reporting or forecast
+and QA). Wait 15 minutes with no traffic, then time one `/healthz` per service, in chain order:
+
+```powershell
+$tok = gcloud auth print-identity-token
+foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-qa','ops-forecast') {
+  $u = "https://$s-$N.$R.run.app/healthz"
+  $t = Measure-Command { try { Invoke-WebRequest -Uri $u -Headers @{ Authorization = "Bearer $tok" } -UseBasicParsing | Out-Null } catch {} }
+  "{0}: {1:N1} s" -f $s, $t.TotalSeconds
+}
+```
+
+(The owner's token is accepted by Cloud Run for a project Owner.) Record the five numbers. Then wait
+15 minutes again and time one real question through the UI end to end (question 1). **Pass:** the chain's
+sum is well under 120 s, and the real question returns an answer (not the time-limit degraded result).
+A service over 40 s alone: record it under R-05 and consider `min_instances=1` for it (cost below). The
+sentiment sidecar's start-up (hash of 438 MB) is the number this measurement exists for once R-19 is
+decided; it is not measured here.
+
+## Rollback (per service)
+
+```powershell
+gcloud run revisions list --service <svc> --region $R --project $P --format="table(metadata.name,status.conditions[0].status,metadata.creationTimestamp)"
+gcloud run services update-traffic <svc> --to-revisions <previous-revision>=100 --region $R --project $P
+gcloud run services describe <svc> --region $R --project $P --format="value(status.traffic[0].revisionName)"
+```
+
+Expect the last command to print `<previous-revision>`. For `ops-orchestrator` and `ops-reporting` there is a
+previous revision (00004). For a service created in this window there is none: "roll back" means remove its
+invoker binding (`gcloud run services remove-iam-policy-binding`), and leave the service, or delete it
+(`gcloud run services delete <svc> --region $R --project $P`; ask first).
+
+| At step | Stop and roll back when |
+|---|---|
+| 1 | the instance is not `RUNNABLE` within 10 min: stop; nothing to undo |
+| 2, 3 | a binding or secret is wrong: fix it; nothing is serving yet |
+| 4 | the count or hash differs: do not deploy sentiment; the rest can proceed |
+| 5b | the build fails: read its log; nothing new serves (a failed deploy step leaves the old revision) |
+| 5e | a revision is not at 100%: update traffic to the previous revision (R-03), then investigate |
+| 6 | any `FAIL`: roll the failing service back; the others stay |
+| 10 | a revoked or expired invite is accepted: disable the gateway's public binding at once (`remove-iam-policy-binding ... allUsers`) and revoke every invite |
+| 11 | an answer shows upstream text: roll the gateway back |
+| 12 | over the deadline: not a rollback; record R-05 and decide on `min_instances` |
+
+The 2026-10-14 stop rule (ADR-078) is unchanged: if the revisions are not verified serving at the end of
+2026-10-14, record R-03 as realised.
+
+## End of window
+
+```powershell
+gcloud sql instances patch ops-db --activation-policy NEVER --project $P
+gcloud sql instances describe ops-db --project $P --format="value(state,settings.activationPolicy)"
+```
+
+Expect `STOPPED  NEVER`. **Leave it running** only if a grading window is open (Costs, below). Then
+disable the trigger again (step 8's command with `disabled: true`) unless the database is staying up:
+while `ops-db` is stopped a merge would deploy revisions that fail readiness (ADR-083). Stop the
+Auth Proxy, and remove the `DB_ROLE_*` variables from the shell.
+
+## Time
+
+| Step | Minutes |
+|---|---|
+| 0 pre-flight (incl. Next.js check) | 15 |
+| 1 start the database | 5 |
+| 2 secrets | 5 |
+| 3 accounts and bindings (+ propagation wait) | 15 |
+| 4 backfill and fingerprint | 25 |
+| 5 build, deploy, bindings, checks 5a to 5h | 55 |
+| 6 verify.py | 10 |
+| 7 integration suites | 20 |
+| 8 trigger, docs-only check | 10 |
+| 9 invites | 10 |
+| 10 valid, expired, revoked | 10 |
+| 11 smoke questions | 15 |
+| 12 cold starts (2 x 15 min idle) | 40 |
+| **Total** | **about 235 (3 h 55 min)** |
+
+That is the 4-hour budget with no slack. **Can move to a second sitting:** step 12's second idle wait,
+step 8's docs-only merge check (it needs a merge), step 7 (the integration suites; they need only the
+database running), and 5h. The window that must not split is 1 to 6: the database is running and the
+trigger is off. Sentiment adds its own sitting after R-19 is decided (the build, the cold start of the
+438 MB hash, one backfill-dependent suite run).
+
+## Costs (estimate)
+
+**The official pricing pages could not be read in this work.** The four pages (Cloud SQL
+https://cloud.google.com/sql/pricing, Cloud Run https://cloud.google.com/run/pricing, Secret Manager
+https://cloud.google.com/secret-manager/pricing, Cloud Build https://cloud.google.com/build/pricing) are
+client-rendered: on 2026-10-12 a fetch returned 73 characters (the page title). The `docs.cloud.google.com`
+variants redirect back to them, and `docs.cloud.google.com/secret-manager/docs/pricing` returned 404. What
+was read: https://docs.cloud.google.com/sql/docs/postgres/start-stop-restart-instance (2026-10-12):
+"Stopping an instance suspends instance charges" and "charges for storage and IP addresses continue to
+apply." `ops-db` is `db-f1-micro`, Enterprise, zonal, 10 GB SSD, no backups, no autoresize (read with
+`gcloud sql instances describe`, 2026-10-12). Confirm every figure below in the console's Billing > Reports
+(filter label `component: deploy`) after the first day.
+
+| Item | Estimate (**unverified**; the handoff's figure where there is one) |
+|---|---|
+| `db-f1-micro` running | about $0.30 a day (the handoff's number; not verified) |
+| 10 GB SSD, running or stopped | on the order of $0.05 to $0.06 a day (list price recalled at about $0.17 per GB-month) |
+| Cloud Run, `min_instances=0` | $0 compute while idle; requests at this volume fall inside the monthly free tier (recalled: 2 M requests, 180,000 vCPU-seconds, 360,000 GiB-seconds) |
+| Secret Manager, about 100 accesses a day | about 3,000 a month, inside a recalled free tier of 10,000; active versions about $0.06 each a month beyond a free few: cents a month |
+| `min_instances=1` on the gateway and the orchestrator (**option; not applied**) | an idle instance bills at a reduced rate; at 1 vCPU and 512 MiB, recalled at about $0.3 a day each, so about $0.65 a day for both |
+| Cloud Build, one full build on `E2_HIGHCPU_8` | about 15 to 25 min; recalled at $0.016 a minute: $0.25 to $0.40 a build; the monthly free minutes apply to the default machine only |
+
+**Grading window with `ops-db` running (database about $0.36 a day with storage; everything else
+about $0.01 to $0.05):** **7 days about $2.5 to $3; 14 days about $5 to $6**, plus about $1 for builds
+and any option above. Both are an order of magnitude under the $50 and $80 budget alerts (ADR-078).
+Model calls are free tier (ADR-029) and cost nothing here.
+
+Idle storage while stopped: about $0.06 a day, so about $1.80 a month: stop `ops-db` between windows
+and delete nothing.

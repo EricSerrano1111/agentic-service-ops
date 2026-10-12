@@ -4,7 +4,7 @@
 # (--locked fails if the lock is stale), so CI, local and this image get identical
 # versions (ADR-047).
 # No db-models and no specialist or MCP code: this agent holds app_qa credentials and runs its
-# own SQL (ADR-055, ADR-087). The volume_v2 manifest is baked in, read-only.
+# own SQL (ADR-055, ADR-087). The volume_v2 manifest and parameter files are baked in (ADR-098).
 # The final stage copies only the resulting virtualenv, not the workspace sources.
 
 FROM python:3.12-slim AS build
@@ -26,6 +26,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY --from=build /app/.venv /app/.venv
 
 COPY ml/forecast/artifacts/volume_v2.manifest.json /app/artifacts/volume_v2.manifest.json
+# The parameter files for the forecast recompute (ADR-095, ADR-098); QA refuses to start if any
+# differs from the manifest. The files are read-only data: no model code comes with them.
+COPY models/forecast/volume_v2/ /models/forecast/volume_v2/
 # The sentiment model's manifest: its hash is the predictions' model_version, its threshold τ.
 # A JSON file only: no weights and no model code (ADR-090).
 COPY ml/sentiment/artifacts/bert_v1.manifest.json /app/artifacts/bert_v1.manifest.json

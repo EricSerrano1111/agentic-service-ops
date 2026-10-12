@@ -15,6 +15,9 @@
 !ml/sentiment/artifacts/bert_v1.manifest.json
 # The volume_v2 manifest only (ADR-072): mcp_volume verifies the mounted artifact against it.
 !ml/forecast/artifacts/volume_v2.manifest.json
+# The volume_v2 parameter files (ADR-098): baked into mcp_volume and agent_qa, hash-checked
+# against the manifest at start-up. Nothing else under models/ (the sentiment weights stay out).
+!models/forecast/volume_v2/*.json
 # The `!services/` and `!packages/` re-includes above pull in everything beneath them, so
 # secret-shaped files nested there are excluded explicitly.
 **/.env

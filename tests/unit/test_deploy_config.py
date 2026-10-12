@@ -173,7 +173,7 @@ def test_cloud_build_runs_as_a_dedicated_account_and_renders_before_it_deploys()
     steps = {s["id"]: s for s in cb["steps"]}
     assert "render" in steps["deploy-reporting"]["waitFor"]
     assert steps["deploy-orchestrator"]["waitFor"] == ["deploy-reporting"]
-    assert steps["verify"]["waitFor"] == ["deploy-orchestrator"]
+    assert steps["verify"]["waitFor"] == ["deploy-gateway"]  # the last of the six (ADR-099)
     assert set(steps["render"]["waitFor"]) == {"push-images"}
     for image in ("orchestrator", "agent-reporting", "mcp-incidents"):
         assert any(f"{image}:${{COMMIT_SHA}}" in " ".join(s.get("args", [])) for s in cb["steps"])

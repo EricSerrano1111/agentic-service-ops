@@ -1,5 +1,7 @@
 # Deploy: reporting slice on Cloud Run (ADR-078, ADR-079, ADR-081)
 
+> **Full system (2026-10-12, ADR-099):** six services now. `RUNBOOK_V.md` is the window runbook, `plan_full.py` the plan, `cloudrun/*.yaml` the six definitions, `trigger_full.yaml` the trigger. Everything below describes the reporting slice and still holds for it; where this README and `RUNBOOK_V.md` differ, the runbook is current. `ops-sentiment` is blocked (R-19).
+
 Two Cloud Run services, `ops-orchestrator` and `ops-reporting` (the reporting agent with
 `mcp_incidents` as a sidecar), in front of one Cloud SQL Postgres 16 instance. Everything in
 this folder is a draft: it has been validated locally (YAML parses, placeholders render,

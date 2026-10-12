@@ -1,0 +1,77 @@
+# Cloud Run service "ops-qa": the QA agent, with no sidecar (ADR-087, ADR-099). It runs its own
+# SQL as app_qa (ADR-055), so the Cloud SQL socket and the password are in this one container,
+# and its Gemini key is for the one interpretation call. The volume_v2 manifest and parameter
+# files and the sentiment manifest are baked into the image (ADR-098, ADR-090): no volume other
+# than the Cloud SQL socket. It refuses to start if a parameter file differs from the manifest.
+name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-qa
+description: "QA agent: deterministic checks plus one interpretation call, as app_qa"
+labels:
+  app: agentic-service-ops
+  component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
+ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
+invokerIamDisabled: false
+template:
+  serviceAccount: ${QA_SA} # dedicated; never the default compute account
+  timeout: 300s # at least 120 s (TA-16)
+  scaling:
+    minInstanceCount: 0
+    maxInstanceCount: 2 # connection arithmetic: ADR-099
+  maxInstanceRequestConcurrency: 8
+  volumes:
+    - name: cloudsql
+      cloudSqlInstance:
+        instances:
+          - ${CLOUD_SQL_INSTANCE}
+  containers:
+    - name: agent-qa
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/agent-qa:${IMAGE_TAG}
+      ports:
+        - containerPort: 8080
+      env:
+        - name: AGENT_QA_PORT
+          value: "8080"
+        - name: AGENT_QA_PUBLIC_URL
+          value: https://ops-qa-${PROJECT_NUMBER}.${REGION}.run.app/
+        - name: CLOUD_SQL_INSTANCE
+          value: ${CLOUD_SQL_INSTANCE}
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: ${POSTGRES_DB}
+        - name: DB_ROLE_QA_USER
+          value: app_qa
+        - name: QA_FORECAST_RECOMPUTE
+          value: "on"
+        - name: QA_INTERP_MODE
+          value: advisory # neither interpretation prompt passed its gate (ADR-089, L-74)
+        - name: LLM_MODE
+          value: free
+        - name: GEMINI_MODEL_QA
+          value: ${GEMINI_MODEL_QA}
+        - name: LOG_LEVEL
+          value: INFO
+        - name: GOOGLE_AI_API_KEY
+          valueSource:
+            secretKeyRef:
+              secret: gemini-api-key
+              version: latest
+        - name: DB_ROLE_QA_PASSWORD
+          valueSource:
+            secretKeyRef:
+              secret: db-role-qa-password
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+      volumeMounts:
+        - name: cloudsql
+          mountPath: /cloudsql
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 20

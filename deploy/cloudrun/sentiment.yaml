@@ -1,0 +1,99 @@
+# Cloud Run service "ops-sentiment": the sentiment agent (ingress) plus its MCP server
+# (sidecar). Same v2 resource format and the same shape as reporting.yaml (ADR-079, ADR-099).
+# The Cloud SQL socket exists only inside mcp-feedback, the only container with the database
+# password (app_sentiment). The agent holds the Gemini key (it makes one parse call).
+#
+# BLOCKED (R-19, ADR-099): the mcp-feedback image cannot start on Cloud Run until the model
+# weights have a path into it. The definition is final; the image build and deploy are gated
+# behind _DEPLOY_SENTIMENT in cloudbuild.yaml and marked blocked in plan_full.py.
+name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-sentiment
+description: Sentiment agent with the feedback MCP server as a sidecar
+labels:
+  app: agentic-service-ops
+  component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
+ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
+invokerIamDisabled: false # the --no-allow-unauthenticated equivalent
+template:
+  serviceAccount: ${SENTIMENT_SA} # dedicated; never the default compute account
+  timeout: 300s # at least 120 s (TA-16)
+  scaling:
+    minInstanceCount: 0
+    maxInstanceCount: 2 # connection arithmetic: ADR-099
+  maxInstanceRequestConcurrency: 8
+  volumes:
+    - name: cloudsql
+      cloudSqlInstance:
+        instances:
+          - ${CLOUD_SQL_INSTANCE}
+  containers:
+    - name: agent-sentiment
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/agent-sentiment:${IMAGE_TAG}
+      ports:
+        - containerPort: 8080
+      dependsOn:
+        - mcp-feedback # starts after the sidecar's startup probe passes
+      env:
+        - name: AGENT_SENTIMENT_PORT
+          value: "8080"
+        - name: AGENT_SENTIMENT_PUBLIC_URL
+          value: https://ops-sentiment-${PROJECT_NUMBER}.${REGION}.run.app/
+        - name: MCP_FEEDBACK_URL
+          value: http://localhost:8102/mcp
+        - name: LLM_MODE
+          value: free
+        - name: GEMINI_MODEL_SPECIALIST
+          value: ${GEMINI_MODEL_SPECIALIST}
+        - name: LOG_LEVEL
+          value: INFO
+        - name: GOOGLE_AI_API_KEY
+          valueSource:
+            secretKeyRef:
+              secret: gemini-api-key
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+      startupProbe:
+        httpGet:
+          path: /readyz # ready when the MCP sidecar answers
+          port: 8080
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 40
+    - name: mcp-feedback
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/mcp-feedback:${IMAGE_TAG}
+      env:
+        - name: MCP_FEEDBACK_PORT
+          value: "8102"
+        - name: CLOUD_SQL_INSTANCE
+          value: ${CLOUD_SQL_INSTANCE}
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DB
+          value: ${POSTGRES_DB}
+        - name: DB_ROLE_SENTIMENT_USER
+          value: app_sentiment
+        - name: LOG_LEVEL
+          value: INFO
+        - name: DB_ROLE_SENTIMENT_PASSWORD
+          valueSource:
+            secretKeyRef:
+              secret: db-role-sentiment-password
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 2Gi # measured at 1 CPU / 2 GiB for the 250-comment cap (config.py, ADR-067)
+      volumeMounts:
+        - name: cloudsql
+          mountPath: /cloudsql
+      startupProbe:
+        httpGet:
+          path: /readyz # ready only when the artifact verified and the database answers
+          port: 8102
+        initialDelaySeconds: 5
+        periodSeconds: 5
+        timeoutSeconds: 3
+        failureThreshold: 40 # hashing the 438 MB weights is part of start-up (R-05, R-19)

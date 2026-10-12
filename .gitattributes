@@ -28,3 +28,6 @@ evals/golden/golden_v2.manifest.json -text
 # Generated evaluation sets (ADR-094): LF in every checkout, so the raw-output hashes in
 # provenance.json equal the blob bytes on Windows and in CI alike.
 evals/generated/** text eol=lf
+# The volume_v2 parameter files are hashed by the manifest and baked into two images (ADR-098):
+# stored and checked out byte-for-byte, so the SHA-256 matches on Windows (core.autocrlf) and in CI.
+models/forecast/volume_v2/*.json -text

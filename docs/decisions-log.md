@@ -106,6 +106,8 @@
 | 092 | QA fixes from the fault injection: answer text by position, zero denominators, small samples, `qa_status: failed`, and measurement 2 (extends ADR-091) | Accepted |
 | 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted |
 | 095 | QA recomputes served forecast numbers independently (L-83(a)) | Accepted |
+| 098 | The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087) | Accepted |
+| 099 | Deploy configuration for the full system (extends ADR-081 to six services) | Accepted |
 
 ---
 
@@ -3057,6 +3059,8 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 **Note 2026-10-11 (the entry above is unchanged): QA's container now has one mount.** `docker-compose.yml` mounts `./models/forecast/volume_v2` into `agent_qa` read-only, for the recompute. `tests/unit/test_compose_isolation.py` asserted that QA has no volumes; it now asserts exactly that one read-only mount (the sentiment weights stay out, and the image still bakes in only the two manifests). This extends ADR-087's "the manifest is baked in" to "the manifest is baked in and the parameter files are mounted"; it is the owner's to review.
 
 
+**Note 2026-10-12 (ADR-098; the entries above are unchanged): the interim mount ends.** The 2026-10-11 note above recorded QA's one read-only mount of `models/forecast/volume_v2` as an interim arrangement, "the owner's to review". ADR-098 commits the six parameter files and bakes them into the `agent_qa` and `mcp_volume` images; the compose mount is removed and `tests/unit/test_compose_isolation.py` again asserts that QA has no volumes. QA still refuses to start on a missing or altered file. The clean check over the same 171 forecasts: 0 mismatches.
+
 ### ADR-096 — QA also checks the 95% interval ends (supersedes ADR-095 in part)
 *Date: 2026-10-12. Supersedes ADR-095 in part: only its **Gaps** bullet, as far as it leaves the 95% ends unchecked. The rest of ADR-095 stands. Closes the open ruling in L-87 for the 95% ends; the total interval stays a gap.*
 
@@ -3149,3 +3153,84 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - The inline-script hashes are computed from the built export at **image build time** (`python -m api_gateway.csp`, a Dockerfile step) and read at start-up; the gateway refuses to serve an export without the hashes file, or one with inline style attributes. The default Next.js 404 page has inline style attributes, so the export carries a custom `not-found` page.
 
 **Note 2026-10-12 (second, after the first note above):** the policy also carries `form-action 'self'` (the page has no form that posts away; it costs nothing), and the data dictionary §6 "Answer display (UI)" was amended the same day to label every part of the "Interpreted as:" line and to name the area, after review.
+
+**Note 2026-10-12 (Prompt U; the entry above is unchanged): the client-IP rule is not confirmed for a Cloud Run service, so it stays a stated limit.** Read 2026-10-12: Cloud Run's container contract page (https://docs.cloud.google.com/run/docs/container-contract) and the HTTPS-request page (https://docs.cloud.google.com/run/docs/triggering/https-request) say nothing about how `X-Forwarded-For` is formed; the Cloud Run request-headers URL returned 404; the only page that describes the header, Cloud Functions' request headers (https://docs.cloud.google.com/functions/docs/reference/headers), says "the first IP in this list is generally the IP of the client" and does not address a Cloud Run service without a load balancer, nor whether the front end appends the connecting address. So "the last entry, 1 hop" is neither confirmed nor corrected, and the default and its test are left as they are. The sign-in rate limit is therefore keyed by a rule that is documented only as the standard right-to-left handling of an append-only header (L-88). Prompt V settles it by observation: a request with a made-up `X-Forwarded-For` from a known address is compared with the `httpRequest.remoteIp` Cloud Run logs for it (runbook, pre-flight).
+
+### ADR-098 — The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087)
+*Date: 2026-10-12. Written before the Dockerfile, `.gitignore`, `.dockerignore` and compose changes it describes.*
+
+**Decision:**
+- The six files `models/forecast/volume_v2/{total,install,repair,inspection,maintenance,upgrade}.json` are committed to git and copied into the `mcp_volume` and `agent_qa` images at `/models/forecast/volume_v2/`. Nothing else under `models/` is un-ignored: the `.gitignore` chain re-includes `models/forecast/volume_v2/*.json` and no other path, and the `.dockerignore` allows the same glob and no other path under `models/`. The sentiment weights stay ignored and out of every build context.
+- **The manifest is already tracked** (`ml/forecast/artifacts/volume_v2.manifest.json`, baked into both images since ADR-072 and ADR-087); no change is needed there.
+- `.gitattributes` marks the six files `-text` (byte-for-byte, no line-ending conversion), so their SHA-256 equals the manifest's on Windows (`core.autocrlf`), in CI and in the image alike.
+- Both images verify the files against the manifest at start-up and **refuse to start** on a missing or altered file: `mcp_volume` with `ArtifactIntegrityError` (ADR-072), `agent_qa` with `ModelUnavailable` when the recompute is on (ADR-095, the default). A unit test proves both on the committed files and on an altered and a missing copy. Neither behaviour is new; both are now tested at the image's actual layout.
+- Compose no longer mounts `models/forecast` into `mcp_volume` or `models/forecast/volume_v2` into `agent_qa`. `tests/unit/test_compose_isolation.py` returns to "QA has no volumes" and adds the same for `mcp_volume`.
+
+**Context:**
+- The build trigger builds from git, so a file that is ignored cannot reach a deployed image. QA's recompute (ADR-095) needs these files at start-up, and `mcp_volume` serves from them. Without a decision they would never be in a Cloud Run revision.
+- Sizes (2026-10-12): 2,009 to 6,904 bytes each, 17,168 bytes in all. The limit this decision sets is 1 MB per file.
+- They are readable JSON (per-slice coefficients, a scale, an inverse matrix), hash-checked by the manifest, and written by `ml/forecast`. Committing them makes the recompute reproducible from the repository alone.
+
+**Relationship to earlier decisions:**
+- **ADR-062** ("model artifacts are versioned in Cloud Storage; Cloud Build pulls a pinned version") and the `.gitignore` rule for `/models/` (ADR-062, ADR-065) are superseded **for the `volume_v2` parameter files only**. They stand for the sentiment weights, which are 438 MB and cannot be committed.
+- **ADR-087** ("the manifest is baked in") is extended: the manifest and the parameter files are baked in.
+- **ADR-095, note of 2026-10-11** (QA's one read-only mount) described an interim arrangement. It ends here; a dated note under ADR-095 says so.
+
+**Alternatives considered:**
+- *A Cloud Storage bucket, fetched at build or mounted at run.* Rejected: a bucket, an IAM binding and a pinned-version step for six files totalling 17 KB.
+- *Mounting from the repository at deploy time.* Rejected: Cloud Run has no host mount; it would be a bucket by another name.
+- *Inlining the parameters into the manifest.* Not needed: the per-slice files already hold every value and are hash-checked.
+
+**Stop condition (checked):** every file is under 1 MB, and the forecast agent needs nothing beyond these files and the manifest (it reaches data only through `mcp_volume`; its image carries no model file).
+
+**Consequences:**
+- A new model version is a commit: the six files and the manifest change together, and a hash test fails if only one does.
+- The clean check over the same 171 unmodified served forecasts gives 0 mismatches (2,320 numbers, the boundary rule fired 0 times), `evals/results/qa_forecast_recompute/2026-10-12-baked/clean_check.json`. No answer changes.
+- Not covered: the sentiment weights have no path into an image (R-19).
+
+### ADR-099 — Deploy configuration for the full system (extends ADR-081 to six services; supersedes nothing that still holds)
+*Date: 2026-10-12. Written before `deploy/plan_full.py`, the four new service definitions and the `cloudbuild.yaml` extension. Nothing here is deployed; Prompt V executes it.*
+
+**Decision:** six Cloud Run services in `us-central1`, each defined in the Cloud Run Admin API v2 format and deployed by `deploy/deploy_service.py` (ADR-081). Every service runs as its own service account.
+
+| Service | Containers | Cloud SQL socket | Secrets mounted | Invoker | Max instances |
+|---|---|---|---|---|---|
+| `ops-gateway` | `gateway` (static UI baked in) | none | `gateway-session-key` (env); `gateway-invites` (read through the Secret Manager API at run time) | `allUsers` (ADR-097) | 1 |
+| `ops-orchestrator` | `orchestrator` | none | `gemini-api-key` | `run-gateway` | 3 |
+| `ops-reporting` | `agent-reporting` + `mcp-incidents` | `mcp-incidents` only | `gemini-api-key` (agent); `db-role-reporting-password` (MCP) | `run-orchestrator` | 2 |
+| `ops-sentiment` | `agent-sentiment` + `mcp-feedback` | `mcp-feedback` only | `gemini-api-key` (agent); `db-role-sentiment-password` (MCP) | `run-orchestrator` | 2 |
+| `ops-forecast` | `agent-forecast` + `mcp-volume` | `mcp-volume` only | `gemini-api-key` (agent); `db-role-forecast-password` (MCP) | `run-orchestrator` | 2 |
+| `ops-qa` | `agent-qa`, no sidecar | `agent-qa` | `gemini-api-key`; `db-role-qa-password` | `run-orchestrator` | 2 |
+
+**What changes from ADR-081 (everything else in it holds):**
+- **One `allUsers` service, the gateway** (ADR-097). The orchestrator's invoker is `run-gateway`, not `allUsers`. Every other service's invoker is the single account that calls it.
+- **QA's Cloud SQL socket is in the agent container itself.** ADR-079 puts the socket in the MCP sidecar only; QA has no sidecar and runs its own SQL as `app_qa` (ADR-055, ADR-087), so its agent container is the only one that could hold it. The password and the socket are in that container and no other.
+- **New service accounts:** `run-sentiment`, `run-forecast`, `run-qa`, `run-gateway`. Each holds only: accessor on its own secrets (per secret, never project-wide), `roles/cloudsql.client` (project level, only `run-sentiment`, `run-forecast`, `run-qa`; the gateway and orchestrator hold none) and `roles/run.invoker` on its callees (`run-gateway` on `ops-orchestrator`; `run-orchestrator` on the four specialist services).
+- **The orchestrator's environment** gains `AGENT_SENTIMENT_URL`, `AGENT_FORECAST_URL` and `AGENT_QA_URL`, each the deterministic service URL `https://ops-<name>-<project number>.<region>.run.app`; the ID token's audience is that base URL (ADR-081). The gateway's environment names the orchestrator the same way and sets `GATEWAY_AUTH=google_id_token`.
+- **The gateway's public origin** (`GATEWAY_PUBLIC_ORIGIN`, which its `Origin` check and the invite links use) is the same deterministic URL. Prompt V compares it with the URL Cloud Run reports for the service before the first invite is made.
+- **The DB secrets reach only the MCP containers and QA**; the Gemini key reaches only containers that call a model (the four agents and the orchestrator). The gateway holds no database credential and no model key.
+
+**Connection arithmetic (`ops-db`, `db-f1-micro`, `max_connections` = 60, read 2026-10-12):**
+- Each DB-connected container's SQLAlchemy pool is `pool_size=2` + `max_overflow=2`, so at most 4 connections per instance (`mcp_incidents`, `mcp_feedback`, `mcp_volume`, `agent_qa`).
+- Four DB-connected services (the three added here and the existing reporting) at 2 instances each: 4 × 2 × 4 = **32**.
+- Reserved: Postgres's `superuser_reserved_connections` (3 by default) and Cloud SQL's own administration sessions, budgeted at 10 in all; the owner's backfill and migration sessions through the Auth Proxy, budgeted at 4 (the backfill opens at most 4). 32 + 10 + 4 = **46 of 60**, headroom 14.
+- During a rollout an old and a new revision can both hold instances for a minute or so: the theoretical ceiling is then 64 + 14 = 78. It is reached only if every instance of both revisions holds its whole pool at once, which needs concurrent load far above a handful of reviewers (pools open connections on demand; one instance serves 8 concurrent requests). It is a stated limit, not a bound; the stop rule in the runbook is any `too many connections` in a service log.
+- The two services with no database (gateway, orchestrator) hold no connection.
+
+**`max_instances` reasoning:** the gateway is 1 so that its in-process daily question cap and rate limits are exact (ADR-097, L-88); the orchestrator is 3 (no database, the one fan-out point); the four DB services are 2 for the arithmetic above. `min_instances` is 0 everywhere; cold starts are measured at the window (R-05).
+
+**Blocked, not decided here: the sentiment service's model weights (R-19).** `mcp-feedback` hash-checks every file its manifest lists, including the 438 MB `model.safetensors`, at start-up and refuses to start without them; it then loads BERT lazily for any comment in range with no stored prediction. The weights are gitignored and no Cloud Storage bucket exists (ADR-062's path), so a build from git cannot produce a starting `mcp-feedback` image. The definition of `ops-sentiment` is written and tested; its image build and deploy are marked **blocked** in `plan_full.py`, `cloudbuild.yaml` and the runbook, behind `_DEPLOY_SENTIMENT=false`. The owner chooses between (A) ADR-062 as written (a bucket, a build step that pulls the pinned weights, read access for the build account; about 440 MB plus torch in the image and a start-up hash of 438 MB, measured against the 120 s deadline) and (B) stored predictions only after a complete backfill (drops on-demand scoring and relaxes the start-up check; needs its own ADR). Until then sentiment questions answer "The data service is unavailable right now."
+
+**`deploy/plan_full.py`** produces the ordered steps (service accounts, secrets, bindings, deploys, the invoker bindings); `--dry-run` prints them and makes no API call. Without it, each step first runs its read-only check and is skipped if the thing exists, so a rerun is safe.
+
+**Required vs portfolio value:** per-service accounts, per-secret access and the socket in one container are what a public URL in front of a model key and a database requires. Service-level `max_instances` arithmetic is required at 60 connections. Nothing here is deployed for show.
+
+**Alternatives considered:**
+- *One shared runtime account for the four specialists.* Rejected: it would let the sentiment service read the QA password, defeating ADR-079's reason for sidecars.
+- *`min_instances=1` on the gateway and orchestrator.* Not applied; priced as an option in the runbook.
+- *A VPC connector and private IP for Cloud SQL.* Rejected as in ADR-078: cost and complexity above the Auth Proxy and the socket.
+
+**Stated limits:**
+- The deterministic `*.run.app` URL is assumed to be the one a reviewer reaches; Prompt V checks it against what Cloud Run reports.
+- The client-IP rule for the sign-in rate limit is unverified for Cloud Run services (note under ADR-097).
+- `deploy/verify.py` checks two services; the other four are checked by the runbook's commands at V, and extending the script is an item for after the window.
