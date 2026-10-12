@@ -185,3 +185,31 @@ def test_fr03_c_reports_misses_by_id_and_needs_two_of_three_runs():
     verdict = fr03.evaluate(v6, [fresh(0)] * 3, dev_files(44))
     assert verdict["c"]["misses"] == ["i7"]
     assert verdict["c"]["recognised"] == 7 and verdict["c"]["pass"]
+
+
+# ---------------------------------------------------------------- generated-set row mapping
+
+
+def test_the_runner_maps_the_generated_row_format_without_changing_content():
+    run_seed = load("evals/routing/run_seed.py", "run_seed_mod")
+    row = {
+        "uid": "ambiguous/AMB-01",
+        "system_route": "ambiguous",
+        "item": {
+            "id": "AMB-01",
+            "question": "q text",
+            "category": "ambiguous",
+            "candidate_areas": ["reporting", "sentiment"],
+            "rationale": "never used",
+        },
+    }
+    assert run_seed.map_generated(row) == {
+        "id": "ambiguous/AMB-01",
+        "question": "q text",
+        "expected": "ambiguous",
+        "tag": "ambiguous",
+        "candidates": ["reporting", "sentiment"],
+    }
+    flat = {"id": "s01", "question": "q", "expected": "reporting", "tag": "clear"}
+    assert run_seed.map_generated(flat) == flat
+    assert run_seed.is_generated(ROOT / "evals" / "generated" / "sets" / "x.jsonl")

@@ -40,6 +40,25 @@ def default_rpm(model: str) -> float:
     return 12.0 if "flash-lite" in model else 4.0
 
 
+def is_generated(source: Path) -> bool:
+    return "generated" in source.parts
+
+
+def map_generated(row: dict) -> dict:
+    """The frozen generated sets' row format (a nested `item`) onto the runner's fields.
+    Format mapping only: the question, the label and the candidates are used as they are."""
+    if "item" not in row:
+        return row
+    item = row["item"]
+    return {
+        "id": row["uid"],
+        "question": item["question"],
+        "expected": row["system_route"],
+        "tag": item["category"],
+        "candidates": item.get("candidate_areas") or [],
+    }
+
+
 async def run(args: argparse.Namespace) -> int:
     from dotenv import load_dotenv
 
@@ -55,7 +74,11 @@ async def run(args: argparse.Namespace) -> int:
     source = Path(args.file) if args.file.endswith(".jsonl") else SETS / f"{args.file}.jsonl"
     if not source.is_absolute():
         source = ROOT / source
-    items = [json.loads(line) for line in source.read_text(encoding="utf-8").splitlines() if line]
+    items = [
+        map_generated(json.loads(line))
+        for line in source.read_text(encoding="utf-8").splitlines()
+        if line
+    ]
     items = items[args.skip :]
     if args.limit:
         items = items[: args.limit]
@@ -170,6 +193,9 @@ def report(
         print("\nmisroutes:")
         for r in misses:
             got = r["predicted"] or r["error"]
+            if is_generated(source):  # no item text and no model reason on stdout
+                print(f"  {r['id']} [{r['tag']}] expected {r['expected']}, got {got}")
+                continue
             print(f"  {r['id']} [{r['tag']}] {r['question']}")
             print(f"      expected {r['expected']}, got {got}: {r['reason'] or '-'}")
             if r["error_message"]:
