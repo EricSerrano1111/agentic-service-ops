@@ -62,6 +62,10 @@ class OrchestratorUnavailable(Exception):
     """The orchestrator could not be reached, timed out or could not be authenticated to."""
 
 
+class OrchestratorTimeout(OrchestratorUnavailable):
+    """The wait for the orchestrator ran out (the gateway's own deadline)."""
+
+
 class Orchestrator:
     def __init__(
         self,
@@ -84,6 +88,9 @@ class Orchestrator:
                 headers["Authorization"] = f"Bearer {await self._tokens.token()}"
             resp = await self._client.post(self._url, json={"question": question}, headers=headers)
             body = resp.json()
+        except httpx.TimeoutException as exc:
+            log.warning("orchestrator call timed out", extra={"error": type(exc).__name__})
+            raise OrchestratorTimeout from None
         except Exception as exc:
             log.warning("orchestrator call failed", extra={"error": type(exc).__name__})
             raise OrchestratorUnavailable from None

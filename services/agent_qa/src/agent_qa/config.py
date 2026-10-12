@@ -21,8 +21,8 @@ from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
 
 DEFAULT_MANIFEST = Path("/app/artifacts/volume_v2.manifest.json")
 DEFAULT_SENTIMENT_MANIFEST = Path("/app/artifacts/bert_v1.manifest.json")
-#: The `volume_v2` parameter files, read-only, for the forecast recompute (ADR-095). Not baked
-#: into the image: they are not in git.
+#: The `volume_v2` parameter files for the forecast recompute (ADR-095). Committed and baked
+#: into the image (ADR-098); compose runs the same image, so there is no mount.
 DEFAULT_FORECAST_MODEL_DIR = Path("/models/forecast/volume_v2")
 #: `advisory`: the interpretation check is logged and reported on the verdict but never fails
 #: an answer or triggers a retry. `enforce`: a failed check fails the verdict. The default is

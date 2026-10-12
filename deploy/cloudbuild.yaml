@@ -1,4 +1,5 @@
-# Cloud Build: build three images, render the service definitions, deploy, verify.
+# Cloud Build: build the images, render the six service definitions, deploy them in dependency
+# order (QA, sentiment, forecast, reporting, orchestrator, gateway), verify (ADR-081, ADR-099).
 #
 # Runs as a dedicated build service account (not the default compute account), set by the
 # trigger and repeated here. Because a custom account is used, logs go to Cloud Logging only.
@@ -9,7 +10,8 @@
 serviceAccount: projects/${PROJECT_ID}/serviceAccounts/${_BUILD_SA}
 options:
   logging: CLOUD_LOGGING_ONLY
-timeout: 1800s
+  machineType: E2_HIGHCPU_8 # nine parallel image builds, one of them an npm build
+timeout: 3600s
 
 substitutions:
   _REGION: us-central1
@@ -18,12 +20,20 @@ substitutions:
   _BUILD_SA: build-deploy@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
   _ORCHESTRATOR_SA: run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
   _REPORTING_SA: run-reporting@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _SENTIMENT_SA: run-sentiment@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _FORECAST_SA: run-forecast@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _QA_SA: run-qa@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+  _GATEWAY_SA: run-gateway@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
   _PROBE_SA: probe-noauth@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
   _CLOUD_SQL_INSTANCE: "" # project:region:instance
   _INSTANCE_NAME: "" # the bare instance name, for the authorizedNetworks check
   _POSTGRES_DB: service_ops
   _GEMINI_MODEL_ORCHESTRATOR: ""
   _GEMINI_MODEL_SPECIALIST: ""
+  _GEMINI_MODEL_QA: ""
+  # "false" until the sentiment weights have a path into the mcp-feedback image (R-19, ADR-099):
+  # its build, render and deploy are skipped, and the orchestrator answers "agent unavailable".
+  _DEPLOY_SENTIMENT: "false"
   # "false" on the very first run only: checks 4 and 6 cannot pass until the service-level
   # invoker bindings exist, and those need the services (README, runbook step 10).
   _RUN_VERIFY: "true"
@@ -42,6 +52,34 @@ steps:
     name: gcr.io/cloud-builders/docker
     args: ["build", "-f", "services/mcp_incidents/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-incidents:${COMMIT_SHA}", "."]
     waitFor: ["-"]
+  - id: build-agent-qa
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "services/agent_qa/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-qa:${COMMIT_SHA}", "."]
+    waitFor: ["-"]
+  - id: build-agent-forecast
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "services/agent_forecast/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-forecast:${COMMIT_SHA}", "."]
+    waitFor: ["-"]
+  - id: build-mcp-volume
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "services/mcp_volume/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-volume:${COMMIT_SHA}", "."]
+    waitFor: ["-"]
+  - id: build-gateway
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "services/api_gateway/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/gateway:${COMMIT_SHA}", "."]
+    waitFor: ["-"]
+  # Sentiment: skipped while _DEPLOY_SENTIMENT is "false" (R-19).
+  - id: build-sentiment
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_DEPLOY_SENTIMENT}" != "true" ]; then echo "sentiment build skipped (R-19)"; exit 0; fi
+        docker build -f services/agent_sentiment/Dockerfile -t "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-sentiment:${COMMIT_SHA}" .
+        docker build -f services/mcp_feedback/Dockerfile -t "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-feedback:${COMMIT_SHA}" .
+    waitFor: ["-"]
 
   # ---- push: must finish before a definition can reference the tags -------------------
   - id: push-images
@@ -51,10 +89,12 @@ steps:
       - -c
       - |
         set -euo pipefail
-        for image in orchestrator agent-reporting mcp-incidents; do
+        images="orchestrator agent-reporting mcp-incidents agent-qa agent-forecast mcp-volume gateway"
+        if [ "${_DEPLOY_SENTIMENT}" = "true" ]; then images="$$images agent-sentiment mcp-feedback"; fi
+        for image in $$images; do
           docker push "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/$${image}:${COMMIT_SHA}"
         done
-    waitFor: ["build-orchestrator", "build-agent-reporting", "build-mcp-incidents"]
+    waitFor: ["build-orchestrator", "build-agent-reporting", "build-mcp-incidents", "build-agent-qa", "build-agent-forecast", "build-mcp-volume", "build-gateway", "build-sentiment"]
 
   # ---- render ---------------------------------------------------------------------------
   # Fails the build if any placeholder has no value or remains after rendering.
@@ -69,30 +109,61 @@ steps:
       - IMAGE_TAG=${COMMIT_SHA}
       - ORCHESTRATOR_SA=${_ORCHESTRATOR_SA}
       - REPORTING_SA=${_REPORTING_SA}
+      - SENTIMENT_SA=${_SENTIMENT_SA}
+      - FORECAST_SA=${_FORECAST_SA}
+      - QA_SA=${_QA_SA}
+      - GATEWAY_SA=${_GATEWAY_SA}
       - CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE}
       - POSTGRES_DB=${_POSTGRES_DB}
       - GEMINI_MODEL_ORCHESTRATOR=${_GEMINI_MODEL_ORCHESTRATOR}
       - GEMINI_MODEL_SPECIALIST=${_GEMINI_MODEL_SPECIALIST}
+      - GEMINI_MODEL_QA=${_GEMINI_MODEL_QA}
     args:
       - -c
       - |
         set -euo pipefail
         pip install --quiet pyyaml==6.0.3
-        python deploy/render.py deploy/cloudrun/reporting.yaml /workspace/rendered/reporting.json
-        python deploy/render.py deploy/cloudrun/orchestrator.yaml /workspace/rendered/orchestrator.json
+        for name in qa sentiment forecast reporting orchestrator gateway; do
+          python deploy/render.py "deploy/cloudrun/$${name}.yaml" "/workspace/rendered/$${name}.json"
+        done
     waitFor: ["push-images"]
 
-  # ---- deploy: reporting first, because the orchestrator's card fetch needs it ----------
+  # ---- deploy, in dependency order: callees before their callers ------------------------
+  - id: deploy-qa
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: python3
+    args: ["deploy/deploy_service.py", "/workspace/rendered/qa.json"]
+    waitFor: ["render"]
+  - id: deploy-sentiment
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_DEPLOY_SENTIMENT}" != "true" ]; then echo "ops-sentiment skipped (R-19)"; exit 0; fi
+        python3 deploy/deploy_service.py /workspace/rendered/sentiment.json
+    waitFor: ["deploy-qa"]
+  - id: deploy-forecast
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: python3
+    args: ["deploy/deploy_service.py", "/workspace/rendered/forecast.json"]
+    waitFor: ["deploy-sentiment"]
   - id: deploy-reporting
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/reporting.json"]
-    waitFor: ["render"]
+    waitFor: ["render", "deploy-forecast"]
   - id: deploy-orchestrator
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/orchestrator.json"]
     waitFor: ["deploy-reporting"]
+  - id: deploy-gateway
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: python3
+    args: ["deploy/deploy_service.py", "/workspace/rendered/gateway.json"]
+    waitFor: ["deploy-orchestrator"]
 
   # ---- post-deploy check: fails the build on any FAIL -----------------------------------
   - id: verify
@@ -117,4 +188,4 @@ steps:
         else
           echo "verify skipped (_RUN_VERIFY=${_RUN_VERIFY}); run deploy/verify.py after the invoker bindings"
         fi
-    waitFor: ["deploy-orchestrator"]
+    waitFor: ["deploy-gateway"]

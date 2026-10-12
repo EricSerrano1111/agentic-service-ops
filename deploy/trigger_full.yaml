@@ -1,0 +1,54 @@
+# The build trigger for the full system (ADR-099), in the format `gcloud builds triggers import`
+# reads. It replaces the filters and substitutions of `deploy-reporting-slice` (same name, same
+# id, so the import updates it in place). It ships DISABLED: ADR-083 keeps the trigger off while
+# `ops-db` is stopped, since a merge would deploy revisions that fail readiness.
+#
+# Apply and enable at the deploy window (deploy/RUNBOOK_V.md, step 8):
+#   gcloud builds triggers import --source deploy/trigger_full.yaml --region us-central1 \
+#     --project a2a-agentic-service-ops-gcp
+# `disabled` is a field of the imported file: change it to false (the runbook does this with a
+# temporary copy) and import again to enable; set it back to true and import to disable.
+#
+# Filters. A push to main starts a build when at least one changed file matches `includedFiles`
+# and is not matched by `ignoredFiles` (Cloud Build documents that a file in both lists does not
+# trigger; https://docs.cloud.google.com/build/docs/automating-builds/create-manage-triggers, read
+# 2026-10-12). What is included is exactly what ends up in an image: code, shared packages, the
+# UI, the deploy files, the baked manifests and parameter files, and the lock file.
+#
+# Deviation from the prompt's "exclude **/*.md": `services/*/prompts/*.md` are baked into the
+# images (they ARE the prompts), so a blanket markdown ignore would stop a prompt revision from
+# redeploying. Ignored instead: docs, READMEs and the runbook. deploy/** is included, and
+# these ignores take its documentation files back out.
+name: deploy-reporting-slice
+id: e4c3b9df-07f4-4f8b-8acb-3d7443a5fa2c
+description: Build and deploy the six services of the full system on a push to main (ADR-099)
+disabled: true
+filename: deploy/cloudbuild.yaml
+serviceAccount: projects/a2a-agentic-service-ops-gcp/serviceAccounts/build-deploy@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+repositoryEventConfig:
+  repository: projects/a2a-agentic-service-ops-gcp/locations/us-central1/connections/GitHub-CloudBuild-A2A/repositories/EricSerrano1111-agentic-service-ops
+  repositoryType: GITHUB
+  push:
+    branch: ^main$
+includedFiles:
+  - services/**
+  - packages/**
+  - web/**
+  - deploy/**
+  - ml/forecast/artifacts/**
+  - ml/sentiment/artifacts/**
+  - models/forecast/volume_v2/**
+  - pyproject.toml
+  - uv.lock
+ignoredFiles:
+  - docs/**
+  - README.md
+  - "**/README.md"
+  - deploy/RUNBOOK_V.md
+substitutions:
+  _CLOUD_SQL_INSTANCE: a2a-agentic-service-ops-gcp:us-central1:ops-db
+  _INSTANCE_NAME: ops-db
+  _GEMINI_MODEL_ORCHESTRATOR: gemini-3.5-flash-lite
+  _GEMINI_MODEL_SPECIALIST: gemini-3.5-flash-lite
+  _GEMINI_MODEL_QA: gemini-3.5-flash-lite
+  _DEPLOY_SENTIMENT: "false"

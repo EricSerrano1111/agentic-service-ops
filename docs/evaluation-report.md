@@ -953,6 +953,7 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 
 **Update 2026-10-12 (closed for the 95% ends).** Owner ruling of 2026-10-11 applied: QA compares `lo95` and `hi95` by the same whole-number rule as the 80% ends (ADR-096; data dictionary §6, rule 4a). Clean check: 0 mismatches in 171 forecasts. The total interval is still not served, so there is still none to check; that part of this entry stands.
 
+**Update 2026-10-12 (ADR-098):** the six `volume_v2` parameter files are committed and baked into the `agent_qa` and `mcp_volume` images, which ends the "deployed QA needs them provided" step above. QA still refuses to start on a missing or altered file. The clean check: 0 mismatches in 171 forecasts.
 
 ### L-88 — Invite-link access has no per-user identity and per-instance limits (2026-10-12)
 - **What:** the gateway admits anyone who holds an unexpired, unrevoked invite link (ADR-097). A forwarded link grants access until it expires or is revoked; a session identifies an invite, not a person; there are no user accounts. The rate limits (exchange per IP, questions per session) and the global daily question cap are counted in process, so they are per instance and reset on a restart or scale-to-zero. The client IP rule for the exchange limit is not verified against Cloud Run's documentation (Prompt U). The authentication code is the project's own and has had no independent review.
@@ -960,8 +961,18 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (option):** per-user accounts, or a shared-state counter (Redis or Firestore) for the limits, each a new decision.
 - **Recorded in:** ADR-097; data dictionary §6, "Answer display (UI)".
 
+**Update 2026-10-12 (Prompt U):** the client-IP rule was not confirmed against Cloud Run's documentation for a service without a load balancer: the container-contract and HTTPS-request pages are silent, the request-headers URL returned 404, and the one page that describes `X-Forwarded-For` is Cloud Functions'. The default (the last entry) and its test are unchanged; the exchange limit is keyed by a weaker, unverified rule until the runbook's step 5h observes it (note under ADR-097).
+
 ### L-89 — A database outage behind a healthy agent is a 502 error, not the degraded result (2026-10-12)
 - **What:** found in the Prompt T local smoke. With the database container stopped while the agents and MCP servers stayed up, a reporting question returned the orchestrator's `502 agent_task_failed` ("The incidents query failed.", the agent's `tool_error` task failure), not the `outcome: degraded` result of FR-13 / ADR-088 with `escalate: true`. The degraded result is produced for a breaker trip, a transport failure, a timeout, the cost cap or a QA failure; a task the agent itself reports as failed with `tool_error` takes the error path. The gateway passes the sentence on ("The incidents query failed."), so the user sees an honest error, but with no follow-up flag and no warning wording of §6, "Answer display (UI)", rule 4.
 - **Why accepted (for now):** changing which failures count as dependency failures is a change to ADR-088's behaviour and to the orchestrator's error contract, outside this work's brief. No answer is wrong and no unverified figure is shown.
 - **Fix (option):** map the agent's `tool_error` (and QA's `qa_unavailable`) task failures to `DegradedResult("dependency", capability)`, with a test over a stopped database; a new ADR superseding the relevant part of ADR-088.
 - **Observed once, one question** (the degraded smoke), not measured.
+
+**Update 2026-10-12 (Prompt U):** the display no longer shows the agent's sentence. The gateway maps each known orchestrator error code (`agent_task_failed`, `agent_unavailable`, `unclear_question`, `invalid_range`, `rate_limited`, `daily_quota_exhausted`, `model_unavailable`, `internal_error`) to one fixed message, and anything unrecognised to one generic message; the orchestrator's `detail` is logged with the trace ID and never returned (data dictionary §6, "Answer display (UI)", rule 5). With the database stopped the browser check showed "The data service is unavailable right now. Please try again later." and no upstream text. This changes no answer and no `qa_status`. The limitation itself stands: the outage is still a 502 error without the follow-up flag.
+
+### L-90 — The sentiment service cannot be deployed: its model weights have no path into an image (2026-10-12)
+- **What:** `mcp_feedback` refuses to start without the 438 MB BERT weights, which are gitignored, and no Cloud Storage bucket exists to pull them from (ADR-062 was never built). The deployed system therefore answers a sentiment question with "The data service is unavailable right now." The forecast, reporting and QA paths are unaffected. Found by reading the start-up code while preparing the full deploy.
+- **Why accepted (for now):** the choice between a bucket and a build-time pull (A) and stored predictions only (B) is the owner's, and (B) needs its own ADR. Neither is made here.
+- **Fix (option):** (A) or (B) in R-19; either is a decision recorded in `docs/decisions-log.md` before its code.
+- **Recorded in:** R-19; ADR-099; `deploy/RUNBOOK_V.md`.

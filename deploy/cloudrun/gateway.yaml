@@ -1,0 +1,61 @@
+# Cloud Run service "ops-gateway": the public entry point (ADR-097, ADR-099). FastAPI serving the
+# Next.js static export baked into the image (ADR-080), with invite-link sign-in in its own code.
+# Its invoker is allUsers, bound separately (README; the IAM policy is not part of this file),
+# and it is the only service in the system that has one. It holds no database credential and no
+# model key; it calls the orchestrator with its own account's ID token.
+#
+# max instances is 1 on purpose: the daily question cap and the rate limits are counted in
+# process, so one instance keeps them exact (ADR-097, L-88).
+name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-gateway
+description: "Gateway: invite-link sign-in, the UI, and /api/ask in front of the orchestrator"
+labels:
+  app: agentic-service-ops
+  component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
+ingress: INGRESS_TRAFFIC_ALL
+invokerIamDisabled: false # public access is an IAM binding for allUsers, not this switch
+template:
+  serviceAccount: ${GATEWAY_SA} # dedicated; never the default compute account
+  timeout: 300s # the gateway waits up to 125 s for the orchestrator (ADR-097)
+  scaling:
+    minInstanceCount: 0
+    maxInstanceCount: 1
+  maxInstanceRequestConcurrency: 20
+  containers:
+    - name: gateway
+      image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/gateway:${IMAGE_TAG}
+      ports:
+        - containerPort: 8080
+      env:
+        - name: GATEWAY_PORT
+          value: "8080"
+        - name: GATEWAY_AUTH
+          value: google_id_token
+        - name: GATEWAY_ORCHESTRATOR_URL
+          value: https://ops-orchestrator-${PROJECT_NUMBER}.${REGION}.run.app
+        - name: GATEWAY_PUBLIC_ORIGIN
+          # The origin its Origin check and the invite links use: Cloud Run's deterministic URL.
+          value: https://ops-gateway-${PROJECT_NUMBER}.${REGION}.run.app
+        - name: GATEWAY_INVITES_SECRET
+          # Read through the Secret Manager API as `latest`, cached at most 60 s (ADR-097).
+          value: projects/${PROJECT_NUMBER}/secrets/gateway-invites
+        - name: GATEWAY_TRUSTED_PROXY_HOPS
+          value: "1" # unverified for Cloud Run services (note under ADR-097)
+        - name: LOG_LEVEL
+          value: INFO
+        - name: GATEWAY_SESSION_KEY
+          valueSource:
+            secretKeyRef:
+              secret: gateway-session-key
+              version: latest
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+      startupProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        timeoutSeconds: 3
+        failureThreshold: 20

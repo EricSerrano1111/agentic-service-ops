@@ -56,7 +56,15 @@ CLAUDE.local.md
 data/generator/corpus/work/
 
 # Local copies of versioned model artifacts and training checkpoints (ADR-062, ADR-065).
-/models/
+/models/*
+# volume_v2 parameter files are committed and baked into the forecast and QA images (ADR-098):
+# small, readable, hash-checked by ml/forecast/artifacts/volume_v2.manifest.json. Nothing else
+# under models/ (the sentiment weights in particular) is un-ignored.
+!/models/forecast/
+/models/forecast/*
+!/models/forecast/volume_v2/
+/models/forecast/volume_v2/*
+!/models/forecast/volume_v2/*.json
 
 # Local gateway state: the invite store (ADR-097). Holds token hashes.
 .local/

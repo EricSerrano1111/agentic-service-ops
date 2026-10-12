@@ -3,9 +3,10 @@
 # Agent Card fetch and the message call alike. It holds the Gemini key and no database
 # credentials, and has no Cloud SQL mount.
 #
-# Only the reporting specialist is deployed in this slice. AGENT_SENTIMENT_URL and
-# AGENT_FORECAST_URL keep their compose defaults, which do not resolve here, so those routes
-# answer "agent unavailable" until their services exist (Sprint 5).
+# All four callees are named here (ADR-099): reporting, sentiment, forecast and QA, each by its
+# deterministic service URL, which is also the ID token's audience (ADR-081). A callee that is
+# not deployed (sentiment, until R-19 is decided) answers "agent unavailable". Its invoker is
+# run-gateway (ADR-097); it is not public.
 name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-orchestrator
 description: Orchestrator that routes questions to specialist agents over A2A
 labels:
@@ -18,7 +19,7 @@ template:
   timeout: 300s # at least 120 s (TA-16)
   scaling:
     minInstanceCount: 0
-    maxInstanceCount: 2
+    maxInstanceCount: 3
   maxInstanceRequestConcurrency: 8
   containers:
     - name: orchestrator
@@ -32,6 +33,12 @@ template:
           value: google_id_token
         - name: AGENT_REPORTING_URL
           value: https://ops-reporting-${PROJECT_NUMBER}.${REGION}.run.app
+        - name: AGENT_SENTIMENT_URL
+          value: https://ops-sentiment-${PROJECT_NUMBER}.${REGION}.run.app
+        - name: AGENT_FORECAST_URL
+          value: https://ops-forecast-${PROJECT_NUMBER}.${REGION}.run.app
+        - name: AGENT_QA_URL
+          value: https://ops-qa-${PROJECT_NUMBER}.${REGION}.run.app
         - name: A2A_TIMEOUT_S
           value: "60"
         - name: ROUTE_TIMEOUT_S

@@ -180,10 +180,8 @@ services:
       MCP_VOLUME_PORT: "8103"
       MCP_DB_STATEMENT_TIMEOUT_MS: ${MCP_DB_STATEMENT_TIMEOUT_MS:-10000}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    volumes:
-      # Gitignored local artifact, read-only; start-up verifies it against the manifest
-      # baked into the image (ADR-062, ADR-072).
-      - ./models/forecast:/models/forecast:ro
+    # The volume_v2 parameter files are baked into the image (ADR-098); start-up verifies them
+    # against the manifest, also baked in (ADR-072). No volume.
     expose:
       - "8103"
     depends_on:
@@ -242,7 +240,7 @@ services:
       QA_INTERP_TIMEOUT_S: ${QA_INTERP_TIMEOUT_S:-30}
       QA_INTERP_MODE: ${QA_INTERP_MODE:-advisory}
       # The forecast recompute (ADR-095) reads the volume_v2 parameter files, hash-checked
-      # against the manifest; they are mounted read-only, not baked into the image.
+      # against the manifest; they are baked into the image (ADR-098), so QA has no volumes.
       QA_FORECAST_RECOMPUTE: ${QA_FORECAST_RECOMPUTE:-on}
       QA_FORECAST_MODEL_DIR: /models/forecast/volume_v2
       REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
@@ -253,8 +251,6 @@ services:
       AGENT_QA_PUBLIC_URL: http://agent_qa:8004/
       AGENT_QA_PORT: "8004"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    volumes:
-      - ./models/forecast/volume_v2:/models/forecast/volume_v2:ro
     ports:
       - "127.0.0.1:${AGENT_QA_PORT:-8004}:8004"
     depends_on:
