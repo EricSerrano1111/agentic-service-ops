@@ -1,0 +1,313 @@
+{
+  "seed_set": "fr03_fresh_v2.jsonl",
+  "model": "gemini-3.5-flash-lite",
+  "mode": "paid",
+  "thinking_level": "minimal",
+  "prompt_version": "route_v3",
+  "prompt_sha": "1201bc648069",
+  "as_of": "2026-08-30",
+  "run_at": "20261012T213544Z",
+  "ledger_path": "C1",
+  "answered": 16,
+  "correct": 8,
+  "accuracy_by_tag": {
+    "ambiguous": "0/8 (0%)",
+    "clear_sentiment": "2/2 (100%)",
+    "multi_domain": "2/2 (100%)",
+    "underspecified": "4/4 (100%)"
+  },
+  "stopped_early": null,
+  "calls": 16,
+  "requests": 16,
+  "input_tokens": 9532,
+  "output_tokens": 668,
+  "list_price_cost_usd": 0.00453,
+  "rows": [
+    {
+      "id": "ambiguous/AMB-29",
+      "question": "How are jobs going in Central?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for current operational status of jobs in a region.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-09",
+      "question": "How is repair work looking?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about future repair work trends and outlook.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-21",
+      "question": "How are we tracking year to date?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for year-to-date operational performance figures.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-15",
+      "question": "What's the situation in Central over the past 4 weeks?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past operational figures over a specific 4-week period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-18",
+      "question": "What is the trend for inspections?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past or current operational trends based on historical inspection records.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-08",
+      "question": "What should I know about Bluewater Hospitality Partners?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "The question asks for general information about a company, which is outside operational analytics.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-17",
+      "question": "Is Westgate Foods Partners happy with our service?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks how a specific client feels about our service based on feedback.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-11",
+      "question": "How satisfied is Pinecrest Manufacturing Group?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about customer satisfaction, which falls under sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-09",
+      "question": "projected weekly service requests going forward",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for projected future service request volumes going forward.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-11",
+      "question": "give me SLA compliance by region",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for SLA compliance, which is a reporting metric.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-18",
+      "question": "pull up some positive customer comments",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for positive customer comments, which directly targets customer sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-05",
+      "question": "volume forecast for maintenance visits please",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a forward-looking volume projection for maintenance visits.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-10",
+      "question": "Are we seeing an increase in unhappy customer comments quarter by quarter over the past year?",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "This question asks about customer comments and their sentiment over the past year.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-03",
+      "question": "Show me some sample positive reviews from the Northeast over the past 4 weeks",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for customer reviews based on feedback sentiment over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-16",
+      "question": "Can you share the sentiment breakdown of recent comments and how many visits we expect to handle per week next month?",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "sentiment",
+        "forecast"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "sentiment",
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for both customer sentiment and future visit volumes.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-14",
+      "question": "Any sample negative comments from Pinecrest Manufacturing Group, and did we hit our promised service windows for them last month?",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "sentiment",
+        "reporting"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "sentiment",
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for both customer comments and service window compliance for last month.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    }
+  ]
+}

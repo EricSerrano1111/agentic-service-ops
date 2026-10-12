@@ -168,3 +168,22 @@ change them.
    under a written brief; the owner reviewed the brief and spot-checked the ambiguous labels."
 2. "The sets were generated, not owner-written."
 3. The persona-drop selection effect (L-86).
+
+---
+
+## Results (appended 2026-10-12, after the runs; nothing above was changed)
+
+First Part C call: 2026-10-12 16:34 CDT, after the pre-registration commit (16:24:33 CDT) and
+the format-mapping commit `77899b0` (16:33:30 CDT; no criterion, prompt or item change).
+
+- **B1 (FR-03): FAIL on (c).** (a) 0 of 24 non-ambiguous item-runs flagged (limit 1); (b1)
+  43, 43, 43, mean 43.00 (floor 42.00); (b2) `route_v6` 7, 7, 7 against `route_v3` 8, 8, 8
+  (floor 7.00); (c) 4 of 8 (needed 6; misses AMB-08, AMB-11, AMB-17, AMB-18). `route_v3`
+  stays the default; FR-03 stays open. ADR-101.
+- **B2 (interpretation): FAIL on (a) in run 1.** 3 false rejects of 23 (limit 1; reporting 1
+  of 10, forecast 1 of 7, sentiment 1 of 6; `f-underspecified/UND-20-ok`,
+  `s-clear_sentiment/CS-04-ok`, `r-filtered/FIL-18-ok`), 19 of 23 caught (floor 19; reporting
+  10 of 10, forecast 5 of 7, sentiment 4 of 6). Runs 2 and 3 not made, as pre-registered. The
+  check stays advisory with `qa_interp_v2`. ADR-102.
+- **Ledger** (`evals/results/sprint5_w_ledger.json`): 418 of 561 requests, $0.2719 of $3.00.
+  A1 192, A2 84, C1 96, C2 46. No call failed and no retry was needed.

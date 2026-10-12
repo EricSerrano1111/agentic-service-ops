@@ -3294,3 +3294,95 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - **Memory, measured:** the `stored` image under `--memory 512m --cpus 1` against the local database, 20 tool calls (summary by month and by quarter, examples, flagged examples; 5,184 and 434 comments in range): peak cgroup memory 100,925,440 bytes (96 MiB), 19% of 512 Mi, under the 60% line set above. **512 Mi stands.** The container answered `/readyz` within seconds of start.
 - **The `full` target** still starts with the weights mounted, verifies them, and answers the same figures (5,184 of 5,184 comments scored in the first window, `complete: true`).
 - **Not tested here:** nothing ran on Cloud Run or against Cloud SQL; the backfill's fingerprint on Cloud SQL is the runbook's step 4.
+
+### ADR-101 — The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default
+*Date: 2026-10-12. Supersedes nothing. Applies ADR-076's criteria, scaled, to the frozen generated set (ADR-094); ADR-075 stays not in effect. Pre-registered in `evals/sprint5_gates.md` (commit `458f1054795cce7cd63dcf8da820384cfa259554`, 2026-10-12 16:24:33 CDT) before the first Part C call (16:34 CDT).*
+
+**Decision (as pre-registered):** the gate failed, so `route_v3` stays the default, FR-03 stays open (L-58), and there are no further attempts in Sprint 5. `route_v6` and its development results stay in the repo.
+
+**What was tried.** `route_v6` (commit `031426b`, prompt sha `a160b528247b`) is the one revision allowed, written from the used development material only (`seed_v2`, `routing_v2`, `fr03_fresh_v1`) and committed before any of its runs. It states the concept as a rule: the measure decides, never the place, team or period; a question with no named measure that could be answered by counting records, reading customers' words or projecting forward is `ambiguous`; a future question about an in-scope measure is `forecast`; a future question about an out-of-scope subject is `out_of_scope` (the owner's 2026-10-11 clarification). All `route_v5` examples were removed and six new generic ones written (listed in the commit message); a test extracts the quoted examples from the prompt file and checks Jaccard at most 0.6 and no containment against the used development sets and the 84 used interpretation pairs.
+
+**Development check (A1; informs only, decides nothing).** k=3, Flash-Lite, paid key, thinking `minimal`, as-of 2026-08-30; 192 calls, no errors.
+
+| Set | Per-run correct | Non-ambiguous correct | Ambiguous recognised | Notes |
+|---|---|---|---|---|
+| `seed_v2` (31) | 30, 30, 30 | 27 of 27, every run | 3 of 4 (s15, s16, s29) | s20 routed to forecast in 3 of 3 runs (`route_v5` recognised it) |
+| `routing_v2` (18) | 17, 17, 17 | 16 of 17, every run | 1 of 1 (r02) | r06 routed `ambiguous` in 3 of 3 runs |
+| `fr03_fresh_v1` (15) | 15, 14, 15 | 10, 9, 10 of 10 | 5 of 5, every run | f10 routed `ambiguous` once; f03 and f05 now recognised |
+
+- `fr03_fresh_v1` is development material (ADR-076 used it to judge `route_v5`), and the "status or outcome with no measure" rule was written after f03 and f05's failures, so its 5 of 5 is not held-out evidence.
+- Two over-flags and one regression are the prompt's, found and not fixed: r06 ("behind" with no target) and s20.
+
+**The gate** (`fr03_fresh_v2`: 16 items, 8 ambiguous and 8 not; k=3 each for `route_v6` and `route_v3`; 96 calls, no errors; scored by `evals/routing/fr03_gate.py`).
+
+| Criterion | `route_v3` (3 runs) | `route_v6` (3 runs) | Rule | Verdict |
+|---|---|---|---|---|
+| (a) fresh non-ambiguous routed `ambiguous` | n/a | 0 item-runs | at most 1 | PASS |
+| (b1) development non-ambiguous correct, of 44 (A1 runs) | 43, 43, 43 (mean 43.00, ADR-076) | 43, 43, 43 (mean 43.00) | `route_v6` mean at least 42.00 | PASS |
+| (b2) fresh non-ambiguous correct, of 8 | 8, 8, 8 (mean 8.00) | 7, 7, 7 (mean 7.00) | `route_v6` mean at least 7.00 | PASS, at the boundary |
+| (c) fresh ambiguous returned `ambiguous` in at least 2 of 3 runs | 0 of 8 | **4 of 8** | at least 6 of 8 | **FAIL** |
+
+- **Verdict: the gate failed on (c).** AMB-08, AMB-11, AMB-17 and AMB-18 were not recognised in any of the 3 runs; each was routed to one domain (or `out_of_scope`) instead. The other four ambiguous items were recognised in 3 of 3 runs.
+- The one non-ambiguous miss (CS-10, a clear sentiment item routed `multi_domain`) is the same in all 3 runs, so (b2) passed with no slack.
+- `route_v6` is better than `route_v3` on this set (11 of 16 in every run against 8 of 16), because `route_v3` never returns `ambiguous` (0 of 8): that is the gap FR-03 describes, and `route_v6` closes half of it.
+- Per-item results for every run are in `evals/results/routing_fr03_fresh_v2_gemini-3.5-flash-lite_route_v{3,6}_*.json` (20261012T2134 to T2136) and the A1 runs in `evals/results/routing_{seed_v2,routing_v2,fr03_fresh_v1}_gemini-3.5-flash-lite_route_v6_20261012T2119*` to `T2125*`. This record gives counts and item IDs only.
+
+**Context:**
+- The pre-registration was committed while the last A1 runs were finishing; no criterion was set from an A1 or A2 result. (b1)'s outcome was known to the session when the gate "ran", because it uses the A1 runs; the rule was fixed by the prompt text, not by that outcome.
+- The set was written by Gemini 3.8 Flash under a written brief (ADR-094); the owner skimmed the ambiguous labels and dropped items on persona grounds (a selection effect, L-86). The system's models are the same family.
+
+**Alternatives considered:**
+- *Revise `route_v6` and rerun* (rejected): the plan allows one revision and no third attempt in Sprint 5; the sets are for measuring, not tuning (ADR-094).
+- *Ship `route_v6` anyway because it recognises more ambiguous questions* (rejected): the gate was pre-registered and the (c) floor is what FR-03's reason requires; shipping it would loosen a gate after its result.
+
+**Consequences:**
+- FR-03 is not met in the running system. `golden_v2`'s G35 expects the clarification and will fail under `route_v3`; Prompt X scores the held-out ambiguous items wrong under `route_v3` and reports the without-ambiguous figure alongside (B3).
+- The default router in the evaluation freeze (ADR-103) is `route_v3`.
+- `05`: the FR-03 scenario stays a known-failing one, unchanged from the draft; see the sprint-log note.
+
+### ADR-102 — The Sprint 5 interpretation gate: `qa_interp_v3` failed (a) in run 1; the check stays advisory with `qa_interp_v2`
+*Date: 2026-10-12. Supersedes nothing; applies ADR-089's gate, restated as rates, to the frozen generated pairs (ADR-094). Pre-registered in `evals/sprint5_gates.md` (commit `458f1054795cce7cd63dcf8da820384cfa259554`, 2026-10-12 16:24:33 CDT) before the first Part C call.*
+
+**Decision (as pre-registered):** the gate failed, so the interpretation check stays advisory (`QA_INTERP_MODE=advisory`) with `qa_interp_v2`, L-74 stands, and `qa_interp_v3` is not shipped (the file stays in the repo, like v1). No enforce switch was made and the shipped code is unchanged.
+
+**Scope, and a correction to the plan.** The plan assumed the check covers reporting and forecast. It also runs on sentiment (ADR-090; `reading_sentiment`; `QA_INTERP_MODE` is not domain-scoped), so the gate covers all three domains: 23 correct and 23 wrong pairs (reporting 10, forecast 7, sentiment 6 per role). The call cap was raised from 522 to 561 by the owner before any call.
+
+**Criteria, as rates, strict rounding (pre-registered).** ADR-089's (a) at most 2 of 42 and (b) at least 34 of 42 become: (a) 2/42 = 4.76%, 4.76% of 23 = 1.09, rounded down: **at most 1 false reject of 23**; (b) 34/42 = 80.95%, 80.95% of 23 = 18.62, rounded up: **at least 19 of 23 caught**. All 3 runs; a complete failing run ends the gate.
+
+**What was tried.** `qa_interp_v3` (commit `07ca35b`, prompt sha `cccf19c29990`), one revision from `qa_interp_v2` written before its development run: a calendar-quarter table and a second worked example for the quarter-range failures; an explicit "unsupported readings" section and a rule that `faithful` is true exactly when `differs_in` is empty, for unsupported areas and forecast declines judged unfaithful against the model's own `meaning`; and a sentiment section written from `SentimentRequest` and §6 rule 3, with the closed `DiffField` list unchanged.
+
+**Development check (A2; the 84 used pairs, k=1, 84 calls, no errors; not held out).**
+
+| | `qa_interp_v2` run 1 (ADR-089) | `qa_interp_v3` |
+|---|---|---|
+| False rejects of 42 | 7 (reporting 4, forecast 3) | 3 (reporting 2 of 28, forecast 1 of 14) |
+| Caught of 42 | 39 (27 of 28, 12 of 14) | 37 (24 of 28, 13 of 14) |
+
+- The two quarter-range pairs that v1 and v2 rejected are accepted by v3. The three remaining false rejects are decline pairs.
+- **Development diagnostic, not held-out: false rejects on decline pairs: 3 of 7** (the used correct pairs whose labelled reading is an unsupported metric, an unsupported area or a forecast the system cannot make). This is the known failure kind.
+- Sentiment had no development pairs, so the new sentiment section had no measurement before the gate.
+
+**The gate (C2; one run, 46 calls, no errors; scored by `evals/qa_interp/gate_s5.py`).**
+
+| Run | Domain | False rejects (of correct) | Caught (of wrong) |
+|---|---|---|---|
+| 1 | reporting | 1 of 10 | 10 of 10 |
+| 1 | forecast | 1 of 7 | 5 of 7 |
+| 1 | sentiment | 1 of 6 | 4 of 6 |
+| 1 | **total** | **3 of 23** (limit 1): (a) **FAIL** | **19 of 23** (need 19): (b) PASS |
+
+- **Verdict: the gate failed on (a).** The false rejects were `f-underspecified/UND-20-ok`, `s-clear_sentiment/CS-04-ok` and `r-filtered/FIL-18-ok`. Runs 2 and 3 were not made, as pre-registered (a complete failing run ends the gate).
+- Per-pair results: `evals/results/qa_interp/2026-10-12/interp_qa_interp_v3_k1_163702.json` (gate) and `interp_qa_interp_v3_k1_162538.json` (development).
+
+**Disclosed limits of this gate.**
+- The frozen gate covers 1 decline pair; it does not test decline false rejects (L-92).
+- The pairs are generated, not owner-written (ADR-094), and the wrong pairs are synthetic one-field mutations (blunt, L-74).
+- The generator and the checked model are both Gemini.
+
+**Alternatives considered:**
+- *Run runs 2 and 3 anyway for the record* (rejected): a complete failing run fails the gate, and the budget is better kept for Prompt X.
+- *Enforce for reporting and forecast only* (not pursued): it would be a new decision with a new gate, on a changed scope, after seeing the result.
+
+**Consequences:**
+- A misparse is still not caught by QA (L-74); the range and filters the answer states remain the user's check. The orchestrator's re-ask loop (FR-12) still never fires in a running system.
+- The evaluation freeze records `QA_INTERP_MODE=advisory` and `qa_interp_v2` as shipped (ADR-103).
