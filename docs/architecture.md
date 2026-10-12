@@ -219,6 +219,8 @@ Each scoped to exactly the tables and fields it needs. This is also a better MCP
 - Agent identity and scoped credentials per A2A peer
 - Audit logging of every tool invocation with trace correlation
 
+**Note 2026-10-12 (ADR-097): access is by invite link, and the gateway is the only `allUsers` service.** The gateway is the one public service; its Cloud Run invoker is `allUsers` (in the deploy of Prompts U and V), and every other service stays behind IAM. Sign-in is an invite link whose token is in the URL fragment, exchanged for a signed `__Host-session` cookie (`Secure`, `HttpOnly`, `SameSite=Strict`); only the token's SHA-256 is stored, in a file locally and a Secret Manager secret on Cloud Run (read as `latest`, cached at most 60 seconds, so a revoke takes effect within that). This replaces the 2026-10-10 plan for Identity-Aware Proxy, which needs a Google identity the grader may not have; the authentication code is therefore ours (L-88). The gateway holds no database credential and no model key. Rate limits and the daily question cap are in process and per instance. ADR-081's "no `allUsers`" applied to the reporting slice.
+
 ---
 
 ## 6. Technology Stack

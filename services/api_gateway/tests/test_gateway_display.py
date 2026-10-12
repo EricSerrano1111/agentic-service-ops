@@ -177,7 +177,7 @@ def test_answer_without_warning_leaves_other_text_alone():
     assert answer_without_warning("plain", "other") == "plain"
 
 
-@pytest.mark.parametrize("status", [422, 429, 503, 500])
+@pytest.mark.parametrize("status", [422, 429, 503, 500, 502])
 def test_an_orchestrator_error_is_passed_on_as_its_user_facing_detail(kit, status):
     kit.upstream.status = status
     kit.upstream.body = {
@@ -194,7 +194,7 @@ def test_an_orchestrator_error_is_passed_on_as_its_user_facing_detail(kit, statu
     }
 
 
-def test_an_unexpected_upstream_status_is_a_generic_502(kit):
+def test_an_unexpected_upstream_status_is_a_generic_502(kit):  # 418: not one it passes on
     kit.upstream.status = 418
     kit.upstream.body = {"error": "x", "detail": "http://internal-host:8000 exploded"}
     kit.sign_in()

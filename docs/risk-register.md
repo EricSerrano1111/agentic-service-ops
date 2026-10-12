@@ -304,6 +304,7 @@ The same steps are in the README's "Local environment recovery". Check the memor
 - For forecasts, an answer-time check that served numbers equal the model's own prediction (L-83(a)) narrows what a wrong parse can hide; it does not catch the parse itself.
 **Review trigger:** The Sprint 5 interpretation-gate reattempt; every sprint retro.
 **Update 2026-10-11:** the answer-time forecast check named in the mitigation (L-83(a)) is built (ADR-095): QA recomputes served forecast numbers from the stored parameters. Measurement 3 still catches consistent misparses 0 of 71; the check does not catch the parse itself, as stated here.
+**Update 2026-10-12:** the single-screen UI built under ADR-097 shows an "Interpreted as:" line with every answer, and every decline that carries a parsed request: the measure, the resolved dates (and whether they were assumed), the region ("all regions", or "region not recognised"), account or technician, breakdown and forecast horizon (data dictionary §6, "Answer display (UI)"). It is the user's check on a misparse, which the mitigation above relied on the answer text alone to provide. The risk itself is unchanged: the line shows how the question was read, it does not make the reading correct, and `qa_status: verified` is worded "Figures checked for the request as interpreted" (L-74). Status stays Open.
 
 ---
 

@@ -35,8 +35,9 @@ log = logging.getLogger("gateway")
 
 MAX_BODY_BYTES = 4096
 MAX_QUESTION_CHARS = 500
-#: Orchestrator errors passed on to the user (their `detail` is written for the user).
-PASS_ON = {422, 429, 500, 503}
+#: Orchestrator errors passed on to the user (their `detail` is written for the user). 502 is
+#: its "agent task failed / agent unavailable" family, e.g. "The incidents query failed."
+PASS_ON = {422, 429, 500, 502, 503}
 HSTS = "max-age=63072000; includeSubDomains"
 
 

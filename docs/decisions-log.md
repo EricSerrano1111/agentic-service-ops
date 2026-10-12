@@ -3141,3 +3141,9 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - The orchestrator's `/ask` response gains `parsed_request` for a decline (ADR-086's unsupported region among them), validated against the domain's request model, so "Interpreted as:" can show a decline's parse. It changes no answer.
 - The display rules are data dictionary §6, "Answer display (UI)".
 - Prompt U provisions two secrets (the invite store and the session key) and verifies the forwarded-for hop count.
+
+**Note 2026-10-12 (the entry above is unchanged): three points settled while building it.**
+- `GET /api/session` answers **401** when there is no valid session and 200 `{"signed_in": true}` when there is, instead of a 200 with `signed_in: false`. Every route under `/api/` is on one router whose dependency requires a session, so there is no exception to enumerate in the exposure test; the page treats 401 as "signed out".
+- The per-session hourly limit is keyed by **invite id**, not by cookie: a holder of one link cannot reset it by exchanging the token again. A session therefore identifies an invite (as stated in the limits).
+- An orchestrator error with status 502 (`agent_task_failed`, `agent_unavailable`) is passed on with its `detail`, like 422, 429, 500 and 503: those sentences are written for the user (for example "The incidents query failed."). Any other upstream status is a generic 502 with no detail.
+- The inline-script hashes are computed from the built export at **image build time** (`python -m api_gateway.csp`, a Dockerfile step) and read at start-up; the gateway refuses to serve an export without the hashes file, or one with inline style attributes. The default Next.js 404 page has inline style attributes, so the export carries a custom `not-found` page.

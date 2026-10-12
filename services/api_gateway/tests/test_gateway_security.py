@@ -197,14 +197,41 @@ def test_the_global_daily_cap_triggers_with_a_clear_message_and_resets_at_pacifi
 # ---------------------------------------------------------------- logging
 
 
-def test_no_token_cookie_or_hash_reaches_the_logs(kit, caplog):
-    caplog.set_level(logging.DEBUG)
+class _Records(logging.Handler):
+    def __init__(self) -> None:
+        super().__init__(logging.DEBUG)
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
+@pytest.fixture
+def caplog_gateway():
+    """Capture on the gateway loggers themselves: another test's `configure_logging` can leave
+    the root logger (and so pytest's caplog) without the records."""
+    handler = _Records()
+    loggers = [logging.getLogger(n) for n in ("gateway", "gateway.upstream")]
+    saved = [(lg.level, lg.propagate, lg.disabled) for lg in loggers]
+    for lg in loggers:
+        lg.addHandler(handler)
+        lg.setLevel(logging.DEBUG)
+        lg.disabled = False  # a dictConfig elsewhere can leave existing loggers disabled
+    yield handler
+    for lg, (level, propagate, disabled) in zip(loggers, saved, strict=True):
+        lg.removeHandler(handler)
+        lg.setLevel(level)
+        lg.propagate = propagate
+        lg.disabled = disabled
+
+
+def test_no_token_cookie_or_hash_reaches_the_logs(kit, caplog_gateway):
     kit.exchange("wrong-token-should-not-be-logged")
     cookie = kit.sign_in()
     kit.ask("What was SLA compliance in the Northeast last month?")
     kit.ask("x" * 600)  # refused
     text = "\n".join(
-        r.getMessage() + " " + json.dumps(r.__dict__, default=str) for r in caplog.records
+        r.getMessage() + " " + json.dumps(r.__dict__, default=str) for r in caplog_gateway.records
     )
     assert "exchange ok" in text and kit.invite.id in text  # the id is logged
     for secret in (

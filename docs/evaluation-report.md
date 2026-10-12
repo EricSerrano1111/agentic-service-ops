@@ -959,3 +959,9 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** at this scale (a handful of invited reviewers, synthetic data) a revocable link with a 12-hour session is proportionate, and Google's quota is the backstop for spend. A federated identity was the portfolio-value choice and was ruled out by the grader's account situation.
 - **Fix (option):** per-user accounts, or a shared-state counter (Redis or Firestore) for the limits, each a new decision.
 - **Recorded in:** ADR-097; data dictionary §6, "Answer display (UI)".
+
+### L-89 — A database outage behind a healthy agent is a 502 error, not the degraded result (2026-10-12)
+- **What:** found in the Prompt T local smoke. With the database container stopped while the agents and MCP servers stayed up, a reporting question returned the orchestrator's `502 agent_task_failed` ("The incidents query failed.", the agent's `tool_error` task failure), not the `outcome: degraded` result of FR-13 / ADR-088 with `escalate: true`. The degraded result is produced for a breaker trip, a transport failure, a timeout, the cost cap or a QA failure; a task the agent itself reports as failed with `tool_error` takes the error path. The gateway passes the sentence on ("The incidents query failed."), so the user sees an honest error, but with no follow-up flag and no warning wording of §6, "Answer display (UI)", rule 4.
+- **Why accepted (for now):** changing which failures count as dependency failures is a change to ADR-088's behaviour and to the orchestrator's error contract, outside this work's brief. No answer is wrong and no unverified figure is shown.
+- **Fix (option):** map the agent's `tool_error` (and QA's `qa_unavailable`) task failures to `DegradedResult("dependency", capability)`, with a test over a stopped database; a new ADR superseding the relevant part of ADR-088.
+- **Observed once, one question** (the degraded smoke), not measured.
