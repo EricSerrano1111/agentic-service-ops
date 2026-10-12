@@ -73,6 +73,14 @@ REPO = Path(__file__).resolve().parents[2]
 AS_OF = DATASET_WINDOW_END
 BASE_URL = "http://agent.test"
 VOLUME_ARTIFACTS = REPO / "models" / "forecast" / "volume_v2"
+
+
+def recompute_enabled() -> bool:
+    """Measurement 3 enables QA's forecast recompute (ADR-095); `QA_FORECAST_RECOMPUTE=off`
+    reproduces measurement 2's QA exactly."""
+    return (os.environ.get("QA_FORECAST_RECOMPUTE") or "on").strip().lower() != "off"
+
+
 VOLUME_MANIFEST = REPO / "ml" / "forecast" / "artifacts" / "volume_v2.manifest.json"
 SENTIMENT_MANIFEST = REPO / "ml" / "sentiment" / "artifacts" / "bert_v1.manifest.json"
 
@@ -214,7 +222,9 @@ class Stack:
         load_dotenv(REPO / ".env", override=False)
         stack = cls(
             sentiment_manifest=qa_sentiment.SentimentManifest.load(SENTIMENT_MANIFEST),
-            forecast_manifest=qa_forecast.Manifest.load(VOLUME_MANIFEST),
+            forecast_manifest=qa_forecast.Manifest.load(
+                VOLUME_MANIFEST, VOLUME_ARTIFACTS if recompute_enabled() else None
+            ),
         )
         stack.incidents = create_incidents_server(IncidentsSettings.from_env())
         volume_settings = VolumeSettings(

@@ -205,9 +205,14 @@ def test_mcp_volume_mounts_only_the_forecast_models_read_only(compose):
     assert (mount["target"], mount.get("read_only")) == ("/models/forecast", True)
 
 
-def test_agent_qa_holds_only_app_qa_credentials_and_no_models_folder(compose):
+def test_agent_qa_holds_only_app_qa_credentials_and_one_read_only_parameter_folder(compose):
+    """QA has no `models/` folder of its own: it mounts the `volume_v2` parameter files and
+    nothing else, read-only, for the forecast recompute (ADR-095). No sentiment weights."""
     service = compose["agent_qa"]
-    assert "env_file" not in service and not service.get("volumes")
+    assert "env_file" not in service
+    (mount,) = service["volumes"]
+    assert (mount["target"], mount.get("read_only")) == ("/models/forecast/volume_v2", True)
+    assert str(mount["source"]).replace("\\", "/").endswith("models/forecast/volume_v2")
     db_vars = {key for key in _env(service) if key.startswith(DB_PREFIXES)}
     assert db_vars == {
         "POSTGRES_HOST",

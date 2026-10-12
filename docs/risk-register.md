@@ -303,6 +303,7 @@ The same steps are in the README's "Local environment recovery". Check the memor
 - An interpretation-gate reattempt on an owner-written set in Sprint 5, with a new pre-registered gate.
 - For forecasts, an answer-time check that served numbers equal the model's own prediction (L-83(a)) narrows what a wrong parse can hide; it does not catch the parse itself.
 **Review trigger:** The Sprint 5 interpretation-gate reattempt; every sprint retro.
+**Update 2026-10-11:** the answer-time forecast check named in the mitigation (L-83(a)) is built (ADR-095): QA recomputes served forecast numbers from the stored parameters. Measurement 3 still catches consistent misparses 0 of 71; the check does not catch the parse itself, as stated here.
 
 ---
 

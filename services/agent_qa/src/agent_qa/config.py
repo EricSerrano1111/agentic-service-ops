@@ -21,6 +21,9 @@ from schemas import DATASET_WINDOW_END, DATASET_WINDOW_START
 
 DEFAULT_MANIFEST = Path("/app/artifacts/volume_v2.manifest.json")
 DEFAULT_SENTIMENT_MANIFEST = Path("/app/artifacts/bert_v1.manifest.json")
+#: The `volume_v2` parameter files, read-only, for the forecast recompute (ADR-095). Not baked
+#: into the image: they are not in git.
+DEFAULT_FORECAST_MODEL_DIR = Path("/models/forecast/volume_v2")
 #: `advisory`: the interpretation check is logged and reported on the verdict but never fails
 #: an answer or triggers a retry. `enforce`: a failed check fails the verdict. The default is
 #: advisory because neither interpretation prompt passed its gate (ADR-089, L-74).
@@ -32,6 +35,13 @@ def _interp_mode(raw: str | None) -> str:
     if mode not in INTERP_MODES:
         raise ValueError(f"QA_INTERP_MODE must be one of {', '.join(INTERP_MODES)}, got {raw!r}")
     return mode
+
+
+def _on_off(raw: str | None) -> bool:
+    value = (raw or "on").strip().lower()
+    if value not in ("on", "off"):
+        raise ValueError(f"QA_FORECAST_RECOMPUTE must be on or off, got {raw!r}")
+    return value == "on"
 
 
 def _required(name: str) -> str:
@@ -53,6 +63,10 @@ class Settings:
     #: predictions to read, and its calibrated threshold is τ (ADR-066). Read as a file, never
     #: through model code.
     sentiment_manifest_path: Path = DEFAULT_SENTIMENT_MANIFEST
+    #: The forecast recompute (ADR-095): `on` loads and verifies the parameter files at
+    #: start-up (refusing to start without them) and fails an answer whose numbers differ.
+    forecast_recompute: bool = True
+    forecast_model_dir: Path = DEFAULT_FORECAST_MODEL_DIR
     window_start: dt.date = DATASET_WINDOW_START
     window_end: dt.date = DATASET_WINDOW_END
     #: Relative dates resolve against this, never the wall clock (ADR-050); the same variable
@@ -90,6 +104,8 @@ class Settings:
             sentiment_manifest_path=Path(
                 env("QA_SENTIMENT_MANIFEST_PATH") or DEFAULT_SENTIMENT_MANIFEST
             ),
+            forecast_recompute=_on_off(env("QA_FORECAST_RECOMPUTE")),
+            forecast_model_dir=Path(env("QA_FORECAST_MODEL_DIR") or DEFAULT_FORECAST_MODEL_DIR),
             as_of=dt.date.fromisoformat(
                 env("REPORTING_AS_OF_DATE") or DATASET_WINDOW_END.isoformat()
             ),

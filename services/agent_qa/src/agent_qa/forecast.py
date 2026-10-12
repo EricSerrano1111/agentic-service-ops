@@ -2,9 +2,12 @@
 arithmetic, the `volume_v2` manifest's serving table, the year-end caveat, declines, and the
 answer text.
 
-QA does not reproduce the model: it cannot say a point forecast is the right number. It checks
-what can be checked without trusting the forecast agent: that every week asked for is the week
-the question's period or horizon names, that a band the manifest marks unserved carries no
+QA does not say the model is right: a model that misses a holiday matches its own recompute
+(L-83(b)). With the recompute enabled (ADR-095) it does check that every number the answer shows
+equals the stored model's, from the artifact's parameter files and its own code (`forecast_model`).
+It also checks what can be checked without trusting the forecast agent: that every week asked
+for is the week the question's period or horizon names, that a band the manifest marks unserved
+carries no
 number and its `shown_error` is the manifest's, that each interval contains its point, that a
 period total is the sum of its weeks, that the history is what the database holds, and that the
 text states only those numbers. It reads the manifest itself and imports nothing from the
@@ -27,6 +30,7 @@ from schemas import CheckResult, ForecastAnswer, ForecastRequest
 from . import slots
 from .config import Settings
 from .db import Source
+from .forecast_model import ForecastModel, is_year_end
 from .reporting import bad, result
 
 HORIZON_CAP = 26
@@ -62,6 +66,8 @@ class Manifest:
     version: str  # SHA-256 of the manifest file's bytes
     last_training_week: dt.date  # Monday of the last week the model was trained on
     serving: dict[str, dict[str, dict[str, Any]]]
+    #: QA's own reimplementation of the model, or None when the recompute is off (ADR-095).
+    model: ForecastModel | None = None
 
     @property
     def trained_through(self) -> dt.date:
@@ -71,13 +77,16 @@ class Manifest:
         return self.last_training_week + dt.timedelta(weeks=horizon)
 
     @classmethod
-    def load(cls, path: Path) -> Manifest:
+    def load(cls, path: Path, model_dir: Path | None = None) -> Manifest:
+        """`model_dir` set: also load and verify the artifact's parameter files, so the recompute
+        can run (raises `ModelUnavailable` if they are missing or altered)."""
         raw = Path(path).read_bytes()
         doc = json.loads(raw)
         return cls(
             version=hashlib.sha256(raw).hexdigest(),
             last_training_week=dt.date.fromisoformat(doc["trained_on"][1]),
             serving=doc["serving"]["slices"],
+            model=ForecastModel.load(Path(model_dir), doc) if model_dir is not None else None,
         )
 
 
@@ -113,12 +122,6 @@ def resolve(req: ForecastRequest, as_of: dt.date) -> tuple[bool, bool, list[dt.d
     return assumed, (not weeks and end < first), weeks
 
 
-def is_year_end(monday: dt.date) -> bool:
-    """An ISO week (Monday start) containing December 25 or January 1 (ADR-070)."""
-    days = [monday + dt.timedelta(days=i) for i in range(7)]
-    return any((d.month, d.day) in ((12, 25), (1, 1)) for d in days)
-
-
 def decline_reasons(req: ForecastRequest, as_of: dt.date) -> set[str]:
     """Every reason the request cannot be forecast, as reason classes; empty if it can."""
     if req.unsupported is not None and req.unsupported != "past_period":
@@ -147,6 +150,8 @@ class Checker:
             self._year_end(answer, text),
             self._history(answer),
         ]
+        if self.manifest.model is not None:
+            checks.append(self._recompute(answer))
         if all(c.passed for c in checks):
             checks.append(self._text(answer, text))
         return checks
@@ -271,6 +276,44 @@ class Checker:
         if any(actual.get(h.week_start, 0) != h.count for h in a.history):
             problems.append("history_counts_differ")
         return result("history_matches_database", problems)
+
+    def _recompute(self, a: ForecastAnswer) -> CheckResult:
+        """Every displayed number equals QA's own recomputation from the stored parameters,
+        after the display rule (data dictionary §6, "Forecast recompute (QA)"). The 95% ends are
+        in the data part but never displayed, and no total interval is served: both are reported
+        as unchecked, never as passed."""
+        model = self.manifest.model
+        assert model is not None
+        problems: list[str] = []
+        if a.request.slice not in model.slices:
+            return bad("forecast_numbers_recomputed", "slice not in the model files")
+        unrounded_total = 0.0
+        counted = 0
+        for w in a.weeks:
+            if not w.served or not 1 <= w.horizon <= HORIZON_CAP:
+                continue
+            want = model.predict(a.request.slice, w.horizon)
+            counted += 1
+            unrounded_total += want["point"]
+            for name, claimed in (("point", w.point), ("lo80", w.lo80), ("hi80", w.hi80)):
+                if claimed is None or not math.isfinite(claimed):
+                    problems.append(f"{name}_missing")
+                elif not model.same_when_displayed(claimed, want[name]):
+                    problems.append(f"{name}_differs_from_the_model")
+        if (
+            a.period_total is not None
+            and counted
+            and not model.same_when_displayed(a.period_total, unrounded_total)
+        ):
+            problems.append("period_total_differs_from_the_model")
+        if problems:
+            return bad("forecast_numbers_recomputed", "; ".join(dict.fromkeys(problems)))
+        return CheckResult(
+            code="forecast_numbers_recomputed",
+            check_class="figures",
+            passed=True,
+            detail="unchecked: lo95, hi95 (not displayed, no rule); total interval (none served)",
+        )
 
     def _text(self, a: ForecastAnswer, text: str) -> CheckResult:
         """The text's numbers, by position (§6 "Answer text"): each is one slot of the data

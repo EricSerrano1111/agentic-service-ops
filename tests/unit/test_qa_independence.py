@@ -32,6 +32,14 @@ FORBIDDEN_MODULES = {
     "agent_forecast",
     "orchestrator",
     "forecast_runtime",
+    # The library the model was fitted with and the numerical stack: QA's forecast recompute is
+    # pure Python on the stored parameters (ADR-095), so a shared fitting or prediction path
+    # cannot make it agree with the specialist by construction.
+    "statsmodels",
+    "numpy",
+    "scipy",
+    "pandas",
+    "sklearn",
     "db_models",
     "torch",
     "transformers",
@@ -184,3 +192,26 @@ def test_a_comments_text_is_selected_in_one_place_only_and_never_leaves_the_chec
     interp = (QA / "src" / "agent_qa" / "interpretation.py").read_text(encoding="utf-8")
     for needle in ("feedback_text", ".examples", "quote", ".summary", ".counts", "answer.text"):
         assert needle not in interp, needle
+
+
+def test_the_scan_fails_when_a_forbidden_import_is_present(tmp_path):
+    """The scan itself works: a fixture module that imports the runtime, the fitting library
+    or the numerical stack is reported, in each import form (ADR-095)."""
+    for source in (
+        "import forecast_runtime",
+        "from forecast_runtime import forecast_record",
+        "import statsmodels.api as sm",
+        "from numpy import exp",
+        "import scipy.stats",
+    ):
+        fixture = tmp_path / "fixture_module.py"
+        fixture.write_text(source + chr(10), encoding="utf-8")
+        roots = {m.split(".")[0] for m in imported_modules(fixture)}
+        assert roots & FORBIDDEN_MODULES, source
+
+
+def test_the_forecast_recompute_module_is_pure_standard_library():
+    roots = {
+        m.split(".")[0] for m in imported_modules(QA / "src" / "agent_qa" / "forecast_model.py")
+    }
+    assert roots <= {"__future__", "datetime", "hashlib", "json", "math", "dataclasses", "pathlib"}

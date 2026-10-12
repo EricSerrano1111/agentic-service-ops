@@ -105,6 +105,7 @@
 | 091 | The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate (extends ADR-055 and ADR-087) | Accepted |
 | 092 | QA fixes from the fault injection: answer text by position, zero denominators, small samples, `qa_status: failed`, and measurement 2 (extends ADR-091) | Accepted |
 | 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted |
+| 095 | QA recomputes served forecast numbers independently (L-83(a)) | Accepted |
 
 ---
 
@@ -3009,3 +3010,48 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - The sets are weaker than owner-written ones. What they keep is that nobody who tuned the system wrote or saw the questions before the freeze.
 - The generator runs at the model's default temperature: none is sent (`evals/generated/plan.md`).
 - Sets stay drafts until the owner's skim. Freezing (manifests, hashes, interpretation pairs) is a later step.
+
+### ADR-095 — QA recomputes served forecast numbers independently (L-83(a))
+*Date: 2026-10-11. Extends ADR-055, ADR-087 and ADR-092; closes L-83(a); supersedes nothing. Pre-registered before any QA code.*
+
+**Decision:**
+- QA reimplements the `volume_v2` prediction from the artifact's stored parameters and requires every number a served forecast **shows** (the weekly point, the 80% range's two ends, the period total) to equal its own value after the display rule of data dictionary §6, "Answer text", rule 2. The formulas, the rounding, the boundary rule and the failure semantics are written in data dictionary §6, "Forecast recompute (QA)".
+- **Independence.** QA must not import `forecast_runtime`, the library used to fit the model (`statsmodels`), `numpy`, `scipy`, `pandas`, any forecast-agent or volume-server module, or any shared helper that computes forecast values. Reading the manifest and the parameter files is allowed; a helper that only loads data is not "shared" unless it transforms values. The recompute is pure Python (`math`).
+- **Where the parameters come from.** The six per-slice JSON files of `volume_v2` (`k`, `year_end`, `params`, `scale`, `xtwx_inv`, `last_t`, `period`), each verified against the manifest's `files` hashes. They are not in git (`models/`) and are not baked into QA's image, which still holds only the two manifests. QA reads them from `QA_FORECAST_MODEL_DIR` (a read-only mount). Making the files available to a deployed QA is a deployment step, not done here.
+- **Gaps (recorded, not checked):** the 95% interval ends are in the data part but are never displayed, so no display rule exists for them; a total interval is not served. Neither is reported as passed.
+
+**Required vs portfolio value:** required. It closes L-83(a), a fault class measured at 0 of 6 (owner fault 2), and it is what lets "QA verifies forecasts" mean more than arithmetic.
+
+**Scope limits:**
+- It catches altered forecast numbers (L-83(a)).
+- It does **not** catch a model that misses a holiday (L-83(b), handled offline: the stored model's own numbers match their own recompute), and it does not catch a misparse (R-18). The interpretation check stays advisory (L-74).
+
+**The evidence rule (ADR-092):** this fix was designed from owner fault 2's miss, so measurement 3 is evidence that the fix works on the case it was built for, not a new catch rate. The faults are drafted by the assistant that built QA (L-85).
+
+**Pre-registered criteria, fixed before any run:**
+1. **Equivalence test.** On the test suite's model records, QA's recompute equals `forecast_runtime`'s unrounded output to 1e-9 relative for the weekly point, `lo80`, `hi80`, `lo95`, `hi95` and the period total, for every slice and horizon 1 to 26 (and against the real `volume_v2` files wherever they are present). A test, and it must pass.
+2. **Clean false-alarm check.** Zero recompute mismatches over every recorded, unmodified served forecast available locally (the agents' test fixtures and recorded evaluation outputs, not `evals/golden/` or `evals/generated/`; the fault harness's clean base answers and controls count). The count checked is reported. **If there is any false alarm, the check ships behind a flag defaulting off, and the tolerance is never widened.**
+3. **Measurement 3.** The same frozen catalogue and seed as measurement 2, with the recompute enabled. Expectation: owner fault 2's variants, all six of which alter served numbers (part (a)), are **caught**. A miss is reported as a miss, with no rerun after a code change in this work. Any change of outcome from measurement 2 other than a newly caught forecast-number fault is a regression: reported, and the change is not merged. Consistent misparses stay 0 of 71.
+
+**Measurement 3 is run comparably.** Measurements 1 and 2 ran QA with a fake interpretation client that always answers `faithful`, made 0 model calls, and logged 0 advisories, so no advisory result changed any outcome. Measurement 3 keeps that harness and makes 0 calls.
+
+**Alternatives considered:**
+- *Compare the answer's unrounded floats at a tolerance* (rejected). It is a tolerance the rule forbids; the display rule is the existing contract.
+- *Import `forecast_runtime`* (rejected). Both sides would share code, and a bug there would pass its own check (ADR-055, ADR-087).
+- *Export the parameters into the manifest* (not needed). The per-slice files already hold every value, hash-checked.
+- *A seasonal-naive plausibility band* (rejected for this item). It is L-83(b)'s offline territory and has a different false-alarm profile.
+
+**Consequences:**
+- A forecast answer whose weekly figure differs from the stored model's by enough to change its whole-number display now fails with `qa_status: failed`. A change under half a request in a weekly figure can still pass: the display rule is the contract.
+- QA needs the six parameter files at start-up when the check is enabled, and refuses to start without them.
+- The wording "QA does not reproduce the model" in `agent_qa/forecast.py` and L-83 is superseded for the numbers listed above.
+
+
+**Result 2026-10-11 (appended after the runs; the entry above is unchanged).**
+- **Criterion 1 (equivalence):** passed. Maximum relative difference between QA's recompute and `forecast_runtime`, over the six slices and horizons 1 to 26: on the real `volume_v2` files, point 1.06e-15, lo80 1.02e-15, hi80 1.76e-15, lo95 1.03e-15, hi95 1.01e-15; on the synthetic records of the test suite, 1.7e-15 to 2.7e-15. The limit is 1e-9. (`tests/unit/test_qa_forecast_equivalence.py`.)
+- **Criterion 2 (clean false-alarm check):** passed. 171 unmodified served forecasts and 2,320 numbers compared, 0 mismatches, the boundary rule fired 0 times: the fault harness's 11 clean answers (150 numbers), the 4 recorded forecast-agent end-to-end answers on this artifact version (120; the other 3 runs of that file are a decline, a reporting answer and a sentiment answer), and the serving path swept over all 6 slices and horizons 1 to 26 (156 forecasts, 2,050 numbers). The harness's 15 forecast controls also ran through full QA with the check on: 0 failed. The check ships enabled (`QA_FORECAST_RECOMPUTE=on`). Records: `evals/results/qa_forecast_recompute/2026-10-11/clean_check.json`.
+- **Criterion 3 (measurement 3, `evals/results/qa_faults/2026-10-11-m3/`):** 223 of 223 caught overall (measurement 1: 219 of 223; measurement 2: 223 of 223); forecast-number faults 43 of 43. Owner fault 2: **6 of 6 caught** by `forecast_numbers_recomputed` (measurements 1 and 2: 0 of 6); all six variants alter served numbers, so all are part (a). Consistent misparses 0 of 71, unchanged. 19 case outcomes differ from measurement 2, all of them the new check firing on a forecast-number fault (O2 6, F01 4, F03 9; F01 and F03 were already caught). No regression. **This is evidence the fix works on the case it was designed from, not a catch rate** (ADR-092; L-85).
+- Catalogue SHA-256 identical before and after the run, and equal to the values recorded in the note under ADR-091.
+- Not covered, as decided: the 95% interval ends and a total interval (L-87), a model that misses a holiday (L-83(b)), a misparse (R-18).
+
+**Note 2026-10-11 (the entry above is unchanged): QA's container now has one mount.** `docker-compose.yml` mounts `./models/forecast/volume_v2` into `agent_qa` read-only, for the recompute. `tests/unit/test_compose_isolation.py` asserted that QA has no volumes; it now asserts exactly that one read-only mount (the sentiment weights stay out, and the image still bakes in only the two manifests). This extends ADR-087's "the manifest is baked in" to "the manifest is baked in and the parameter files are mounted"; it is the owner's to review.

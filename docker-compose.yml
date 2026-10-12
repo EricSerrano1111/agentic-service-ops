@@ -241,6 +241,10 @@ services:
       QA_DB_STATEMENT_TIMEOUT_MS: ${QA_DB_STATEMENT_TIMEOUT_MS:-10000}
       QA_INTERP_TIMEOUT_S: ${QA_INTERP_TIMEOUT_S:-30}
       QA_INTERP_MODE: ${QA_INTERP_MODE:-advisory}
+      # The forecast recompute (ADR-095) reads the volume_v2 parameter files, hash-checked
+      # against the manifest; they are mounted read-only, not baked into the image.
+      QA_FORECAST_RECOMPUTE: ${QA_FORECAST_RECOMPUTE:-on}
+      QA_FORECAST_MODEL_DIR: /models/forecast/volume_v2
       REPORTING_AS_OF_DATE: ${REPORTING_AS_OF_DATE:-}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:?set GOOGLE_AI_API_KEY in .env}
       GEMINI_MODEL_QA: ${GEMINI_MODEL_QA:?set GEMINI_MODEL_QA in .env}
@@ -249,6 +253,8 @@ services:
       AGENT_QA_PUBLIC_URL: http://agent_qa:8004/
       AGENT_QA_PORT: "8004"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./models/forecast/volume_v2:/models/forecast/volume_v2:ro
     ports:
       - "127.0.0.1:${AGENT_QA_PORT:-8004}:8004"
     depends_on:
