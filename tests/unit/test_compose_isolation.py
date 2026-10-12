@@ -42,6 +42,7 @@ APP_SERVICES = (
     "agent_forecast",
     "agent_qa",
     "orchestrator",
+    "gateway",
 )
 LLM_SERVICES = (
     "agent_reporting",
@@ -109,7 +110,7 @@ def test_no_secret_literals_in_compose(compose):
 
 def test_only_orchestrator_and_qa_publish_a_port(compose):
     published = {name for name in APP_SERVICES if compose[name].get("ports")}
-    assert published == {"orchestrator", "agent_qa"}
+    assert published == {"orchestrator", "agent_qa", "gateway"}
 
 
 def _bind_address(port) -> str:
@@ -130,7 +131,7 @@ def test_every_published_port_binds_loopback_only(compose):
         for name, service in compose.items()
         for port in service.get("ports") or []
     ]
-    assert {n for n, _ in published} == {"orchestrator", "agent_qa", "postgres"}
+    assert {n for n, _ in published} == {"orchestrator", "agent_qa", "postgres", "gateway"}
     assert [(n, a) for n, a in published if a != "127.0.0.1"] == []
 
 
@@ -229,3 +230,22 @@ def test_the_orchestrator_waits_for_qa_and_knows_where_it_is(compose):
     service = compose["orchestrator"]
     assert service["depends_on"]["agent_qa"]["condition"] == "service_healthy"
     assert _env(service)["AGENT_QA_URL"] == "http://agent_qa:8004"
+
+
+def test_the_gateway_holds_no_database_credential_and_no_model_key(compose):
+    """ADR-079, ADR-097: the only browser-facing service holds neither; its secrets are the
+    session key and the invite store."""
+    env = _env(compose["gateway"])
+    assert [k for k in env if k.startswith(DB_PREFIXES)] == []
+    assert [k for k in env if k.startswith(LLM_PREFIXES)] == []
+    assert "GATEWAY_SESSION_KEY" in env and str(env["GATEWAY_SESSION_KEY"]).startswith("${")
+
+
+def test_the_gateway_is_loopback_only_and_reaches_only_the_orchestrator(compose):
+    service = compose["gateway"]
+    assert [_bind_address(p) for p in service["ports"]] == ["127.0.0.1"]
+    assert _env(service)["GATEWAY_ORCHESTRATOR_URL"] == "http://orchestrator:8000"
+    assert set(service["depends_on"]) == {"orchestrator"}
+    # the invite store is the one mount, and it is read-only
+    (mount,) = service["volumes"]
+    assert (mount["target"], mount.get("read_only")) == ("/run/gateway", True)

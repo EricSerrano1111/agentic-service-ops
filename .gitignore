@@ -57,3 +57,6 @@ data/generator/corpus/work/
 
 # Local copies of versioned model artifacts and training checkpoints (ADR-062, ADR-065).
 /models/
+
+# Local gateway state: the invite store (ADR-097). Holds token hashes.
+.local/

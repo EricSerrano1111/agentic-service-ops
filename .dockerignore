@@ -23,3 +23,9 @@
 **/*.key
 **/*credentials*.json
 **/*service-account*.json
+
+# The UI source for the gateway image, which builds the export itself (ADR-080).
+!web/
+web/node_modules/
+web/.next/
+web/out/
