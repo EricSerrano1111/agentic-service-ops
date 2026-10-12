@@ -119,6 +119,26 @@ def test_a_verified_decline_is_a_normal_not_available_answer(monkeypatch):
     assert call["data"]["parsed_request"] == PARSED and "answer" not in call["data"]
 
 
+def test_a_decline_passes_its_validated_parsed_request_on_for_the_ui(monkeypatch):
+    """ADR-097: the UI's "Interpreted as:" line needs a decline's parse (an unsupported region
+    among them). It is validated against the domain's request model and changes no answer."""
+    region = PARSED | {"metric": "sla_compliance", "region": "unsupported"}
+    hop = Hop(lambda n: declined("not_supported", "Only four regions.", parsed=region))
+    body = ask(routed(monkeypatch, "reporting", hop)).json()
+    assert body["outcome"] == "not_available" and body["qa_status"] == "verified"
+    assert body["parsed_request"]["region"] == "unsupported"
+    assert body["parsed_request"]["metric"] == "sla_compliance"
+
+
+def test_an_invalid_or_missing_parsed_request_is_not_passed_on(monkeypatch):
+    bad = PARSED | {"surprise_field": 1}  # extra="forbid": not a valid request
+    for parsed in (bad, None):
+        hop = Hop(lambda n, p=parsed: declined("not_supported", "No.", parsed=p))
+        body = ask(routed(monkeypatch, "reporting", hop)).json()
+        assert body["outcome"] == "not_available"
+        assert body["parsed_request"] is None
+
+
 def test_a_verified_clarification_keeps_its_reason(monkeypatch):
     hop = Hop(lambda n: declined("technician_ambiguous", "2 technicians match Priya: A and B."))
     body = ask(routed(monkeypatch, "reporting", hop)).json()

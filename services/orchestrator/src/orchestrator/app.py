@@ -49,8 +49,15 @@ from llm import (
     LLMRequestError,
     LLMUnavailable,
 )
-from pydantic import BaseModel, Field, model_validator
-from schemas import QaStatus, Verdict, VerificationRequest
+from pydantic import BaseModel, Field, ValidationError, model_validator
+from schemas import (
+    ForecastRequest,
+    QaStatus,
+    ReportingRequest,
+    SentimentRequest,
+    Verdict,
+    VerificationRequest,
+)
 
 from .a2a_client import AgentCardCache, AgentProtocolError, send_question
 from .auth import AgentAuthError, IdTokenProvider
@@ -153,6 +160,11 @@ class AskResponse(BaseModel):
     #: any check ran); `unavailable` (QA was needed and
     #: could not run); `not_applicable` (no specialist answered). Every specialist is checked.
     qa_status: QaStatus = "not_applicable"
+    #: How the specialist read the question, for a decline only (ADR-097): the request its
+    #: status metadata carried, validated against the domain's request model. Null for an
+    #: answer (the payload's own `request` holds it) and when absent or invalid. A passthrough
+    #: for the UI's "Interpreted as:" line; it changes no answer.
+    parsed_request: dict[str, Any] | None = None
 
     @model_validator(mode="after")
     def _reason_only_for_clarification(self) -> AskResponse:
@@ -172,6 +184,25 @@ class AskResponse(BaseModel):
         if self.qa_status == "failed" and not degraded:
             raise ValueError("only a degraded result can say QA failed the answer")
         return self
+
+
+_REQUEST_MODELS: dict[str, type[BaseModel]] = {
+    "reporting": ReportingRequest,
+    "sentiment": SentimentRequest,
+    "forecast": ForecastRequest,
+}
+
+
+def validated_parsed_request(domain: str, raw: dict | None) -> dict[str, Any] | None:
+    """A decline's `parsed_request`, only if it is a valid request for the domain (untrusted
+    until validated, architecture §11); otherwise None."""
+    model = _REQUEST_MODELS.get(domain)
+    if model is None or raw is None:
+        return None
+    try:
+        return model.model_validate(raw).model_dump(mode="json")
+    except ValidationError:
+        return None
 
 
 def _error(
@@ -645,7 +676,11 @@ def create_app(
             exc = attempt.failure
             if exc.error_code == "not_supported":
                 return respond(
-                    exc.reason, "not_available", task_id=exc.task_id, qa_status=qa_status
+                    exc.reason,
+                    "not_available",
+                    task_id=exc.task_id,
+                    qa_status=qa_status,
+                    parsed_request=validated_parsed_request(spec.key, exc.parsed_request),
                 )
             return respond(
                 exc.reason,
@@ -653,6 +688,7 @@ def create_app(
                 reason=exc.error_code,
                 task_id=exc.task_id,
                 qa_status=qa_status,
+                parsed_request=validated_parsed_request(spec.key, exc.parsed_request),
             )
         return respond(
             attempt.text,
