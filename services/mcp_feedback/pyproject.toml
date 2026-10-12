@@ -3,9 +3,8 @@ name = "mcp-feedback"
 version = "0.1.0"
 description = "Feedback MCP server: sentiment from stored bert_v1 predictions, scored on arrival, as app_sentiment (ADR-008, ADR-023, ADR-067)"
 requires-python = ">=3.12"
-# The MCP SDK is pinned exactly (R-12, ADR-047). The model stack shares the root `bert`
-# extra's exact pins, and torch resolves from the CPU index declared in the workspace
-# root (ADR-065), so no CUDA package enters the lock or the image.
+# The MCP SDK is pinned exactly (R-12, ADR-047). numpy stays a base dependency: scoring's
+# `Prediction` type is imported from the classifier module in every mode.
 dependencies = [
     "mcp==2.2.0",
     "db-models",
@@ -16,6 +15,13 @@ dependencies = [
     "anyio>=4.9",
     "uvicorn>=0.31",
     "numpy==2.5.3",
+]
+
+[project.optional-dependencies]
+# The model stack, only for `lazy` scoring (ADR-100). The deployed `stored` image target
+# is built without it. It shares the root `bert` extra's exact pins, and torch resolves from
+# the CPU index declared in the workspace root (ADR-065), so no CUDA package enters the lock.
+model = [
     "safetensors==0.8.0",
     "tokenizers==0.23.2",
     "torch==2.14.1",

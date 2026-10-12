@@ -46,12 +46,22 @@ from starlette.responses import JSONResponse
 
 from .classifier import Classifier
 from .config import Settings
-from .scoring import Scope, Store, build_summary, ensure_scored
+from .scoring import (
+    PredictionsIncomplete,
+    Scope,
+    Store,
+    build_summary,
+    ensure_scored,
+    require_complete,
+)
 
 log = logging.getLogger("mcp_feedback")
 
 SUMMARY = "get_sentiment_summary"
 EXAMPLES = "get_feedback_examples"
+#: The tool error for a gap in stored predictions under `stored_only` (ADR-100). The
+#: sentiment agent matches this code; the message carries no count and no text.
+PREDICTIONS_INCOMPLETE = "predictions_incomplete"
 _REGIONS = ("northeast", "southeast", "central", "west")
 
 Start = Annotated[str, Field(description="First day, inclusive: YYYY-MM-DD (UTC).")]
@@ -133,10 +143,13 @@ class Backend:
     """What the tools run on. Offline tests pass an in-memory store and a stub classifier."""
 
     store: Store
-    classifier: Classifier
+    #: None in `stored_only` (ADR-100): nothing is scored, and none is constructed.
+    classifier: Classifier | None
     model_version: str
     score_cap: int
     ready: Callable[[], None]
+    #: `stored_only` (ADR-100): fail closed on any comment without a stored prediction.
+    stored_only: bool = False
 
 
 def create_server(settings: Settings, backend: Backend) -> MCPServer:
@@ -162,6 +175,16 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
             began = time.perf_counter()
             try:
                 result, coverage = await anyio.to_thread.run_sync(answer, *args)
+            except PredictionsIncomplete as exc:
+                log.error(
+                    "stored predictions incomplete",
+                    extra={
+                        "tool": tool,
+                        "n_comments": exc.n_comments,
+                        "n_scored": exc.n_scored,
+                    },
+                )
+                raise ToolError(PREDICTIONS_INCOMPLETE) from None
             except Exception:
                 # Log the cause here; the client gets a generic message, never SQL detail.
                 log.exception("tool query failed", extra={"tool": tool})
@@ -183,6 +206,9 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
             return result
 
     def _coverage(scope: Scope):
+        if backend.stored_only:
+            return require_complete(backend.store, backend.model_version, scope)
+        assert backend.classifier is not None
         return ensure_scored(
             backend.store, backend.classifier, backend.model_version, scope, backend.score_cap
         )

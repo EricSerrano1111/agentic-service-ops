@@ -42,6 +42,8 @@ DATA_UNAVAILABLE = "The data service is unavailable right now. Please try again 
 UPSTREAM_MESSAGES: dict[str, tuple[int, str]] = {
     "agent_task_failed": (502, DATA_UNAVAILABLE),
     "agent_unavailable": (502, DATA_UNAVAILABLE),
+    # Deployed sentiment found a comment with no stored prediction (ADR-100): a pipeline fault.
+    "predictions_incomplete": (502, DATA_UNAVAILABLE),
     "unclear_question": (422, "I couldn't interpret the question. Please rephrase it."),
     "invalid_range": (
         422,

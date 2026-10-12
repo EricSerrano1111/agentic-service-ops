@@ -191,6 +191,7 @@ DATA_MSG = "The data service is unavailable right now. Please try again later."
 MAPPED = [
     ("agent_task_failed", 502, DATA_MSG),
     ("agent_unavailable", 502, DATA_MSG),
+    ("predictions_incomplete", 502, DATA_MSG),
     ("unclear_question", 422, "I couldn't interpret the question. Please rephrase it."),
     (
         "invalid_range",

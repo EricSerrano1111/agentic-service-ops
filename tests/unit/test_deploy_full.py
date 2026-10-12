@@ -117,13 +117,60 @@ def test_phases_and_skip_deploy_select_the_runbook_runs():
     assert {s.binding[0] for s in bindings if s.binding} >= {"qa", "orchestrator", "gateway"}
 
 
-def test_only_sentiment_is_blocked_and_it_says_why():
-    blocked = [s for s in dry_run() if s.blocked]
-    assert {s.id for s in blocked} == {"deploy-sentiment", "invoker-sentiment"}
-    assert all("R-19" in s.blocked for s in blocked)
+def test_sentiment_is_unblocked_and_deploys_with_the_other_five():
+    """ADR-100 resolves R-19: no step is blocked, and sentiment's steps are in the plan."""
+    steps = dry_run()
+    assert [s for s in steps if s.blocked] == []
+    ids = {s.id for s in steps}
+    assert {"deploy-sentiment", "invoker-sentiment"} <= ids
+    assert "sentiment" not in {n for n, svc in plan_full.SERVICES.items() if svc.get("blocked")}
 
 
-def test_a_real_run_skips_what_exists_and_blocked_steps_and_pipes_secrets(monkeypatch):
+def test_the_sentiment_service_is_stored_only_with_no_weights_and_no_bucket():
+    text = (DEPLOY / "cloudrun" / "sentiment.yaml").read_text(encoding="utf-8")
+    rendered = text.lower()
+    assert "name: MCP_FEEDBACK_SCORING\n          value: stored_only" in text
+    for banned in ("safetensors", "bucket", "gcs", "gcsfuse", "/models", "models_dir", "storage"):
+        # comments may name them; no env, volume or mount may
+        code = "\n".join(line.split("#")[0] for line in rendered.splitlines())
+        assert banned not in code, banned
+    # the only volume is the Cloud SQL socket
+    assert text.count("cloudSqlInstance:") == 1 and "gcs:" not in text
+    # sized for no model: not the lazy path's 2 GiB
+    memory = re.findall(r"memory: (\d+)(Mi|Gi)", text)
+    assert ("2", "Gi") not in memory and ("512", "Mi") in memory
+
+
+def test_cloud_build_builds_the_weight_free_target_and_sentiment_is_enabled():
+    build = (DEPLOY / "cloudbuild.yaml").read_text(encoding="utf-8")
+    trigger = (DEPLOY / "trigger_full.yaml").read_text(encoding="utf-8")
+    assert '_DEPLOY_SENTIMENT: "true"' in build
+    assert '_DEPLOY_SENTIMENT: "true"' in trigger
+    [line] = [x for x in build.splitlines() if "services/mcp_feedback/Dockerfile" in x]
+    assert "--target stored" in line
+
+
+def test_the_stored_image_target_installs_no_model_stack():
+    """Static: the `stored` stage resolves without the `model` extra, and the extra holds the
+    model stack alone. An image inspection is in tests/unit/test_mcp_feedback_image.py."""
+    dockerfile = (REPO / "services" / "mcp_feedback" / "Dockerfile").read_text(encoding="utf-8")
+    stages = re.split(r"(?m)^FROM ", dockerfile)[1:]
+    by_name = {
+        s.split(" AS ")[1].split()[0]: s for s in (x.split("\n", 1)[0] + "\n" + x for x in stages)
+    }
+    stored_chain = by_name["build-stored"] + by_name["stored"]
+    assert "--extra" not in stored_chain
+    assert "--extra model" in by_name["build-full"]
+    assert dockerfile.rstrip().splitlines()[-1].startswith("CMD")  # `full` is the last stage
+    assert dockerfile.index("AS stored") < dockerfile.index("AS full")
+    pyproject = (REPO / "services" / "mcp_feedback" / "pyproject.toml").read_text(encoding="utf-8")
+    base, extra = pyproject.split("[project.optional-dependencies]")
+    for pkg in ("torch", "transformers", "safetensors", "tokenizers"):
+        assert f'"{pkg}==' not in base.split("[tool.uv.sources]")[0]
+        assert f'"{pkg}==' in extra
+
+
+def test_a_real_run_skips_what_exists_and_pipes_secrets(monkeypatch):
     calls: list[tuple[list[str], str | None]] = []
 
     class Done:
@@ -139,8 +186,8 @@ def test_a_real_run_skips_what_exists_and_blocked_steps_and_pipes_secrets(monkey
     rc = plan_full.run_plan(dry_run(), CFG, run=run, generate=lambda: "TOKEN", out=lines.append)
     assert rc == 0
     assert any("exists, skipped: create gateway-session-key" in x for x in lines)
-    assert any("SKIP (blocked" in x for x in lines)
-    assert not any("sentiment.json" in " ".join(a) for a, _ in calls)
+    assert not any("SKIP (blocked" in x for x in lines)
+    assert any("sentiment.json" in " ".join(a) for a, _ in calls)
 
     calls.clear()
 

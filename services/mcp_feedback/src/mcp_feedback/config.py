@@ -29,6 +29,9 @@ DEFAULT_SCORE_CAP = 250
 #: Inference batch size: 8 had the lower median in the same measurement (31.8 s against
 #: 35.5 s at 16 for 300 comments), from less padding to the longest comment per batch.
 DEFAULT_BATCH_SIZE = 8
+#: Scoring modes (ADR-100). `lazy` scores unscored comments on demand (local default);
+#: `stored_only` answers from stored predictions and fails closed on a gap (Cloud Run).
+SCORING_MODES = ("lazy", "stored_only")
 
 
 def _required(name: str) -> str:
@@ -50,6 +53,8 @@ class Settings:
     #: The committed manifest; its SHA-256 is the stored predictions' `model_version`.
     manifest_path: Path = Path("/app/artifacts/bert_v1.manifest.json")
     score_cap: int = DEFAULT_SCORE_CAP
+    #: `MCP_FEEDBACK_SCORING` (ADR-100): `lazy` or `stored_only`.
+    scoring_mode: str = "lazy"
     batch_size: int = DEFAULT_BATCH_SIZE
     window_start: dt.date = DEFAULT_WINDOW_START
     window_end: dt.date = DEFAULT_WINDOW_END
@@ -67,6 +72,9 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         env = os.environ.get
+        scoring_mode = env("MCP_FEEDBACK_SCORING", "lazy")
+        if scoring_mode not in SCORING_MODES:
+            raise RuntimeError(f"MCP_FEEDBACK_SCORING must be one of {', '.join(SCORING_MODES)}")
         return cls(
             db_host=database_host(),
             db_port=int(env("POSTGRES_PORT", "5432")),
@@ -76,6 +84,7 @@ class Settings:
             models_dir=Path(env("MODELS_DIR", "/models/sentiment/bert_v1")),
             manifest_path=Path(env("MANIFEST_PATH", "/app/artifacts/bert_v1.manifest.json")),
             score_cap=int(env("SENTIMENT_SCORE_CAP", str(DEFAULT_SCORE_CAP))),
+            scoring_mode=scoring_mode,
             window_start=dt.date.fromisoformat(
                 env("DATASET_WINDOW_START", DEFAULT_WINDOW_START.isoformat())
             ),

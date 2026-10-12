@@ -1461,15 +1461,19 @@ dependencies = [
     { name = "mcp" },
     { name = "numpy" },
     { name = "psycopg", extra = ["binary"] },
-    { name = "safetensors" },
     { name = "service-ops-common" },
     { name = "service-ops-schemas" },
     { name = "sqlalchemy" },
+    { name = "uvicorn" },
+]
+
+[package.optional-dependencies]
+model = [
+    { name = "safetensors" },
     { name = "tokenizers" },
     { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
     { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
     { name = "transformers" },
-    { name = "uvicorn" },
 ]
 
 [package.metadata]
@@ -1479,15 +1483,16 @@ requires-dist = [
     { name = "mcp", specifier = "==2.2.0" },
     { name = "numpy", specifier = "==2.5.3" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
-    { name = "safetensors", specifier = "==0.8.0" },
+    { name = "safetensors", marker = "extra == 'model'", specifier = "==0.8.0" },
     { name = "service-ops-common", editable = "packages/common" },
     { name = "service-ops-schemas", editable = "packages/schemas" },
     { name = "sqlalchemy", specifier = ">=2.0.30" },
-    { name = "tokenizers", specifier = "==0.23.2" },
-    { name = "torch", specifier = "==2.14.1", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "transformers", specifier = "==5.18.0" },
+    { name = "tokenizers", marker = "extra == 'model'", specifier = "==0.23.2" },
+    { name = "torch", marker = "extra == 'model'", specifier = "==2.14.1", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "transformers", marker = "extra == 'model'", specifier = "==5.18.0" },
     { name = "uvicorn", specifier = ">=0.31" },
 ]
+provides-extras = ["model"]
 
 [[package]]
 name = "mcp-incidents"

@@ -110,7 +110,17 @@ class World:
     def __init__(self, server_engine, qa_engine) -> None:
         store = SqlStore(server_engine)
         self.server = create_server(
-            feedback_settings(), Backend(store, NoScoring(), MANIFEST.version, 0, store.ping)
+            feedback_settings(),
+            Backend(
+                store,
+                NoScoring(),
+                MANIFEST.version,
+                0,
+                store.ping,
+                # The same suite runs in both scoring modes (ADR-100): set
+                # MCP_FEEDBACK_SCORING=stored_only to run it against the deployed mode.
+                stored_only=os.environ.get("MCP_FEEDBACK_SCORING") == "stored_only",
+            ),
         )
         self.qa = PostgresSource(qa_engine)
         self.checker = qa.Checker(
@@ -394,6 +404,11 @@ async def test_a_partial_answer_is_checked_inside_a_transaction_that_is_rolled_b
 ):
     """Delete 40 predictions in one open transaction on a shared connection; the server and QA
     both read that connection; roll back. Nobody else ever sees the change."""
+    if os.environ.get("MCP_FEEDBACK_SCORING") == "stored_only":
+        pytest.skip(
+            "stored_only refuses a partial answer by design (ADR-100); the fail-closed "
+            "behaviour is tested in test_mcp_feedback_stored_only.py"
+        )
     conn = HeldOpen.connect(
         host=os.environ["POSTGRES_HOST"],
         port=os.environ["POSTGRES_PORT"],

@@ -567,6 +567,10 @@ async def test_parse_failures_end_in_coded_failed_tasks(mcp_calls):
     [
         (TimeoutError(), "tool_timeout"),
         (McpToolError("Error executing tool: feedback query failed"), "tool_error"),
+        (
+            McpToolError("Error executing tool get_sentiment_summary: predictions_incomplete"),
+            "predictions_incomplete",
+        ),
         (McpToolError("range is outside the dataset window"), "invalid_range"),
         (ConnectionError("refused"), "tool_unavailable"),
     ],

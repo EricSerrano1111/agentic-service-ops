@@ -373,6 +373,7 @@ def test_routing_timeout_is_the_degraded_result_without_hanging(monkeypatch):
         ("model_unavailable", 503, "model_unavailable"),
         ("internal_error", 500, "internal_error"),
         ("tool_error", 502, "agent_task_failed"),
+        ("predictions_incomplete", 502, "predictions_incomplete"),
         (None, 502, "agent_task_failed"),
     ],
 )
