@@ -23,6 +23,7 @@ members = [
     "agent-reporting",
     "agent-sentiment",
     "agentic-service-ops",
+    "api-gateway",
     "db-models",
     "forecast-runtime",
     "mcp-feedback",
@@ -280,6 +281,29 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a9/d2/f4d173e22df740bc37b1db102b386ba719b66e95b0f0d751f556b387e6d2/anyio-4.15.1.tar.gz", hash = "sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94", size = 276966, upload-time = "2026-09-05T10:42:39.44Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl", hash = "sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101", size = 132079, upload-time = "2026-09-05T10:42:37.923Z" },
+]
+
+[[package]]
+name = "api-gateway"
+version = "0.1.0"
+source = { editable = "services/api_gateway" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "google-auth", extra = ["requests"] },
+    { name = "httpx" },
+    { name = "service-ops-common" },
+    { name = "tzdata" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastapi", specifier = ">=0.115.2" },
+    { name = "google-auth", extras = ["requests"], specifier = ">=2.40" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "service-ops-common", editable = "packages/common" },
+    { name = "tzdata", specifier = "==2026.4" },
+    { name = "uvicorn", specifier = ">=0.31" },
 ]
 
 [[package]]

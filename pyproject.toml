@@ -87,6 +87,7 @@ members = [
     "services/agent_forecast",
     "services/agent_qa",
     "services/orchestrator",
+    "services/api_gateway",
 ]
 
 [tool.ruff]
