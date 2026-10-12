@@ -444,12 +444,14 @@ QA recomputes the numbers a served forecast carries from the `volume_v2` artifac
 
 **4. What is compared, and how.** Each *displayed* number is compared after the display rule it already has. The weekly point, the 80% range's two ends and the period total are shown to the nearest whole request, a tie to the even number ("Answer text", rule 2). The answer's value is rounded by that rule and compared with the recomputed value rounded by that rule. `shown_error` is not recomputed: it is the manifest's own value and is checked by `serving_matches_manifest`.
 
+**4a. The 95% ends (owner ruling 2026-10-11, ADR-096).** `lo95` and `hi95` are recomputed by the formula in rule 3 (level 95, `z_95`) and compared after the same whole-number rounding as the 80% ends (rule 4), with the same boundary rule (rule 5). Any number carried in a response can reach a user, so none is left unchecked. A mismatch fails `forecast_numbers_recomputed` and names the field (`lo95_differs_from_the_model`, `hi95_differs_from_the_model`), never a value.
+
 **5. The boundary rule (the one narrow tolerance).** The recompute runs in float64. If a recomputed unrounded value is within 1e-9 relative of a rounding boundary (an exact half), either adjacent whole number passes. There is no other tolerance. The number of times this fires is reported.
 
 **6. Failure.** A mismatch fails the check `forecast_numbers_recomputed` (class `figures`) with fixed wording naming the field, never a value. A failed figures check makes the verdict `fail`, and the orchestrator returns `qa_status: failed` (ADR-092, rule 3), as for the reporting recompute. No new status is introduced.
 
 **7. Gaps, recorded and not checked** (retro change 2; reported in the check's detail as "unchecked", never as passed):
-- *The 95% interval ends* (`lo95`, `hi95`). The data part carries them; no text shows them, so no display rule exists for them. The check does not compare them.
+- *The 95% interval ends* are no longer a gap: since 2026-10-11 (ADR-096) they are compared (rule 4a). The 2026-10-11 wording of this rule, that they were not compared, is superseded.
 - *A total interval:* none exists.
 
 **8. Not covered, by design.** A model that misses a holiday (L-83(b)): QA recomputes what the stored model says, so a wrong model gives a matching answer. A misparse (R-18): the figures are recomputed for the request as parsed.

@@ -3055,3 +3055,21 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - Not covered, as decided: the 95% interval ends and a total interval (L-87), a model that misses a holiday (L-83(b)), a misparse (R-18).
 
 **Note 2026-10-11 (the entry above is unchanged): QA's container now has one mount.** `docker-compose.yml` mounts `./models/forecast/volume_v2` into `agent_qa` read-only, for the recompute. `tests/unit/test_compose_isolation.py` asserted that QA has no volumes; it now asserts exactly that one read-only mount (the sentiment weights stay out, and the image still bakes in only the two manifests). This extends ADR-087's "the manifest is baked in" to "the manifest is baked in and the parameter files are mounted"; it is the owner's to review.
+
+
+### ADR-096 — QA also checks the 95% interval ends (supersedes ADR-095 in part)
+*Date: 2026-10-12. Supersedes ADR-095 in part: only its **Gaps** bullet, as far as it leaves the 95% ends unchecked. The rest of ADR-095 stands. Closes the open ruling in L-87 for the 95% ends; the total interval stays a gap.*
+
+**Decision:**
+- QA recomputes `lo95` and `hi95` by the formula already in data dictionary §6, "Forecast recompute (QA)", rule 3, and compares them after the same whole-number rounding as the 80% ends, with the same boundary rule (new rule 4a). A mismatch fails `forecast_numbers_recomputed`, names the field and never a value.
+- The passing check's detail now lists only the total interval as unchecked.
+
+**Context:** ADR-095 recorded the 95% ends as "not checked" because no text displays them, so no display rule existed (L-87). The owner ruled on 2026-10-11 that any number carried in a response can reach a user, so none is left unchecked, and that the ends follow the same whole-number rule as the displayed numbers. The change needed a ruling, not new evidence: QA already computes both ends (the equivalence test of ADR-095 criterion 1 covers `lo95` and `hi95`).
+
+**Evidence (not a catch rate):**
+- Clean false-alarm check over the same 171 served forecasts as ADR-095 criterion 2 (11 harness base answers, 4 recorded end-to-end answers, 156 serving-path sweep forecasts; 2,320 numbers): **0 mismatches**, boundary rule fired 0 times. `evals/results/qa_forecast_recompute/2026-10-12/clean_check.json`.
+- The fault catalogue was **not** re-run. No catalogue fault targets a 95% end alone: the two faults that touch them (the unserved-week fault and the mean-point fault in `evals/qa_faults/catalogue_v1.yaml`) alter `lo95`/`hi95` together with the point and the 80% range, and were already caught by other checks, so they show nothing about this rule. A tampered 95% end alone is covered by two unit tests, not by a measured catch rate.
+
+**Required vs portfolio value:** required: it removes a class of number that could be changed in transit without any check.
+
+**Consequences:** the only change to an answer is `qa_status` on a response whose 95% ends were altered: `failed` where it was `verified` before. The submitted-document and sprint-log wording that says "unchecked: lo95, hi95" is superseded by this entry.

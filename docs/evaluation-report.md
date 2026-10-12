@@ -950,3 +950,5 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (option):** the owner rules that the 95% ends are compared after the same whole-number rule as the 80% ends (one line in data dictionary §6 and one in the check).
 - **Also recorded:** the recompute needs the six `volume_v2` parameter files at start-up (a read-only mount; they are not in git and not in QA's image). A deployed QA needs them provided; that is a deployment step, not done in this change.
 - **Recorded in:** ADR-095; data dictionary §6, "Forecast recompute (QA)", rule 7.
+
+**Update 2026-10-12 (closed for the 95% ends).** Owner ruling of 2026-10-11 applied: QA compares `lo95` and `hi95` by the same whole-number rule as the 80% ends (ADR-096; data dictionary §6, rule 4a). Clean check: 0 mismatches in 171 forecasts. The total interval is still not served, so there is still none to check; that part of this entry stands.
