@@ -781,6 +781,7 @@ def check_template_keys(text: str) -> None:
         ("route_v3", False),
         ("route_v4", True),
         ("route_v5", True),
+        ("route_v6", True),
     ],
 )
 def test_route_prompt_json_template_keys_follow_the_schema_property_order(name, exact):
