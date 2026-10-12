@@ -37,6 +37,7 @@ import copy
 import io
 import json
 import logging
+import os
 import traceback
 from pathlib import Path
 
@@ -387,6 +388,8 @@ def _env(monkeypatch, values: dict) -> None:
         "GEMINI_MODEL_SPECIALIST",
     ):
         monkeypatch.delenv(name, raising=False)
+    for name in [n for n in os.environ if n.startswith("LLM_")]:  # shell-exported caps etc.
+        monkeypatch.delenv(name)
     for name, value in values.items():
         monkeypatch.setenv(name, value)
 
@@ -684,12 +687,13 @@ async def test_request_rejection_logs_status_and_googles_message(log_lines):
 
 
 def _role_env(monkeypatch, model: str, override: str | None = None) -> None:
+    # Clear every LLM_* variable first, so a value exported in the shell (a request cap set for
+    # a live smoke run) cannot reach these tests; then set only what they need.
+    for name in [n for n in os.environ if n.startswith("LLM_")]:
+        monkeypatch.delenv(name)
     monkeypatch.setenv("GOOGLE_AI_API_KEY", KEY)
     monkeypatch.setenv("GEMINI_MODEL_ORCHESTRATOR", model)
-    monkeypatch.delenv("LLM_MODE", raising=False)
-    if override is None:
-        monkeypatch.delenv("LLM_THINKING_LEVEL_ORCHESTRATOR", raising=False)
-    else:
+    if override is not None:
         monkeypatch.setenv("LLM_THINKING_LEVEL_ORCHESTRATOR", override)
 
 

@@ -1,0 +1,85 @@
+:root {
+  --bg: #fafafa;
+  --fg: #1a1a1a;
+  --muted: #555;
+  --border: #c8c8c8;
+  --accent: #0b5cad;
+  --warn-bg: #fff4e0;
+  --warn-border: #b36b00;
+  --ok-bg: #eef6ee;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --fg: #ececec;
+    --muted: #aaa;
+    --border: #3a3d42;
+    --accent: #6cb2ff;
+    --warn-bg: #3a2c12;
+    --warn-border: #e0a040;
+    --ok-bg: #1d2a1d;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+
+label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+
+textarea {
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.6rem;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+button {
+  font: inherit;
+  padding: 0.55rem 1rem;
+  margin-top: 0.6rem;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:disabled { opacity: 0.6; cursor: wait; }
+button.link { color: var(--accent); background: none; padding: 0; margin: 0; text-decoration: underline; }
+
+.hint { color: var(--muted); font-size: 0.9rem; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+
+.panel {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.panel h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 1rem 0 0.25rem; }
+.panel h2:first-child { margin-top: 0; }
+.panel p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.interpreted { background: var(--ok-bg); padding: 0.5rem 0.6rem; border-radius: 6px; }
+.flag { background: var(--warn-bg); border: 1px solid var(--warn-border); padding: 0.5rem 0.6rem; border-radius: 6px; }
+.error { background: var(--warn-bg); border: 1px solid var(--warn-border); padding: 0.6rem; border-radius: 6px; margin-top: 1rem; }

@@ -3055,3 +3055,97 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - Not covered, as decided: the 95% interval ends and a total interval (L-87), a model that misses a holiday (L-83(b)), a misparse (R-18).
 
 **Note 2026-10-11 (the entry above is unchanged): QA's container now has one mount.** `docker-compose.yml` mounts `./models/forecast/volume_v2` into `agent_qa` read-only, for the recompute. `tests/unit/test_compose_isolation.py` asserted that QA has no volumes; it now asserts exactly that one read-only mount (the sentiment weights stay out, and the image still bakes in only the two manifests). This extends ADR-087's "the manifest is baked in" to "the manifest is baked in and the parameter files are mounted"; it is the owner's to review.
+
+
+### ADR-096 — QA also checks the 95% interval ends (supersedes ADR-095 in part)
+*Date: 2026-10-12. Supersedes ADR-095 in part: only its **Gaps** bullet, as far as it leaves the 95% ends unchecked. The rest of ADR-095 stands. Closes the open ruling in L-87 for the 95% ends; the total interval stays a gap.*
+
+**Decision:**
+- QA recomputes `lo95` and `hi95` by the formula already in data dictionary §6, "Forecast recompute (QA)", rule 3, and compares them after the same whole-number rounding as the 80% ends, with the same boundary rule (new rule 4a). A mismatch fails `forecast_numbers_recomputed`, names the field and never a value.
+- The passing check's detail now lists only the total interval as unchecked.
+
+**Context:** ADR-095 recorded the 95% ends as "not checked" because no text displays them, so no display rule existed (L-87). The owner ruled on 2026-10-11 that any number carried in a response can reach a user, so none is left unchecked, and that the ends follow the same whole-number rule as the displayed numbers. The change needed a ruling, not new evidence: QA already computes both ends (the equivalence test of ADR-095 criterion 1 covers `lo95` and `hi95`).
+
+**Evidence (not a catch rate):**
+- Clean false-alarm check over the same 171 served forecasts as ADR-095 criterion 2 (11 harness base answers, 4 recorded end-to-end answers, 156 serving-path sweep forecasts; 2,320 numbers): **0 mismatches**, boundary rule fired 0 times. `evals/results/qa_forecast_recompute/2026-10-12/clean_check.json`.
+- The fault catalogue was **not** re-run. No catalogue fault targets a 95% end alone: the two faults that touch them (the unserved-week fault and the mean-point fault in `evals/qa_faults/catalogue_v1.yaml`) alter `lo95`/`hi95` together with the point and the 80% range, and were already caught by other checks, so they show nothing about this rule. A tampered 95% end alone is covered by two unit tests, not by a measured catch rate.
+
+**Required vs portfolio value:** required: it removes a class of number that could be changed in transit without any check.
+
+**Consequences:** the only change to an answer is `qa_status` on a response whose 95% ends were altered: `failed` where it was `verified` before. The submitted-document and sprint-log wording that says "unchecked: lo95, hi95" is superseded by this entry.
+
+
+### ADR-097 — Invite-link access to the gateway (builds on ADR-079, ADR-080 and ADR-081; supersedes nothing)
+*Date: 2026-10-12. Specifies the access control that ADR-080 left "to be decided in Sprint 5". Written before any gateway code.*
+
+**Decision:** The gateway is the only public service. On Cloud Run (Prompts U and V) its invoker is `allUsers`, the only `allUsers` service in the system. Access control is in the gateway's own code, through invite links. Everything behind the gateway is unchanged: the gateway calls the orchestrator with its own service account's ID token (ADR-081's pattern, audience the orchestrator's base URL). Locally the orchestrator takes no authentication and is on loopback (`A2A_AUTH` unset).
+
+**Context:**
+- This replaces the owner's 2026-10-10 plan for Identity-Aware Proxy. IAP was never recorded in an ADR, so nothing is superseded.
+- **The reason:** IAP needs a Google identity, and the grader's `@northwestern.edu` address is on Microsoft 365. Getting a personal Google account on that domain can be refused, and "Sign in with Microsoft" carries the same admin-consent risk.
+- **The cost:** the authentication code is ours to own, not Google's.
+- ADR-081's "no `allUsers`" applied to the reporting slice. ADR-079 already makes the gateway the only public entry point.
+
+**Invites**
+- A token is 32 random bytes, URL-safe base64, from `secrets.token_urlsafe(32)`. Only its SHA-256 is stored. A plain hash is correct for a high-entropy token (256 bits cannot be guessed or brute-forced from its hash); slow password hashes exist for low-entropy secrets.
+- A record holds `id`, `label`, `token_sha256`, `created_at` and `expires_at`. Revoking an invite deletes its record.
+- The store is a JSON document behind a small interface. Locally: a file path from configuration, outside the repo and gitignored. On Cloud Run: a Secret Manager secret, read as `latest` and cached for at most 60 seconds, so revoking takes effect within 60 seconds with no redeploy.
+- Not a database table: the gateway holds no database credential (ADR-079's least privilege), and `ops-db` is stopped when idle, so sign-in must not depend on it. Prompt U provisions the secret; this work builds the interface, the file backend, and a Secret Manager backend tested against a fake.
+- Admin tool: `scripts/invites.py create --label <x> --days <n>` prints the link once; `list` shows IDs, labels and expiry, never hashes; `revoke --id <x>` deletes.
+
+**Exchange**
+- The link is `https://<gateway>/#invite=<token>`. The token is in the URL fragment, which browsers do not send to a server, so it cannot appear in access logs or `Referer`.
+- The page's script reads the fragment, sends `POST /auth/exchange` with the JSON body `{"token": ...}`, clears the fragment with `history.replaceState`, then loads the app.
+- `/auth/exchange` compares hashes with `hmac.compare_digest`. On a valid, unexpired token it sets the session cookie. Expired, unknown, malformed and empty tokens return one identical response (same status, same body).
+
+**Session**
+- Cookie `__Host-session`: `Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`, no `Domain`. Its value is HMAC-SHA256-signed (standard library); the key comes from configuration (a local env file; Secret Manager on Cloud Run).
+- Payload: invite ID, issued-at, expiry. The expiry is the earlier of the invite's own expiry and 12 hours.
+- Every request re-checks that the invite still exists and has not expired, so revoking an invite ends its sessions (within the 60-second cache on Cloud Run).
+- `POST /auth/logout` clears the cookie.
+
+**What needs a session:** public are the static UI files (they hold no data), `/auth/exchange`, `/auth/logout` and `/healthz`. Everything under `/api/` requires a session: 401 with no detail otherwise, except `GET /api/session`, which answers 200 with `signed_in` true or false so the page can show its signed-out state.
+
+**Request protection**
+- **CSRF:** `SameSite=Strict`, plus `Content-Type: application/json` required on every state-changing POST, plus an `Origin` check against the gateway's own origin.
+- **Rate limits** (in process, per instance):
+  - `/auth/exchange`: 10 attempts per minute per client IP.
+  - `/api/ask`: 15 per hour per session.
+  - A **global daily cap of 50 questions**, counted by Pacific-time day (Gemini's quota reset, ADR-029). Past it: a clear "daily limit reached" message.
+- **Client IP, the rule:** `X-Forwarded-For` is a comma-separated list the client can pre-fill, and Cloud Run's front end appends the connecting address. The gateway takes the entry **counted from the right**, `GATEWAY_TRUSTED_PROXY_HOPS` entries in (default 1: the last entry), and never the leftmost. With no header (local), it uses the socket peer address. **Source: this is the standard right-to-left handling of an append-only header and is not verified against Cloud Run's documentation in this work** (only the Next.js security page was permitted to be fetched). Prompt U verifies the hop count against Cloud Run's documented behaviour before the deploy.
+- **Input:** a question is at most 500 characters, trimmed, non-empty; a body is at most 4 KB; unknown fields are rejected; no stack trace or internal detail in any error (the default validation handler, which echoes input, is replaced).
+- **Headers:** `Content-Security-Policy: default-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self'`, with the export's inline scripts allowed by build-time SHA-256 hashes (`script-src 'self' 'sha256-…'`), never `'unsafe-inline'`; `Referrer-Policy: no-referrer`; `X-Content-Type-Options: nosniff`; `Strict-Transport-Security`. The UI uses no inline style attributes, so `style-src 'self'` holds.
+- **Deadline:** the gateway forwards the question to the orchestrator and waits up to 125 s, just over the 120 s request deadline (ADR-034), so the orchestrator's own degraded response is what the user sees. No retries of its own.
+
+**Daily cap arithmetic**
+- Quota: all three role models are `gemini-3.5-flash-lite` (`.env.example`); 500 requests per day per model per project on the free tier (ADR-029, recorded 2026-09-22; the live value in AI Studio is authoritative). That budget is shared by every role and by the owner's own development and evaluation use.
+- Calls per question, counted from the code: route 1 + attempts × (specialist parse 1 + QA interpretation 1). A first-pass answer is 3. The re-ask loop allows two retries (`MAX_QA_RETRY_ATTEMPTS=2`, ADR-089), so the worst case is 1 + 3 × 2 = 7, before transient retries (up to 2 per call).
+- 50 questions × 7 = 350 calls worst case, 70% of 500; 50 × 3 = 150 typical, 30%. The remaining 150 to 350 are the owner's, and the headroom for transient retries.
+- The counter is in process: it resets on a cold start or scale-to-zero and is per instance. The real backstop is Google's quota, which the orchestrator already maps to `daily_quota_exhausted`. At `max_instances` 1 to 3 the cap is close to global; it is not exact.
+
+**Required vs portfolio value:** required: some access control on a public URL that spends model quota. Sized right for this scale: invite links. Federated identity was the portfolio-value choice, and it is out.
+
+**Stated limits (also L-88):**
+- A forwarded link grants access until it expires or is revoked.
+- Rate limits and the daily counter are per instance and reset on a restart.
+- There are no per-user accounts, so a session identifies an invite, not a person.
+- The authentication code is ours; it is tested here and has had no independent review.
+
+**Alternatives considered:**
+- *IAP* (rejected: needs a Google identity the grader may not have).
+- *Sign in with Microsoft* (rejected: admin-consent risk on the grader's tenant).
+- *A shared password* (rejected: not individually revocable, and it reaches a form field and a log more easily than a fragment token).
+- *A basic-auth header at a load balancer* (rejected: no load balancer, ADR-080).
+
+**Consequences:**
+- The orchestrator's `/ask` response gains `parsed_request` for a decline (ADR-086's unsupported region among them), validated against the domain's request model, so "Interpreted as:" can show a decline's parse. It changes no answer.
+- The display rules are data dictionary §6, "Answer display (UI)".
+- Prompt U provisions two secrets (the invite store and the session key) and verifies the forwarded-for hop count.
+
+**Note 2026-10-12 (the entry above is unchanged): three points settled while building it.**
+- `GET /api/session` answers **401** when there is no valid session and 200 `{"signed_in": true}` when there is, instead of a 200 with `signed_in: false`. Every route under `/api/` is on one router whose dependency requires a session, so there is no exception to enumerate in the exposure test; the page treats 401 as "signed out".
+- The per-session hourly limit is keyed by **invite id**, not by cookie: a holder of one link cannot reset it by exchanging the token again. A session therefore identifies an invite (as stated in the limits).
+- An orchestrator error with status 502 (`agent_task_failed`, `agent_unavailable`) is passed on with its `detail`, like 422, 429, 500 and 503: those sentences are written for the user (for example "The incidents query failed."). Any other upstream status is a generic 502 with no detail.
+- The inline-script hashes are computed from the built export at **image build time** (`python -m api_gateway.csp`, a Dockerfile step) and read at start-up; the gateway refuses to serve an export without the hashes file, or one with inline style attributes. The default Next.js 404 page has inline style attributes, so the export carries a custom `not-found` page.
+
+**Note 2026-10-12 (second, after the first note above):** the policy also carries `form-action 'self'` (the page has no form that posts away; it costs nothing), and the data dictionary §6 "Answer display (UI)" was amended the same day to label every part of the "Interpreted as:" line and to name the area, after review.

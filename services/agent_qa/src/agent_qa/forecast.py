@@ -279,9 +279,9 @@ class Checker:
 
     def _recompute(self, a: ForecastAnswer) -> CheckResult:
         """Every displayed number equals QA's own recomputation from the stored parameters,
-        after the display rule (data dictionary §6, "Forecast recompute (QA)"). The 95% ends are
-        in the data part but never displayed, and no total interval is served: both are reported
-        as unchecked, never as passed."""
+        after the display rule (data dictionary §6, "Forecast recompute (QA)", rules 4 and 4a; the
+        95% ends are checked since ADR-096). No total interval is served: it is reported as
+        unchecked, never as passed."""
         model = self.manifest.model
         assert model is not None
         problems: list[str] = []
@@ -295,7 +295,13 @@ class Checker:
             want = model.predict(a.request.slice, w.horizon)
             counted += 1
             unrounded_total += want["point"]
-            for name, claimed in (("point", w.point), ("lo80", w.lo80), ("hi80", w.hi80)):
+            for name, claimed in (
+                ("point", w.point),
+                ("lo80", w.lo80),
+                ("hi80", w.hi80),
+                ("lo95", w.lo95),
+                ("hi95", w.hi95),
+            ):
                 if claimed is None or not math.isfinite(claimed):
                     problems.append(f"{name}_missing")
                 elif not model.same_when_displayed(claimed, want[name]):
@@ -312,7 +318,7 @@ class Checker:
             code="forecast_numbers_recomputed",
             check_class="figures",
             passed=True,
-            detail="unchecked: lo95, hi95 (not displayed, no rule); total interval (none served)",
+            detail="unchecked: total interval (none served)",
         )
 
     def _text(self, a: ForecastAnswer, text: str) -> CheckResult:

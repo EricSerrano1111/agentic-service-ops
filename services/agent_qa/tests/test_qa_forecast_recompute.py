@@ -215,7 +215,8 @@ def checker(model) -> Checker:
 def test_an_unmodified_answer_passes_and_says_what_it_did_not_check(checker, model):
     res = checker._recompute(answer_for(model))
     assert res.passed
-    assert "unchecked" in res.detail and "lo95" in res.detail and "total interval" in res.detail
+    assert "unchecked" in res.detail and "total interval" in res.detail
+    assert "lo95" not in res.detail and "hi95" not in res.detail  # compared since ADR-096
 
 
 def test_a_changed_point_fails_naming_the_field_and_no_value(checker, model):
@@ -251,14 +252,34 @@ def test_a_changed_total_fails(checker, model):
     assert not res.passed and "period_total_differs_from_the_model" in res.detail
 
 
-def test_the_95_percent_ends_are_never_reported_as_checked(checker, model):
-    """A wrong lo95 is not a mismatch of this check (no display rule exists for it): it is
-    listed as unchecked in the passing result, never silently passed as verified."""
+def test_a_tampered_lo95_fails_naming_the_field_and_no_value(checker, model):
+    """The 95% ends are compared like the 80% ends (owner ruling 2026-10-11, ADR-096)."""
     a = answer_for(model)
     w = a.weeks[0].model_copy(update={"lo95": a.weeks[0].lo95 - 1})
     res = checker._recompute(a.model_copy(update={"weeks": [w, *a.weeks[1:]]}))
+    assert not res.passed
+    assert "lo95_differs_from_the_model" in res.detail
+    assert str(round(w.lo95)) not in res.detail
+
+
+def test_a_tampered_hi95_fails_naming_the_field_and_no_value(checker, model):
+    a = answer_for(model)
+    w = a.weeks[0].model_copy(update={"hi95": a.weeks[0].hi95 + 1})
+    res = checker._recompute(a.model_copy(update={"weeks": [w, *a.weeks[1:]]}))
+    assert not res.passed
+    assert "hi95_differs_from_the_model" in res.detail
+    assert str(round(w.hi95)) not in res.detail
+
+
+def test_a_95_end_inside_the_whole_number_rounding_passes(checker, model):
+    """Same rule as the 80% ends: a value that rounds to the same whole request passes."""
+    a = answer_for(model)
+    want = model.predict(a.request.slice, a.weeks[0].horizon)["lo95"]
+    w = a.weeks[0].model_copy(update={"lo95": round(want) + 0.2})
+    if round(want) + 0.2 > a.weeks[0].lo80:
+        pytest.skip("slice too narrow for the nudge to keep the ordering")
+    res = checker._recompute(a.model_copy(update={"weeks": [w, *a.weeks[1:]]}))
     assert res.passed
-    assert res.detail.startswith("unchecked:") and "lo95" in res.detail
 
 
 def test_the_check_is_in_check_answer_when_a_model_is_loaded_and_absent_otherwise(checker, model):

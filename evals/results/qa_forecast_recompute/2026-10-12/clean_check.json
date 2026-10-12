@@ -1,0 +1,22 @@
+{
+  "boundary_rule_fired": 0,
+  "forecasts_checked": 171,
+  "manifest_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+  "mismatches": [],
+  "numbers_checked": 2320,
+  "sources": {
+    "fault_harness_clean_base_answers": {
+      "forecasts": 11,
+      "numbers": 150
+    },
+    "recorded_forecast_agent_e2e": {
+      "forecasts": 4,
+      "numbers": 120,
+      "skipped_not_a_forecast_answer": 3
+    },
+    "serving_path_sweep": {
+      "forecasts": 156,
+      "numbers": 2050
+    }
+  }
+}

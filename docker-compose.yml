@@ -309,3 +309,39 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
+
+  # The only service meant to face a browser (ADR-079, ADR-097): invite-link sign-in, the static UI
+  # and /api in front of the orchestrator. It holds no database credential and no model key;
+  # its secrets are the session key and the invite store file. Loopback only here.
+  #   scripts/invites.py create --label me --days 7     # prints the link once
+  gateway:
+    build:
+      context: .
+      dockerfile: services/api_gateway/Dockerfile
+    environment:
+      GATEWAY_ORCHESTRATOR_URL: http://orchestrator:8000
+      # Empty when unset: the gateway then refuses to start, and the other compose commands still run.
+      GATEWAY_SESSION_KEY: ${GATEWAY_SESSION_KEY:-}
+      GATEWAY_INVITES_FILE: /run/gateway/invites.json
+      GATEWAY_PUBLIC_ORIGIN: ${GATEWAY_PUBLIC_ORIGIN:-http://127.0.0.1:8080}
+      GATEWAY_DAILY_QUESTION_CAP: ${GATEWAY_DAILY_QUESTION_CAP:-50}
+      GATEWAY_ASKS_PER_SESSION_HOUR: ${GATEWAY_ASKS_PER_SESSION_HOUR:-15}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      # The invite store (gitignored; scripts/invites.py writes it). Read-only here.
+      # Long form: the short form cannot hold a `${VAR:-default}` source in `config --no-interpolate`.
+      - type: bind
+        source: ${GATEWAY_STATE_DIR:-./.local/gateway}
+        target: /run/gateway
+        read_only: true
+    ports:
+      - "127.0.0.1:${API_GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      orchestrator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
