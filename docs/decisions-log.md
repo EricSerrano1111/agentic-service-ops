@@ -3386,3 +3386,47 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 **Consequences:**
 - A misparse is still not caught by QA (L-74); the range and filters the answer states remain the user's check. The orchestrator's re-ask loop (FR-12) still never fires in a running system.
 - The evaluation freeze records `QA_INTERP_MODE=advisory` and `qa_interp_v2` as shipped (ADR-103).
+
+### ADR-103 — Evaluation freeze for Sprint 5: the system Prompt X measures
+*Date: 2026-10-12. Supersedes nothing. Written after ADR-101 and ADR-102 applied their pre-registered outcomes. Tag `eval-freeze-s5`.*
+
+**Decision:** the system is frozen as recorded below. Prompt X's runs (the held-out routing set, the golden run, and the QA and parse measurements that follow) measure exactly this state. The machine-readable record is `evals/freeze_s5.json`; `tests/unit/test_eval_freeze.py` recomputes it and fails on any difference, citing this ADR.
+
+**Frozen state:**
+- **Commit:** `1d105ea0bf78596ab8acd47fc46a87739990df57` (2026-10-12 16:46 CDT) holds every file below. The commit that carries this ADR and its sprint-log notes changes no code, prompt, configuration or test; the tag is on that commit.
+- **Default router:** `route_v3` (`orchestrator.routing.PROMPT_NAME`). `route_v4`, `route_v5` and `route_v6` are in the repo and not default (ADR-075, ADR-076, ADR-101).
+- **Shipped interpretation prompt:** `qa_interp_v2`, `QA_INTERP_MODE=advisory` (`qa_interp_v1` and `qa_interp_v3` are in the repo and not shipped; ADR-089, ADR-102).
+- **Parse prompts in the services:** reporting `parse_v4`, sentiment `parse_v1`, forecast `parse_v1`.
+- **Models and thinking levels, per role:** orchestrator, specialist and QA all run `gemini-3.5-flash-lite`, free key, thinking `minimal` (the model's lowest supported level; `LLM_THINKING_LEVEL_<ROLE>` is blank, ADR-052). The sentiment classifier is `bert_v1` (`ml/sentiment/artifacts/bert_v1.manifest.json`, SHA-256 `0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad`).
+- **Mode flags:** `QA_INTERP_MODE=advisory`; `QA_FORECAST_RECOMPUTE=on` (ADR-095); `MCP_FEEDBACK_SCORING=stored_only` for the deploy (ADR-100; the local default may differ and is not part of what is measured on the deployed path).
+- **Thresholds and caps:** `MAX_QA_RETRY_ATTEMPTS=2`; `MAX_COST_PER_RUN_USD` unset; route timeout 30 s, specialist A2A 60 s (sentiment 85 s), QA A2A 50 s, QA interpretation call 30 s, QA statement timeout 10000 ms; end-to-end ceiling 120 s (ADR-034); as-of date 2026-08-30.
+- **Data dictionary §6:** `docs/data-dictionary.md`, SHA-256 `8fccfe6f0e4f71db684003faab42de16f316e50223682fee9893ad5b461aae18` (LF-normalised; §6 is the file's section 6, "Conventions & Metric Definitions"; the file is hashed whole).
+- **Prompt files** (SHA-256 of every file in `services/*/prompts/`, LF-normalised; `.gitattributes` now pins `eol=lf` for them):
+
+| File | SHA-256 |
+|---|---|
+| `services/agent_forecast/prompts/parse_v1.md` | `44cd63997912e44cb1b4573b50aad0a628818081570cab6e0b5f2f846d4d751c` |
+| `services/agent_qa/prompts/qa_interp_v1.md` | `bfef37465b5fc4770afb79f8ff8ef347c607140fc58bfccd14c0c90ee9fc9ebd` |
+| `services/agent_qa/prompts/qa_interp_v2.md` | `5199ef6684d50bfd6d50a48d3d9a3ab32fbdce1da940442e04aca352856fdc10` |
+| `services/agent_qa/prompts/qa_interp_v3.md` | `cccf19c2999009aadb3fc7d50dbb6ec65ecfb788816f611de563f7f452bc1d09` |
+| `services/agent_reporting/prompts/parse_v1.md` | `c67a1cf4bc9dd39dd1ad0026e0aed3ae017bb75248369109cdcf783c7a6530eb` |
+| `services/agent_reporting/prompts/parse_v2.md` | `c43591a3e397b30888d74be25a73a8512bf9cbe4c9f52046d7787403aee67a68` |
+| `services/agent_reporting/prompts/parse_v3.md` | `d239cc36ba15d5855bd40b98227debd7c0285a31689e4d78d3ba72e7ee791a49` |
+| `services/agent_reporting/prompts/parse_v4.md` | `de3af35b3682035a06af13139965c046da5e9439263a25c09b969168795480ba` |
+| `services/agent_sentiment/prompts/parse_v1.md` | `0f61684af8cf1e763b3943b8dc3ad2801be8e7185193a132618fb48ec103d953` |
+| `services/orchestrator/prompts/route_v1.md` | `d2b285c19d9e7454afafb32ce51a5110055f02227f37f8e040421e144726184e` |
+| `services/orchestrator/prompts/route_v2.md` | `72af019a26cba49a86ab0f44172f79aa32f41c234393af83eae532645221de7a` |
+| `services/orchestrator/prompts/route_v3.md` | `1201bc648069c81d9b4c40fc44912ab10f484d63d98e30c3542dabcd4e26c678` |
+| `services/orchestrator/prompts/route_v4.md` | `135001ca827c9a63aa182995ac0d98fd75c6cd27696d610e294fe1471c1fe0f5` |
+| `services/orchestrator/prompts/route_v5.md` | `4d9e2d5a568addc6c3129dd38565e0d5d3a52a9c9d20225326294966a5505126` |
+| `services/orchestrator/prompts/route_v6.md` | `a160b528247bd2f9d0fd0a1d281dd6821417961b7f25d22efd2a0cc3d70e4c98` |
+
+**What may change after the freeze:** only changes that alter no answer and no `qa_status`: for example the Next.js pin (gateway only), the trace ID, logging, UI copy outside §6's answer rules, and documentation. Any other change before Prompt X's runs finish invalidates them: it needs a new ADR, `evals/freeze_s5.json` is re-recorded under it, and the runs are repeated.
+
+**Context:**
+- Both pre-registered gates failed (ADR-101, ADR-102), so the frozen system is the Sprint 4 system with its two known gaps: FR-03 is not met (L-58) and the interpretation check is advisory (L-74, L-92).
+- The frozen generated sets and their manifest are separate (`evals/generated/manifest.json`, ADR-094) and unchanged.
+- The paid key was used for the gate runs only (418 of 561 requests, $0.2719 of $3.00; `evals/results/sprint5_w_ledger.json`); the services run on the free key.
+
+**Consequences:**
+- Prompt X reports against this state. Any difference found between the deployed services and this record is a finding, not something to correct silently.
