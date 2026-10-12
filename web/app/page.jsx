@@ -26,9 +26,9 @@ export default function Page() {
   const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    (async () => {
+    // Read an invite from the fragment, exchange it, then ask the gateway whether we are
+    // signed in. Runs on load and when the fragment changes (a link opened in an open tab).
+    async function enter() {
       const match = /(?:^|&)invite=([^&]+)/.exec(window.location.hash.replace(/^#/, ""));
       if (match) {
         // The token travels in the fragment, which is never sent to a server. Clear it from
@@ -47,7 +47,14 @@ export default function Page() {
       } catch {
         setPhase("signed-out");
       }
-    })();
+    }
+
+    if (!started.current) {
+      started.current = true;
+      enter();
+    }
+    window.addEventListener("hashchange", enter);
+    return () => window.removeEventListener("hashchange", enter);
   }, []);
 
   async function submit(event) {

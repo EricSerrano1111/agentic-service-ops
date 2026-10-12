@@ -21,31 +21,37 @@ def reporting(**request) -> dict:
 
 
 def test_a_reporting_answer_shows_measure_resolved_dates_and_region():
-    assert interpreted_as(answered()) == ("SLA compliance · 2026-08-01 to 2026-08-30 · Northeast")
+    assert interpreted_as(answered()) == (
+        "Area: incident reporting · Measure: SLA compliance · "
+        "Period: 2026-08-01 to 2026-08-30 · Region: Northeast"
+    )
 
 
 def test_resolved_dates_come_from_the_answer_not_the_requests_null_dates():
     body = answered()
     assert body["reporting"]["request"]["start"] is None
-    assert "2026-08-01 to 2026-08-30" in interpreted_as(body)
+    assert "Period: 2026-08-01 to 2026-08-30" in interpreted_as(body)
 
 
 def test_an_assumed_range_says_so():
     body = answered()
     body["reporting"]["range_assumed"] = True
-    assert interpreted_as(body).endswith("(assumed: the question named no dates) · Northeast")
+    assert interpreted_as(body).endswith(
+        "(assumed: the question named no dates) · Region: Northeast"
+    )
 
 
 def test_no_region_is_all_regions_and_other_fields_appear_only_when_present():
     line = interpreted_as(reporting(region=None, group_by="service_type", account_name="Acme"))
     assert line == (
-        "SLA compliance · 2026-08-01 to 2026-08-30 · all regions · account: Acme · by service type"
+        "Area: incident reporting · Measure: SLA compliance · Period: 2026-08-01 to 2026-08-30"
+        " · Region: all regions · Account: Acme · Breakdown: service type"
     )
-    assert "technician" not in line
+    assert "Technician" not in line
 
 
 def test_a_technician_is_shown_as_typed():
-    assert "technician: Priya N." in interpreted_as(reporting(technician_name="Priya N."))
+    assert "Technician: Priya N." in interpreted_as(reporting(technician_name="Priya N."))
 
 
 def test_a_decline_with_an_unsupported_region_says_region_not_recognised():
@@ -62,7 +68,8 @@ def test_a_decline_with_an_unsupported_region_says_region_not_recognised():
         },
     }
     assert interpreted_as(body) == (
-        "SLA compliance · 2026-08-01 to 2026-08-31 · region not recognised"
+        "Area: incident reporting · Measure: SLA compliance · "
+        "Period: 2026-08-01 to 2026-08-31 · Region: not recognised"
     )
 
 
@@ -83,7 +90,8 @@ def test_a_sentiment_answer():
         },
     }
     assert interpreted_as(body) == (
-        "customer sentiment trend · 2026-05-01 to 2026-07-31 · all regions · by month"
+        "Area: customer sentiment · Measure: sentiment trend · "
+        "Period: 2026-05-01 to 2026-07-31 · Region: all regions · Breakdown: month"
     )
 
 
@@ -98,8 +106,9 @@ def test_a_forecast_answer_shows_the_resolved_weeks_and_the_horizon():
         },
     }
     assert interpreted_as(body) == (
-        "weekly service request forecast · all service types · "
-        "weeks starting 2026-08-31 to 2026-10-19 · next 8 weeks"
+        "Area: volume forecast · Measure: weekly service request volume · "
+        "Slice: all service types · Period: weeks starting 2026-08-31 to 2026-10-19 · "
+        "Horizon: next 8 weeks"
     )
 
 
@@ -148,7 +157,7 @@ def test_the_view_carries_only_the_displayed_fields(kit):
         "trace_id",
     }
     assert body["question"] == "How is SLA?"
-    assert body["interpreted_as"].startswith("SLA compliance")
+    assert body["interpreted_as"].startswith("Area: incident reporting · Measure: SLA compliance")
     assert body["qa_text"].startswith("Figures checked")
     assert "route" not in body and "reporting" not in body and "task_id" not in body
 

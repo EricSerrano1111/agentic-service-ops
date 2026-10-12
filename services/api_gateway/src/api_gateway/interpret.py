@@ -45,86 +45,82 @@ def _words(value: Any) -> str:
 def _range(start: Any, end: Any, assumed: bool) -> str | None:
     if not start or not end:
         return None
-    return f"{start} to {end}" + (ASSUMED if assumed else "")
+    return f"Period: {start} to {end}" + (ASSUMED if assumed else "")
 
 
-def _region(value: Any, *, allow_all: bool = True) -> str | None:
+def _region(value: Any) -> str:
     if value == "unsupported":
-        return "region not recognised"
-    if value:
-        return str(value).capitalize()
-    return "all regions" if allow_all else None
+        return "Region: not recognised"
+    return f"Region: {str(value).capitalize()}" if value else "Region: all regions"
 
 
 def _person(request: dict) -> list[str]:
     out = []
     if request.get("account_name"):
-        out.append(f"account: {request['account_name']}")
+        out.append(f"Account: {request['account_name']}")
     if request.get("technician_name"):
-        out.append(f"technician: {request['technician_name']}")
+        out.append(f"Technician: {request['technician_name']}")
     return out
+
+
+def _period(payload: dict | None, request: dict) -> str | None:
+    if payload:
+        return _range(payload.get("start"), payload.get("end"), bool(payload.get("range_assumed")))
+    return _range(request.get("start"), request.get("end"), False)
 
 
 def _reporting(payload: dict | None, request: dict) -> list[str]:
     metric = request.get("metric")
-    parts = [METRICS.get(metric, "measure not recognised") if metric else "incident figures"]
-    if payload:
-        period = _range(
-            payload.get("start"), payload.get("end"), bool(payload.get("range_assumed"))
-        )
-    else:
-        period = _range(request.get("start"), request.get("end"), False)
-    if period:
-        parts.append(period)
-    parts.append(_region(request.get("region")))
-    parts += _person(request)
-    if request.get("group_by"):
-        parts.append(f"by {_words(request['group_by'])}")
-    return parts
+    measure = METRICS.get(metric, "not recognised") if metric else None
+    parts = [
+        "Area: incident reporting",
+        f"Measure: {measure}" if measure else None,
+        _period(payload, request),
+        _region(request.get("region")),
+        *_person(request),
+        f"Breakdown: {_words(request['group_by'])}" if request.get("group_by") else None,
+    ]
+    return [p for p in parts if p]
 
 
 def _sentiment(payload: dict | None, request: dict) -> list[str]:
-    measure = "customer sentiment"
+    measure = "sentiment summary"
     if request.get("want_trend"):
-        measure += " trend"
+        measure = "sentiment trend"
     if request.get("want_examples"):
         label = request.get("example_label")
-        measure += " with example comments" + (f" ({label})" if label else "")
-    parts = [measure]
-    if payload:
-        period = _range(
-            payload.get("start"), payload.get("end"), bool(payload.get("range_assumed"))
-        )
-    else:
-        period = _range(request.get("start"), request.get("end"), False)
-    if period:
-        parts.append(period)
-    parts.append(_region(request.get("region")))
-    if request.get("bucket"):
-        parts.append(f"by {request['bucket']}")
-    if request.get("unsupported"):
-        parts.append(f"not supported: {_words(request['unsupported'])}")
-    return parts
+        measure = "sentiment with example comments" + (f" ({label})" if label else "")
+    parts = [
+        "Area: customer sentiment",
+        f"Measure: {measure}",
+        _period(payload, request),
+        _region(request.get("region")),
+        f"Breakdown: {request['bucket']}" if request.get("bucket") else None,
+        f"Not supported: {_words(request['unsupported'])}" if request.get("unsupported") else None,
+    ]
+    return [p for p in parts if p]
 
 
 def _forecast(payload: dict | None, request: dict) -> list[str]:
-    parts = ["weekly service request forecast"]
     slice_ = request.get("slice") or "total"
-    parts.append("all service types" if slice_ == "total" else str(slice_))
+    period = None
     if payload and payload.get("requested_first_week") and payload.get("requested_last_week"):
-        text = (
-            f"weeks starting {payload['requested_first_week']} to {payload['requested_last_week']}"
-        )
-        parts.append(text + (ASSUMED if payload.get("range_assumed") else ""))
+        period = (
+            f"Period: weeks starting {payload['requested_first_week']} to "
+            f"{payload['requested_last_week']}"
+        ) + (ASSUMED if payload.get("range_assumed") else "")
     elif request.get("period_start") and request.get("period_end"):
-        parts.append(f"{request['period_start']} to {request['period_end']}")
-    if request.get("horizon_weeks"):
-        parts.append(f"next {request['horizon_weeks']} weeks")
-    if request.get("want_history"):
-        parts.append("with recent history")
-    if request.get("unsupported"):
-        parts.append(f"not supported: {_words(request['unsupported'])}")
-    return parts
+        period = f"Period: {request['period_start']} to {request['period_end']}"
+    parts = [
+        "Area: volume forecast",
+        "Measure: weekly service request volume",
+        f"Slice: {'all service types' if slice_ == 'total' else slice_}",
+        period,
+        f"Horizon: next {request['horizon_weeks']} weeks" if request.get("horizon_weeks") else None,
+        "History: included" if request.get("want_history") else None,
+        f"Not supported: {_words(request['unsupported'])}" if request.get("unsupported") else None,
+    ]
+    return [p for p in parts if p]
 
 
 def interpreted_as(body: dict) -> str | None:
@@ -141,7 +137,7 @@ def interpreted_as(body: dict) -> str | None:
     if not isinstance(request, dict):
         return None
     build = {"reporting": _reporting, "sentiment": _sentiment, "forecast": _forecast}[domain]
-    return SEP.join(p for p in build(payload, request) if p)
+    return SEP.join(build(payload, request))
 
 
 def answer_without_warning(answer: str, warning: str | None) -> str:

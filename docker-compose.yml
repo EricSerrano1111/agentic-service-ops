@@ -320,7 +320,8 @@ services:
       dockerfile: services/api_gateway/Dockerfile
     environment:
       GATEWAY_ORCHESTRATOR_URL: http://orchestrator:8000
-      GATEWAY_SESSION_KEY: ${GATEWAY_SESSION_KEY:?set GATEWAY_SESSION_KEY (32+ characters) in .env}
+      # Empty when unset: the gateway then refuses to start, and the other compose commands still run.
+      GATEWAY_SESSION_KEY: ${GATEWAY_SESSION_KEY:-}
       GATEWAY_INVITES_FILE: /run/gateway/invites.json
       GATEWAY_PUBLIC_ORIGIN: ${GATEWAY_PUBLIC_ORIGIN:-http://127.0.0.1:8080}
       GATEWAY_DAILY_QUESTION_CAP: ${GATEWAY_DAILY_QUESTION_CAP:-50}
@@ -328,7 +329,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       # The invite store (gitignored; scripts/invites.py writes it). Read-only here.
-      - ${GATEWAY_STATE_DIR:-./.local/gateway}:/run/gateway:ro
+      # Long form: the short form cannot hold a `${VAR:-default}` source in `config --no-interpolate`.
+      - type: bind
+        source: ${GATEWAY_STATE_DIR:-./.local/gateway}
+        target: /run/gateway
+        read_only: true
     ports:
       - "127.0.0.1:${API_GATEWAY_PORT:-8080}:8080"
     depends_on:
