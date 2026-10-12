@@ -22,16 +22,15 @@ def build_backend(settings: Settings) -> Backend:
         artifact = load_manifest(settings.manifest_path)
     else:
         artifact = load_verified(settings.models_dir, settings.manifest_path)
-    log.info(
-        "artifact verified",
-        extra={
-            "artifact": artifact.name,
-            "model_version": artifact.model_version,
-            "scoring_mode": settings.scoring_mode,
-            "files": len(artifact.files),
-            "seconds": round(time.perf_counter() - began, 2),
-        },
-    )
+    fields = {
+        "artifact": artifact.name,
+        "model_version": artifact.model_version,
+        "files": len(artifact.files),
+        "seconds": round(time.perf_counter() - began, 2),
+    }
+    if stored_only:  # the lazy log line is unchanged (ADR-100)
+        fields["scoring_mode"] = settings.scoring_mode
+    log.info("artifact verified", extra=fields)
     store = SqlStore(make_engine(settings))
     classifier = None
     if not stored_only:

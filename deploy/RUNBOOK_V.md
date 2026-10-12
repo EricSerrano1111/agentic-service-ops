@@ -44,7 +44,7 @@ sitting 1 depends on the order of the others except: 1 before 4 (the database mu
 
 | # | Check | Command | Expect |
 |---|---|---|---|
-| 0a | PR reviewed and merged by the owner | `gh pr view feat/deploy-readiness --json state,mergedAt` | `MERGED` |
+| 0a | The sentiment PR is reviewed and merged by the owner (sitting 2 builds from `main`; `feat/deploy-readiness` merged as #47) | `gh pr view feat/sentiment-stored-only --json state,mergedAt` | `MERGED` |
 | 0b | On main, clean, suites green | `git switch main; git pull; git status --short; .venv\Scripts\python -m pytest tests/unit services -q` | no changes; all pass |
 | 0c | The two images that bake the parameter files build locally | `docker compose build mcp_volume agent_qa` | `Built` for both |
 | 0d | ID token and gcloud identity | `gcloud config get-value account; gcloud auth print-access-token --quiet \| Out-Null; $LASTEXITCODE` | the owner; `0` |
@@ -162,11 +162,18 @@ Roll back: `DELETE` is not available to `app_sentiment`; rerunning `load.py` tru
 
 ## 5. Deploy (about 45 min, mostly the build)
 
-**Before the build (sitting 2): the fingerprint again.** With the proxy and the variables from step 4
-(`ops-db` running), rerun `scripts\predictions_fingerprint.py`. It must print the same `rows` and `sha256`
+**Before the build (sitting 2): the fingerprint again.** Sitting 2 is a new day and a new shell: start
+`ops-db` (step 1's two commands), open Terminal A (`cloud-sql-proxy $DB --port 5433`), and in Terminal B
+set the variables again (step 4's `POSTGRES_*` lines, `$P`/`$R`/`$N`/`$DB` from the top of this file, and
+`DB_ROLE_EVAL_USER` / `DB_ROLE_EVAL_PASSWORD` from Secret Manager), then run
+`.venv\Scripts\python scripts\predictions_fingerprint.py`. It must print the same `rows` and `sha256`
 as step 4. Only then run 5b with `_DEPLOY_SENTIMENT=true` (the committed value). If it differs, run 5b
 with `--substitutions _RUN_VERIFY=false,_DEPLOY_SENTIMENT=false`: the other five deploy and sentiment
-answers "The data service is unavailable right now."
+answers "The data service is unavailable right now." **That override is for this one run only.** The
+imported trigger carries `_DEPLOY_SENTIMENT: "true"`, so once step 8 enables it, the first merge to
+`main` would deploy sentiment with no matching fingerprint. On a mismatch, before step 8, make the
+trigger say `"false"` too (step 8 has the command), and put it back to `"true"` only after a fingerprint
+that matches.
 
 **Services are deployed one at a time (R-20).** `cloudbuild.yaml` chains the six deploy steps with
 `waitFor` (QA, sentiment, forecast, reporting, orchestrator, gateway), and `deploy_service.py` waits for
@@ -348,6 +355,9 @@ From this point a merge to `main` that touches an image's inputs deploys all six
 ```powershell
 (Get-Content deploy\trigger_full.yaml) -replace '^disabled: true', 'disabled: false' |
   Set-Content "$env:TEMP\trigger_enabled.yaml" -Encoding utf8
+# Only if step 4's or the sitting-2 fingerprint did NOT match (see step 5, "Before the build"):
+# (Get-Content "$env:TEMP\trigger_enabled.yaml") -replace '_DEPLOY_SENTIMENT: "true"', '_DEPLOY_SENTIMENT: "false"' |
+#   Set-Content "$env:TEMP\trigger_enabled.yaml" -Encoding utf8
 gcloud builds triggers import --source "$env:TEMP\trigger_enabled.yaml" --region $R --project $P
 gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format="value(disabled)"
 Remove-Item "$env:TEMP\trigger_enabled.yaml"
