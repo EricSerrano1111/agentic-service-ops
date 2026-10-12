@@ -56,6 +56,8 @@ SUMMARY_TOOL = "get_sentiment_summary"
 EXAMPLES_TOOL = "get_feedback_examples"
 # The MCP server's own message when its query (not the caller's input) failed.
 _TOOL_QUERY_FAILED = "feedback query failed"
+# The MCP server's code when stored predictions do not cover the range (ADR-100).
+_PREDICTIONS_INCOMPLETE = "predictions_incomplete"
 
 
 def message_metadata(context: RequestContext) -> dict:
@@ -228,7 +230,14 @@ class SentimentExecutor(AgentExecutor):
                 )
                 return
             except McpToolError as exc:
-                if _TOOL_QUERY_FAILED in str(exc):
+                if _PREDICTIONS_INCOMPLETE in str(exc):
+                    await self._fail(
+                        updater,
+                        task.id,
+                        "predictions_incomplete",
+                        "The stored sentiment predictions do not cover that range.",
+                    )
+                elif _TOOL_QUERY_FAILED in str(exc):
                     await self._fail(updater, task.id, "tool_error", "The feedback query failed.")
                 else:  # the tool rejected the input: its message is written for users
                     await self._fail(

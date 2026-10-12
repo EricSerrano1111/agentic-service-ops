@@ -5,7 +5,7 @@
 #
 # All four callees are named here (ADR-099): reporting, sentiment, forecast and QA, each by its
 # deterministic service URL, which is also the ID token's audience (ADR-081). A callee that is
-# not deployed (sentiment, until R-19 is decided) answers "agent unavailable". Its invoker is
+# not deployed (sentiment, if _DEPLOY_SENTIMENT is false) answers "agent unavailable". Its invoker is
 # run-gateway (ADR-097); it is not public.
 name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-orchestrator
 description: Orchestrator that routes questions to specialist agents over A2A

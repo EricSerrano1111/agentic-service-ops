@@ -51,4 +51,4 @@ substitutions:
   _GEMINI_MODEL_ORCHESTRATOR: gemini-3.5-flash-lite
   _GEMINI_MODEL_SPECIALIST: gemini-3.5-flash-lite
   _GEMINI_MODEL_QA: gemini-3.5-flash-lite
-  _DEPLOY_SENTIMENT: "false"
+  _DEPLOY_SENTIMENT: "true"

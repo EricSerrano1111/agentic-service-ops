@@ -499,7 +499,7 @@ Example: `Area: incident reporting · Measure: SLA compliance · Period: 2026-07
 
 | Upstream `error` (status) | User-facing message (fixed) |
 |---|---|
-| `agent_task_failed` (502), `agent_unavailable` (502) | "The data service is unavailable right now. Please try again later." |
+| `agent_task_failed` (502), `agent_unavailable` (502), `predictions_incomplete` (502; ADR-100) | "The data service is unavailable right now. Please try again later." |
 | `unclear_question` (422) | "I couldn't interpret the question. Please rephrase it." |
 | `invalid_range` (422) | "The date range in the question can't be answered. Please check the dates and try again." |
 | `rate_limited` (429) | "The language model is rate-limited right now. Please try again in about a minute." |

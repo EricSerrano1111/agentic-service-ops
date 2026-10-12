@@ -3234,3 +3234,63 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - The deterministic `*.run.app` URL is assumed to be the one a reviewer reaches; Prompt V checks it against what Cloud Run reports.
 - The client-IP rule for the sign-in rate limit is unverified for Cloud Run services (note under ADR-097).
 - `deploy/verify.py` checks two services; the other four are checked by the runbook's commands at V, and extending the script is an item for after the window.
+
+### ADR-100 — Deployed sentiment reads stored predictions only; scoring is an offline batch (supersedes ADR-062 in part; builds on ADR-099; resolves R-19's blocker)
+*Date: 2026-10-12. Owner decision: option B. Written and committed before any code or deploy-file change on `feat/sentiment-stored-only`.*
+
+**Decision:**
+- `mcp_feedback` has a scoring mode, `MCP_FEEDBACK_SCORING`: `lazy` or `stored_only`. Local compose and every existing test keep `lazy`, the default, unchanged. The Cloud Run `ops-sentiment` definition sets `stored_only`. An unknown value stops the server at start-up.
+- In `stored_only`:
+  - **No torch import and no weights in the image.** The classifier is never constructed; `transformers`, `torch`, `safetensors` and `tokenizers` are not installed in the deployed image target.
+  - **The start-up check covers the manifest without the weights.** The manifest must exist, parse and carry calibration values; its SHA-256 is the model version, exactly as in `lazy`. The per-file weight hashes are not checked, because the files are not there.
+  - **Before answering, every tool checks coverage:** every comment in the requested range (the same filter the lazy path counts with, `SqlStore.count_comments`) must have a stored prediction whose `model_version` equals the manifest's SHA-256. A prediction under another version does not count.
+  - **If any comment lacks one, the call fails closed:** no figures, no partial answer, no scoring attempt. The tool error carries the dedicated code `predictions_incomplete`; the sentiment agent fails the task with that code; the orchestrator passes it through as `error: predictions_incomplete` (502); the gateway maps it to the fixed data-service message (data dictionary §6, "Answer display (UI)", rule 5). The counts (`n_comments`, `n_scored`) go to the log with the trace ID, never to the user.
+- The predictions are produced by the offline backfill (`deploy/RUNBOOK_V.md`) and **verified by fingerprint** (`scripts/predictions_fingerprint.py`) against the local database before the service deploys. A fingerprint that differs means sentiment does not deploy.
+- **Packaging:** `torch`, `transformers`, `safetensors` and `tokenizers` move to an optional `model` extra of the `mcp-feedback` package (versions unchanged; `uv.lock` is regenerated and no pin moves). `services/mcp_feedback/Dockerfile` gains two targets: `stored` (no extra, no weights; what Cloud Build builds) and `full` (the extra; the last stage, so it stays the default for `docker build` and the compose file). CI installs `--all-extras`, so the lazy path stays tested.
+- **`ops-sentiment` memory** for the `mcp-feedback` container is sized for no model: **512 Mi, 1 CPU**, the value `mcp-incidents` runs at on the same stack (SQLAlchemy, psycopg, the MCP SDK) plus numpy, which `scoring` imports for the `Prediction` type. This is provisional until the peak resident memory of the `stored` image is measured under a summary and an examples query; the measurement is recorded in a dated note below this entry and, if it exceeds 60% of 512 Mi, the value is raised and the note says so.
+
+**Evidence (local database, read as `app_eval`, 2026-10-12):**
+- Comments sentiment can read (non-null `feedback_text`, joined to a request and a location as `mcp_feedback` does): **7,521**. Stored predictions: **7,521**, all under one model version, `0fa27f64…33ad` (the manifest's SHA-256). Comments with no prediction: **0**. Predictions with no comment: 0.
+- Fingerprint (`scripts/predictions_fingerprint.py`): 7,521 rows, `a340b82d8af178173afae34cb17bb7f2a1e3a944baa879321f34c4ac137e259f`.
+- So for this dataset `lazy` never scores anything, and **every answer is identical in both modes.** The equivalence is also tested (see the dated note below this entry).
+
+**Relationship to earlier decisions:**
+- **ADR-062** ("model artifacts are versioned in Cloud Storage; Cloud Build pulls a pinned version") is superseded **for the sentiment weights in serving**: the deployed service does not pull them from a bucket. The weights stay gitignored and out of every build context; the offline backfill still needs them, from the owner's machine.
+- **ADR-066 and ADR-067** hold: the manifest, calibration and the model-version key are unchanged, as is the lazy path.
+- **ADR-099**: its "Blocked, not decided here" paragraph is resolved by this entry; the rest stands. The `_DEPLOY_SENTIMENT` gate is set to `true`.
+- **R-19** (blocker removed), **L-90** (resolved for serving).
+
+**Rationale:**
+- The data is fixed and fully scored, so there is nothing for query-time scoring to do; the counts above show it.
+- It keeps a 1.5 to 2 GB image, about 2 GB of memory and the model load off the cold-start path (the 120 s deadline, R-05). The lazy path's own start-up hashes 438 MB before it listens.
+- Query-time scoring also fails at scale: about 8 comments per second on one CPU (ADR-067's measurement), so 1,000 unscored comments would take around 2 minutes, past the request deadline. The cap of 250 per call exists for that reason, and it turns an incomplete backlog into several incomplete answers.
+
+**Production design for growing data (recorded, not built):**
+- New comments are scored at ingest by a scheduled batch job (a Cloud Run Job; the weights pulled from a bucket, so ADR-062's path is built once, for the job and not the service).
+- Questions read stored predictions only.
+- Until the job has run, unscored comments are **excluded and disclosed** ("based on N of M comments"), as the lazy path's `complete: false` already does, instead of failing.
+- Upgrading the classifier is a deliberate re-scoring backfill; the model version stays on every row (ADR-067), so old and new predictions never mix in one answer.
+- Failing closed is correct **here only**: with fixed data an unscored comment means a pipeline fault, and a partial answer would be a silently wrong one. With growing data the same condition is normal, and the right behaviour is disclosure.
+
+**Required vs portfolio value:**
+- **Required:** `stored_only` at this scale. Without it sentiment cannot be served at all (R-19).
+- **Portfolio value:** the batch-scoring job above, backlogged for Sprint 6. It is not needed for a fixed dataset.
+
+**Alternatives considered:**
+- *A bucket plus a build-time pull, with lazy scoring on Cloud Run (option A).* Rejected: a bucket, an IAM binding and a 438 MB pull in every build; a larger image and a start-up hash on the cold-start path; model load and 2 GiB of memory for a path that never runs on this data. It also keeps a design that fails at scale, where the fix is a batch job anyway.
+- *Drop the coverage check and answer from whatever is stored.* Rejected: a partial answer with `complete: false` reaches QA and the user as a figure over fewer comments than the range implies. On fixed data that is a fault to surface, not a state to serve.
+- *Disclose rather than fail in `stored_only`.* Rejected for this dataset (see above); it is the design for growing data.
+
+**Stated limits:**
+- `stored_only` cannot score a new comment. A comment inserted after the backfill makes every range that contains it fail closed until the offline backfill is re-run. The batch job is designed, not built (new limitation entry).
+- The start-up check does not prove the stored predictions came from the weights the manifest names; the fingerprint at backfill time does, once. The model version is the manifest's hash, so a prediction under that version is trusted to be the manifest's model's.
+- The coverage check runs per call: two `count(*)` queries, which the lazy path also ran.
+
+**Note 2026-10-12 (ADR-100; the entry above is unchanged): what was built and measured.** Written after the code, on the same branch; the entry above was committed first (`a040319`).
+- **Equivalence, on the local database, real stored predictions:** the lazy and `stored_only` servers return byte-identical tool results for 9 questions (both tools, month and quarter buckets, a region, a weekend, the flagged-only and label filters, both halves of the window), and the lazy classifier is never called (`tests/integration/test_mcp_feedback_stored_only.py`). The same sentiment integration files run in both modes: lazy 54 passed; `stored_only` 53 passed and 1 skipped. Of those, only `test_qa_sentiment_agrees.py` (28 tests) goes through the feedback server and so exercises the mode; `test_golden_oracles.py` (3), `test_qa_sentiment_flag_band.py` (19) and `test_qa_baseline.py` (1) read the stored rows by SQL and are mode-independent, so their equal counts are not evidence of equivalence. The one skip, `test_a_partial_answer_is_checked_inside_a_transaction_that_is_rolled_back`, builds a deliberately partial answer, which `stored_only` refuses by design; the refusal is tested instead.
+- **Fail closed:** a range with an unscored comment, and a range whose predictions are under another model version, each give `predictions_incomplete`, no figure, and write nothing (offline in `services/mcp_feedback/tests/test_stored_only.py`; against Postgres on throwaway versions in the integration file above).
+- **No torch:** in a clean interpreter, `torch`, `transformers`, `safetensors` and `tokenizers` are absent from `sys.modules` after start-up and after both tools are called. In the built `stored` image: no `*.safetensors` anywhere, none of the four packages importable, `MCP_FEEDBACK_SCORING=stored_only`, and the manifest is the only model file.
+- **Image sizes** (Docker Desktop, 2026-10-12): `stored` 399 MB, `full` 1.8 GB. The lock is unchanged except that the four packages moved to the `model` extra; no pin moved.
+- **Memory, measured:** the `stored` image under `--memory 512m --cpus 1` against the local database, 20 tool calls (summary by month and by quarter, examples, flagged examples; 5,184 and 434 comments in range): peak cgroup memory 100,925,440 bytes (96 MiB), 19% of 512 Mi, under the 60% line set above. **512 Mi stands.** The container answered `/readyz` within seconds of start.
+- **The `full` target** still starts with the weights mounted, verifies them, and answers the same figures (5,184 of 5,184 comments scored in the first window, `complete: true`).
+- **Not tested here:** nothing ran on Cloud Run or against Cloud SQL; the backfill's fingerprint on Cloud SQL is the runbook's step 4.

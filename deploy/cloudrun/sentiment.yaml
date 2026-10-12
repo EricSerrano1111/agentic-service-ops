@@ -3,9 +3,9 @@
 # The Cloud SQL socket exists only inside mcp-feedback, the only container with the database
 # password (app_sentiment). The agent holds the Gemini key (it makes one parse call).
 #
-# BLOCKED (R-19, ADR-099): the mcp-feedback image cannot start on Cloud Run until the model
-# weights have a path into it. The definition is final; the image build and deploy are gated
-# behind _DEPLOY_SENTIMENT in cloudbuild.yaml and marked blocked in plan_full.py.
+# Scoring mode stored_only (ADR-100, resolves R-19): mcp-feedback is the `stored` image target,
+# with no torch and no model weights. It answers from the predictions the offline backfill
+# stored, after checking that every comment in range has one, and fails closed otherwise.
 name: projects/${PROJECT_ID}/locations/${REGION}/services/ops-sentiment
 description: Sentiment agent with the feedback MCP server as a sidecar
 labels:
@@ -73,6 +73,8 @@ template:
           value: "5432"
         - name: POSTGRES_DB
           value: ${POSTGRES_DB}
+        - name: MCP_FEEDBACK_SCORING
+          value: stored_only # ADR-100: no model, no scoring, fail closed on a gap
         - name: DB_ROLE_SENTIMENT_USER
           value: app_sentiment
         - name: LOG_LEVEL
@@ -85,15 +87,15 @@ template:
       resources:
         limits:
           cpu: "1"
-          memory: 2Gi # measured at 1 CPU / 2 GiB for the 250-comment cap (config.py, ADR-067)
+          memory: 512Mi # no model loaded (ADR-100); the value mcp-incidents runs at on this stack
       volumeMounts:
         - name: cloudsql
           mountPath: /cloudsql
       startupProbe:
         httpGet:
-          path: /readyz # ready only when the artifact verified and the database answers
+          path: /readyz # ready only when the manifest was read and the database answers
           port: 8102
-        initialDelaySeconds: 5
-        periodSeconds: 5
+        initialDelaySeconds: 2
+        periodSeconds: 3
         timeoutSeconds: 3
-        failureThreshold: 40 # hashing the 438 MB weights is part of start-up (R-05, R-19)
+        failureThreshold: 20 # same as mcp-incidents: start-up is a manifest read (ADR-100)

@@ -11,8 +11,9 @@ a rerun is safe. `--dry-run` only prints: it makes no API call and starts no pro
 
 Order: service accounts, secrets, secret access, project roles, build-account bindings, then
 the services in dependency order (QA, sentiment, forecast, reporting, orchestrator, gateway),
-each followed by its invoker binding. `ops-sentiment` is **blocked** (R-19): its image has no
-path to the model weights, so its steps print as BLOCKED and are skipped by a real run.
+each followed by its invoker binding. `ops-sentiment` deploys with the others (ADR-100): its
+image is the weight-free `stored` target. A service entry may still carry `"blocked": <reason>`,
+which prints its steps as BLOCKED and skips them in a real run; none does now.
 Nothing here deploys by itself: the definitions are `deploy/cloudrun/*.yaml`, rendered by
 `render.py` and sent by `deploy_service.py`.
 """
@@ -29,10 +30,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC = "allUsers"
-BLOCKED_SENTIMENT = (
-    "R-19: mcp-feedback hash-checks the 438 MB weights at start-up and no image carries them; "
-    "the owner chooses (A) a bucket and a build-time pull, or (B) stored predictions only"
-)
 
 #: Service short name -> definition file, runtime account, callers, secrets it may read.
 SERVICES: dict[str, dict] = {
@@ -41,7 +38,6 @@ SERVICES: dict[str, dict] = {
         "file": "sentiment.yaml",
         "sa": "run-sentiment",
         "secrets": ["db-role-sentiment-password", "gemini-api-key"],
-        "blocked": BLOCKED_SENTIMENT,
     },
     "forecast": {
         "file": "forecast.yaml",

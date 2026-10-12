@@ -127,6 +127,31 @@ def ensure_scored(
     return Coverage(n_comments, n_scored, n_scored == n_comments, n_new)
 
 
+class PredictionsIncomplete(RuntimeError):
+    """`stored_only` found a comment in range with no stored prediction for the model version.
+
+    Carries counts for the log only; the tool's message to the caller has none (ADR-100).
+    """
+
+    def __init__(self, n_comments: int, n_scored: int) -> None:
+        super().__init__("predictions_incomplete")
+        self.n_comments = n_comments
+        self.n_scored = n_scored
+
+
+def require_complete(store: Store, version: str, scope: Scope) -> Coverage:
+    """`stored_only`: every comment in scope has a stored prediction for `version`, or fail.
+
+    Never scores and never returns a partial answer (ADR-100). A prediction stored under
+    another version does not count, so a model-version mismatch fails closed too.
+    """
+    n_comments = store.count_comments(scope)
+    n_scored = store.count_scored(version, scope)
+    if n_scored != n_comments:
+        raise PredictionsIncomplete(n_comments, n_scored)
+    return Coverage(n_comments, n_scored, True, 0)
+
+
 def example_order_key(flagged_only: bool):
     """Highest confidence first, ties by lowest id; flagged-only: lowest confidence first."""
     if flagged_only:

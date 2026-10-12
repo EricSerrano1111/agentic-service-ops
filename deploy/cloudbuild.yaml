@@ -31,9 +31,11 @@ substitutions:
   _GEMINI_MODEL_ORCHESTRATOR: ""
   _GEMINI_MODEL_SPECIALIST: ""
   _GEMINI_MODEL_QA: ""
-  # "false" until the sentiment weights have a path into the mcp-feedback image (R-19, ADR-099):
-  # its build, render and deploy are skipped, and the orchestrator answers "agent unavailable".
-  _DEPLOY_SENTIMENT: "false"
+  # "true" (ADR-100, resolves R-19): sentiment builds the weight-free `stored` image and deploys
+  # with the other five. "false" skips its build and deploy, and the orchestrator then answers
+  # "agent unavailable" for sentiment. The runbook deploys it only after the backfill's
+  # fingerprint matches the local database.
+  _DEPLOY_SENTIMENT: "true"
   # "false" on the very first run only: checks 4 and 6 cannot pass until the service-level
   # invoker bindings exist, and those need the services (README, runbook step 10).
   _RUN_VERIFY: "true"
@@ -68,7 +70,7 @@ steps:
     name: gcr.io/cloud-builders/docker
     args: ["build", "-f", "services/api_gateway/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/gateway:${COMMIT_SHA}", "."]
     waitFor: ["-"]
-  # Sentiment: skipped while _DEPLOY_SENTIMENT is "false" (R-19).
+  # Sentiment: skipped only if _DEPLOY_SENTIMENT is "false" (ADR-100).
   - id: build-sentiment
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
@@ -76,9 +78,9 @@ steps:
       - -c
       - |
         set -euo pipefail
-        if [ "${_DEPLOY_SENTIMENT}" != "true" ]; then echo "sentiment build skipped (R-19)"; exit 0; fi
+        if [ "${_DEPLOY_SENTIMENT}" != "true" ]; then echo "sentiment build skipped (_DEPLOY_SENTIMENT=false)"; exit 0; fi
         docker build -f services/agent_sentiment/Dockerfile -t "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-sentiment:${COMMIT_SHA}" .
-        docker build -f services/mcp_feedback/Dockerfile -t "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-feedback:${COMMIT_SHA}" .
+        docker build -f services/mcp_feedback/Dockerfile --target stored -t "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-feedback:${COMMIT_SHA}" .
     waitFor: ["-"]
 
   # ---- push: must finish before a definition can reference the tags -------------------
@@ -141,7 +143,7 @@ steps:
       - -c
       - |
         set -euo pipefail
-        if [ "${_DEPLOY_SENTIMENT}" != "true" ]; then echo "ops-sentiment skipped (R-19)"; exit 0; fi
+        if [ "${_DEPLOY_SENTIMENT}" != "true" ]; then echo "ops-sentiment skipped (_DEPLOY_SENTIMENT=false)"; exit 0; fi
         python3 deploy/deploy_service.py /workspace/rendered/sentiment.json
     waitFor: ["deploy-qa"]
   - id: deploy-forecast

@@ -272,6 +272,9 @@ _AGENT_ERRORS: dict[str, tuple[int, str]] = {
     "daily_quota_exhausted": (503, "daily_quota_exhausted"),
     "model_unavailable": (503, "model_unavailable"),
     "internal_error": (500, "internal_error"),
+    # Sentiment in scoring mode stored_only: a comment in range has no stored prediction
+    # (ADR-100). The gateway maps the code to its fixed data-service message.
+    "predictions_incomplete": (502, "predictions_incomplete"),
 }
 
 

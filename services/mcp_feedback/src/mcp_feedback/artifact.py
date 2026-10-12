@@ -38,17 +38,7 @@ class Artifact:
     files: dict[str, str]
 
 
-def load_verified(directory: Path, manifest_path: Path) -> Artifact:
-    """Read the manifest, verify every listed file, and return the artifact."""
-    if not manifest_path.is_file():
-        raise ArtifactIntegrityError(f"manifest not found: {manifest_path}")
-    manifest = json.loads(manifest_path.read_bytes())
-    for name, expected in manifest["files"].items():
-        path = directory / name
-        if not path.is_file():
-            raise ArtifactIntegrityError(f"{name} is missing from {directory}")
-        if _sha256(path) != expected:
-            raise ArtifactIntegrityError(f"{name} does not match the manifest's SHA-256")
+def _artifact(directory: Path, manifest_path: Path, manifest: dict) -> Artifact:
     calibration = manifest["calibration"]
     if calibration.get("temperature") is None or calibration.get("threshold") is None:
         raise ArtifactIntegrityError("manifest has no calibration values (ADR-066)")
@@ -62,3 +52,29 @@ def load_verified(directory: Path, manifest_path: Path) -> Artifact:
         threshold=float(calibration["threshold"]),
         files=dict(manifest["files"]),
     )
+
+
+def load_verified(directory: Path, manifest_path: Path) -> Artifact:
+    """Read the manifest, verify every listed file, and return the artifact."""
+    if not manifest_path.is_file():
+        raise ArtifactIntegrityError(f"manifest not found: {manifest_path}")
+    manifest = json.loads(manifest_path.read_bytes())
+    for name, expected in manifest["files"].items():
+        path = directory / name
+        if not path.is_file():
+            raise ArtifactIntegrityError(f"{name} is missing from {directory}")
+        if _sha256(path) != expected:
+            raise ArtifactIntegrityError(f"{name} does not match the manifest's SHA-256")
+    return _artifact(directory, manifest_path, manifest)
+
+
+def load_manifest(manifest_path: Path) -> Artifact:
+    """The manifest alone, for `stored_only` (ADR-100): no weights are present or read.
+
+    The model version is the manifest's SHA-256, as in `load_verified`; the per-file
+    hashes are not checked because the files are not in the image.
+    """
+    if not manifest_path.is_file():
+        raise ArtifactIntegrityError(f"manifest not found: {manifest_path}")
+    manifest = json.loads(manifest_path.read_bytes())
+    return _artifact(manifest_path.parent, manifest_path, manifest)
