@@ -1,0 +1,65 @@
+{
+  "adr": "ADR-103",
+  "note": "Frozen evaluation state (Sprint 5). Any change here, or to a prompt file, invalidates Prompt X's runs and needs a new ADR; see ADR-103 for what may change.",
+  "line_endings": "prompt files hashed after replacing CRLF with LF",
+  "prompts_sha256": {
+    "services/agent_forecast/prompts/parse_v1.md": "44cd63997912e44cb1b4573b50aad0a628818081570cab6e0b5f2f846d4d751c",
+    "services/agent_qa/prompts/qa_interp_v1.md": "bfef37465b5fc4770afb79f8ff8ef347c607140fc58bfccd14c0c90ee9fc9ebd",
+    "services/agent_qa/prompts/qa_interp_v2.md": "5199ef6684d50bfd6d50a48d3d9a3ab32fbdce1da940442e04aca352856fdc10",
+    "services/agent_qa/prompts/qa_interp_v3.md": "cccf19c2999009aadb3fc7d50dbb6ec65ecfb788816f611de563f7f452bc1d09",
+    "services/agent_reporting/prompts/parse_v1.md": "c67a1cf4bc9dd39dd1ad0026e0aed3ae017bb75248369109cdcf783c7a6530eb",
+    "services/agent_reporting/prompts/parse_v2.md": "c43591a3e397b30888d74be25a73a8512bf9cbe4c9f52046d7787403aee67a68",
+    "services/agent_reporting/prompts/parse_v3.md": "d239cc36ba15d5855bd40b98227debd7c0285a31689e4d78d3ba72e7ee791a49",
+    "services/agent_reporting/prompts/parse_v4.md": "de3af35b3682035a06af13139965c046da5e9439263a25c09b969168795480ba",
+    "services/agent_sentiment/prompts/parse_v1.md": "0f61684af8cf1e763b3943b8dc3ad2801be8e7185193a132618fb48ec103d953",
+    "services/orchestrator/prompts/route_v1.md": "d2b285c19d9e7454afafb32ce51a5110055f02227f37f8e040421e144726184e",
+    "services/orchestrator/prompts/route_v2.md": "72af019a26cba49a86ab0f44172f79aa32f41c234393af83eae532645221de7a",
+    "services/orchestrator/prompts/route_v3.md": "1201bc648069c81d9b4c40fc44912ab10f484d63d98e30c3542dabcd4e26c678",
+    "services/orchestrator/prompts/route_v4.md": "135001ca827c9a63aa182995ac0d98fd75c6cd27696d610e294fe1471c1fe0f5",
+    "services/orchestrator/prompts/route_v5.md": "4d9e2d5a568addc6c3129dd38565e0d5d3a52a9c9d20225326294966a5505126",
+    "services/orchestrator/prompts/route_v6.md": "a160b528247bd2f9d0fd0a1d281dd6821417961b7f25d22efd2a0cc3d70e4c98"
+  },
+  "default_router": "route_v3",
+  "shipped_interpretation_prompt": "qa_interp_v2",
+  "parse_prompts_in_service": {
+    "reporting": "parse_v4",
+    "sentiment": "parse_v1",
+    "forecast": "parse_v1"
+  },
+  "models": {
+    "orchestrator": {
+      "model": "gemini-3.5-flash-lite",
+      "thinking_level": "minimal (the lowest the model supports; LLM_THINKING_LEVEL_<ROLE> blank, ADR-052)"
+    },
+    "specialist": {
+      "model": "gemini-3.5-flash-lite",
+      "thinking_level": "minimal (the lowest the model supports; LLM_THINKING_LEVEL_<ROLE> blank, ADR-052)"
+    },
+    "qa": {
+      "model": "gemini-3.5-flash-lite",
+      "thinking_level": "minimal (the lowest the model supports; LLM_THINKING_LEVEL_<ROLE> blank, ADR-052)"
+    }
+  },
+  "llm_mode_in_services": "free",
+  "flags": {
+    "QA_INTERP_MODE": "advisory",
+    "QA_FORECAST_RECOMPUTE": "on",
+    "MCP_FEEDBACK_SCORING_deploy": "stored_only"
+  },
+  "thresholds_and_caps": {
+    "MAX_QA_RETRY_ATTEMPTS": 2,
+    "MAX_COST_PER_RUN_USD": "unset (blank)",
+    "route_timeout_s": 30.0,
+    "a2a_timeout_s": 60.0,
+    "sentiment_a2a_timeout_s": 85.0,
+    "forecast_a2a_timeout_s": 60.0,
+    "qa_a2a_timeout_s": 50.0,
+    "qa_interp_timeout_s": 30.0,
+    "qa_statement_timeout_ms": 10000,
+    "end_to_end_deadline_s": 120,
+    "as_of_date": "2026-08-30"
+  },
+  "data_dictionary_sha256": "8fccfe6f0e4f71db684003faab42de16f316e50223682fee9893ad5b461aae18",
+  "sentiment_manifest_sha256": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+  "sentiment_manifest_path": "ml/sentiment/artifacts/bert_v1.manifest.json"
+}

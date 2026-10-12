@@ -30,6 +30,7 @@ PAIRS = HERE / "pairs_v1.jsonl"
 AS_OF = dt.date(2026, 8, 30)
 sys.path.insert(0, str(ROOT / "services" / "agent_qa" / "src"))
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(ROOT / "evals"))
 
 
 def default_rpm(model: str) -> float:
@@ -43,6 +44,24 @@ def reading_for(pair: dict, as_of: dt.date) -> str:
     from agent_qa.reporting import decline_reason, last_full_month
     from schemas import ForecastRequest, ReportingRequest
 
+    if pair["domain"] == "sentiment":
+        from agent_qa.interpretation import reading_sentiment
+        from agent_qa.sentiment import resolved_range
+        from schemas import SentimentRequest
+
+        srequest = SentimentRequest(**pair["request"])
+        if srequest.unsupported is not None:  # a decline never resolved a range (verify.py)
+            named = srequest.start is not None
+            return reading_sentiment(
+                srequest,
+                srequest.start if named else None,
+                srequest.end if named else None,
+                srequest.bucket,
+                False,
+                as_of,
+            )
+        start, end, bucket, assumed = resolved_range(srequest, as_of)
+        return reading_sentiment(srequest, start, end, bucket, assumed, as_of)
     if pair["domain"] == "forecast":
         return reading_forecast(ForecastRequest(**pair["request"]), as_of)
     request = ReportingRequest(**pair["request"])
@@ -69,10 +88,17 @@ async def run(args: argparse.Namespace) -> int:
     from llm import LLMClient, LLMDailyQuotaExhausted, LLMError
     from llm.redact import redact
 
-    pairs = [json.loads(line) for line in PAIRS.read_text("utf-8").splitlines() if line]
+    pairs_path = Path(args.pairs) if args.pairs else PAIRS
+    if not pairs_path.is_absolute():
+        pairs_path = ROOT / pairs_path
+    pairs = [json.loads(line) for line in pairs_path.read_text("utf-8").splitlines() if line]
     client = LLMClient.from_env("qa")
-    if client.settings.mode != "free":
-        raise SystemExit("this eval runs on the free key only (LLM_MODE=free)")
+    # Free by default; paid only explicitly (--paid with LLM_MODE=paid), every call ledgered.
+    import ledger as ledger_mod
+
+    ledger_mod.require_paid(args.paid, client.settings.mode, args.path)
+    ledger = ledger_mod.Ledger(args.ledger or ledger_mod.DEFAULT_PATH) if args.paid else None
+    key = "paid" if args.paid else "free"
     model = client.settings.default_model
     interpreter = Interpreter(client, load_interp_prompt(args.prompt))
     as_of = AS_OF
@@ -87,7 +113,7 @@ async def run(args: argparse.Namespace) -> int:
     done = {(i, r["id"]) for i, rows in enumerate(runs) for r in rows}
     todo = sum(1 for i in range(args.k) for p in pairs if (i, p["id"]) not in done)
     print(
-        f"{len(pairs)} pairs x k={args.k}, model {model} (free key), thinking {thinking}, prompt "
+        f"{len(pairs)} pairs x k={args.k}, model {model} ({key} key), thinking {thinking}, prompt "
         f"{interpreter.prompt.version} ({interpreter.prompt.sha}), as-of {as_of}, "
         f"{todo} calls to make, budget {args.budget} requests"
     )
@@ -101,7 +127,9 @@ async def run(args: argparse.Namespace) -> int:
         "not_blind": "correct pairs come from parse sets drafted by assistants (L-69); "
         "mutations are synthetic (seed fixed in build_sets.py)",
         "model": model,
-        "key": "free",
+        "key": key,
+        "pairs_file": str(pairs_path.relative_to(ROOT)) if pairs_path.is_relative_to(ROOT) else "",
+        "ledger_path": args.path if args.paid else None,
         "thinking_level": thinking,
         "prompt": interpreter.prompt.version,
         "prompt_sha": interpreter.prompt.sha,
@@ -132,18 +160,30 @@ async def run(args: argparse.Namespace) -> int:
                 "error": None,
             }
             try:
-                judgement = await interpreter.judge(
-                    pair["domain"],
-                    pair["question"],
-                    reading_for(pair, as_of),
-                    trace_id=f"interp-{pair['id']}-k{i + 1}",
-                )
+                reading = reading_for(pair, as_of)
+                trace = f"interp-{pair['id']}-k{i + 1}"
+                if ledger is None:
+                    judgement = await interpreter.judge(
+                        pair["domain"], pair["question"], reading, trace_id=trace
+                    )
+                else:
+                    with ledger.call(
+                        client,
+                        args.path,
+                        label=f"{interpreter.prompt.version}:{pair['id']}:k{i + 1}",
+                    ):
+                        judgement = await interpreter.judge(
+                            pair["domain"], pair["question"], reading, trace_id=trace
+                        )
                 cell |= {
                     "meaning": judgement.meaning,
                     "faithful": judgement.faithful,
                     "differs_in": list(judgement.differs_in),
                     "note": judgement.note,
                 }
+            except ledger_mod.LedgerRefused as exc:
+                stopped = f"ledger refused ({exc})"
+                break
             except LLMDailyQuotaExhausted as exc:
                 stopped = f"daily quota exhausted ({exc})"
                 break
@@ -179,6 +219,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--prompt", default="qa_interp_v1")
     ap.add_argument("--k", type=int, default=3)
     ap.add_argument("--budget", type=int, default=252, help="stop at this many requests")
+    ap.add_argument("--pairs", default=None, help="pairs .jsonl (default pairs_v1.jsonl)")
+    ap.add_argument("--paid", action="store_true", help="spend on the paid key (LLM_MODE=paid)")
+    ap.add_argument("--path", help="ledger path label for a paid run: A1, A2, C1 or C2")
+    ap.add_argument("--ledger", help="ledger file (default evals/results/sprint5_w_ledger.json)")
     ap.add_argument("--resume", default=None, help="a stopped run's file: judge only what is left")
     ap.add_argument("--date", default=dt.date.today().isoformat())
     return asyncio.run(run(ap.parse_args(argv)))

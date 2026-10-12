@@ -1,0 +1,527 @@
+{
+  "evidence": "observed",
+  "not_blind": "correct pairs come from parse sets drafted by assistants (L-69); mutations are synthetic (seed fixed in build_sets.py)",
+  "model": "gemini-3.5-flash-lite",
+  "key": "paid",
+  "pairs_file": "evals\\generated\\sets\\interp_pairs_v1.jsonl",
+  "ledger_path": "C2",
+  "thinking_level": "minimal",
+  "prompt": "qa_interp_v3",
+  "prompt_sha": "cccf19c29990",
+  "as_of": "2026-08-30",
+  "k": 1,
+  "resumed_from": null,
+  "stopped": null,
+  "calls": 46,
+  "requests": 46,
+  "runs": [
+    [
+      {
+        "id": "r-underspecified/UND-19-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user wants to know the SLA compliance for Pinecrest Manufacturing Group for the previous month."
+      },
+      {
+        "id": "r-underspecified/UND-19-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "account"
+        ],
+        "note": "The reading should have specified Pinecrest Manufacturing Group as the account name.",
+        "error": null,
+        "meaning": "sla compliance for Pinecrest Manufacturing Group for last month"
+      },
+      {
+        "id": "r-clear_reporting/CR-15-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Show first time fix rate broken down by technician in the southeast region for June 2026."
+      },
+      {
+        "id": "r-clear_reporting/CR-15-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The region should have been set to southeast.",
+        "error": null,
+        "meaning": "The user wants the first time fix rate broken down by technician in the Southeast region for June 2026, but the system reading failed to capture the region."
+      },
+      {
+        "id": "f-clear_forecast/CF-20-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "What is the expected install request volume for the next 11 weeks starting from August 30, 2026?"
+      },
+      {
+        "id": "f-clear_forecast/CF-20-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The reading should have set the horizon to 11 weeks.",
+        "error": null,
+        "meaning": "The user asks for the expected weekly volume of install requests over the next 11 weeks."
+      },
+      {
+        "id": "f-clear_forecast/CF-08-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The forecast for total request volume over the next 3 weeks starting from August 30, 2026."
+      },
+      {
+        "id": "f-clear_forecast/CF-08-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The reading should have set the slice to total instead of install.",
+        "error": null,
+        "meaning": "The user wants a forecast of total incoming jobs for the next 3 weeks from August 30, 2026."
+      },
+      {
+        "id": "s-underspecified/UND-06-ok",
+        "domain": "sentiment",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for example negative customer comments with no dates named."
+      },
+      {
+        "id": "s-underspecified/UND-06-bad",
+        "domain": "sentiment",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Ask for example negative customer comments between 2026-07-01 and 2026-07-31."
+      },
+      {
+        "id": "f-underspecified/UND-20-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The system should have set a horizon or period for the weekly expectation instead of leaving it null.",
+        "error": null,
+        "meaning": "How many upgrade service requests should we expect each week, with no specific horizon named."
+      },
+      {
+        "id": "f-underspecified/UND-20-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "slice"
+        ],
+        "note": "The reading should have set the slice to upgrade instead of maintenance.",
+        "error": null,
+        "meaning": "How many upgrade requests should we expect each week"
+      },
+      {
+        "id": "s-clear_sentiment/CS-14-ok",
+        "domain": "sentiment",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "What was the monthly sentiment distribution across Northeast sites during Q1 2026?"
+      },
+      {
+        "id": "s-clear_sentiment/CS-14-bad",
+        "domain": "sentiment",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates",
+          "breakdown"
+        ],
+        "note": "The reading should have set the date range to Q1 2026 and the bucket to quarter.",
+        "error": null,
+        "meaning": "What was the sentiment distribution across Northeast sites during Q1 2026 (2026-01-01 to 2026-03-31)?"
+      },
+      {
+        "id": "r-underspecified/UND-14-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user wants an incident count broken down by severity for the previous month."
+      },
+      {
+        "id": "r-underspecified/UND-14-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The breakdown should be severity instead of incident type.",
+        "error": null,
+        "meaning": "The user asks for the count of incidents broken down by severity for July 2026."
+      },
+      {
+        "id": "f-clear_forecast/CF-16-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for a weekly forecast of total service requests for the next 20 weeks starting from August 30, 2026."
+      },
+      {
+        "id": "f-clear_forecast/CF-16-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The reading should have set horizon_weeks to 20 instead of 8.",
+        "error": null,
+        "meaning": "The user asks for the weekly forecast of total service requests for the next 20 weeks starting from 2026-08-30."
+      },
+      {
+        "id": "r-underspecified/UND-07-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the incident rate for the account Meridian Manufacturing LLC, using the default date range since none was named."
+      },
+      {
+        "id": "r-underspecified/UND-07-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "account"
+        ],
+        "note": "The reading should have used the account name Meridian Manufacturing LLC instead of Meridian Education LLC.",
+        "error": null,
+        "meaning": "The user is asking for the incident rate for Meridian Manufacturing LLC."
+      },
+      {
+        "id": "r-clear_reporting/CR-25-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "What were the drivers of repeat visits in the west region during the first quarter of 2026?"
+      },
+      {
+        "id": "r-clear_reporting/CR-25-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "metric"
+        ],
+        "note": "The reading should have used repeat visit drivers as the metric instead of incident rate.",
+        "error": null,
+        "meaning": "The question asks for repeat visit drivers in the West region during Q1 2026."
+      },
+      {
+        "id": "s-underspecified/UND-16-ok",
+        "domain": "sentiment",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the share of positive versus negative feedback for the Northeast region using default dates."
+      },
+      {
+        "id": "s-underspecified/UND-16-bad",
+        "domain": "sentiment",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading should have set the region to northeast instead of west.",
+        "error": null,
+        "meaning": "The question asks for the share of positive versus negative feedback for the Northeast region, using default dates."
+      },
+      {
+        "id": "r-technician/TECH-12-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Priya Patel SLA compliance percentage from July 1 to July 31, 2026"
+      },
+      {
+        "id": "r-technician/TECH-12-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The question does not mention any region, so region should be null.",
+        "error": null,
+        "meaning": "Priya Patel's SLA compliance percentage for July 2026"
+      },
+      {
+        "id": "f-clear_forecast/CF-19-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "How many repair jobs per week are expected over the next 22 weeks from 2026-08-30"
+      },
+      {
+        "id": "f-clear_forecast/CF-19-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for the expected number of repair jobs per week for the next 22 weeks, starting from August 30, 2026."
+      },
+      {
+        "id": "r-filtered/FIL-17-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The question asks for the number of quality incidents for Redstone Logistics Co. in Q1 2026, which spans from 2026-01-01 to 2026-03-31."
+      },
+      {
+        "id": "r-filtered/FIL-17-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The reading incorrectly includes a region breakdown which the question did not ask for.",
+        "error": null,
+        "meaning": "How many quality incidents occurred for Redstone Logistics Co. in Q1 2026 (2026-01-01 to 2026-03-31) with no breakdown?"
+      },
+      {
+        "id": "s-clear_sentiment/CS-04-ok",
+        "domain": "sentiment",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The question asks for quarterly figures, so bucket should be quarter.",
+        "error": null,
+        "meaning": "What percentage of feedback was negative vs positive in Q2 2026 (2026-04-01 to 2026-06-30)?"
+      },
+      {
+        "id": "s-clear_sentiment/CS-04-bad",
+        "domain": "sentiment",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "breakdown"
+        ],
+        "note": "The reading should have used quarterly buckets instead of monthly buckets.",
+        "error": null,
+        "meaning": "What was the negative vs positive sentiment percentage in Q2 2026 (2026-04-01 to 2026-06-30)?"
+      },
+      {
+        "id": "r-technician/TECH-08-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "How many incidents by severity did Wen Olsen have this month, 2026-08-01 to 2026-08-30."
+      },
+      {
+        "id": "r-technician/TECH-08-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "technician"
+        ],
+        "note": "The reading should have included the technician name Wen Olsen instead of null.",
+        "error": null,
+        "meaning": "The question asks for incident counts broken down by severity for Wen Olsen during August 2026."
+      },
+      {
+        "id": "f-clear_forecast/CF-13-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Estimate maintenance call volume for the next 7 weeks starting from August 30, 2026."
+      },
+      {
+        "id": "f-clear_forecast/CF-13-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "horizon"
+        ],
+        "note": "The reading should have set the horizon to 7 weeks instead of 11.",
+        "error": null,
+        "meaning": "Estimate weekly maintenance calls for the next 7 weeks from August 30, 2026."
+      },
+      {
+        "id": "s-clear_sentiment/CS-01-ok",
+        "domain": "sentiment",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Customer feedback sentiment breakdown across all sites for last month July 2026"
+      },
+      {
+        "id": "s-clear_sentiment/CS-01-bad",
+        "domain": "sentiment",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should be set to last month, which is May 2026.",
+        "error": null,
+        "meaning": "Breakdown of customer feedback sentiment across all sites for last month (2026-05-01 to 2026-05-31)"
+      },
+      {
+        "id": "s-clear_sentiment/CS-09-ok",
+        "domain": "sentiment",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Sentiment breakdown of customer comments in the southeast region for August 2026"
+      },
+      {
+        "id": "s-clear_sentiment/CS-09-bad",
+        "domain": "sentiment",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "Sentiment breakdown of customer comments in the Southeast region for August 2026"
+      },
+      {
+        "id": "r-filtered/FIL-18-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": false,
+        "differs_in": [
+          "region"
+        ],
+        "note": "The reading should have set region to unsupported because the Tri-State area is not one of the four supported regions.",
+        "error": null,
+        "meaning": "The user asks for SLA performance across the Tri-State area for August 2026."
+      },
+      {
+        "id": "r-filtered/FIL-18-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "region",
+          "unsupported"
+        ],
+        "note": "The question asks about the Tri-State area, which is unsupported, and the reading wrongly maps it to the central region.",
+        "error": null,
+        "meaning": "What was the SLA compliance in the Tri-State area from 2026-08-01 to 2026-08-30."
+      },
+      {
+        "id": "f-clear_forecast/CF-15-ok",
+        "domain": "forecast",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "How many upgrade requests to plan for per week over the next 15 weeks."
+      },
+      {
+        "id": "f-clear_forecast/CF-15-bad",
+        "domain": "forecast",
+        "label": "mismatch",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user wants a forecast of upgrade requests per week for the next 15 weeks starting from August 30, 2026."
+      },
+      {
+        "id": "r-clear_reporting/CR-02-ok",
+        "domain": "reporting",
+        "label": "matches",
+        "faithful": true,
+        "differs_in": [],
+        "note": "",
+        "error": null,
+        "meaning": "The user asks for the first-time fix rate broken down by region for Q2 2026, which is April 1 to June 30, 2026."
+      },
+      {
+        "id": "r-clear_reporting/CR-02-bad",
+        "domain": "reporting",
+        "label": "mismatch",
+        "faithful": false,
+        "differs_in": [
+          "dates"
+        ],
+        "note": "The date range should be set to Q2 2026, which is 2026-04-01 to 2026-06-30.",
+        "error": null,
+        "meaning": "First-time fix rate by region for Q2 2026, which is April to June 2026, given as_of August 30, 2026."
+      }
+    ]
+  ]
+}

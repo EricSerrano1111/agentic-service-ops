@@ -1,0 +1,2958 @@
+{
+  "cap_requests": 561,
+  "cap_usd": 3.0,
+  "requests": 418,
+  "calls": 418,
+  "cost_usd": 0.2718683,
+  "max_call_cost_usd": 0.0011342000000000019,
+  "by_path": {
+    "A1": {
+      "requests": 192,
+      "calls": 192,
+      "cost_usd": 0.1039746
+    },
+    "A2": {
+      "requests": 84,
+      "calls": 84,
+      "cost_usd": 0.0828294
+    },
+    "C1": {
+      "requests": 96,
+      "calls": 96,
+      "cost_usd": 0.0396265
+    },
+    "C2": {
+      "requests": 46,
+      "calls": 46,
+      "cost_usd": 0.0454378
+    }
+  },
+  "events": [
+    {
+      "at": "2026-10-12T21:18:47Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0004972,
+      "label": "seed_v2:s01"
+    },
+    {
+      "at": "2026-10-12T21:18:49Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005377,
+      "label": "seed_v2:s02"
+    },
+    {
+      "at": "2026-10-12T21:18:51Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000543,
+      "label": "seed_v2:s03"
+    },
+    {
+      "at": "2026-10-12T21:18:53Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005543,
+      "label": "seed_v2:s04"
+    },
+    {
+      "at": "2026-10-12T21:18:55Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000517,
+      "label": "seed_v2:s05"
+    },
+    {
+      "at": "2026-10-12T21:18:57Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005531,
+      "label": "seed_v2:s06"
+    },
+    {
+      "at": "2026-10-12T21:18:59Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005306,
+      "label": "seed_v2:s07"
+    },
+    {
+      "at": "2026-10-12T21:19:01Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000559,
+      "label": "seed_v2:s08"
+    },
+    {
+      "at": "2026-10-12T21:19:03Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000559,
+      "label": "seed_v2:s09"
+    },
+    {
+      "at": "2026-10-12T21:19:05Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005431,
+      "label": "seed_v2:s10"
+    },
+    {
+      "at": "2026-10-12T21:19:07Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005453,
+      "label": "seed_v2:s11"
+    },
+    {
+      "at": "2026-10-12T21:19:09Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005053,
+      "label": "seed_v2:s12"
+    },
+    {
+      "at": "2026-10-12T21:19:11Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005428,
+      "label": "seed_v2:s13"
+    },
+    {
+      "at": "2026-10-12T21:19:13Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005527,
+      "label": "seed_v2:s14"
+    },
+    {
+      "at": "2026-10-12T21:19:15Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000544,
+      "label": "seed_v2:s15"
+    },
+    {
+      "at": "2026-10-12T21:19:17Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005938,
+      "label": "seed_v2:s16"
+    },
+    {
+      "at": "2026-10-12T21:19:19Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005418,
+      "label": "seed_v2:s17"
+    },
+    {
+      "at": "2026-10-12T21:19:21Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005214,
+      "label": "seed_v2:s18"
+    },
+    {
+      "at": "2026-10-12T21:19:23Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005394,
+      "label": "seed_v2:s19"
+    },
+    {
+      "at": "2026-10-12T21:19:25Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000545,
+      "label": "seed_v2:s20"
+    },
+    {
+      "at": "2026-10-12T21:19:27Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005303,
+      "label": "seed_v2:s21"
+    },
+    {
+      "at": "2026-10-12T21:19:29Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005424,
+      "label": "seed_v2:s22"
+    },
+    {
+      "at": "2026-10-12T21:19:31Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005103,
+      "label": "seed_v2:s23"
+    },
+    {
+      "at": "2026-10-12T21:19:33Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005165,
+      "label": "seed_v2:s24"
+    },
+    {
+      "at": "2026-10-12T21:19:35Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005134,
+      "label": "seed_v2:s25"
+    },
+    {
+      "at": "2026-10-12T21:19:37Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005217,
+      "label": "seed_v2:s26"
+    },
+    {
+      "at": "2026-10-12T21:19:39Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005352,
+      "label": "seed_v2:s27"
+    },
+    {
+      "at": "2026-10-12T21:19:41Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005843,
+      "label": "seed_v2:s28"
+    },
+    {
+      "at": "2026-10-12T21:19:43Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005344,
+      "label": "seed_v2:s29"
+    },
+    {
+      "at": "2026-10-12T21:19:45Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005144,
+      "label": "seed_v2:s30"
+    },
+    {
+      "at": "2026-10-12T21:19:47Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0004922,
+      "label": "seed_v2:s31"
+    },
+    {
+      "at": "2026-10-12T21:19:50Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005403,
+      "label": "routing_v2:r01"
+    },
+    {
+      "at": "2026-10-12T21:19:52Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005428,
+      "label": "routing_v2:r02"
+    },
+    {
+      "at": "2026-10-12T21:19:54Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005403,
+      "label": "routing_v2:r03"
+    },
+    {
+      "at": "2026-10-12T21:19:56Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0004981,
+      "label": "routing_v2:r04"
+    },
+    {
+      "at": "2026-10-12T21:19:58Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000545,
+      "label": "routing_v2:r05"
+    },
+    {
+      "at": "2026-10-12T21:20:00Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005697,
+      "label": "routing_v2:r06"
+    },
+    {
+      "at": "2026-10-12T21:20:02Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005556,
+      "label": "routing_v2:r07"
+    },
+    {
+      "at": "2026-10-12T21:20:04Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005537,
+      "label": "routing_v2:r08"
+    },
+    {
+      "at": "2026-10-12T21:20:06Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005362,
+      "label": "routing_v2:r09"
+    },
+    {
+      "at": "2026-10-12T21:20:08Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005397,
+      "label": "routing_v2:r10"
+    },
+    {
+      "at": "2026-10-12T21:20:10Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005187,
+      "label": "routing_v2:r11"
+    },
+    {
+      "at": "2026-10-12T21:20:12Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005334,
+      "label": "routing_v2:r12"
+    },
+    {
+      "at": "2026-10-12T21:20:14Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005343,
+      "label": "routing_v2:r13"
+    },
+    {
+      "at": "2026-10-12T21:20:16Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005037,
+      "label": "routing_v2:r14"
+    },
+    {
+      "at": "2026-10-12T21:20:18Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005428,
+      "label": "routing_v2:r15"
+    },
+    {
+      "at": "2026-10-12T21:20:20Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005062,
+      "label": "routing_v2:r16"
+    },
+    {
+      "at": "2026-10-12T21:20:22Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005465,
+      "label": "routing_v2:r17"
+    },
+    {
+      "at": "2026-10-12T21:20:24Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005512,
+      "label": "routing_v2:r18"
+    },
+    {
+      "at": "2026-10-12T21:20:28Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005484,
+      "label": "fr03_fresh_v1:f01"
+    },
+    {
+      "at": "2026-10-12T21:20:30Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005453,
+      "label": "fr03_fresh_v1:f02"
+    },
+    {
+      "at": "2026-10-12T21:20:32Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005725,
+      "label": "fr03_fresh_v1:f03"
+    },
+    {
+      "at": "2026-10-12T21:20:34Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005697,
+      "label": "fr03_fresh_v1:f04"
+    },
+    {
+      "at": "2026-10-12T21:20:36Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005719,
+      "label": "fr03_fresh_v1:f05"
+    },
+    {
+      "at": "2026-10-12T21:20:38Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005084,
+      "label": "fr03_fresh_v1:f06"
+    },
+    {
+      "at": "2026-10-12T21:20:40Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000545,
+      "label": "fr03_fresh_v1:f07"
+    },
+    {
+      "at": "2026-10-12T21:20:42Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005068,
+      "label": "fr03_fresh_v1:f08"
+    },
+    {
+      "at": "2026-10-12T21:20:44Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005434,
+      "label": "fr03_fresh_v1:f09"
+    },
+    {
+      "at": "2026-10-12T21:20:46Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005028,
+      "label": "fr03_fresh_v1:f10"
+    },
+    {
+      "at": "2026-10-12T21:20:48Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005667,
+      "label": "fr03_fresh_v1:f11"
+    },
+    {
+      "at": "2026-10-12T21:20:50Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005083,
+      "label": "fr03_fresh_v1:f12"
+    },
+    {
+      "at": "2026-10-12T21:20:52Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005324,
+      "label": "fr03_fresh_v1:f13"
+    },
+    {
+      "at": "2026-10-12T21:20:54Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005572,
+      "label": "fr03_fresh_v1:f14"
+    },
+    {
+      "at": "2026-10-12T21:20:56Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005356,
+      "label": "fr03_fresh_v1:f15"
+    },
+    {
+      "at": "2026-10-12T21:20:59Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005322,
+      "label": "seed_v2:s01"
+    },
+    {
+      "at": "2026-10-12T21:21:01Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005302,
+      "label": "seed_v2:s02"
+    },
+    {
+      "at": "2026-10-12T21:21:03Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000553,
+      "label": "seed_v2:s03"
+    },
+    {
+      "at": "2026-10-12T21:21:05Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005518,
+      "label": "seed_v2:s04"
+    },
+    {
+      "at": "2026-10-12T21:21:07Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000512,
+      "label": "seed_v2:s05"
+    },
+    {
+      "at": "2026-10-12T21:21:09Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005006,
+      "label": "seed_v2:s06"
+    },
+    {
+      "at": "2026-10-12T21:21:11Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005581,
+      "label": "seed_v2:s07"
+    },
+    {
+      "at": "2026-10-12T21:21:13Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005465,
+      "label": "seed_v2:s08"
+    },
+    {
+      "at": "2026-10-12T21:21:15Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005415,
+      "label": "seed_v2:s09"
+    },
+    {
+      "at": "2026-10-12T21:21:17Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005481,
+      "label": "seed_v2:s10"
+    },
+    {
+      "at": "2026-10-12T21:21:20Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0004953,
+      "label": "seed_v2:s11"
+    },
+    {
+      "at": "2026-10-12T21:21:21Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005353,
+      "label": "seed_v2:s12"
+    },
+    {
+      "at": "2026-10-12T21:21:23Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005428,
+      "label": "seed_v2:s13"
+    },
+    {
+      "at": "2026-10-12T21:21:25Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005527,
+      "label": "seed_v2:s14"
+    },
+    {
+      "at": "2026-10-12T21:21:27Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005865,
+      "label": "seed_v2:s15"
+    },
+    {
+      "at": "2026-10-12T21:21:29Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005988,
+      "label": "seed_v2:s16"
+    },
+    {
+      "at": "2026-10-12T21:21:31Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0004993,
+      "label": "seed_v2:s17"
+    },
+    {
+      "at": "2026-10-12T21:21:33Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005214,
+      "label": "seed_v2:s18"
+    },
+    {
+      "at": "2026-10-12T21:21:35Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005019,
+      "label": "seed_v2:s19"
+    },
+    {
+      "at": "2026-10-12T21:21:37Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.00054,
+      "label": "seed_v2:s20"
+    },
+    {
+      "at": "2026-10-12T21:21:39Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005478,
+      "label": "seed_v2:s21"
+    },
+    {
+      "at": "2026-10-12T21:21:41Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005424,
+      "label": "seed_v2:s22"
+    },
+    {
+      "at": "2026-10-12T21:21:43Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005153,
+      "label": "seed_v2:s23"
+    },
+    {
+      "at": "2026-10-12T21:21:45Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000514,
+      "label": "seed_v2:s24"
+    },
+    {
+      "at": "2026-10-12T21:21:47Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005184,
+      "label": "seed_v2:s25"
+    },
+    {
+      "at": "2026-10-12T21:21:49Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005742,
+      "label": "seed_v2:s26"
+    },
+    {
+      "at": "2026-10-12T21:21:51Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005377,
+      "label": "seed_v2:s27"
+    },
+    {
+      "at": "2026-10-12T21:21:53Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005568,
+      "label": "seed_v2:s28"
+    },
+    {
+      "at": "2026-10-12T21:21:55Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005344,
+      "label": "seed_v2:s29"
+    },
+    {
+      "at": "2026-10-12T21:21:57Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005169,
+      "label": "seed_v2:s30"
+    },
+    {
+      "at": "2026-10-12T21:21:59Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005447,
+      "label": "seed_v2:s31"
+    },
+    {
+      "at": "2026-10-12T21:22:03Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005528,
+      "label": "routing_v2:r01"
+    },
+    {
+      "at": "2026-10-12T21:22:04Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005528,
+      "label": "routing_v2:r02"
+    },
+    {
+      "at": "2026-10-12T21:22:06Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005078,
+      "label": "routing_v2:r03"
+    },
+    {
+      "at": "2026-10-12T21:22:08Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005506,
+      "label": "routing_v2:r04"
+    },
+    {
+      "at": "2026-10-12T21:22:10Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.00053,
+      "label": "routing_v2:r05"
+    },
+    {
+      "at": "2026-10-12T21:22:12Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005172,
+      "label": "routing_v2:r06"
+    },
+    {
+      "at": "2026-10-12T21:22:14Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005556,
+      "label": "routing_v2:r07"
+    },
+    {
+      "at": "2026-10-12T21:22:16Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005612,
+      "label": "routing_v2:r08"
+    },
+    {
+      "at": "2026-10-12T21:22:18Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005462,
+      "label": "routing_v2:r09"
+    },
+    {
+      "at": "2026-10-12T21:22:20Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005272,
+      "label": "routing_v2:r10"
+    },
+    {
+      "at": "2026-10-12T21:22:23Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005112,
+      "label": "routing_v2:r11"
+    },
+    {
+      "at": "2026-10-12T21:22:24Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005334,
+      "label": "routing_v2:r12"
+    },
+    {
+      "at": "2026-10-12T21:22:27Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005593,
+      "label": "routing_v2:r13"
+    },
+    {
+      "at": "2026-10-12T21:22:28Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005037,
+      "label": "routing_v2:r14"
+    },
+    {
+      "at": "2026-10-12T21:22:31Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005403,
+      "label": "routing_v2:r15"
+    },
+    {
+      "at": "2026-10-12T21:22:32Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005612,
+      "label": "routing_v2:r16"
+    },
+    {
+      "at": "2026-10-12T21:22:34Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000504,
+      "label": "routing_v2:r17"
+    },
+    {
+      "at": "2026-10-12T21:22:36Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005012,
+      "label": "routing_v2:r18"
+    },
+    {
+      "at": "2026-10-12T21:22:40Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005809,
+      "label": "fr03_fresh_v1:f01"
+    },
+    {
+      "at": "2026-10-12T21:22:42Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005978,
+      "label": "fr03_fresh_v1:f02"
+    },
+    {
+      "at": "2026-10-12T21:22:44Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005925,
+      "label": "fr03_fresh_v1:f03"
+    },
+    {
+      "at": "2026-10-12T21:22:46Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005547,
+      "label": "fr03_fresh_v1:f04"
+    },
+    {
+      "at": "2026-10-12T21:22:48Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005944,
+      "label": "fr03_fresh_v1:f05"
+    },
+    {
+      "at": "2026-10-12T21:22:50Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005084,
+      "label": "fr03_fresh_v1:f06"
+    },
+    {
+      "at": "2026-10-12T21:22:52Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005425,
+      "label": "fr03_fresh_v1:f07"
+    },
+    {
+      "at": "2026-10-12T21:22:54Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005568,
+      "label": "fr03_fresh_v1:f08"
+    },
+    {
+      "at": "2026-10-12T21:22:56Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005509,
+      "label": "fr03_fresh_v1:f09"
+    },
+    {
+      "at": "2026-10-12T21:22:58Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005678,
+      "label": "fr03_fresh_v1:f10"
+    },
+    {
+      "at": "2026-10-12T21:23:00Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005667,
+      "label": "fr03_fresh_v1:f11"
+    },
+    {
+      "at": "2026-10-12T21:23:02Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005158,
+      "label": "fr03_fresh_v1:f12"
+    },
+    {
+      "at": "2026-10-12T21:23:04Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005299,
+      "label": "fr03_fresh_v1:f13"
+    },
+    {
+      "at": "2026-10-12T21:23:06Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005197,
+      "label": "fr03_fresh_v1:f14"
+    },
+    {
+      "at": "2026-10-12T21:23:08Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005406,
+      "label": "fr03_fresh_v1:f15"
+    },
+    {
+      "at": "2026-10-12T21:23:11Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0004972,
+      "label": "seed_v2:s01"
+    },
+    {
+      "at": "2026-10-12T21:23:13Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005327,
+      "label": "seed_v2:s02"
+    },
+    {
+      "at": "2026-10-12T21:23:15Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000543,
+      "label": "seed_v2:s03"
+    },
+    {
+      "at": "2026-10-12T21:23:17Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005543,
+      "label": "seed_v2:s04"
+    },
+    {
+      "at": "2026-10-12T21:23:19Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005595,
+      "label": "seed_v2:s05"
+    },
+    {
+      "at": "2026-10-12T21:23:21Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005531,
+      "label": "seed_v2:s06"
+    },
+    {
+      "at": "2026-10-12T21:23:23Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005581,
+      "label": "seed_v2:s07"
+    },
+    {
+      "at": "2026-10-12T21:23:25Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005515,
+      "label": "seed_v2:s08"
+    },
+    {
+      "at": "2026-10-12T21:23:27Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005465,
+      "label": "seed_v2:s09"
+    },
+    {
+      "at": "2026-10-12T21:23:29Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005431,
+      "label": "seed_v2:s10"
+    },
+    {
+      "at": "2026-10-12T21:23:31Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005628,
+      "label": "seed_v2:s11"
+    },
+    {
+      "at": "2026-10-12T21:23:33Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005478,
+      "label": "seed_v2:s12"
+    },
+    {
+      "at": "2026-10-12T21:23:35Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005553,
+      "label": "seed_v2:s13"
+    },
+    {
+      "at": "2026-10-12T21:23:37Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005527,
+      "label": "seed_v2:s14"
+    },
+    {
+      "at": "2026-10-12T21:23:39Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005365,
+      "label": "seed_v2:s15"
+    },
+    {
+      "at": "2026-10-12T21:23:41Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005913,
+      "label": "seed_v2:s16"
+    },
+    {
+      "at": "2026-10-12T21:23:43Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005418,
+      "label": "seed_v2:s17"
+    },
+    {
+      "at": "2026-10-12T21:23:45Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005214,
+      "label": "seed_v2:s18"
+    },
+    {
+      "at": "2026-10-12T21:23:47Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005394,
+      "label": "seed_v2:s19"
+    },
+    {
+      "at": "2026-10-12T21:23:49Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.00054,
+      "label": "seed_v2:s20"
+    },
+    {
+      "at": "2026-10-12T21:23:51Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005428,
+      "label": "seed_v2:s21"
+    },
+    {
+      "at": "2026-10-12T21:23:53Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005424,
+      "label": "seed_v2:s22"
+    },
+    {
+      "at": "2026-10-12T21:23:55Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005128,
+      "label": "seed_v2:s23"
+    },
+    {
+      "at": "2026-10-12T21:23:57Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005215,
+      "label": "seed_v2:s24"
+    },
+    {
+      "at": "2026-10-12T21:23:59Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005584,
+      "label": "seed_v2:s25"
+    },
+    {
+      "at": "2026-10-12T21:24:01Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005742,
+      "label": "seed_v2:s26"
+    },
+    {
+      "at": "2026-10-12T21:24:03Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005327,
+      "label": "seed_v2:s27"
+    },
+    {
+      "at": "2026-10-12T21:24:05Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005893,
+      "label": "seed_v2:s28"
+    },
+    {
+      "at": "2026-10-12T21:24:07Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005494,
+      "label": "seed_v2:s29"
+    },
+    {
+      "at": "2026-10-12T21:24:09Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005069,
+      "label": "seed_v2:s30"
+    },
+    {
+      "at": "2026-10-12T21:24:11Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005347,
+      "label": "seed_v2:s31"
+    },
+    {
+      "at": "2026-10-12T21:24:15Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005578,
+      "label": "routing_v2:r01"
+    },
+    {
+      "at": "2026-10-12T21:24:17Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005753,
+      "label": "routing_v2:r02"
+    },
+    {
+      "at": "2026-10-12T21:24:19Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005503,
+      "label": "routing_v2:r03"
+    },
+    {
+      "at": "2026-10-12T21:24:21Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005456,
+      "label": "routing_v2:r04"
+    },
+    {
+      "at": "2026-10-12T21:24:23Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000535,
+      "label": "routing_v2:r05"
+    },
+    {
+      "at": "2026-10-12T21:24:25Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005772,
+      "label": "routing_v2:r06"
+    },
+    {
+      "at": "2026-10-12T21:24:27Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005556,
+      "label": "routing_v2:r07"
+    },
+    {
+      "at": "2026-10-12T21:24:29Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005487,
+      "label": "routing_v2:r08"
+    },
+    {
+      "at": "2026-10-12T21:24:30Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005437,
+      "label": "routing_v2:r09"
+    },
+    {
+      "at": "2026-10-12T21:24:33Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005397,
+      "label": "routing_v2:r10"
+    },
+    {
+      "at": "2026-10-12T21:24:35Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005412,
+      "label": "routing_v2:r11"
+    },
+    {
+      "at": "2026-10-12T21:24:36Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005409,
+      "label": "routing_v2:r12"
+    },
+    {
+      "at": "2026-10-12T21:24:39Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005468,
+      "label": "routing_v2:r13"
+    },
+    {
+      "at": "2026-10-12T21:24:41Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005062,
+      "label": "routing_v2:r14"
+    },
+    {
+      "at": "2026-10-12T21:24:43Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005478,
+      "label": "routing_v2:r15"
+    },
+    {
+      "at": "2026-10-12T21:24:45Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005587,
+      "label": "routing_v2:r16"
+    },
+    {
+      "at": "2026-10-12T21:24:47Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000529,
+      "label": "routing_v2:r17"
+    },
+    {
+      "at": "2026-10-12T21:24:49Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005487,
+      "label": "routing_v2:r18"
+    },
+    {
+      "at": "2026-10-12T21:24:52Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005859,
+      "label": "fr03_fresh_v1:f01"
+    },
+    {
+      "at": "2026-10-12T21:24:54Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005453,
+      "label": "fr03_fresh_v1:f02"
+    },
+    {
+      "at": "2026-10-12T21:24:56Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005825,
+      "label": "fr03_fresh_v1:f03"
+    },
+    {
+      "at": "2026-10-12T21:24:58Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005797,
+      "label": "fr03_fresh_v1:f04"
+    },
+    {
+      "at": "2026-10-12T21:25:00Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005869,
+      "label": "fr03_fresh_v1:f05"
+    },
+    {
+      "at": "2026-10-12T21:25:02Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005634,
+      "label": "fr03_fresh_v1:f06"
+    },
+    {
+      "at": "2026-10-12T21:25:04Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.000515,
+      "label": "fr03_fresh_v1:f07"
+    },
+    {
+      "at": "2026-10-12T21:25:06Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005268,
+      "label": "fr03_fresh_v1:f08"
+    },
+    {
+      "at": "2026-10-12T21:25:08Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005484,
+      "label": "fr03_fresh_v1:f09"
+    },
+    {
+      "at": "2026-10-12T21:25:10Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005003,
+      "label": "fr03_fresh_v1:f10"
+    },
+    {
+      "at": "2026-10-12T21:25:12Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005542,
+      "label": "fr03_fresh_v1:f11"
+    },
+    {
+      "at": "2026-10-12T21:25:14Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005533,
+      "label": "fr03_fresh_v1:f12"
+    },
+    {
+      "at": "2026-10-12T21:25:16Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005324,
+      "label": "fr03_fresh_v1:f13"
+    },
+    {
+      "at": "2026-10-12T21:25:18Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005397,
+      "label": "fr03_fresh_v1:f14"
+    },
+    {
+      "at": "2026-10-12T21:25:20Z",
+      "path": "A1",
+      "requests": 1,
+      "cost_usd": 0.0005406,
+      "label": "fr03_fresh_v1:f15"
+    },
+    {
+      "at": "2026-10-12T21:25:39Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009444,
+      "label": "qa_interp_v3:r-m01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:25:43Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010397,
+      "label": "qa_interp_v3:r-m01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:25:48Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010068,
+      "label": "qa_interp_v3:r-m02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:25:54Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010493,
+      "label": "qa_interp_v3:r-m02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:25:58Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009427,
+      "label": "qa_interp_v3:r-m03-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:03Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.001023,
+      "label": "qa_interp_v3:r-m03-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:08Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009472,
+      "label": "qa_interp_v3:r-m04-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:13Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010272,
+      "label": "qa_interp_v3:r-m04-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:18Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009281,
+      "label": "qa_interp_v3:r-c01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:23Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010028,
+      "label": "qa_interp_v3:r-c01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:28Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009503,
+      "label": "qa_interp_v3:r-c02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009931,
+      "label": "qa_interp_v3:r-c02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:38Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009749,
+      "label": "qa_interp_v3:r-c03-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:44Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010343,
+      "label": "qa_interp_v3:r-c03-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:49Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009861,
+      "label": "qa_interp_v3:r-t01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:54Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010549,
+      "label": "qa_interp_v3:r-t01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:26:59Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009731,
+      "label": "qa_interp_v3:r-t02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:04Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010209,
+      "label": "qa_interp_v3:r-t02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:08Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009368,
+      "label": "qa_interp_v3:r-t03-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:13Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009299,
+      "label": "qa_interp_v3:r-t03-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:18Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009746,
+      "label": "qa_interp_v3:r-d01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:24Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.001004,
+      "label": "qa_interp_v3:r-d01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:29Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009858,
+      "label": "qa_interp_v3:r-d02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009833,
+      "label": "qa_interp_v3:r-d02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:39Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009919,
+      "label": "qa_interp_v3:r-q01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:44Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.00109,
+      "label": "qa_interp_v3:r-q01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:49Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009278,
+      "label": "qa_interp_v3:r-q02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:53Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009953,
+      "label": "qa_interp_v3:r-q02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:27:59Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009495,
+      "label": "qa_interp_v3:r-r15-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:04Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009623,
+      "label": "qa_interp_v3:r-r15-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:09Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010312,
+      "label": "qa_interp_v3:r-r17-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:14Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010015,
+      "label": "qa_interp_v3:r-r17-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:19Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009356,
+      "label": "qa_interp_v3:r-f01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:24Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009331,
+      "label": "qa_interp_v3:r-f01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:29Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009648,
+      "label": "qa_interp_v3:r-f02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010236,
+      "label": "qa_interp_v3:r-f02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:39Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009523,
+      "label": "qa_interp_v3:r-f03-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:44Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009982,
+      "label": "qa_interp_v3:r-f03-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:49Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.000934,
+      "label": "qa_interp_v3:r-f04-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:54Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009812,
+      "label": "qa_interp_v3:r-f04-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:28:59Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009862,
+      "label": "qa_interp_v3:r-f05-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:04Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009924,
+      "label": "qa_interp_v3:r-f05-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:09Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010077,
+      "label": "qa_interp_v3:r-f06-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:14Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010239,
+      "label": "qa_interp_v3:r-f06-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:19Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.000987,
+      "label": "qa_interp_v3:r-f07-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:24Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010298,
+      "label": "qa_interp_v3:r-f07-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:29Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.000985,
+      "label": "qa_interp_v3:r-f08-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009941,
+      "label": "qa_interp_v3:r-f08-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:39Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009537,
+      "label": "qa_interp_v3:r-f09-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:44Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010299,
+      "label": "qa_interp_v3:r-f09-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:49Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009524,
+      "label": "qa_interp_v3:r-f10-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:54Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010249,
+      "label": "qa_interp_v3:r-f10-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:29:59Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009803,
+      "label": "qa_interp_v3:r-f11-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:04Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009825,
+      "label": "qa_interp_v3:r-f11-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:09Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010177,
+      "label": "qa_interp_v3:r-f12-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:14Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010046,
+      "label": "qa_interp_v3:r-f12-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:19Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010095,
+      "label": "qa_interp_v3:f-f01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:24Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.000982,
+      "label": "qa_interp_v3:f-f01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:29Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009211,
+      "label": "qa_interp_v3:f-f02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010136,
+      "label": "qa_interp_v3:f-f02-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:39Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009286,
+      "label": "qa_interp_v3:f-f03-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:44Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009711,
+      "label": "qa_interp_v3:f-f03-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:49Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009477,
+      "label": "qa_interp_v3:f-f04-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:54Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010002,
+      "label": "qa_interp_v3:f-f04-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:30:59Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.000927,
+      "label": "qa_interp_v3:f-f05-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:04Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.001022,
+      "label": "qa_interp_v3:f-f05-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:09Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009301,
+      "label": "qa_interp_v3:f-f06-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:14Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010001,
+      "label": "qa_interp_v3:f-f06-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:19Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009314,
+      "label": "qa_interp_v3:f-f07-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:24Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.001024,
+      "label": "qa_interp_v3:f-f07-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:29Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009426,
+      "label": "qa_interp_v3:f-f08-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0011226,
+      "label": "qa_interp_v3:f-f08-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:39Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010026,
+      "label": "qa_interp_v3:f-f09-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:44Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009973,
+      "label": "qa_interp_v3:f-f09-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:49Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009276,
+      "label": "qa_interp_v3:f-f10-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:54Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009295,
+      "label": "qa_interp_v3:f-f10-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:31:59Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009458,
+      "label": "qa_interp_v3:f-f11-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:04Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009705,
+      "label": "qa_interp_v3:f-f11-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:09Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010198,
+      "label": "qa_interp_v3:f-f12-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:14Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010489,
+      "label": "qa_interp_v3:f-f12-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:19Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0009345,
+      "label": "qa_interp_v3:f-f13-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:24Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010171,
+      "label": "qa_interp_v3:f-f13-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:29Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010023,
+      "label": "qa_interp_v3:f-f14-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:32:34Z",
+      "path": "A2",
+      "requests": 1,
+      "cost_usd": 0.0010223,
+      "label": "qa_interp_v3:f-f14-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:33:33Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005194,
+      "label": "fr03_fresh_v2:ambiguous/AMB-29"
+    },
+    {
+      "at": "2026-10-12T21:33:35Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005841,
+      "label": "fr03_fresh_v2:ambiguous/AMB-09"
+    },
+    {
+      "at": "2026-10-12T21:33:37Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005822,
+      "label": "fr03_fresh_v2:ambiguous/AMB-21"
+    },
+    {
+      "at": "2026-10-12T21:33:39Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005565,
+      "label": "fr03_fresh_v2:ambiguous/AMB-15"
+    },
+    {
+      "at": "2026-10-12T21:33:41Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005394,
+      "label": "fr03_fresh_v2:ambiguous/AMB-18"
+    },
+    {
+      "at": "2026-10-12T21:33:43Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005178,
+      "label": "fr03_fresh_v2:ambiguous/AMB-08"
+    },
+    {
+      "at": "2026-10-12T21:33:45Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0004978,
+      "label": "fr03_fresh_v2:ambiguous/AMB-17"
+    },
+    {
+      "at": "2026-10-12T21:33:47Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005447,
+      "label": "fr03_fresh_v2:ambiguous/AMB-11"
+    },
+    {
+      "at": "2026-10-12T21:33:49Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0004969,
+      "label": "fr03_fresh_v2:underspecified/UND-09"
+    },
+    {
+      "at": "2026-10-12T21:33:51Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005516,
+      "label": "fr03_fresh_v2:underspecified/UND-11"
+    },
+    {
+      "at": "2026-10-12T21:33:53Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005416,
+      "label": "fr03_fresh_v2:underspecified/UND-18"
+    },
+    {
+      "at": "2026-10-12T21:33:55Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005391,
+      "label": "fr03_fresh_v2:underspecified/UND-05"
+    },
+    {
+      "at": "2026-10-12T21:33:57Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005424,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-10"
+    },
+    {
+      "at": "2026-10-12T21:33:59Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005418,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-03"
+    },
+    {
+      "at": "2026-10-12T21:34:01Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005764,
+      "label": "fr03_fresh_v2:multi_domain/MD-16"
+    },
+    {
+      "at": "2026-10-12T21:34:03Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005667,
+      "label": "fr03_fresh_v2:multi_domain/MD-14"
+    },
+    {
+      "at": "2026-10-12T21:34:07Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002501,
+      "label": "fr03_fresh_v2:ambiguous/AMB-29"
+    },
+    {
+      "at": "2026-10-12T21:34:08Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002673,
+      "label": "fr03_fresh_v2:ambiguous/AMB-09"
+    },
+    {
+      "at": "2026-10-12T21:34:10Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002979,
+      "label": "fr03_fresh_v2:ambiguous/AMB-21"
+    },
+    {
+      "at": "2026-10-12T21:34:12Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002872,
+      "label": "fr03_fresh_v2:ambiguous/AMB-15"
+    },
+    {
+      "at": "2026-10-12T21:34:14Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002926,
+      "label": "fr03_fresh_v2:ambiguous/AMB-18"
+    },
+    {
+      "at": "2026-10-12T21:34:16Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.000286,
+      "label": "fr03_fresh_v2:ambiguous/AMB-08"
+    },
+    {
+      "at": "2026-10-12T21:34:19Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.000286,
+      "label": "fr03_fresh_v2:ambiguous/AMB-17"
+    },
+    {
+      "at": "2026-10-12T21:34:21Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002879,
+      "label": "fr03_fresh_v2:ambiguous/AMB-11"
+    },
+    {
+      "at": "2026-10-12T21:34:22Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002426,
+      "label": "fr03_fresh_v2:underspecified/UND-09"
+    },
+    {
+      "at": "2026-10-12T21:34:25Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002823,
+      "label": "fr03_fresh_v2:underspecified/UND-11"
+    },
+    {
+      "at": "2026-10-12T21:34:26Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002798,
+      "label": "fr03_fresh_v2:underspecified/UND-18"
+    },
+    {
+      "at": "2026-10-12T21:34:29Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002848,
+      "label": "fr03_fresh_v2:underspecified/UND-05"
+    },
+    {
+      "at": "2026-10-12T21:34:30Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002956,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-10"
+    },
+    {
+      "at": "2026-10-12T21:34:33Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002925,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-03"
+    },
+    {
+      "at": "2026-10-12T21:34:35Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002696,
+      "label": "fr03_fresh_v2:multi_domain/MD-16"
+    },
+    {
+      "at": "2026-10-12T21:34:37Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0003199,
+      "label": "fr03_fresh_v2:multi_domain/MD-14"
+    },
+    {
+      "at": "2026-10-12T21:34:40Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005844,
+      "label": "fr03_fresh_v2:ambiguous/AMB-29"
+    },
+    {
+      "at": "2026-10-12T21:34:42Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005816,
+      "label": "fr03_fresh_v2:ambiguous/AMB-09"
+    },
+    {
+      "at": "2026-10-12T21:34:44Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005722,
+      "label": "fr03_fresh_v2:ambiguous/AMB-21"
+    },
+    {
+      "at": "2026-10-12T21:34:46Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005715,
+      "label": "fr03_fresh_v2:ambiguous/AMB-15"
+    },
+    {
+      "at": "2026-10-12T21:34:48Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005394,
+      "label": "fr03_fresh_v2:ambiguous/AMB-18"
+    },
+    {
+      "at": "2026-10-12T21:34:50Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005228,
+      "label": "fr03_fresh_v2:ambiguous/AMB-08"
+    },
+    {
+      "at": "2026-10-12T21:34:52Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005028,
+      "label": "fr03_fresh_v2:ambiguous/AMB-17"
+    },
+    {
+      "at": "2026-10-12T21:34:54Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005347,
+      "label": "fr03_fresh_v2:ambiguous/AMB-11"
+    },
+    {
+      "at": "2026-10-12T21:34:56Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005444,
+      "label": "fr03_fresh_v2:underspecified/UND-09"
+    },
+    {
+      "at": "2026-10-12T21:34:58Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005491,
+      "label": "fr03_fresh_v2:underspecified/UND-11"
+    },
+    {
+      "at": "2026-10-12T21:35:00Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005441,
+      "label": "fr03_fresh_v2:underspecified/UND-18"
+    },
+    {
+      "at": "2026-10-12T21:35:02Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005016,
+      "label": "fr03_fresh_v2:underspecified/UND-05"
+    },
+    {
+      "at": "2026-10-12T21:35:04Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005299,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-10"
+    },
+    {
+      "at": "2026-10-12T21:35:06Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005568,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-03"
+    },
+    {
+      "at": "2026-10-12T21:35:08Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005714,
+      "label": "fr03_fresh_v2:multi_domain/MD-16"
+    },
+    {
+      "at": "2026-10-12T21:35:10Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005617,
+      "label": "fr03_fresh_v2:multi_domain/MD-14"
+    },
+    {
+      "at": "2026-10-12T21:35:13Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002876,
+      "label": "fr03_fresh_v2:ambiguous/AMB-29"
+    },
+    {
+      "at": "2026-10-12T21:35:15Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002473,
+      "label": "fr03_fresh_v2:ambiguous/AMB-09"
+    },
+    {
+      "at": "2026-10-12T21:35:17Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002879,
+      "label": "fr03_fresh_v2:ambiguous/AMB-21"
+    },
+    {
+      "at": "2026-10-12T21:35:19Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002622,
+      "label": "fr03_fresh_v2:ambiguous/AMB-15"
+    },
+    {
+      "at": "2026-10-12T21:35:21Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002926,
+      "label": "fr03_fresh_v2:ambiguous/AMB-18"
+    },
+    {
+      "at": "2026-10-12T21:35:23Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.000286,
+      "label": "fr03_fresh_v2:ambiguous/AMB-08"
+    },
+    {
+      "at": "2026-10-12T21:35:25Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002585,
+      "label": "fr03_fresh_v2:ambiguous/AMB-17"
+    },
+    {
+      "at": "2026-10-12T21:35:27Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002854,
+      "label": "fr03_fresh_v2:ambiguous/AMB-11"
+    },
+    {
+      "at": "2026-10-12T21:35:30Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002851,
+      "label": "fr03_fresh_v2:underspecified/UND-09"
+    },
+    {
+      "at": "2026-10-12T21:35:31Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002873,
+      "label": "fr03_fresh_v2:underspecified/UND-11"
+    },
+    {
+      "at": "2026-10-12T21:35:33Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002898,
+      "label": "fr03_fresh_v2:underspecified/UND-18"
+    },
+    {
+      "at": "2026-10-12T21:35:35Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002898,
+      "label": "fr03_fresh_v2:underspecified/UND-05"
+    },
+    {
+      "at": "2026-10-12T21:35:37Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002931,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-10"
+    },
+    {
+      "at": "2026-10-12T21:35:39Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.000295,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-03"
+    },
+    {
+      "at": "2026-10-12T21:35:41Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002671,
+      "label": "fr03_fresh_v2:multi_domain/MD-16"
+    },
+    {
+      "at": "2026-10-12T21:35:44Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0003149,
+      "label": "fr03_fresh_v2:multi_domain/MD-14"
+    },
+    {
+      "at": "2026-10-12T21:35:47Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005394,
+      "label": "fr03_fresh_v2:ambiguous/AMB-29"
+    },
+    {
+      "at": "2026-10-12T21:35:49Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005841,
+      "label": "fr03_fresh_v2:ambiguous/AMB-09"
+    },
+    {
+      "at": "2026-10-12T21:35:51Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005872,
+      "label": "fr03_fresh_v2:ambiguous/AMB-21"
+    },
+    {
+      "at": "2026-10-12T21:35:53Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.000554,
+      "label": "fr03_fresh_v2:ambiguous/AMB-15"
+    },
+    {
+      "at": "2026-10-12T21:35:55Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005394,
+      "label": "fr03_fresh_v2:ambiguous/AMB-18"
+    },
+    {
+      "at": "2026-10-12T21:35:57Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005128,
+      "label": "fr03_fresh_v2:ambiguous/AMB-08"
+    },
+    {
+      "at": "2026-10-12T21:35:59Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0004953,
+      "label": "fr03_fresh_v2:ambiguous/AMB-17"
+    },
+    {
+      "at": "2026-10-12T21:36:01Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005022,
+      "label": "fr03_fresh_v2:ambiguous/AMB-11"
+    },
+    {
+      "at": "2026-10-12T21:36:03Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0004969,
+      "label": "fr03_fresh_v2:underspecified/UND-09"
+    },
+    {
+      "at": "2026-10-12T21:36:05Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005441,
+      "label": "fr03_fresh_v2:underspecified/UND-11"
+    },
+    {
+      "at": "2026-10-12T21:36:07Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005391,
+      "label": "fr03_fresh_v2:underspecified/UND-18"
+    },
+    {
+      "at": "2026-10-12T21:36:09Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005466,
+      "label": "fr03_fresh_v2:underspecified/UND-05"
+    },
+    {
+      "at": "2026-10-12T21:36:11Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005649,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-10"
+    },
+    {
+      "at": "2026-10-12T21:36:13Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005068,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-03"
+    },
+    {
+      "at": "2026-10-12T21:36:15Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005764,
+      "label": "fr03_fresh_v2:multi_domain/MD-16"
+    },
+    {
+      "at": "2026-10-12T21:36:17Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0005667,
+      "label": "fr03_fresh_v2:multi_domain/MD-14"
+    },
+    {
+      "at": "2026-10-12T21:36:21Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002551,
+      "label": "fr03_fresh_v2:ambiguous/AMB-29"
+    },
+    {
+      "at": "2026-10-12T21:36:22Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002823,
+      "label": "fr03_fresh_v2:ambiguous/AMB-09"
+    },
+    {
+      "at": "2026-10-12T21:36:24Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002679,
+      "label": "fr03_fresh_v2:ambiguous/AMB-21"
+    },
+    {
+      "at": "2026-10-12T21:36:27Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002647,
+      "label": "fr03_fresh_v2:ambiguous/AMB-15"
+    },
+    {
+      "at": "2026-10-12T21:36:28Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002926,
+      "label": "fr03_fresh_v2:ambiguous/AMB-18"
+    },
+    {
+      "at": "2026-10-12T21:36:30Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.000286,
+      "label": "fr03_fresh_v2:ambiguous/AMB-08"
+    },
+    {
+      "at": "2026-10-12T21:36:32Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002585,
+      "label": "fr03_fresh_v2:ambiguous/AMB-17"
+    },
+    {
+      "at": "2026-10-12T21:36:34Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002854,
+      "label": "fr03_fresh_v2:ambiguous/AMB-11"
+    },
+    {
+      "at": "2026-10-12T21:36:36Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002576,
+      "label": "fr03_fresh_v2:underspecified/UND-09"
+    },
+    {
+      "at": "2026-10-12T21:36:38Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002473,
+      "label": "fr03_fresh_v2:underspecified/UND-11"
+    },
+    {
+      "at": "2026-10-12T21:36:40Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002923,
+      "label": "fr03_fresh_v2:underspecified/UND-18"
+    },
+    {
+      "at": "2026-10-12T21:36:42Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002498,
+      "label": "fr03_fresh_v2:underspecified/UND-05"
+    },
+    {
+      "at": "2026-10-12T21:36:45Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0002906,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-10"
+    },
+    {
+      "at": "2026-10-12T21:36:46Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.00029,
+      "label": "fr03_fresh_v2:clear_sentiment/CS-03"
+    },
+    {
+      "at": "2026-10-12T21:36:49Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0003121,
+      "label": "fr03_fresh_v2:multi_domain/MD-16"
+    },
+    {
+      "at": "2026-10-12T21:36:50Z",
+      "path": "C1",
+      "requests": 1,
+      "cost_usd": 0.0003199,
+      "label": "fr03_fresh_v2:multi_domain/MD-14"
+    },
+    {
+      "at": "2026-10-12T21:37:03Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.000952,
+      "label": "qa_interp_v3:r-underspecified/UND-19-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:08Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009895,
+      "label": "qa_interp_v3:r-underspecified/UND-19-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:13Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009501,
+      "label": "qa_interp_v3:r-clear_reporting/CR-15-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:18Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010223,
+      "label": "qa_interp_v3:r-clear_reporting/CR-15-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:23Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009495,
+      "label": "qa_interp_v3:f-clear_forecast/CF-20-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:28Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009795,
+      "label": "qa_interp_v3:f-clear_forecast/CF-20-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:33Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009264,
+      "label": "qa_interp_v3:f-clear_forecast/CF-08-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:38Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009989,
+      "label": "qa_interp_v3:f-clear_forecast/CF-08-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:43Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009461,
+      "label": "qa_interp_v3:s-underspecified/UND-06-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:48Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009811,
+      "label": "qa_interp_v3:s-underspecified/UND-06-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:53Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009865,
+      "label": "qa_interp_v3:f-underspecified/UND-20-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:37:58Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.000954,
+      "label": "qa_interp_v3:f-underspecified/UND-20-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:03Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009471,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-14-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:08Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010921,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-14-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:13Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.000943,
+      "label": "qa_interp_v3:r-underspecified/UND-14-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:18Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010036,
+      "label": "qa_interp_v3:r-underspecified/UND-14-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:23Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009598,
+      "label": "qa_interp_v3:f-clear_forecast/CF-16-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:28Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.001022,
+      "label": "qa_interp_v3:f-clear_forecast/CF-16-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:33Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009667,
+      "label": "qa_interp_v3:r-underspecified/UND-07-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:38Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009892,
+      "label": "qa_interp_v3:r-underspecified/UND-07-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:43Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009511,
+      "label": "qa_interp_v3:r-clear_reporting/CR-25-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:48Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.001003,
+      "label": "qa_interp_v3:r-clear_reporting/CR-25-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:53Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009508,
+      "label": "qa_interp_v3:s-underspecified/UND-16-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:38:58Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.001003,
+      "label": "qa_interp_v3:s-underspecified/UND-16-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:03Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009487,
+      "label": "qa_interp_v3:r-technician/TECH-12-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:08Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009865,
+      "label": "qa_interp_v3:r-technician/TECH-12-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:13Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009517,
+      "label": "qa_interp_v3:f-clear_forecast/CF-19-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:18Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009742,
+      "label": "qa_interp_v3:f-clear_forecast/CF-19-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:23Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010242,
+      "label": "qa_interp_v3:r-filtered/FIL-17-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:28Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.001072,
+      "label": "qa_interp_v3:r-filtered/FIL-17-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:33Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010559,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-04-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:38Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010659,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-04-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:43Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.000984,
+      "label": "qa_interp_v3:r-technician/TECH-08-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:48Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009734,
+      "label": "qa_interp_v3:r-technician/TECH-08-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:53Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009374,
+      "label": "qa_interp_v3:f-clear_forecast/CF-13-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:39:58Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009952,
+      "label": "qa_interp_v3:f-clear_forecast/CF-13-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:03Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009419,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-01-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:08Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010669,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-01-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:13Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009419,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-09-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:18Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009419,
+      "label": "qa_interp_v3:s-clear_sentiment/CS-09-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:23Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010318,
+      "label": "qa_interp_v3:r-filtered/FIL-18-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:28Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0010815,
+      "label": "qa_interp_v3:r-filtered/FIL-18-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:33Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009248,
+      "label": "qa_interp_v3:f-clear_forecast/CF-15-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:38Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009573,
+      "label": "qa_interp_v3:f-clear_forecast/CF-15-bad:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:43Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0009792,
+      "label": "qa_interp_v3:r-clear_reporting/CR-02-ok:k1"
+    },
+    {
+      "at": "2026-10-12T21:40:49Z",
+      "path": "C2",
+      "requests": 1,
+      "cost_usd": 0.0011342,
+      "label": "qa_interp_v3:r-clear_reporting/CR-02-bad:k1"
+    }
+  ]
+}

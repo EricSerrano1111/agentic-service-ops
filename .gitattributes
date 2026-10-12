@@ -31,3 +31,6 @@ evals/generated/** text eol=lf
 # The volume_v2 parameter files are hashed by the manifest and baked into two images (ADR-098):
 # stored and checked out byte-for-byte, so the SHA-256 matches on Windows (core.autocrlf) and in CI.
 models/forecast/volume_v2/*.json -text
+
+# Prompt files are hashed by the evaluation-freeze test (ADR-103): LF in every checkout.
+services/*/prompts/*.md text eol=lf

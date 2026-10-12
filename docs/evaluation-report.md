@@ -983,3 +983,22 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** the dataset is fixed and synthetic, so an unscored comment can only mean a pipeline fault, and failing closed is the right behaviour for a fixed dataset. Required at this scale; the alternative (a bucket, a 438 MB pull in every build, 2 GiB of memory for a path that never runs) was rejected in ADR-100.
 - **Fix (designed, not built):** a scheduled batch-scoring job (a Cloud Run Job, weights from a bucket) that scores new comments at ingest; questions read stored predictions only and disclose "based on N of M comments" instead of failing; a classifier upgrade is a re-scoring backfill with the model version on every row. Sprint 6 backlog item, portfolio value (ADR-100).
 - **Recorded in:** ADR-100; R-19; `deploy/RUNBOOK_V.md`.
+
+### L-58 update — the Sprint 5 gate on `fr03_fresh_v2` also failed; FR-03 stands (2026-10-12)
+- **Status: standing, open.** `route_v6` (the one Sprint 5 revision) recognised 4 of 8 fresh ambiguous questions in at least 2 of 3 runs against the pre-registered 6 of 8, so criterion (c) failed; (a), (b1) and (b2) passed ((b2) at its boundary, 7.00 against a floor of 7.00). `route_v3` stays the default, ADR-075 stays not in effect, and there are no further attempts in Sprint 5. AMB-08, AMB-11, AMB-17 and AMB-18 were missed in 3 of 3 runs.
+- **What changed in the picture:** `route_v6` is better than `route_v3` on the fresh set (11 of 16 in every run against 8 of 16), because `route_v3` never returns `ambiguous` (0 of 8). On the development sets it regressed on one item (s20, previously recognised) and over-flags one underspecified question (r06) in 3 of 3 runs; its 5 of 5 on `fr03_fresh_v1` is development material, not confirmation.
+- **Consequence for the evaluation:** `golden_v2`'s G35 and the held-out ambiguous items fail under `route_v3` by design; Prompt X reports accuracy with and without them.
+- **Recorded in:** ADR-101; `evals/sprint5_gates.md`; `evals/results/routing_fr03_fresh_v2_*_route_v{3,6}_*.json`.
+
+### L-74 update — the Sprint 5 interpretation gate also failed; the check stays advisory (2026-10-12)
+- **Status: standing.** `qa_interp_v3` met the catch criterion in run 1 (19 of 23 caught, the floor) and failed the false-reject criterion (3 of 23 against at most 1: reporting 1 of 10, forecast 1 of 7, sentiment 1 of 6). Runs 2 and 3 were not made, as pre-registered. `QA_INTERP_MODE` stays `advisory`, `qa_interp_v2` stays the shipped prompt, and `qa_interp_v3` is not shipped.
+- **What v3 fixed on the used pairs (development, not held out):** false rejects 7 of 42 (v2) to 3 of 42; the two quarter-range pairs are now accepted. The three remaining false rejects are decline pairs (3 of 7), the known failure kind (L-92).
+- **The check covers sentiment too** (ADR-090), which the earlier plan missed; the gate included it (6 pairs per role), and `enforce` would have applied to it.
+- **Options still open, each a new decision with a new gate:** a higher thinking level for this one call, a stronger model (ADR-056's optional comparison), or computing the expected dates in code and giving the model only the comparison, which would also remove the quarter arithmetic.
+- **Recorded in:** ADR-102; `evals/sprint5_gates.md`; `evals/results/qa_interp/2026-10-12/`.
+
+### L-92 — The frozen interpretation gate does not test declines (2026-10-12)
+- **What:** `interp_pairs_v1` holds 1 decline pair among its 23 correct pairs. The failure kind that sank `qa_interp_v1`, `v2` and `v3` is a correct decline (an unsupported metric or area, or a forecast the system cannot make) judged unfaithful, and the frozen gate cannot measure it. The A2 development diagnostic on the used pairs found 3 false rejects on 7 decline pairs under `qa_interp_v3` ("development diagnostic, not held-out").
+- **Why accepted:** the sets were generated once and frozen (ADR-094), and a third attempt in Sprint 5 is not allowed. Disclosed in the pre-registration before the gate ran. At this scale a gate that cannot see its known failure kind is a real weakness, not a portfolio choice.
+- **Fix (option):** a decline-heavy interpretation set (new, generated or owner-written, before any further prompt work), and a gate stated on it.
+- **Recorded in:** ADR-102; `evals/sprint5_gates.md` (B2 scope limits).

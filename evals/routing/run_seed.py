@@ -31,12 +31,32 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SETS = ROOT / "evals" / "routing"
 RESULTS = ROOT / "evals" / "results"
+sys.path.insert(0, str(ROOT / "evals"))
 ROUTES = ("reporting", "sentiment", "forecast", "multi_domain", "out_of_scope", "ambiguous")
 
 
 def default_rpm(model: str) -> float:
     """Stay under the free-tier per-minute limits in ADR-029."""
     return 12.0 if "flash-lite" in model else 4.0
+
+
+def is_generated(source: Path) -> bool:
+    return "generated" in source.parts
+
+
+def map_generated(row: dict) -> dict:
+    """The frozen generated sets' row format (a nested `item`) onto the runner's fields.
+    Format mapping only: the question, the label and the candidates are used as they are."""
+    if "item" not in row:
+        return row
+    item = row["item"]
+    return {
+        "id": row["uid"],
+        "question": item["question"],
+        "expected": row["system_route"],
+        "tag": item["category"],
+        "candidates": item.get("candidate_areas") or [],
+    }
 
 
 async def run(args: argparse.Namespace) -> int:
@@ -50,13 +70,25 @@ async def run(args: argparse.Namespace) -> int:
     from orchestrator.config import Settings
     from orchestrator.routing import Router
 
-    source = SETS / f"{args.file}.jsonl"
-    items = [json.loads(line) for line in source.read_text(encoding="utf-8").splitlines() if line]
+    # A set by stem in evals/routing/, or an explicit path to a .jsonl (the frozen generated sets).
+    source = Path(args.file) if args.file.endswith(".jsonl") else SETS / f"{args.file}.jsonl"
+    if not source.is_absolute():
+        source = ROOT / source
+    items = [
+        map_generated(json.loads(line))
+        for line in source.read_text(encoding="utf-8").splitlines()
+        if line
+    ]
     items = items[args.skip :]
     if args.limit:
         items = items[: args.limit]
 
     client = LLMClient.from_env("orchestrator")
+    # Paid mode is explicit (Prompt W): --paid with LLM_MODE=paid, every call through the ledger.
+    import ledger as ledger_mod
+
+    ledger_mod.require_paid(args.paid, client.settings.mode, args.path)
+    ledger = ledger_mod.Ledger(args.ledger or ledger_mod.DEFAULT_PATH) if args.paid else None
     model = args.model or client.settings.default_model
     as_of = Settings.from_env().as_of  # REPORTING_AS_OF_DATE, as the service reads it
     prompt = load_prompt("orchestrator", args.prompt, routing_mod.__file__) if args.prompt else None
@@ -83,7 +115,13 @@ async def run(args: argparse.Namespace) -> int:
         row["reason"] = None
         row |= {"error": None, "error_message": None}
         try:
-            decision = await router.classify(item["question"], trace_id=f"seed-{item['id']}")
+            if ledger is None:
+                decision = await router.classify(item["question"], trace_id=f"seed-{item['id']}")
+            else:
+                with ledger.call(client, args.path, label=f"{source.stem}:{item['id']}"):
+                    decision = await router.classify(
+                        item["question"], trace_id=f"seed-{item['id']}"
+                    )
             row.update(
                 predicted=decision.route,
                 domains=decision.domains,
@@ -91,6 +129,10 @@ async def run(args: argparse.Namespace) -> int:
                 dropped_candidates=decision.dropped_candidates,
                 reason=decision.reason,
             )
+        except ledger_mod.LedgerRefused as exc:
+            stopped = f"ledger refused at question {n} ({exc})"
+            print(f"  {item['id']}: {stopped}; stopping")
+            break
         except LLMDailyQuotaExhausted as exc:
             stopped = f"daily quota exhausted at question {n} ({exc})"
             print(f"  {item['id']}: {stopped}; stopping")
@@ -107,11 +149,23 @@ async def run(args: argparse.Namespace) -> int:
             f"got {row['predicted'] or row['error']}"
         )
 
-    report(rows, client.totals, model, thinking, router, stopped, client.settings.mode, source)
+    report(
+        rows,
+        client.totals,
+        model,
+        thinking,
+        router,
+        stopped,
+        client.settings.mode,
+        source,
+        args.path if args.paid else None,
+    )
     return 0
 
 
-def report(rows, totals, model, thinking, router, stopped, mode, source: Path) -> None:
+def report(
+    rows, totals, model, thinking, router, stopped, mode, source: Path, ledger_path=None
+) -> None:
     prompt = router.prompt
     correct = [r for r in rows if r["predicted"] == r["expected"]]
     by_tag: dict[str, list[bool]] = defaultdict(list)
@@ -139,6 +193,9 @@ def report(rows, totals, model, thinking, router, stopped, mode, source: Path) -
         print("\nmisroutes:")
         for r in misses:
             got = r["predicted"] or r["error"]
+            if is_generated(source):  # no item text and no model reason on stdout
+                print(f"  {r['id']} [{r['tag']}] expected {r['expected']}, got {got}")
+                continue
             print(f"  {r['id']} [{r['tag']}] {r['question']}")
             print(f"      expected {r['expected']}, got {got}: {r['reason'] or '-'}")
             if r["error_message"]:
@@ -166,6 +223,7 @@ def report(rows, totals, model, thinking, router, stopped, mode, source: Path) -
                 "prompt_sha": prompt.sha,
                 "as_of": router.as_of.isoformat() if "{{as_of}}" in prompt.text else None,
                 "run_at": stamp,
+                "ledger_path": ledger_path,
                 "answered": len(rows),
                 "correct": len(correct),
                 "accuracy_by_tag": {t: pct(h) for t, h in sorted(by_tag.items())},
@@ -193,6 +251,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--prompt", help="routing prompt by stem, e.g. route_v3 (default: the service's)"
+    )
+    parser.add_argument("--paid", action="store_true", help="spend on the paid key (LLM_MODE=paid)")
+    parser.add_argument("--path", help="ledger path label for a paid run: A1, A2, C1 or C2")
+    parser.add_argument(
+        "--ledger", help="ledger file (default evals/results/sprint5_w_ledger.json)"
     )
     parser.add_argument("--rpm", type=float, help="requests per minute (default: per model)")
     parser.add_argument("--skip", type=int, default=0, help="skip the first N questions")
