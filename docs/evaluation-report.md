@@ -952,3 +952,10 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Recorded in:** ADR-095; data dictionary §6, "Forecast recompute (QA)", rule 7.
 
 **Update 2026-10-12 (closed for the 95% ends).** Owner ruling of 2026-10-11 applied: QA compares `lo95` and `hi95` by the same whole-number rule as the 80% ends (ADR-096; data dictionary §6, rule 4a). Clean check: 0 mismatches in 171 forecasts. The total interval is still not served, so there is still none to check; that part of this entry stands.
+
+
+### L-88 — Invite-link access has no per-user identity and per-instance limits (2026-10-12)
+- **What:** the gateway admits anyone who holds an unexpired, unrevoked invite link (ADR-097). A forwarded link grants access until it expires or is revoked; a session identifies an invite, not a person; there are no user accounts. The rate limits (exchange per IP, questions per session) and the global daily question cap are counted in process, so they are per instance and reset on a restart or scale-to-zero. The client IP rule for the exchange limit is not verified against Cloud Run's documentation (Prompt U). The authentication code is the project's own and has had no independent review.
+- **Why accepted:** at this scale (a handful of invited reviewers, synthetic data) a revocable link with a 12-hour session is proportionate, and Google's quota is the backstop for spend. A federated identity was the portfolio-value choice and was ruled out by the grader's account situation.
+- **Fix (option):** per-user accounts, or a shared-state counter (Redis or Firestore) for the limits, each a new decision.
+- **Recorded in:** ADR-097; data dictionary §6, "Answer display (UI)".

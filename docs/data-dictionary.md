@@ -456,6 +456,42 @@ QA recomputes the numbers a served forecast carries from the `volume_v2` artifac
 
 **8. Not covered, by design.** A model that misses a holiday (L-83(b)): QA recomputes what the stored model says, so a wrong model gives a matching answer. A misparse (R-18): the figures are recomputed for the request as parsed.
 
+### Answer display (UI) (rules written 2026-10-12 for ADR-097, before the gateway and UI code; R-18 mitigation, L-74)
+
+What the single-screen UI shows for one question, and where each part comes from. The gateway builds the strings below from the orchestrator's response (`/ask`); the UI renders them as text and computes nothing. A part with nothing to show is omitted, never shown empty.
+
+**1. Fields shown, in order:** the question as asked; the answer text; the "Interpreted as:" line; the verification line (`qa_status`); the follow-up flag (`escalate`); the degraded warning (`warning`). For `outcome: degraded` the orchestrator's `answer` begins with the warning; the gateway sends the answer text with that leading warning removed, so the warning is shown once.
+
+**2. "Interpreted as:"** is one line of parts joined with " · ", built from the specialist's parsed request. It is the user's check on a misparse (R-18). It is shown when the response carries a parsed request: for an answered question, the specialist's payload (`reporting`, `sentiment` or `forecast`, field `request`); for a decline, the orchestrator's `parsed_request` passthrough (validated against the domain's request model; null when absent or invalid). It is not shown for a split, an out-of-scope or an ambiguous question, or when no specialist ran. Dates are the **resolved** dates of the answer (`start`/`end`; `requested_first_week`/`requested_last_week` for a forecast), not the request's own, which are null when the question named none; "(assumed: the question named no dates)" follows them when `range_assumed` is true. Free text from the question (a technician or account name) is shown as typed, as text.
+
+| Part | Rule | Source field |
+|---|---|---|
+| Measure (reporting) | `incident_count` "incident count"; `incident_rate` "incident rate"; `sla_compliance` "SLA compliance"; `first_time_fix_rate` "first-time fix rate"; `repeat_visit_drivers` "repeat-visit drivers"; `unsupported` "measure not recognised" | `request.metric` |
+| Measure (sentiment) | "customer sentiment"; plus "trend" when `want_trend`; plus "example comments" when `want_examples` (with the label in brackets when `example_label` is set) | `request.want_trend`, `want_examples`, `example_label` |
+| Measure (forecast) | "weekly service request forecast" | domain |
+| Period | "<start> to <end>" of the resolved range; for a forecast "weeks starting <first> to <last>"; for a decline with no resolved range, the request's own dates when present, else omitted | answer `start`, `end` (forecast: `requested_first_week`, `requested_last_week`); `range_assumed` |
+| Horizon (forecast) | "next N weeks" when the question stated a horizon; a stated period is shown as the period | `request.horizon_weeks`, `period_start`, `period_end` |
+| Region | one of the four regions, capitalised ("Northeast"); `unsupported` "region not recognised"; no region "all regions" (reporting and sentiment only; a forecast has no region) | `request.region` |
+| Slice (forecast) | `total` "all service types"; otherwise the service type, e.g. "repair" | `request.slice` |
+| Account / technician | `account: <as typed>`, `technician: <as typed>` | `request.account_name`, `request.technician_name` |
+| Breakdown | "by <group>" (underscores as spaces); sentiment: "by month" or "by quarter" | `request.group_by`; `request.bucket` |
+| History (forecast) | "with recent history" | `request.want_history` |
+| Unsupported | "not supported: <value>" with underscores as spaces | `request.unsupported` (sentiment, forecast) |
+
+**3. `qa_status` wording (exact user-facing words).** `verified` means "the figures are correct for the request as the specialist parsed it" (L-74); it never says the question was understood correctly, so the words are never "verified correct".
+
+| `qa_status` | Words |
+|---|---|
+| `verified` | "Figures checked for the request as interpreted. Check that the “Interpreted as” line matches your question." |
+| `failed` | "Not verified: the answer failed verification and is not shown." |
+| `unavailable` | "Not verified: the checking service was unavailable." |
+| `not_checked` | "Not checked: the request ended before verification ran." |
+| `not_applicable` | no verification line |
+
+**4. Follow-up flag and degraded warning.** When `escalate` is true the UI shows "Sent for follow-up" and the orchestrator's `warning` verbatim. The warning's wording is `degraded.py` `warning_for` (ADR-088): time limit (120 seconds), a dependency unavailable, cost limit, verification unavailable, or "failed verification (checks: …) and is not shown". A response that failed verification never shows its answer figures (ADR-092, rule 3).
+
+**5. Errors.** An orchestrator error (`unclear_question`, `rate_limited`, `daily_quota_exhausted`, `model_unavailable`, `invalid_range`, `internal_error`, `agent_unavailable`) is shown as its `detail` sentence, which is written for the user. Nothing else from an error (no trace, URL or exception text) reaches the page. The gateway's own refusals: "daily limit reached" (the global daily question cap, ADR-097), "too many questions this hour" (per session), "sign-in required" (401).
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
