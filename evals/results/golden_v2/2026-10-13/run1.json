@@ -1,0 +1,2706 @@
+{
+ "set": "golden_v2",
+ "date": "2026-10-13",
+ "orchestrator": "https://ops-orchestrator-vszrpegifq-uc.a.run.app",
+ "caller": "serranoe.e20@gmail.com",
+ "complete": true,
+ "rows": [
+  {
+   "label": "X2/G01",
+   "question": "how's Dave Miller tracking on first-time fixes this month?",
+   "at": "2026-10-13T18:00:15Z",
+   "http_status": 200,
+   "seconds": 5.02,
+   "error": "",
+   "response": {
+    "answer": "No technician matches Dave Miller.",
+    "outcome": "needs_clarification",
+    "reason": "technician_not_found",
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "This question asks for technician performance metrics over the current month."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "6f79b18b-625d-4743-ac29-971073320682",
+    "trace_id": "c085845eea864cf3b73ef583fc3c2066",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "first_time_fix_rate",
+     "group_by": null,
+     "technician_name": "Dave Miller",
+     "region": null,
+     "account_name": null,
+     "start": "2026-08-01",
+     "end": "2026-08-30"
+    }
+   },
+   "id": "G01"
+  },
+  {
+   "label": "X2/G02",
+   "question": "show me repeat truck rolls in Chicago over the last 30 days",
+   "at": "2026-10-13T18:00:21Z",
+   "http_status": 200,
+   "seconds": 5.49,
+   "error": "",
+   "response": {
+    "answer": "I can only restrict a question to one of four regions: northeast, southeast, central or west. Other areas, such as a state or a city, aren't mapped to a region. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past operational records of repeat truck rolls."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "3a8bb471-1661-4c4c-9a03-553db7d543f0",
+    "trace_id": "64b683ed6d1e481cb475f111d131dafc",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "repeat_visit_drivers",
+     "group_by": null,
+     "technician_name": null,
+     "region": "unsupported",
+     "account_name": null,
+     "start": "2026-08-01",
+     "end": "2026-08-30"
+    }
+   },
+   "id": "G02"
+  },
+  {
+   "label": "X2/G03",
+   "question": "which district had the worst SLA breach rate between June and August?",
+   "at": "2026-10-13T18:00:34Z",
+   "http_status": 200,
+   "seconds": 4.05,
+   "error": "",
+   "response": {
+    "answer": "That breakdown isn't supported yet. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past SLA breach rates by district, which is an operational reporting metric."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "31989d2a-1e14-4ca9-b684-c8170777455f",
+    "trace_id": "32b53220c3f74e6c96d73dbf7fe84360",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "sla_compliance",
+     "group_by": "unsupported",
+     "technician_name": null,
+     "region": null,
+     "account_name": null,
+     "start": "2026-06-01",
+     "end": "2026-08-30"
+    }
+   },
+   "id": "G03"
+  },
+  {
+   "label": "X2/G04",
+   "question": "what're customers whining about most down South since the app update?",
+   "at": "2026-10-13T18:00:39Z",
+   "http_status": 200,
+   "seconds": 5.3,
+   "error": "",
+   "response": {
+    "answer": "Customer feedback sentiment in the Southeast from 2026-07-01 to 2026-07-31 (inclusive, UTC), as of 2026-08-30; no period was named, so this range was assumed.\n62 comments: positive 31 (50.0%), neutral 17 (27.4%), negative 11 (17.7%), mixed 3 (4.8%).\n1 comments (1.6%) are low-confidence and flagged for review.\nExample negative comments, quoted as written:\n- [negative, confidence 0.9948] \"Two hours late for the scheduled security camera inspection, which threw off our entire morning operations and left us waiting around.\" (feedback 7047, 2026-07-09, the Southeast)\n- [negative, confidence 0.9947] \"How are we supposed to conduct business when the inspection report lists every single security camera as operational while three units are literally hanging by their power cords from the ceiling tiles?\" (feedback 6989, 2026-07-01, the Southeast)\n- [negative, confidence 0.9946] \"Yesterday morning I waited around for a scheduled maintenance visit that nobody showed up for or called about until three hours after the appointment window passed.\" (feedback 7050, 2026-07-11, the Southeast)",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks what customers are complaining about based on their feedback."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": {
+     "request": {
+      "start": null,
+      "end": null,
+      "region": "southeast",
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": true,
+      "example_label": "negative",
+      "unsupported": null
+     },
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "range_assumed": true,
+     "as_of": "2026-08-30",
+     "summary": {
+      "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+      "n_comments": 62,
+      "n_scored": 62,
+      "complete": true,
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "region": "southeast",
+      "bucket": "month",
+      "counts": {
+       "positive": 31,
+       "neutral": 17,
+       "negative": 11,
+       "mixed": 3
+      },
+      "shares": {
+       "positive": "0.5000",
+       "neutral": "0.2742",
+       "negative": "0.1774",
+       "mixed": "0.0484"
+      },
+      "flagged_count": 1,
+      "buckets": [
+       {
+        "bucket": "2026-07",
+        "n_scored": 62,
+        "counts": {
+         "positive": 31,
+         "neutral": 17,
+         "negative": 11,
+         "mixed": 3
+        },
+        "flagged_count": 1
+       }
+      ]
+     },
+     "trend": null,
+     "examples": [
+      {
+       "feedback_id": 7047,
+       "submitted_at": "2026-07-09T00:17:00Z",
+       "region": "southeast",
+       "label": "negative",
+       "confidence": "0.9948",
+       "flagged": false,
+       "feedback_text": "Two hours late for the scheduled security camera inspection, which threw off our entire morning operations and left us waiting around."
+      },
+      {
+       "feedback_id": 6989,
+       "submitted_at": "2026-07-01T01:43:00Z",
+       "region": "southeast",
+       "label": "negative",
+       "confidence": "0.9947",
+       "flagged": false,
+       "feedback_text": "How are we supposed to conduct business when the inspection report lists every single security camera as operational while three units are literally hanging by their power cords from the ceiling tiles?"
+      },
+      {
+       "feedback_id": 7050,
+       "submitted_at": "2026-07-11T20:34:00Z",
+       "region": "southeast",
+       "label": "negative",
+       "confidence": "0.9946",
+       "flagged": false,
+       "feedback_text": "Yesterday morning I waited around for a scheduled maintenance visit that nobody showed up for or called about until three hours after the appointment window passed."
+      }
+     ],
+     "quoted_feedback_ids": [
+      7047,
+      6989,
+      7050
+     ]
+    },
+    "forecast": null,
+    "task_id": "ee60dd7e-a39e-47b1-8ccc-7962da70f856",
+    "trace_id": "2b1605ed46e2466aa1b2e0dde5aba54e",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G04"
+  },
+  {
+   "label": "X2/G05",
+   "question": "why did CSAT crater after the storm last weekend?",
+   "at": "2026-10-13T18:00:59Z",
+   "http_status": 200,
+   "seconds": 4.57,
+   "error": "",
+   "response": {
+    "answer": "Customer feedback sentiment from 2026-07-01 to 2026-07-31 (inclusive, UTC), as of 2026-08-30; no period was named, so this range was assumed.\n212 comments: positive 111 (52.4%), neutral 51 (24.1%), negative 33 (15.6%), mixed 17 (8.0%).\n2 comments (0.9%) are low-confidence and flagged for review.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks why customer satisfaction scores and feedback dropped following last weekend's storm."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": {
+     "request": {
+      "start": null,
+      "end": null,
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+     },
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "range_assumed": true,
+     "as_of": "2026-08-30",
+     "summary": {
+      "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+      "n_comments": 212,
+      "n_scored": 212,
+      "complete": true,
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "region": null,
+      "bucket": "month",
+      "counts": {
+       "positive": 111,
+       "neutral": 51,
+       "negative": 33,
+       "mixed": 17
+      },
+      "shares": {
+       "positive": "0.5236",
+       "neutral": "0.2406",
+       "negative": "0.1557",
+       "mixed": "0.0802"
+      },
+      "flagged_count": 2,
+      "buckets": [
+       {
+        "bucket": "2026-07",
+        "n_scored": 212,
+        "counts": {
+         "positive": 111,
+         "neutral": 51,
+         "negative": 33,
+         "mixed": 17
+        },
+        "flagged_count": 2
+       }
+      ]
+     },
+     "trend": null,
+     "examples": [],
+     "quoted_feedback_ids": []
+    },
+    "forecast": null,
+    "task_id": "4b246504-d2d4-406b-9dcf-78b7d3f25120",
+    "trace_id": "cd1ef384f464457f9e0e956c17d31f85",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G05"
+  },
+  {
+   "label": "X2/G06",
+   "question": "project emergency dispatch volume for the next 8 weeks",
+   "at": "2026-10-13T18:01:02Z",
+   "http_status": 200,
+   "seconds": 3.3,
+   "error": "",
+   "response": {
+    "answer": "That isn't something I can forecast. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for projected future dispatch volume over the next 8 weeks."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "da6a26cb-aab8-4012-bf6f-288e09ab31a8",
+    "trace_id": "73b71cd3dd46427e9f6e19867458a21a",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "slice": "total",
+     "horizon_weeks": 8,
+     "period_start": null,
+     "period_end": null,
+     "want_history": false,
+     "unsupported": "other"
+    }
+   },
+   "id": "G06"
+  },
+  {
+   "label": "X2/G07",
+   "question": "how many total dispatches are we looking at through the end of next year?",
+   "at": "2026-10-13T18:01:12Z",
+   "http_status": 200,
+   "seconds": 4.08,
+   "error": "",
+   "response": {
+    "answer": "Forecast of total request volume, 52 weeks from 2027-01-04 to 2028-01-02 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2027-01-04: about 139 requests (80% range 121-160)\n- Week of 2027-01-11: about 136 requests (80% range 118-157)\n- Week of 2027-01-18: about 134 requests (80% range 116-154)\n- Week of 2027-01-25: about 133 requests (80% range 115-153)\n- Week of 2027-02-01: about 132 requests (80% range 115-152)\n- Week of 2027-02-08: about 133 requests (80% range 115-153)\n- Week of 2027-02-15: about 134 requests (80% range 116-154)\n- Week of 2027-02-22: about 136 requests (80% range 118-156)\nTotal over these 8 weeks: about 1,076 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 14-26 weeks ahead, forecasts were off by 11.5% on average.\nThe remaining 44 weeks fall beyond the 26-week forecast horizon and aren't forecast.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for total dispatches through the end of next year, which is a forward-looking projection."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": {
+     "request": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2027-01-01",
+      "period_end": "2027-12-31",
+      "want_history": false,
+      "unsupported": null
+     },
+     "as_of": "2026-08-30",
+     "trained_through": "2026-08-30",
+     "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+     "range_assumed": false,
+     "requested_first_week": "2027-01-04",
+     "requested_last_week": "2027-12-27",
+     "beyond_horizon_weeks": 44,
+     "weeks": [
+      {
+       "week_start": "2027-01-04",
+       "horizon": 19,
+       "band": "14-26",
+       "served": true,
+       "point": 138.83743260273042,
+       "lo80": 120.63602038252297,
+       "hi80": 159.7850511861736,
+       "lo95": 111.98758985214323,
+       "hi95": 172.12472129427482
+      },
+      {
+       "week_start": "2027-01-11",
+       "horizon": 20,
+       "band": "14-26",
+       "served": true,
+       "point": 136.01556505389263,
+       "lo80": 118.19119851971854,
+       "hi80": 156.5280170489446,
+       "lo95": 109.72152837177401,
+       "hi95": 168.6107932642406
+      },
+      {
+       "week_start": "2027-01-18",
+       "horizon": 21,
+       "band": "14-26",
+       "served": true,
+       "point": 133.9736865710361,
+       "lo80": 116.42422069286076,
+       "hi80": 154.16851052656315,
+       "lo95": 108.08477076413611,
+       "hi95": 166.06362364039822
+      },
+      {
+       "week_start": "2027-01-25",
+       "horizon": 22,
+       "band": "14-26",
+       "served": true,
+       "point": 132.7534453177601,
+       "lo80": 115.3704900710343,
+       "hi80": 152.7555030136792,
+       "lo95": 107.10979629904594,
+       "hi95": 164.53655830444802
+      },
+      {
+       "week_start": "2027-02-01",
+       "horizon": 23,
+       "band": "14-26",
+       "served": true,
+       "point": 132.3636771638458,
+       "lo80": 115.03700175221579,
+       "hi80": 152.30006663484107,
+       "lo95": 106.80276303916123,
+       "hi95": 164.0420391175714
+      },
+      {
+       "week_start": "2027-02-08",
+       "horizon": 24,
+       "band": "14-26",
+       "served": true,
+       "point": 132.78262877749296,
+       "lo80": 115.40436091936851,
+       "hi80": 152.77781848625466,
+       "lo95": 107.14542391487535,
+       "hi95": 164.55417189883087
+      },
+      {
+       "week_start": "2027-02-15",
+       "horizon": 25,
+       "band": "14-26",
+       "served": true,
+       "point": 133.9590885301623,
+       "lo80": 116.42783602243173,
+       "hi80": 154.13012912457168,
+       "lo95": 108.0961391753091,
+       "hi95": 166.0099753491547
+      },
+      {
+       "week_start": "2027-02-22",
+       "horizon": 26,
+       "band": "14-26",
+       "served": true,
+       "point": 135.81264880030852,
+       "lo80": 118.03763405245303,
+       "hi80": 156.26436197424462,
+       "lo95": 109.59015527278734,
+       "hi95": 168.30960343329392
+      }
+     ],
+     "bands": {
+      "14-26": {
+       "served": true,
+       "shown_error": 11.491661356128652
+      }
+     },
+     "period_total": 1076.4981728172288,
+     "year_end_weeks": [],
+     "history": []
+    },
+    "task_id": "f349d7d0-6c4e-4d3b-aba6-fd393045c6ec",
+    "trace_id": "b261f806aa77404a9c6e78fb5a6201e8",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G07"
+  },
+  {
+   "label": "X2/G08",
+   "question": "what's our projected overtime labor spend for field techs this month?",
+   "at": "2026-10-13T18:01:21Z",
+   "http_status": 200,
+   "seconds": 4.12,
+   "error": "",
+   "response": {
+    "answer": "That isn't something I can forecast. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for a forward-looking projection of overtime labor spend for the month."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "5c824e6f-d78b-4da6-a314-6c4d99468547",
+    "trace_id": "c68404f0c849447b83af40553fbc7c7d",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2026-09-01",
+     "period_end": "2026-09-30",
+     "want_history": false,
+     "unsupported": "other"
+    }
+   },
+   "id": "G08"
+  },
+  {
+   "label": "X2/G09",
+   "question": "give me next month's predicted volume for fiber repairs alongside the biggest customer complaints we're seeing on them",
+   "at": "2026-10-13T18:01:22Z",
+   "http_status": 200,
+   "seconds": 0.93,
+   "error": "",
+   "response": {
+    "answer": "Your question covers more than one area: operational forecasts (volumes, SLA outlook) and customer feedback sentiment. I answer one area per question, so please ask about each separately.",
+    "outcome": "split_required",
+    "reason": null,
+    "route": {
+     "route": "multi_domain",
+     "domains": [
+      "forecast",
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks for both future repair volume predictions and current customer complaints."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": null,
+    "trace_id": "7ec7bd48c9dd4617bdad91c6922c0bf6",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "not_applicable",
+    "parsed_request": null
+   },
+   "id": "G09"
+  },
+  {
+   "label": "X2/G10",
+   "question": "how is fiber install looking for next month?",
+   "at": "2026-10-13T18:01:34Z",
+   "http_status": 200,
+   "seconds": 3.23,
+   "error": "",
+   "response": {
+    "answer": "Forecast of install requests, 4 weeks from 2026-09-07 to 2026-10-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-09-28: about 28 requests (80% range 21-39)\nNo total is given, because some of these weeks aren't shown.\nForecasts for install requests at 1-4 weeks ahead aren't shown: they were off by 43.7% on held-out weeks.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 18.0% on average.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks about expected fiber install volumes for next month, which is forward-looking."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": {
+     "request": {
+      "slice": "install",
+      "horizon_weeks": null,
+      "period_start": "2026-09-01",
+      "period_end": "2026-09-30",
+      "want_history": false,
+      "unsupported": null
+     },
+     "as_of": "2026-08-30",
+     "trained_through": "2026-08-30",
+     "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+     "range_assumed": false,
+     "requested_first_week": "2026-09-07",
+     "requested_last_week": "2026-09-28",
+     "beyond_horizon_weeks": 0,
+     "weeks": [
+      {
+       "week_start": "2026-09-07",
+       "horizon": 2,
+       "band": "1-4",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      },
+      {
+       "week_start": "2026-09-14",
+       "horizon": 3,
+       "band": "1-4",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      },
+      {
+       "week_start": "2026-09-21",
+       "horizon": 4,
+       "band": "1-4",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      },
+      {
+       "week_start": "2026-09-28",
+       "horizon": 5,
+       "band": "5-13",
+       "served": true,
+       "point": 28.264499973870358,
+       "lo80": 20.613388077582638,
+       "hi80": 38.75549015844286,
+       "lo95": 17.44123754331662,
+       "hi95": 45.80420149595658
+      }
+     ],
+     "bands": {
+      "1-4": {
+       "served": false,
+       "shown_error": 43.69451185173943
+      },
+      "5-13": {
+       "served": true,
+       "shown_error": 17.957601388809973
+      }
+     },
+     "period_total": null,
+     "year_end_weeks": [],
+     "history": []
+    },
+    "task_id": "c3e5f225-e2f7-4488-a2f7-13d15deaff50",
+    "trace_id": "3ac802d959044d66af5ca5f98b84bc08",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G10"
+  },
+  {
+   "label": "X2/G11",
+   "question": "What was our SLA compliance last quarter?",
+   "at": "2026-10-13T18:01:47Z",
+   "http_status": 200,
+   "seconds": 4.36,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: SLA compliance was 88.94% from 2026-04-01 to 2026-06-30 (inclusive, UTC): 1,487 of 1,672 dispatched requests were completed within their SLA window.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "SLA compliance for a past period is an operational reporting metric."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "sla_compliance",
+      "group_by": null,
+      "technician_name": null,
+      "region": null,
+      "account_name": null,
+      "start": "2026-04-01",
+      "end": "2026-06-30"
+     },
+     "start": "2026-04-01",
+     "end": "2026-06-30",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "group_by": null,
+      "numerator": 1487,
+      "denominator": 1672,
+      "rate": "0.8894",
+      "groups": null,
+      "group_count": null,
+      "truncated": false,
+      "technician_id": null,
+      "technician_name": null,
+      "region": null,
+      "account_id": null,
+      "account_name": null,
+      "metric": "sla_compliance"
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "3606b504-a450-4d67-8eb0-c3222dbbfa54",
+    "trace_id": "5e2cf88510554406b504b1ac903aac9b",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G11"
+  },
+  {
+   "label": "X2/G12",
+   "question": "Which accounts had the highest incident rate in 2025?",
+   "at": "2026-10-13T18:01:52Z",
+   "http_status": 200,
+   "seconds": 4.84,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: 11.5612 incidents per 100 completed requests from 2025-01-01 to 2025-12-31 (inclusive, UTC): 725 incidents over 6,271 completed requests. By account, worst first: Granite Financial Group 19.7080 per 100 (27 incidents / 137 completed jobs); Meridian Distribution Partners 17.5824 per 100 (16 incidents / 91 completed jobs); Bluewater Energy Inc. 17.2840 per 100 (14 incidents / 81 completed jobs); Meridian Education LLC 16.3043 per 100 (15 incidents / 92 completed jobs); Granite Logistics Co. 15.8416 per 100 (16 incidents / 101 completed jobs). 46 accounts in total; the worst 25 are in the data.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past incident rates by account in 2025."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "incident_rate",
+      "group_by": "account",
+      "technician_name": null,
+      "region": null,
+      "account_name": null,
+      "start": "2025-01-01",
+      "end": "2025-12-31"
+     },
+     "start": "2025-01-01",
+     "end": "2025-12-31",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "group_by": "account",
+      "numerator": 725,
+      "denominator": 6271,
+      "rate": "11.5612",
+      "groups": [
+       {
+        "group": "Granite Financial Group",
+        "group_id": 40,
+        "numerator": 27,
+        "denominator": 137,
+        "rate": "19.7080"
+       },
+       {
+        "group": "Meridian Distribution Partners",
+        "group_id": 7,
+        "numerator": 16,
+        "denominator": 91,
+        "rate": "17.5824"
+       },
+       {
+        "group": "Bluewater Energy Inc.",
+        "group_id": 19,
+        "numerator": 14,
+        "denominator": 81,
+        "rate": "17.2840"
+       },
+       {
+        "group": "Meridian Education LLC",
+        "group_id": 47,
+        "numerator": 15,
+        "denominator": 92,
+        "rate": "16.3043"
+       },
+       {
+        "group": "Granite Logistics Co.",
+        "group_id": 8,
+        "numerator": 16,
+        "denominator": 101,
+        "rate": "15.8416"
+       },
+       {
+        "group": "Clearview Hospitality Inc.",
+        "group_id": 49,
+        "numerator": 18,
+        "denominator": 114,
+        "rate": "15.7895"
+       },
+       {
+        "group": "Fairhaven Distribution Holdings",
+        "group_id": 46,
+        "numerator": 41,
+        "denominator": 267,
+        "rate": "15.3558"
+       },
+       {
+        "group": "Cedar Ridge Retail Inc.",
+        "group_id": 39,
+        "numerator": 17,
+        "denominator": 115,
+        "rate": "14.7826"
+       },
+       {
+        "group": "Fairhaven Retail Group",
+        "group_id": 41,
+        "numerator": 8,
+        "denominator": 56,
+        "rate": "14.2857"
+       },
+       {
+        "group": "Stonebridge Labs Co.",
+        "group_id": 37,
+        "numerator": 26,
+        "denominator": 183,
+        "rate": "14.2077"
+       },
+       {
+        "group": "Lakeside Health Co.",
+        "group_id": 22,
+        "numerator": 10,
+        "denominator": 71,
+        "rate": "14.0845"
+       },
+       {
+        "group": "Brightpath Education Holdings",
+        "group_id": 33,
+        "numerator": 11,
+        "denominator": 81,
+        "rate": "13.5802"
+       },
+       {
+        "group": "Stonebridge Education LLC",
+        "group_id": 12,
+        "numerator": 20,
+        "denominator": 148,
+        "rate": "13.5135"
+       },
+       {
+        "group": "Fairhaven Health Holdings",
+        "group_id": 2,
+        "numerator": 9,
+        "denominator": 69,
+        "rate": "13.0435"
+       },
+       {
+        "group": "Ironwood Manufacturing LLC",
+        "group_id": 31,
+        "numerator": 8,
+        "denominator": 62,
+        "rate": "12.9032"
+       },
+       {
+        "group": "Redstone Logistics Co.",
+        "group_id": 4,
+        "numerator": 32,
+        "denominator": 253,
+        "rate": "12.6482"
+       },
+       {
+        "group": "Brightpath Labs LLC",
+        "group_id": 36,
+        "numerator": 27,
+        "denominator": 215,
+        "rate": "12.5581"
+       },
+       {
+        "group": "Westgate Foods Partners",
+        "group_id": 30,
+        "numerator": 7,
+        "denominator": 57,
+        "rate": "12.2807"
+       },
+       {
+        "group": "Westgate Logistics LLC",
+        "group_id": 26,
+        "numerator": 22,
+        "denominator": 183,
+        "rate": "12.0219"
+       },
+       {
+        "group": "Westgate Retail Partners",
+        "group_id": 10,
+        "numerator": 21,
+        "denominator": 177,
+        "rate": "11.8644"
+       },
+       {
+        "group": "Harbor Financial Group",
+        "group_id": 50,
+        "numerator": 7,
+        "denominator": 59,
+        "rate": "11.8644"
+       },
+       {
+        "group": "Pinecrest Manufacturing Group",
+        "group_id": 3,
+        "numerator": 93,
+        "denominator": 798,
+        "rate": "11.6541"
+       },
+       {
+        "group": "Riverbend Foods Partners",
+        "group_id": 35,
+        "numerator": 20,
+        "denominator": 180,
+        "rate": "11.1111"
+       },
+       {
+        "group": "Silver Creek Logistics LLC",
+        "group_id": 24,
+        "numerator": 13,
+        "denominator": 117,
+        "rate": "11.1111"
+       },
+       {
+        "group": "Lakeside Retail Co.",
+        "group_id": 21,
+        "numerator": 7,
+        "denominator": 63,
+        "rate": "11.1111"
+       }
+      ],
+      "group_count": 46,
+      "truncated": true,
+      "technician_id": null,
+      "technician_name": null,
+      "region": null,
+      "account_id": null,
+      "account_name": null,
+      "metric": "incident_rate",
+      "per": 100
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "a3c80d79-b2d3-46e9-bfa7-136a3898bb01",
+    "trace_id": "eb522e54a4e0405a8d36ceec209d0288",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G12"
+  },
+  {
+   "label": "X2/G13",
+   "question": "First-time fix rate by service type for July",
+   "at": "2026-10-13T18:02:00Z",
+   "http_status": 200,
+   "seconds": 3.26,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: First-time fix rate was 98.63% from 2026-07-01 to 2026-07-31 (inclusive, UTC): 503 of 510 completed requests needed no return visit. By service type, worst first: inspection 95.92% (47 of 49); upgrade 98.11% (52 of 53); maintenance 98.36% (120 of 122); install 99.00% (99 of 100); repair 99.46% (185 of 186).",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question requests first-time fix rates for a past period, which falls under reporting."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "first_time_fix_rate",
+      "group_by": "service_type",
+      "technician_name": null,
+      "region": null,
+      "account_name": null,
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+     },
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "group_by": "service_type",
+      "numerator": 503,
+      "denominator": 510,
+      "rate": "0.9863",
+      "groups": [
+       {
+        "group": "inspection",
+        "group_id": null,
+        "numerator": 47,
+        "denominator": 49,
+        "rate": "0.9592"
+       },
+       {
+        "group": "upgrade",
+        "group_id": null,
+        "numerator": 52,
+        "denominator": 53,
+        "rate": "0.9811"
+       },
+       {
+        "group": "maintenance",
+        "group_id": null,
+        "numerator": 120,
+        "denominator": 122,
+        "rate": "0.9836"
+       },
+       {
+        "group": "install",
+        "group_id": null,
+        "numerator": 99,
+        "denominator": 100,
+        "rate": "0.9900"
+       },
+       {
+        "group": "repair",
+        "group_id": null,
+        "numerator": 185,
+        "denominator": 186,
+        "rate": "0.9946"
+       }
+      ],
+      "group_count": 5,
+      "truncated": false,
+      "technician_id": null,
+      "technician_name": null,
+      "region": null,
+      "account_id": null,
+      "account_name": null,
+      "metric": "first_time_fix_rate"
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "a7115467-be70-4032-b551-e4546a11027e",
+    "trace_id": "43c266297dac405ea20957005f2cf271",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G13"
+  },
+  {
+   "label": "X2/G14",
+   "question": "How many incidents did we log last month, broken down by severity?",
+   "at": "2026-10-13T18:02:12Z",
+   "http_status": 200,
+   "seconds": 4.99,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: 54 incidents reported from 2026-07-01 to 2026-07-31 (inclusive, UTC): 6 high, 12 medium, 36 low severity. By severity, highest first: low 36; medium 12; high 6.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past incident counts broken down by severity."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "incident_count",
+      "group_by": "severity",
+      "technician_name": null,
+      "region": null,
+      "account_name": null,
+      "start": "2026-07-01",
+      "end": "2026-07-31"
+     },
+     "start": "2026-07-01",
+     "end": "2026-07-31",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "metric": "incident_count",
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "incident_count": 54,
+      "by_severity": {
+       "low": 36,
+       "medium": 12,
+       "high": 6
+      },
+      "group_by": "severity",
+      "groups": [
+       {
+        "group": "low",
+        "group_id": null,
+        "count": 36
+       },
+       {
+        "group": "medium",
+        "group_id": null,
+        "count": 12
+       },
+       {
+        "group": "high",
+        "group_id": null,
+        "count": 6
+       }
+      ],
+      "group_count": 3,
+      "truncated": false,
+      "technician_id": null,
+      "technician_name": null,
+      "region": null,
+      "account_id": null,
+      "account_name": null
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "0ed0b698-f6c0-4c19-86ba-d9823239ef99",
+    "trace_id": "7fc8ef8aff81497d80d75db728f21134",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G14"
+  },
+  {
+   "label": "X2/G15",
+   "question": "What's Priya Kim's SLA compliance this year?",
+   "at": "2026-10-13T18:02:17Z",
+   "http_status": 200,
+   "seconds": 4.51,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: For Priya Kim, SLA compliance was 87.40% from 2026-01-01 to 2026-08-30 (inclusive, UTC), based on 127 dispatched requests: 111 completed within their SLA window.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past SLA compliance performance over the current year."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "sla_compliance",
+      "group_by": null,
+      "technician_name": "Priya Kim",
+      "region": null,
+      "account_name": null,
+      "start": "2026-01-01",
+      "end": "2026-08-30"
+     },
+     "start": "2026-01-01",
+     "end": "2026-08-30",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "group_by": null,
+      "numerator": 111,
+      "denominator": 127,
+      "rate": "0.8740",
+      "groups": null,
+      "group_count": null,
+      "truncated": false,
+      "technician_id": 3,
+      "technician_name": "Priya Kim",
+      "region": null,
+      "account_id": null,
+      "account_name": null,
+      "metric": "sla_compliance"
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "161a4cb9-d470-4e63-b516-a4f163d54d7c",
+    "trace_id": "fa4b482e321643eaa40dfa053741c8a5",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G15"
+  },
+  {
+   "label": "X2/G16",
+   "question": "How did Lina do on first-time fixes last quarter?",
+   "at": "2026-10-13T18:02:25Z",
+   "http_status": 200,
+   "seconds": 4.17,
+   "error": "",
+   "response": {
+    "answer": "2 technicians match Lina: Lina Adams and Lina Olsen. Please ask again with the full name.",
+    "outcome": "needs_clarification",
+    "reason": "technician_ambiguous",
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for a past operational metric regarding a technician's performance."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "99dbec0b-6eb0-4543-88f1-3b481f089006",
+    "trace_id": "d4c962d3f70d4b3ab127d71bf0a318d0",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "first_time_fix_rate",
+     "group_by": null,
+     "technician_name": "Lina",
+     "region": null,
+     "account_name": null,
+     "start": "2026-04-01",
+     "end": "2026-06-30"
+    }
+   },
+   "id": "G16"
+  },
+  {
+   "label": "X2/G17",
+   "question": "Show me the incident rate for the last two weeks",
+   "at": "2026-10-13T18:02:36Z",
+   "http_status": 200,
+   "seconds": 3.67,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: 13.1148 incidents per 100 completed requests from 2026-08-17 to 2026-08-30 (inclusive, UTC): 16 incidents over 122 completed requests.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for the incident rate over a past period, which falls under reporting."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "incident_rate",
+      "group_by": null,
+      "technician_name": null,
+      "region": null,
+      "account_name": null,
+      "start": "2026-08-17",
+      "end": "2026-08-30"
+     },
+     "start": "2026-08-17",
+     "end": "2026-08-30",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "start": "2026-08-17",
+      "end": "2026-08-30",
+      "group_by": null,
+      "numerator": 16,
+      "denominator": 122,
+      "rate": "13.1148",
+      "groups": null,
+      "group_count": null,
+      "truncated": false,
+      "technician_id": null,
+      "technician_name": null,
+      "region": null,
+      "account_id": null,
+      "account_name": null,
+      "metric": "incident_rate",
+      "per": 100
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "56639ae8-1499-4ee5-8981-985f6cd5733c",
+    "trace_id": "480d512190974dfca561a5d98bd91ea2",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G17"
+  },
+  {
+   "label": "X2/G18",
+   "question": "Which regions have the most repeat visits so far this year?",
+   "at": "2026-10-13T18:02:40Z",
+   "http_status": 200,
+   "seconds": 3.9,
+   "error": "",
+   "response": {
+    "answer": "As of 2026-08-30: 70 of 4,080 jobs completed from 2026-01-01 to 2026-08-30 (inclusive, UTC) needed a repeat visit (1.72%). Every repeat visit is recorded through a repeat-visit-required incident on the original job. No region stands out: no difference is larger than chance would explain (Fisher's exact test, Bonferroni-corrected, groups with at least 20 jobs). By region, worst first: west 2.17% (17 of 782 jobs); central 1.82% (19 of 1,043 jobs); northeast 1.63% (20 of 1,228 jobs); southeast 1.36% (14 of 1,027 jobs).",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past operational records regarding repeat visits so far this year."
+    },
+    "prompt_version": "route_v3",
+    "reporting": {
+     "request": {
+      "metric": "repeat_visit_drivers",
+      "group_by": "region",
+      "technician_name": null,
+      "region": null,
+      "account_name": null,
+      "start": "2026-01-01",
+      "end": "2026-08-30"
+     },
+     "start": "2026-01-01",
+     "end": "2026-08-30",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "figures": {
+      "metric": "repeat_visit_drivers",
+      "start": "2026-01-01",
+      "end": "2026-08-30",
+      "group_by": "region",
+      "overall": {
+       "jobs": 4080,
+       "repeated": 70,
+       "rate": "0.0172"
+      },
+      "groups": [
+       {
+        "group": "west",
+        "group_id": null,
+        "this": {
+         "jobs": 782,
+         "repeated": 17,
+         "rate": "0.0217"
+        },
+        "rest": {
+         "jobs": 3298,
+         "repeated": 53,
+         "rate": "0.0161"
+        },
+        "compared": true,
+        "p_value": 0.2832150938651181,
+        "p_adjusted": 1.0,
+        "stands_out": false
+       },
+       {
+        "group": "central",
+        "group_id": null,
+        "this": {
+         "jobs": 1043,
+         "repeated": 19,
+         "rate": "0.0182"
+        },
+        "rest": {
+         "jobs": 3037,
+         "repeated": 51,
+         "rate": "0.0168"
+        },
+        "compared": true,
+        "p_value": 0.7824023141491224,
+        "p_adjusted": 1.0,
+        "stands_out": false
+       },
+       {
+        "group": "northeast",
+        "group_id": null,
+        "this": {
+         "jobs": 1228,
+         "repeated": 20,
+         "rate": "0.0163"
+        },
+        "rest": {
+         "jobs": 2852,
+         "repeated": 50,
+         "rate": "0.0175"
+        },
+        "compared": true,
+        "p_value": 0.8955313089391843,
+        "p_adjusted": 1.0,
+        "stands_out": false
+       },
+       {
+        "group": "southeast",
+        "group_id": null,
+        "this": {
+         "jobs": 1027,
+         "repeated": 14,
+         "rate": "0.0136"
+        },
+        "rest": {
+         "jobs": 3053,
+         "repeated": 56,
+         "rate": "0.0183"
+        },
+        "compared": true,
+        "p_value": 0.40411817225730073,
+        "p_adjusted": 1.0,
+        "stands_out": false
+       }
+      ],
+      "group_count": 4,
+      "truncated": false,
+      "groups_compared": 4,
+      "any_other_incident": null,
+      "no_other_incident": null,
+      "other_incident_compared": null,
+      "other_incident_p_value": null,
+      "other_incident_higher": null
+     }
+    },
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "672749c6-7890-4e3c-ae13-7c320d5aa9bd",
+    "trace_id": "f19b7b918d854cfd9b2b68b2a0108ad1",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G18"
+  },
+  {
+   "label": "X2/G19",
+   "question": "What's the average resolution time for incidents?",
+   "at": "2026-10-13T18:02:49Z",
+   "http_status": 200,
+   "seconds": 4.72,
+   "error": "",
+   "response": {
+    "answer": "That metric isn't supported yet. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past operational performance metrics regarding incident resolution times."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "9d79a9b8-2550-4740-b06a-8791b02495bd",
+    "trace_id": "f04e6b093aa143668faca36a5e45d752",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "unsupported",
+     "group_by": null,
+     "technician_name": null,
+     "region": null,
+     "account_name": null,
+     "start": null,
+     "end": null
+    }
+   },
+   "id": "G19"
+  },
+  {
+   "label": "X2/G20",
+   "question": "How did customers feel in the Southeast last quarter?",
+   "at": "2026-10-13T18:02:53Z",
+   "http_status": 200,
+   "seconds": 3.91,
+   "error": "",
+   "response": {
+    "answer": "Customer feedback sentiment in the Southeast from 2026-04-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n177 comments: positive 96 (54.2%), neutral 44 (24.9%), negative 28 (15.8%), mixed 9 (5.1%).\n1 comments (0.6%) are low-confidence and flagged for review.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks how customers felt in the Southeast last quarter."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": {
+     "request": {
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "region": "southeast",
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+     },
+     "start": "2026-04-01",
+     "end": "2026-06-30",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "summary": {
+      "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+      "n_comments": 177,
+      "n_scored": 177,
+      "complete": true,
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "region": "southeast",
+      "bucket": "month",
+      "counts": {
+       "positive": 96,
+       "neutral": 44,
+       "negative": 28,
+       "mixed": 9
+      },
+      "shares": {
+       "positive": "0.5424",
+       "neutral": "0.2486",
+       "negative": "0.1582",
+       "mixed": "0.0508"
+      },
+      "flagged_count": 1,
+      "buckets": [
+       {
+        "bucket": "2026-04",
+        "n_scored": 68,
+        "counts": {
+         "positive": 34,
+         "neutral": 19,
+         "negative": 12,
+         "mixed": 3
+        },
+        "flagged_count": 0
+       },
+       {
+        "bucket": "2026-05",
+        "n_scored": 56,
+        "counts": {
+         "positive": 33,
+         "neutral": 14,
+         "negative": 6,
+         "mixed": 3
+        },
+        "flagged_count": 1
+       },
+       {
+        "bucket": "2026-06",
+        "n_scored": 53,
+        "counts": {
+         "positive": 29,
+         "neutral": 11,
+         "negative": 10,
+         "mixed": 3
+        },
+        "flagged_count": 0
+       }
+      ]
+     },
+     "trend": null,
+     "examples": [],
+     "quoted_feedback_ids": []
+    },
+    "forecast": null,
+    "task_id": "7540aa64-3c75-4eef-b069-f12353d5b290",
+    "trace_id": "f9fd35d4b2884bbe85c19e84b3e3b853",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G20"
+  },
+  {
+   "label": "X2/G21",
+   "question": "Is customer sentiment getting worse in the Northeast?",
+   "at": "2026-10-13T18:03:03Z",
+   "http_status": 200,
+   "seconds": 4.53,
+   "error": "",
+   "response": {
+    "answer": "Customer feedback sentiment in the Northeast from 2026-03-01 to 2026-08-30 (inclusive, UTC), as of 2026-08-30; no period was named, so this range was assumed.\n399 comments: positive 209 (52.4%), neutral 89 (22.3%), negative 69 (17.3%), mixed 32 (8.0%).\n2 comments (0.5%) are low-confidence and flagged for review.\nTrend: no clear change in the negative share. Latest month, 2026-08: 7 of 55 negative (12.7%). Earlier months, 2026-03 to 2026-07: 62 of 344 negative (18.0%). Two-proportion test p = 0.3349.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks about customer feelings and sentiment trends in a specific region."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": {
+     "request": {
+      "start": null,
+      "end": null,
+      "region": "northeast",
+      "bucket": "month",
+      "want_trend": true,
+      "want_examples": false,
+      "example_label": null,
+      "unsupported": null
+     },
+     "start": "2026-03-01",
+     "end": "2026-08-30",
+     "range_assumed": true,
+     "as_of": "2026-08-30",
+     "summary": {
+      "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+      "n_comments": 399,
+      "n_scored": 399,
+      "complete": true,
+      "start": "2026-03-01",
+      "end": "2026-08-30",
+      "region": "northeast",
+      "bucket": "month",
+      "counts": {
+       "positive": 209,
+       "neutral": 89,
+       "negative": 69,
+       "mixed": 32
+      },
+      "shares": {
+       "positive": "0.5238",
+       "neutral": "0.2231",
+       "negative": "0.1729",
+       "mixed": "0.0802"
+      },
+      "flagged_count": 2,
+      "buckets": [
+       {
+        "bucket": "2026-03",
+        "n_scored": 56,
+        "counts": {
+         "positive": 29,
+         "neutral": 14,
+         "negative": 8,
+         "mixed": 5
+        },
+        "flagged_count": 0
+       },
+       {
+        "bucket": "2026-04",
+        "n_scored": 75,
+        "counts": {
+         "positive": 36,
+         "neutral": 17,
+         "negative": 18,
+         "mixed": 4
+        },
+        "flagged_count": 1
+       },
+       {
+        "bucket": "2026-05",
+        "n_scored": 77,
+        "counts": {
+         "positive": 38,
+         "neutral": 18,
+         "negative": 17,
+         "mixed": 4
+        },
+        "flagged_count": 0
+       },
+       {
+        "bucket": "2026-06",
+        "n_scored": 73,
+        "counts": {
+         "positive": 38,
+         "neutral": 16,
+         "negative": 10,
+         "mixed": 9
+        },
+        "flagged_count": 1
+       },
+       {
+        "bucket": "2026-07",
+        "n_scored": 63,
+        "counts": {
+         "positive": 35,
+         "neutral": 13,
+         "negative": 9,
+         "mixed": 6
+        },
+        "flagged_count": 0
+       },
+       {
+        "bucket": "2026-08",
+        "n_scored": 55,
+        "counts": {
+         "positive": 33,
+         "neutral": 11,
+         "negative": 7,
+         "mixed": 4
+        },
+        "flagged_count": 0
+       }
+      ]
+     },
+     "trend": {
+      "verdict": "no clear change",
+      "latest_bucket": "2026-08",
+      "latest_n": 55,
+      "latest_negative": 7,
+      "earlier_buckets": [
+       "2026-03",
+       "2026-04",
+       "2026-05",
+       "2026-06",
+       "2026-07"
+      ],
+      "earlier_n": 344,
+      "earlier_negative": 62,
+      "z": -0.9643,
+      "p_value": 0.3349,
+      "small_sample": false
+     },
+     "examples": [],
+     "quoted_feedback_ids": []
+    },
+    "forecast": null,
+    "task_id": "d22d017c-458c-4cec-baf9-f1f81a4b8dae",
+    "trace_id": "5c96e31fe85f4c00821e57e8d19f047e",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G21"
+  },
+  {
+   "label": "X2/G22",
+   "question": "Show me some mixed feedback from June",
+   "at": "2026-10-13T18:03:11Z",
+   "http_status": 200,
+   "seconds": 3.83,
+   "error": "",
+   "response": {
+    "answer": "Customer feedback sentiment from 2026-06-01 to 2026-06-30 (inclusive, UTC), as of 2026-08-30.\n229 comments: positive 116 (50.7%), neutral 53 (23.1%), negative 40 (17.5%), mixed 20 (8.7%).\n2 comments (0.9%) are low-confidence and flagged for review.\nExample mixed comments, quoted as written:\n- [mixed, confidence 0.9929] \"Yesterday afternoon started poorly when the tech showed up over two hours past the arrival window, but once on site, the troubleshooting was handled efficiently and the main network switch is running smoothly now.\" (feedback 6803, 2026-06-08, the Southeast)\n- [mixed, confidence 0.9928] \"Yesterday afternoon was frustrating because nobody called to confirm the arrival window, but once the technician finally got here, the actual router repair was handled quickly and professionally.\" (feedback 6808, 2026-06-07, the Northeast)\n- [mixed, confidence 0.9922] \"Cable management was left a bit tangled during the routine maintenance check, though the field tech was polite and wore proper PPE the entire time.\" (feedback 6878, 2026-06-16, the Central region)",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks for customer feedback comments from a past month."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": {
+     "request": {
+      "start": "2026-06-01",
+      "end": "2026-06-30",
+      "region": null,
+      "bucket": "month",
+      "want_trend": false,
+      "want_examples": true,
+      "example_label": "mixed",
+      "unsupported": null
+     },
+     "start": "2026-06-01",
+     "end": "2026-06-30",
+     "range_assumed": false,
+     "as_of": "2026-08-30",
+     "summary": {
+      "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+      "n_comments": 229,
+      "n_scored": 229,
+      "complete": true,
+      "start": "2026-06-01",
+      "end": "2026-06-30",
+      "region": null,
+      "bucket": "month",
+      "counts": {
+       "positive": 116,
+       "neutral": 53,
+       "negative": 40,
+       "mixed": 20
+      },
+      "shares": {
+       "positive": "0.5066",
+       "neutral": "0.2314",
+       "negative": "0.1747",
+       "mixed": "0.0873"
+      },
+      "flagged_count": 2,
+      "buckets": [
+       {
+        "bucket": "2026-06",
+        "n_scored": 229,
+        "counts": {
+         "positive": 116,
+         "neutral": 53,
+         "negative": 40,
+         "mixed": 20
+        },
+        "flagged_count": 2
+       }
+      ]
+     },
+     "trend": null,
+     "examples": [
+      {
+       "feedback_id": 6803,
+       "submitted_at": "2026-06-08T03:19:00Z",
+       "region": "southeast",
+       "label": "mixed",
+       "confidence": "0.9929",
+       "flagged": false,
+       "feedback_text": "Yesterday afternoon started poorly when the tech showed up over two hours past the arrival window, but once on site, the troubleshooting was handled efficiently and the main network switch is running smoothly now."
+      },
+      {
+       "feedback_id": 6808,
+       "submitted_at": "2026-06-07T00:15:00Z",
+       "region": "northeast",
+       "label": "mixed",
+       "confidence": "0.9928",
+       "flagged": false,
+       "feedback_text": "Yesterday afternoon was frustrating because nobody called to confirm the arrival window, but once the technician finally got here, the actual router repair was handled quickly and professionally."
+      },
+      {
+       "feedback_id": 6878,
+       "submitted_at": "2026-06-16T04:37:00Z",
+       "region": "central",
+       "label": "mixed",
+       "confidence": "0.9922",
+       "flagged": false,
+       "feedback_text": "Cable management was left a bit tangled during the routine maintenance check, though the field tech was polite and wore proper PPE the entire time."
+      }
+     ],
+     "quoted_feedback_ids": [
+      6803,
+      6808,
+      6878
+     ]
+    },
+    "forecast": null,
+    "task_id": "17d0c4ef-6ce9-4b01-8b4a-4c240c8e09e4",
+    "trace_id": "11e804e3347f48b78161880c3ed0249a",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G22"
+  },
+  {
+   "label": "X2/G23",
+   "question": "What's sentiment like for Pinecrest Manufacturing?",
+   "at": "2026-10-13T18:03:15Z",
+   "http_status": 200,
+   "seconds": 3.87,
+   "error": "",
+   "response": {
+    "answer": "Sentiment can't be broken down by account. I can report customer feedback sentiment over a date range, for all sites or one region (Northeast, Southeast, Central or West), as a trend by month or quarter, and quote example comments.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks about customer sentiment for a specific client."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "3727ac8b-49b6-45e2-ad56-321016f56674",
+    "trace_id": "ee49c02bf018490eb9e04fe0ebcb524b",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "start": null,
+     "end": null,
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": "account"
+    }
+   },
+   "id": "G23"
+  },
+  {
+   "label": "X2/G24",
+   "question": "Sentiment by service type this year",
+   "at": "2026-10-13T18:03:24Z",
+   "http_status": 200,
+   "seconds": 3.66,
+   "error": "",
+   "response": {
+    "answer": "Sentiment can't be broken down by service type. I can report customer feedback sentiment over a date range, for all sites or one region (Northeast, Southeast, Central or West), as a trend by month or quarter, and quote example comments.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "sentiment",
+     "domains": [
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks for customer sentiment categorized by service type for the current year."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "859dc867-8ad9-4c56-b16b-dfff36ba5431",
+    "trace_id": "b9fa65ee42314880ae4fb32cd514a56d",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "start": "2026-01-01",
+     "end": "2026-08-30",
+     "region": null,
+     "bucket": "month",
+     "want_trend": false,
+     "want_examples": false,
+     "example_label": null,
+     "unsupported": "service_type"
+    }
+   },
+   "id": "G24"
+  },
+  {
+   "label": "X2/G25",
+   "question": "How many requests should we expect over the next 6 weeks?",
+   "at": "2026-10-13T18:03:34Z",
+   "http_status": 200,
+   "seconds": 3.5,
+   "error": "",
+   "response": {
+    "answer": "Forecast of total request volume, 6 weeks from 2026-08-31 to 2026-10-11 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-08-31: about 151 requests (80% range 131-173)\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\n- Week of 2026-10-05: about 172 requests (80% range 149-198)\nTotal over these 6 weeks: about 972 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for expected request volume over a future period."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": {
+     "request": {
+      "slice": "total",
+      "horizon_weeks": 6,
+      "period_start": null,
+      "period_end": null,
+      "want_history": false,
+      "unsupported": null
+     },
+     "as_of": "2026-08-30",
+     "trained_through": "2026-08-30",
+     "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+     "range_assumed": false,
+     "requested_first_week": "2026-08-31",
+     "requested_last_week": "2026-10-05",
+     "beyond_horizon_weeks": 0,
+     "weeks": [
+      {
+       "week_start": "2026-08-31",
+       "horizon": 1,
+       "band": "1-4",
+       "served": true,
+       "point": 150.86834642212153,
+       "lo80": 131.27271881218553,
+       "hi80": 173.38909529793656,
+       "lo95": 121.95177667779414,
+       "hi95": 186.64146248793276
+      },
+      {
+       "week_start": "2026-09-07",
+       "horizon": 2,
+       "band": "1-4",
+       "served": true,
+       "point": 155.50225491843807,
+       "lo80": 135.27665550477684,
+       "hi80": 178.75184150945415,
+       "lo95": 125.65760243110228,
+       "hi95": 192.43524320764632
+      },
+      {
+       "week_start": "2026-09-14",
+       "horizon": 3,
+       "band": "1-4",
+       "served": true,
+       "point": 160.177810048846,
+       "lo80": 139.31614241039813,
+       "hi80": 184.1633739503344,
+       "lo95": 129.39612060314806,
+       "hi95": 198.28207145972183
+      },
+      {
+       "week_start": "2026-09-21",
+       "horizon": 4,
+       "band": "1-4",
+       "served": true,
+       "point": 164.6502757650155,
+       "lo80": 143.1795109320367,
+       "hi80": 189.3407313170937,
+       "lo95": 132.97132075238622,
+       "hi95": 203.87639346666526
+      },
+      {
+       "week_start": "2026-09-28",
+       "horizon": 5,
+       "band": "5-13",
+       "served": true,
+       "point": 168.66202084016217,
+       "lo80": 146.64381552937115,
+       "hi80": 193.9862050860897,
+       "lo95": 136.17668778213553,
+       "hi95": 208.89682174821655
+      },
+      {
+       "week_start": "2026-10-05",
+       "horizon": 6,
+       "band": "5-13",
+       "served": true,
+       "point": 171.96256540810066,
+       "lo80": 149.4920974395783,
+       "hi80": 197.81061613432342,
+       "lo95": 138.81115212722267,
+       "hi95": 213.03132672389953
+      }
+     ],
+     "bands": {
+      "1-4": {
+       "served": true,
+       "shown_error": 13.575509695123564
+      },
+      "5-13": {
+       "served": true,
+       "shown_error": 5.488484131615858
+      }
+     },
+     "period_total": 971.823273402684,
+     "year_end_weeks": [],
+     "history": []
+    },
+    "task_id": "95977ba7-29ca-45d4-b201-3302ab9da4e3",
+    "trace_id": "7dbdb4e55b094c7bb46726d43160f56f",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G25"
+  },
+  {
+   "label": "X2/G26",
+   "question": "What does repair demand look like for October?",
+   "at": "2026-10-13T18:03:36Z",
+   "http_status": 200,
+   "seconds": 2.65,
+   "error": "",
+   "response": {
+    "answer": "Forecast of repair requests, 4 weeks from 2026-10-05 to 2026-11-01 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-10-05: about 62 requests (80% range 51-76)\n- Week of 2026-10-12: about 63 requests (80% range 51-77)\n- Week of 2026-10-19: about 63 requests (80% range 52-77)\n- Week of 2026-10-26: about 63 requests (80% range 51-77)\nTotal over these 4 weeks: about 251 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 10.8% on average.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for repair demand in October, which is in the future."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": {
+     "request": {
+      "slice": "repair",
+      "horizon_weeks": null,
+      "period_start": "2026-10-01",
+      "period_end": "2026-10-31",
+      "want_history": false,
+      "unsupported": null
+     },
+     "as_of": "2026-08-30",
+     "trained_through": "2026-08-30",
+     "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+     "range_assumed": false,
+     "requested_first_week": "2026-10-05",
+     "requested_last_week": "2026-10-26",
+     "beyond_horizon_weeks": 0,
+     "weeks": [
+      {
+       "week_start": "2026-10-05",
+       "horizon": 6,
+       "band": "5-13",
+       "served": true,
+       "point": 62.15323664792745,
+       "lo80": 50.72781969075188,
+       "hi80": 76.15199804295028,
+       "lo95": 45.55611124685167,
+       "hi95": 84.79707156919017
+      },
+      {
+       "week_start": "2026-10-12",
+       "horizon": 7,
+       "band": "5-13",
+       "served": true,
+       "point": 62.85756257878531,
+       "lo80": 51.2926076349029,
+       "hi80": 77.03007032649549,
+       "lo95": 46.058535207338174,
+       "hi95": 85.78373488344054
+      },
+      {
+       "week_start": "2026-10-19",
+       "horizon": 8,
+       "band": "5-13",
+       "served": true,
+       "point": 63.133458610192584,
+       "lo80": 51.50924394065159,
+       "hi80": 77.38093769493759,
+       "lo95": 46.24902594503015,
+       "hi95": 86.18200091007992
+      },
+      {
+       "week_start": "2026-10-26",
+       "horizon": 9,
+       "band": "5-13",
+       "served": true,
+       "point": 62.96020180986606,
+       "lo80": 51.36075739033171,
+       "hi80": 77.17929433582017,
+       "lo95": 46.11231451744706,
+       "hi95": 85.96373991245324
+      }
+     ],
+     "bands": {
+      "5-13": {
+       "served": true,
+       "shown_error": 10.844175610995082
+      }
+     },
+     "period_total": 251.1044596467714,
+     "year_end_weeks": [],
+     "history": []
+    },
+    "task_id": "2a7403ea-c57b-4708-9ae7-5a898686ff13",
+    "trace_id": "22667f81dab74b3c9195cf65e12a1e81",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G26"
+  },
+  {
+   "label": "X2/G27",
+   "question": "Forecast maintenance requests for next month",
+   "at": "2026-10-13T18:03:46Z",
+   "http_status": 200,
+   "seconds": 3.43,
+   "error": "",
+   "response": {
+    "answer": "Forecast of maintenance requests, 4 weeks from 2026-09-07 to 2026-10-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\nForecasts for maintenance requests at 1-4 weeks ahead aren't shown: they were off by 27.4% on held-out weeks.\nForecasts for maintenance requests at 5-13 weeks ahead aren't shown: they were off by 22.9% on held-out weeks.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for projected maintenance volumes for the upcoming month."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": {
+     "request": {
+      "slice": "maintenance",
+      "horizon_weeks": null,
+      "period_start": "2026-09-01",
+      "period_end": "2026-09-30",
+      "want_history": false,
+      "unsupported": null
+     },
+     "as_of": "2026-08-30",
+     "trained_through": "2026-08-30",
+     "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+     "range_assumed": false,
+     "requested_first_week": "2026-09-07",
+     "requested_last_week": "2026-09-28",
+     "beyond_horizon_weeks": 0,
+     "weeks": [
+      {
+       "week_start": "2026-09-07",
+       "horizon": 2,
+       "band": "1-4",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      },
+      {
+       "week_start": "2026-09-14",
+       "horizon": 3,
+       "band": "1-4",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      },
+      {
+       "week_start": "2026-09-21",
+       "horizon": 4,
+       "band": "1-4",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      },
+      {
+       "week_start": "2026-09-28",
+       "horizon": 5,
+       "band": "5-13",
+       "served": false,
+       "point": null,
+       "lo80": null,
+       "hi80": null,
+       "lo95": null,
+       "hi95": null
+      }
+     ],
+     "bands": {
+      "1-4": {
+       "served": false,
+       "shown_error": 27.41034379203255
+      },
+      "5-13": {
+       "served": false,
+       "shown_error": 22.920142370536908
+      }
+     },
+     "period_total": null,
+     "year_end_weeks": [],
+     "history": []
+    },
+    "task_id": "995c4553-3d38-4628-9823-f778739d4bb7",
+    "trace_id": "a09cfa52ff524dbaa0e8c809e3735d36",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G27"
+  },
+  {
+   "label": "X2/G28",
+   "question": "What will volume be in Q2 2027?",
+   "at": "2026-10-13T18:04:01Z",
+   "http_status": 200,
+   "seconds": 3.95,
+   "error": "",
+   "response": {
+    "answer": "Forecast of total request volume, 13 weeks from 2027-04-05 to 2027-07-04 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\nAll requested weeks fall beyond the 26-week forecast horizon, so none is forecast.",
+    "outcome": "answered",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for projected volume in a future quarter."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": {
+     "request": {
+      "slice": "total",
+      "horizon_weeks": null,
+      "period_start": "2027-04-01",
+      "period_end": "2027-06-30",
+      "want_history": false,
+      "unsupported": null
+     },
+     "as_of": "2026-08-30",
+     "trained_through": "2026-08-30",
+     "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+     "range_assumed": false,
+     "requested_first_week": "2027-04-05",
+     "requested_last_week": "2027-06-28",
+     "beyond_horizon_weeks": 13,
+     "weeks": [],
+     "bands": {},
+     "period_total": null,
+     "year_end_weeks": [],
+     "history": []
+    },
+    "task_id": "1705bbe5-512a-45e6-897c-363dbc24f657",
+    "trace_id": "fe0ff2c8124546ac8a46a27269b8c184",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": null
+   },
+   "id": "G28"
+  },
+  {
+   "label": "X2/G29",
+   "question": "Forecast request volume for the West region",
+   "at": "2026-10-13T18:04:04Z",
+   "http_status": 200,
+   "seconds": 3.68,
+   "error": "",
+   "response": {
+    "answer": "Forecasts can't be broken down by region. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "This question asks for future service request volumes in the West region."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "5bdbe2a5-85a2-4287-997c-d876ba3f3404",
+    "trace_id": "94aa5badf4654ee1b442facc4f293761",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": null,
+     "period_end": null,
+     "want_history": false,
+     "unsupported": "region"
+    }
+   },
+   "id": "G29"
+  },
+  {
+   "label": "X2/G30",
+   "question": "What was request volume last month?",
+   "at": "2026-10-13T18:04:15Z",
+   "http_status": 200,
+   "seconds": 5.9,
+   "error": "",
+   "response": {
+    "answer": "That metric isn't supported yet. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "Request volume for last month refers to past operational records."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "39e2e68f-7af4-4a23-82f4-d434b8d90579",
+    "trace_id": "81058b0991314357a75f5e174912e0f7",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "unsupported",
+     "group_by": null,
+     "technician_name": null,
+     "region": null,
+     "account_name": null,
+     "start": "2026-07-01",
+     "end": "2026-07-31"
+    }
+   },
+   "id": "G30"
+  },
+  {
+   "label": "X2/G31",
+   "question": "Can you reassign tomorrow's jobs from Jin Young to Ben Okafor?",
+   "at": "2026-10-13T18:04:21Z",
+   "http_status": 200,
+   "seconds": 2.2,
+   "error": "",
+   "response": {
+    "answer": "Sorry, that's outside what I can help with. I answer questions about this field-service operation's records: incident and quality reporting, customer sentiment, and request-volume forecasts.",
+    "outcome": "declined",
+    "reason": null,
+    "route": {
+     "route": "out_of_scope",
+     "domains": [],
+     "candidates": [],
+     "reason": "The system cannot modify data or reassign jobs."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": null,
+    "trace_id": "67c6899d772246f6bcf8ab0d7367e421",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "not_applicable",
+    "parsed_request": null
+   },
+   "id": "G31"
+  },
+  {
+   "label": "X2/G32",
+   "question": "What's the weather going to be in Chicago next week?",
+   "at": "2026-10-13T18:04:32Z",
+   "http_status": 200,
+   "seconds": 1.84,
+   "error": "",
+   "response": {
+    "answer": "Sorry, that's outside what I can help with. I answer questions about this field-service operation's records: incident and quality reporting, customer sentiment, and request-volume forecasts.",
+    "outcome": "declined",
+    "reason": null,
+    "route": {
+     "route": "out_of_scope",
+     "domains": [],
+     "candidates": [],
+     "reason": "The question asks about the weather, which is unrelated to field-service operations records."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": null,
+    "trace_id": "1d063581f4ba4aa2b227a2222d7109a4",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "not_applicable",
+    "parsed_request": null
+   },
+   "id": "G32"
+  },
+  {
+   "label": "X2/G33",
+   "question": "Are incidents and sentiment both getting worse in the Northeast?",
+   "at": "2026-10-13T18:04:44Z",
+   "http_status": 200,
+   "seconds": 2.38,
+   "error": "",
+   "response": {
+    "answer": "Your question covers more than one area: incident and quality reporting and customer feedback sentiment. I answer one area per question, so please ask about each separately.",
+    "outcome": "split_required",
+    "reason": null,
+    "route": {
+     "route": "multi_domain",
+     "domains": [
+      "reporting",
+      "sentiment"
+     ],
+     "candidates": [],
+     "reason": "The question asks about both incidents and customer sentiment in the Northeast region."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": null,
+    "trace_id": "1a9692a329a0448c86438f595ba0e366",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "not_applicable",
+    "parsed_request": null
+   },
+   "id": "G33"
+  },
+  {
+   "label": "X2/G34",
+   "question": "Give me SLA compliance and next month's volume forecast",
+   "at": "2026-10-13T18:04:54Z",
+   "http_status": 200,
+   "seconds": 1.57,
+   "error": "",
+   "response": {
+    "answer": "Your question covers more than one area: incident and quality reporting and operational forecasts (volumes, SLA outlook). I answer one area per question, so please ask about each separately.",
+    "outcome": "split_required",
+    "reason": null,
+    "route": {
+     "route": "multi_domain",
+     "domains": [
+      "reporting",
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks for past SLA compliance reporting and future volume forecasting."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": null,
+    "trace_id": "86dea58cd30b4189afb34ed9c33e2898",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "not_applicable",
+    "parsed_request": null
+   },
+   "id": "G34"
+  },
+  {
+   "label": "X2/G35",
+   "question": "How's the Southeast doing?",
+   "at": "2026-10-13T18:04:59Z",
+   "http_status": 200,
+   "seconds": 4.39,
+   "error": "",
+   "response": {
+    "answer": "That metric isn't supported yet. I can report incident counts, incident rate, SLA compliance and first-time fix rate over a date range, by account, region, service type or technician, or for one named technician (incident counts also by incident type or severity), optionally for one region (northeast, southeast, central or west) or one account; and which incident types, service types, regions, accounts or technicians have more repeat visits.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "reporting",
+     "domains": [
+      "reporting"
+     ],
+     "candidates": [],
+     "reason": "This is a general performance check on a region over a current period."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "76d3c167-ecb9-4b00-a4db-479185930591",
+    "trace_id": "6ccfd18d8b814e2d9c7f8ce5b3443238",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "metric": "unsupported",
+     "group_by": null,
+     "technician_name": null,
+     "region": "southeast",
+     "account_name": null,
+     "start": null,
+     "end": null
+    }
+   },
+   "id": "G35"
+  },
+  {
+   "label": "X2/G36",
+   "question": "Are we going to have more repeat visits next quarter?",
+   "at": "2026-10-13T18:05:08Z",
+   "http_status": 200,
+   "seconds": 4.56,
+   "error": "",
+   "response": {
+    "answer": "That isn't something I can forecast. I can forecast weekly request volume, in total or by service type (install, repair, maintenance, inspection, upgrade), up to 26 weeks ahead.",
+    "outcome": "not_available",
+    "reason": null,
+    "route": {
+     "route": "forecast",
+     "domains": [
+      "forecast"
+     ],
+     "candidates": [],
+     "reason": "The question asks about future repeat visit volumes for the next quarter."
+    },
+    "prompt_version": "route_v3",
+    "reporting": null,
+    "sentiment": null,
+    "forecast": null,
+    "task_id": "8a63a24a-0430-4e89-b9fb-91218c25f412",
+    "trace_id": "fdea9231c36343e8bec33aeeb7b02674",
+    "escalate": false,
+    "warning": null,
+    "unavailable_capability": null,
+    "qa_status": "verified",
+    "parsed_request": {
+     "slice": "total",
+     "horizon_weeks": null,
+     "period_start": "2026-10-01",
+     "period_end": "2026-12-31",
+     "want_history": false,
+     "unsupported": "other"
+    }
+   },
+   "id": "G36"
+  }
+ ]
+}
