@@ -157,7 +157,13 @@ class Caller:
 
     def token(self) -> str:
         if not self._token or time.time() - self._minted > TOKEN_TTL_S:
-            self._token = gcloud("auth", "print-identity-token", f"--audiences={ORCHESTRATOR_URL}")
+            # same rule as deploy/verify.py: an explicit audience only for a service account
+            aud = (
+                [f"--audiences={ORCHESTRATOR_URL}"]
+                if self.account.endswith("gserviceaccount.com")
+                else []
+            )
+            self._token = gcloud("auth", "print-identity-token", *aud)
             self._minted = time.time()
         return self._token
 
@@ -238,6 +244,7 @@ class Session:
         for t in self.lookups[:-1]:
             t.join()
         self.ledger.check(self._unresolved())
+        self.caller.token()  # mint before the request is counted: a failure here sends nothing
         self.ledger.sent(self.path_name, label)
         status, body, seconds, err = self.caller.ask(question)
         trace_id = body.get("trace_id") if isinstance(body, dict) else None
