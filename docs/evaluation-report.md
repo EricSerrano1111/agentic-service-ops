@@ -1002,3 +1002,9 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** the sets were generated once and frozen (ADR-094), and a third attempt in Sprint 5 is not allowed. Disclosed in the pre-registration before the gate ran. At this scale a gate that cannot see its known failure kind is a real weakness, not a portfolio choice.
 - **Fix (option):** a decline-heavy interpretation set (new, generated or owner-written, before any further prompt work), and a gate stated on it.
 - **Recorded in:** ADR-102; `evals/sprint5_gates.md` (B2 scope limits).
+
+### L-93 — Per-process model-call caps are not a spend ceiling (2026-10-13)
+- **What:** the deployed containers run on the paid key (ADR-104) with `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00` per process. The client counts these in memory, so they reset when an instance restarts or scales to zero, and each service can run several instances. The bound that actually holds is the gateway's 50-question daily cap (ADR-097), about 350 calls a day, plus the paid project's prepaid balance and budget alert (R-02), which were not re-verified on 2026-10-13.
+- **Why accepted:** at this scale the daily cap keeps worst-case spend to cents a day. A shared, persisted spend counter is a build with no payoff at that volume.
+- **Fix (option):** a billing budget with a programmatic stop on the paid project, or a counter in the database shared by the five services.
+- **Recorded in:** ADR-104.

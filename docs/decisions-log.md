@@ -3430,3 +3430,36 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 
 **Consequences:**
 - Prompt X reports against this state. Any difference found between the deployed services and this record is a finding, not something to correct silently.
+
+### ADR-104 — Deployed model calls use the paid key for the evaluation and grading window
+*Date: 2026-10-13. Supersedes ADR-048 in part (its per-session opt-in for paid mode, for the five deployed model-calling containers only) and ADR-103 in part (its recorded deploy-time `LLM_MODE`, free). Builds on ADR-041.*
+
+**Decision:** the five model-calling containers run with `LLM_MODE=paid` and read `GOOGLE_AI_API_KEY_PAID` from the new Secret Manager secret `gemini-api-key-paid`:
+- `orchestrator` in `ops-orchestrator`
+- `agent-reporting` in `ops-reporting`
+- `agent-sentiment` in `ops-sentiment`
+- `agent-forecast` in `ops-forecast`
+- `agent-qa` in `ops-qa`
+
+The per-process caps are `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00`. The secret's accessor is each of the five service accounts and no one else. The gateway, the MCP sidecars (none calls a model) and the free `GOOGLE_AI_API_KEY` reference are untouched, so a revert is one environment change. No image is rebuilt: the services keep the frozen image tag `9607fa72`, whose tree equals `eval-freeze-s5`.
+
+**Why:**
+- On 2026-10-13 the free tier returned `504 DEADLINE_EXCEEDED` for `gemini-3.5-flash-lite` from Cloud Run twice and from the owner's machine once. The paid key answered the same call with 200 in 1.85 s. That is one call per key, so it is a small sample: it shows the free tier failing that day, not a measured failure rate.
+- Prompt X has to run on the paid key against the deployed system (owner decision 3, 2026-10-10; Prompt W's pre-registration B3), so this switch was needed before X anyway.
+
+**What does not change:** answers. The model ID, thinking level (`minimal`), prompts, thresholds and code are the frozen ones (ADR-103). Free and paid serve the same model, and nothing recorded shows their outputs differ. What changes is availability and who is billed. ADR-103's "What may change after the freeze" is respected: this changes configuration only.
+
+**Spend controls, and their limit:**
+- The gateway's 50-question daily cap (ADR-097). Worst case is about 350 calls a day, about $0.35 a day at list price ($0.30 input and $2.50 output per 1M tokens).
+- The per-process caps above. They reset when an instance restarts or scales to zero, and each service can run several instances (the orchestrator's maximum is 3), so they are a guard against a runaway loop in one process, **not a ceiling**.
+- Prompt X's harness ledger, which has its own request and spend cap.
+- The paid project's controls as recorded on 2026-09-25 (risk register R-02): a $5 prepaid balance with auto-reload off, and a $10 project budget alert. They were not re-verified in this session: the Cloud Billing Budget API is not enabled in the deploy project, so budgets could not be listed, and the paid key's project is separate (ADR-041). Re-verify them in the Billing console before the grading window.
+
+**Duration:** until the Sprint 5 close decides the grading window. After that the choice is to keep paid (today's evidence says the free tier is unreliable) or revert to free. That is the close's decision, not this one's.
+
+**Repo and deploy drift:** `deploy/cloudrun/*.yaml` still say `LLM_MODE: free` and reference only `gemini-api-key`. The Cloud Build trigger is disabled, so they are not applied. They are synced to paid after Prompt X, in the same PR as the other post-freeze fixes. Until then the deployed configuration is the record of truth and this ADR documents it. `evals/freeze_s5.json` records the image tag and the code and is unaffected.
+
+**Consequences:**
+- Every model call from the deployed system is now billed at list price. At the daily cap that is cents; R-02's paid-spend exposure now includes deployed traffic.
+- The owner's own browser questions bill to the paid key.
+- L-93 is added to the Limitations log: the per-process caps are not a ceiling.
