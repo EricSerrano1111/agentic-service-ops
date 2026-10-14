@@ -78,6 +78,7 @@ def test_a_docs_only_change_cannot_deploy():
         "CLAUDE.md",
         "deploy/README.md",
         "deploy/RUNBOOK_V.md",
+        "deploy/RUNBOOK_GRADING.md",
         "services/api_gateway/README.md",
     ]
     assert not builds(changed)
@@ -93,6 +94,8 @@ def test_a_docs_change_alongside_code_still_builds():
     "path",
     [
         "services/orchestrator/prompts/route_v5.md",  # baked into the image: must redeploy
+        "services/orchestrator/prompts/route_v3.md",
+        "web/app/page.tsx",
         "services/agent_reporting/prompts/parse_v4.md",
         "services/agent_qa/src/agent_qa/forecast.py",
         "services/api_gateway/src/api_gateway/app.py",

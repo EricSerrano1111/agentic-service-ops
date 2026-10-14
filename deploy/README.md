@@ -180,6 +180,13 @@ account. The trigger lives in **us-central1**, the region of the Cloud Build 2nd
 `cloudbuild.yaml` (`_AR_REPO`, the four service accounts, `_REGION`, `_POSTGRES_DB`,
 `_RUN_VERIFY`) and the trigger may override them. An empty one fails the render step.
 
+*Note, 2026-10-14 (Z2b):* the ignore list now has `deploy/**/*.md` in place of the single
+`deploy/RUNBOOK_V.md`. `deploy/RUNBOOK_GRADING.md` matched `deploy/**` and was not ignored, so a
+docs-only edit to it would have started a deploy. Markdown elsewhere is still not ignored (the
+prompts under `services/*/prompts/` are `.md` and are baked into the images).
+`tests/unit/test_deploy_trigger.py` covers both sides. The live trigger takes the change at the
+next import of `trigger_full.yaml`.
+
 ## What `verify.py` checks
 
 1. Each service's serving revision is the one just deployed (images tagged with the commit
