@@ -16,7 +16,7 @@
 |---|---|---|---|---|---|
 | R-01 | Process | Solo build — no peer review | High | Medium | Mitigating |
 | R-02 | Budget | Runtime budget depends on unconfirmed Google AI credit coverage (credits ruled out 2026-09-22; exposure is now free-tier limits and paid spend) | Medium | High | Mitigating |
-| R-03 | Deployment | Cloud Run build/deploy decoupling (recurred before) | High | Medium | Monitoring |
+| R-03 | Deployment | Cloud Run build/deploy decoupling (recurred before) | High | Medium | Closed |
 | R-04 | ML / Verification | Sentiment task has weak natural verifiability | Medium | High | Mitigating |
 | R-05 | Cost / Technical | QA retry loop cost or latency runaway | Medium | Medium | Mitigating |
 | R-06 | Schedule / Scope | A2A overhead consumes disproportionate solo dev time | Medium | Medium | Closed |
@@ -28,12 +28,13 @@
 | R-12 | Technical / External | MCP/A2A ecosystem churn breaks a dependency | Medium | Medium | Mitigating |
 | R-13 | Data / ML | Generated comments don't match their requested sentiment | Medium | High | Mitigating |
 | R-14 | Technical / Deployment | Environment parity: everything verified only on local Docker Postgres with a true superuser | Medium | Medium | Monitoring |
-| R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Mitigating |
+| R-15 | External / Technical | Provider capacity: free-tier "high demand" 503s on the orchestrator's model, the first hop of every request | Low | High | Realized |
 | R-16 | Evaluation | Evaluation validity: small, partly non-blind development sets and run-to-run variance make measured differences possibly noise | High | Medium | Open |
 | R-17 | Technical / Environment | Local environment memory exhaustion (WSL/Docker) | High | Medium | Open |
 | R-18 | Verification / Evaluation | Misinterpreted questions pass as verified | Medium | High | Open |
-| R-19 | Deployment / ML | The sentiment model weights have no path into a Cloud Run image, so `ops-sentiment` cannot start | High | Medium | Monitoring |
-| R-20 | Technical / Deployment | Cloud SQL `max_connections` (60 on `db-f1-micro`) is exceeded by instance fan-out during a rollout | Low | Medium | Mitigating |
+| R-19 | Deployment / ML | The sentiment model weights have no path into a Cloud Run image, so `ops-sentiment` cannot start | High | Medium | Closed |
+| R-20 | Technical / Deployment | Cloud SQL `max_connections` (60 on `db-f1-micro`) is exceeded by instance fan-out during a rollout | Low | Medium | Monitoring |
+| R-21 | Budget / Availability | Paid balance runs out during a grading window | Medium | High | Open |
 
 ---
 
@@ -68,6 +69,8 @@
 
 **Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. No paid model call was made in Sprint 4: the deploy window, the interpretation gate, the end-to-end runs and the loop checks used the free key. GCP billing for 2026-10-01 to 10-09 was $0.29 gross and $0.08 net (owner, Billing), covering the deploy window and storage. The Sprint 4 item that prices a full routing eval run is done: about $0.30 for 150 end-to-end requests at paid Flash-Lite list prices, with the Pro-for-QA test's ~$20-30 as a ceiling (architecture §9; official pricing page read 2026-10-10). Status stays Mitigating.
 
+**Update 2026-10-13 (Sprint 5 close):** Paid spend this sprint, as list-price estimates (L-71): W $0.2719 (ADR-103, `evals/results/sprint5_w_ledger.json`) and X $0.1727 for 186 requests (`sprint5_x_ledger.json`). V3 about $0.0015 (3 paid `verify.py` calls, `docs/deploy-window-log.md` (2026-10-12/13)); the three smoke questions are not itemised. Owner-reported in the Prompt Y brief, not in a file in the repo: Q about $0.16. The prepaid balance is about $2.9 after X (the owner's figure in the brief; it is an estimate from list-price spend, not read from Billing, and ADR-104 recorded the budget as not re-verified). Auto-reload is off. The paid key is now the deployed system's spend path (ADR-104, ADR-105), bounded by the gateway's 50-question daily cap (about $0.35 a day at the cap), not by the per-process caps (L-93). The balance is below the $5 minimum ADR-105 sets before a window, so a top-up is due before the first one (R-21). Status stays Mitigating.
+
 ### R-03 — Cloud Run build/deploy decoupling
 **Description:** A prior academic project hit successful Cloud Builds that didn't produce active Cloud Run revisions — a decoupled build/deploy pipeline. Same deployment target, same failure mode plausible.
 **Mitigation:** Wire an explicit Cloud Build trigger → deploy step rather than an image push alone; verify revision promotion immediately on the first Sprint 5 deploy rather than waiting until later to check.
@@ -82,6 +85,8 @@
 **Update 2026-10-08 (deploy window, ADR-084):** **Not realised.** The pipeline built, deployed and verified its own revision on day one: build 5a181fa1 (commit `1a3f1e3`) produced `ops-orchestrator-00004-c6f` and `ops-reporting-00004-5kz`, each at 100% traffic, and its `verify.py` step passed every check. The failure mode this risk names, a successful build with no active revision, did not occur. Two nearby problems did: a merge to `main` while the database was stopped produced a revision that failed its readiness probe (no traffic moved, L-65), and the pipeline deploys before it verifies, so a revision that fails verification keeps serving (L-64). Status: Open to Monitoring; it closes after the Sprint 5 deploy of all services.
 
 **Update 2026-10-10 (Sprint 4 boundary review):** Not realised in the reporting-slice deploy (2026-10-08; see that update). Monitoring until the Sprint 5 deploy of every service, which re-runs the revision check; the trigger is disabled between windows (ADR-083). Status stays Monitoring.
+
+**Update 2026-10-13 (Sprint 5 close):** **Not realised; closed.** The Sprint 5 deploy of all six services ran one service at a time, and traffic was verified at 100% on every service (step 5e and the serving-revisions check, `docs/deploy-window-log.md` (2026-10-12/13)); the one-at-a-time order is owner-reported in the Prompt Y brief. `evals/results/sprint5_x.md` records six revisions identical at the start and the end of the X run. The 2026-10-08 update set the close at this deploy. Reopen trigger: a build that succeeds with no serving revision, or the build trigger enabled again (Sprint 6) without the revision check. Status: Monitoring to Closed.
 
 ### R-04 — Sentiment task has weak natural verifiability
 **Description:** Unlike reporting (deterministic) or forecasting (standard backtest metrics), sentiment has no natural ground truth. A QA check that just re-runs the same model is circular and proves nothing.
@@ -113,6 +118,8 @@
 **Update 2026-10-10 (Sprint 4 boundary review):** Confirmed. The 2026-10-10 update above stands. The interpretation re-ask, the path that multiplies calls, is built and tested but cannot run live while the check is advisory (L-74), so the worst case is still untested on real traffic; the trigger is the day `QA_INTERP_MODE=enforce` is turned on. Status stays Mitigating.
 
 **Update 2026-10-12 (Prompt U, deploy readiness):** the cold-start measurement is planned in `deploy/RUNBOOK_V.md` step 12: one `/healthz` per service in chain order after 15 minutes idle, then one real question after another 15 minutes, against the 120 s deadline (ADR-034). The chain is now six services deep (gateway, orchestrator, a specialist, QA), each at `min_instances=0`; the sentiment sidecar's start-up hash of 438 MB cannot be measured until R-19 is decided. Nothing has been measured yet.
+
+**Update 2026-10-13 (Sprint 5 close):** The cold-start chain was measured: the cold-start question took 55.87 s in the browser (54.47 s at the gateway) after 15 minutes idle, against the 120 s ceiling (ADR-034): new instances at the gateway, orchestrator, reporting (about 20 s start) and QA (about 14 s start), each model call about 1.5 s (`docs/deploy-window-log.md` (2026-10-12/13)). The second idle wait is a Sprint 6 backlog item. Warm latency in the X runs: golden median 3.93 s, max 5.9 s; routing per-run median 3.5 to 3.8 s, p95 5.1 to 17.6 s; nothing over 120 s. The retry loop's worst case is still not exercised on live traffic: the interpretation check stays advisory (ADR-102). Status stays Mitigating.
 
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
@@ -269,6 +276,8 @@
 
 **Update 2026-10-10 (Sprint 4 boundary review):** No 503 is recorded in the sprint log or its notes for Sprint 4's live calls (the deploy window, the gate and end-to-end runs and the two loop checks, all on the free key). One sprint is too little to call it. Status stays Mitigating.
 
+**Update 2026-10-13 (Sprint 5 close):** **Realised**, in a related form. The free tier returned `504 DEADLINE_EXCEEDED` for `gemini-3.5-flash-lite` from Cloud Run twice and from the owner's machine once; the paid key answered the same call with 200 in 1.85 s (ADR-104). That is one call per key, so it shows the free tier failing that day, not a failure rate. It is a deadline error, not the 503 "high demand" this entry names, but the exposure is the same: the first hop of every request. Mitigation: ADR-104 moved the five model-calling services to the paid key and ADR-105 keeps it. Status: Mitigating to Realized (mitigated by ADR-104).
+
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
 **Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.
@@ -279,6 +288,8 @@
 **Update 2026-10-10 (Sprint 4 boundary review):** New evidence, and it points the same way. The interpretation gate was judged on assistant-drafted pairs (L-69, L-74): both prompts failed, and the 84 pairs are now used up as a confirmation set. The fault catalogue is not blind (L-85), and consistent misparses were caught 0 of 71, so the QA numbers are upper bounds on what an independent reviewer would find. Measurement 2 (223 of 223) is the weaker of the two measurements: the fixes were designed from measurement 1's misses (ADR-092). Mitigation: the owner-written sets in Sprint 5 (held-out routing, a fresh FR-03 set, a fresh interpretation set, an option for owner-written faults). Status stays Open, likelihood High.
 
 **Update 2026-10-11 (ADR-094):** The mitigation moves to the sets generated under ADR-094 (a held-out routing set, a fresh FR-03 set, a fresh interpretation set), written by an independent model, `gemini-3.8-flash`, from a fixed brief, not by the owner. They are blind to the system but not to the assistant's framing of the domain. **New evidence:** the generator is in the same model family as the system's models (`gemini-3.5-flash-lite`), so phrasing that the family finds easy may inflate accuracy (L-86). Status stays Open.
+
+**Update 2026-10-13 (Sprint 5 close):** The mitigation ran. Held-out routing: 38, 38, 38 of 50 with no flipping items, and 38, 38, 38 of 43 without the 7 ambiguous items. Golden: 29 of 36 mechanical and 31 of 36 on the owner's judgement. The routing range was zero over three runs, so run-to-run variance did not move that figure on this set. The validity concerns stand: the generated sets come from the system's own model family (L-86), persona drops weight them towards broad questions, and the golden set's owner-written items score lower than the drafted ones (mechanical 6 of 10 against 23 of 26; owner 7 of 10 against 24 of 26), which is the check L-54 describes on drafted items favouring the system's phrasing. Ten and 26 items are too few to size that gap. Both sets are now spent for blind use. Status stays Open.
 
 ### R-17 — Local environment memory exhaustion (WSL/Docker)
 *Added 2026-10-05, from the owner's Sprint 3 final retro review.*
@@ -297,6 +308,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 
 **Update 2026-10-10 (Sprint 4 boundary review):** **The review trigger was this close.** One dated incident is recorded (2026-10-08, a full-stack `docker compose up -d --build` that left stale `Dead` and `Created` containers and ran past 10 minutes), and the first two mitigations are verified (`memory=6GB`, `autoMemoryReclaim=dropcache`, Docker data on `D:`). Observed on 2026-10-10, during the fault-injection loop demonstration: a full-stack `docker compose up -d --build` (the Postgres container showed `Dead`, others `Created`) took about 10 minutes and then came up healthy with no intervention and no data loss. **Recorded as a probable recurrence** of the 2026-10-08 incident: the same symptom, memory not measured. **Owner (2026-10-10):** no memory incidents on 2026-10-08 to 10-10 beyond the 10-08 incident. Status stays Open, likelihood High. **Mitigation added:** on recurrence, capture `docker stats` and the host's memory before recovering, so the next incident is measured, not inferred.
 
+**Update 2026-10-13 (Sprint 5 close):** No recurrence in Sprint 5 (owner-reported in the Prompt Y brief; no dated incident or `docker stats` capture is recorded in the repo). The local database was started for the data-parity check (`sprint5_x.md`, deviation 4) with no problem recorded. Status stays Open: one sprint without an incident does not move likelihood.
+
 ### R-18 — Misinterpreted questions pass as verified
 *Added 2026-10-10 (Sprint 4 boundary review).*
 **Description:** QA recomputes the figures for the request the specialist *parsed*; whether the parse matches the question is the interpretation check's job, and that check is advisory (L-74). A wrong month, region, metric, slice or label therefore returns an answer whose figures are right for the wrong question, marked `verified`. Users and the evaluation can read `verified` as "answered correctly".
@@ -310,6 +323,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 **Update 2026-10-11:** the answer-time forecast check named in the mitigation (L-83(a)) is built (ADR-095): QA recomputes served forecast numbers from the stored parameters. Measurement 3 still catches consistent misparses 0 of 71; the check does not catch the parse itself, as stated here.
 **Update 2026-10-12:** the single-screen UI built under ADR-097 shows an "Interpreted as:" line with every answer, and every decline that carries a parsed request: the measure, the resolved dates (and whether they were assumed), the region ("all regions", or "region not recognised"), account or technician, breakdown and forecast horizon (data dictionary §6, "Answer display (UI)"). It is the user's check on a misparse, which the mitigation above relied on the answer text alone to provide. The risk itself is unchanged: the line shows how the question was read, it does not make the reading correct, and `qa_status: verified` is worded "Figures checked for the request as interpreted" (L-74). Status stays Open.
 
+**Update 2026-10-13 (Sprint 5 close):** The "Interpreted as:" line is deployed with the gateway (ADR-097; revision `ops-gateway-00001-8st`). The interpretation check is still advisory with `qa_interp_v2`: the Sprint 5 gate failed on (a), 3 false rejects of 23 against at most 1 (ADR-102), and the frozen gate holds one decline pair (L-92). The golden run shows the same exposure in a milder form: "district" (G03) and "end of next year" (G07) were resolved by the system's own reading and shown, not asked (L-95). Status stays Open.
+
 ### R-19 — The sentiment model weights have no path into a Cloud Run image
 *Added 2026-10-12 (Prompt U, deploy readiness).*
 **Description:** `mcp_feedback` hash-checks every file its manifest lists, including the 438 MB `model.safetensors`, at start-up and refuses to start if one is missing (ADR-066, ADR-067); it then loads BERT lazily for any comment in range without a stored prediction. The weights are gitignored (`/models/`), and the build trigger builds from git. ADR-062's Cloud Storage path was never built: no bucket exists (read 2026-10-12). A built `mcp-feedback` image therefore cannot start, and `ops-sentiment` cannot serve.
@@ -317,6 +332,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 **Mitigation:** the `ops-sentiment` definition is written and tested; its image build and deploy are gated behind `_DEPLOY_SENTIMENT=false` and marked BLOCKED in `plan_full.py` and the runbook, so the rest deploys. Until decided, a sentiment question answers "The data service is unavailable right now." Owner's choice: (A) ADR-062 as written: a bucket, a build step that pulls the pinned weights, read access for the build account (about 440 MB plus torch in the image; the start-up hash of 438 MB counts against the 120 s deadline, R-05); or (B) stored predictions only after a complete backfill, which drops on-demand scoring and relaxes the start-up check and needs its own ADR.
 **Review trigger:** the owner's decision; the Prompt V window.
 **Update 2026-10-12 (Prompt U2, ADR-100):** the owner chose (B). Deployed sentiment reads stored predictions only (`MCP_FEEDBACK_SCORING=stored_only`): the `stored` image target has no torch and no weights, the start-up check covers the manifest, and a comment in range without a stored prediction fails closed (`predictions_incomplete`). The blocker is removed: `_DEPLOY_SENTIMENT` is `true` and sentiment deploys with the other five. Coverage on the local database is complete (7,521 of 7,521, one model version, fingerprint `a340b82d…e259f`), so answers are identical to the lazy path. **Status: Monitoring** (the mitigation is in place in code and config; nothing is deployed yet). What is watched: the Cloud SQL backfill's fingerprint must match the local value; on a mismatch sentiment does not deploy (runbook step 4). Close it when the service is verified serving. R-05's cold start for this service no longer includes a 438 MB hash.
+
+**Update 2026-10-13 (Sprint 5 close):** **Closed.** Sentiment is deployed (`ops-sentiment-00002-cxz`, `stored_only`, ADR-100) and serving: the golden items G04, G20, G21 and G22 answered on the deployed system, and the counts, shares and flagged counts of G04, G20 and G21 equal the oracle (`golden_assistant_reading.md`, check notes). That is the close condition above. The completeness evidence is the data-parity check (`sprint5_x.md`, deviation 4): `sentiment_predictions` on Cloud SQL equals the local table in row count and in per-table and per-column hashes ordered by primary key (`evals/results/sprint5_x/data_parity_cloud.json`, `data_parity_local.json`). The runbook step 4 fingerprint (`a340b82d…e259f`) matched exactly after the backfill and again after the 2026-10-13 database start (`docs/deploy-window-log.md` (2026-10-12/13)). What replaces this risk is L-91 (a comment added after the backfill makes its range fail closed). Status: Monitoring to Closed.
 
 ### R-20 — Cloud SQL connection ceiling during a rollout
 *Added 2026-10-12 (Prompt U, ADR-099).*
@@ -326,9 +343,24 @@ The same steps are in the README's "Local environment recovery". Check the memor
 **Review trigger:** the Prompt V window.
 **Update 2026-10-12 (Prompt U2, runbook):** the services are deployed one at a time, each waiting for its revision to be ready and at 100% traffic before the next starts (`cloudbuild.yaml` chains the deploy steps and `deploy_service.py` waits for the operation; 5e verifies the traffic). With one service mid-deploy the worst case is 3 × 2 + 4 = 10 instances × 4 = 40 connections, 50 with the 10 reserved, 54 with the owner's 4 sessions, against 60 (headroom 6). ADR-099's all-at-once ceiling was 78. A bound, not an expectation: pools open on demand. Status: Mitigating until the deploy is run.
 
+**Update 2026-10-13 (Sprint 5 close):** The services were deployed one at a time (owner-reported in the Prompt Y brief), the mitigation of the 2026-10-12 update. A count of `too many connections` lines in the service logs is not recorded in the repo, so this entry does not claim there were none. ADR-105 stops `ops-db` outside grading windows, which removes the exposure while it is stopped. Status: Mitigating to Monitoring.
+
+### R-21 — Paid balance runs out during a grading window
+*Added 2026-10-13 (Sprint 5 close; ADR-104, ADR-105).*
+**Description:** The deployed system's model calls run on the paid key. If the prepaid balance reaches zero, every question fails while the services and the database are up, so the grader sees an unavailable system in the one period it most needs to answer. The balance is about $2.9 (R-02, an estimate), below the $5 minimum ADR-105 sets before a window, and auto-reload is off.
+**Likelihood / Impact:** Medium (spend is small, but the balance is not watched and auto-reload is off) / High (a failed window, not a wrong figure). **Status:** Open.
+**Mitigation:**
+- Top up to at least $5 before each window, checked in the Billing console (ADR-105).
+- The gateway's 50-question daily cap (ADR-097) bounds spend at about $0.35 a day (ADR-104).
+- Paid mode fails closed: `LLM_MODE=paid` refuses to start without its own key and caps (`packages/llm/src/llm/config.py`) and does not take the free key. What a service does on an exhausted balance at call time has not been tested.
+**Review trigger:** before each grading window; any budget alert.
+
 ---
 
 ## Closed / Realized Risks
 *(move entries here as they resolve, with the outcome noted — this becomes useful evidence for the evaluation report's lessons-learned section)*
 
 - **R-06 — A2A overhead consumes disproportionate solo dev time.** Closed 2026-09-30: did not materialise (both checkpoints met early, low SDK friction). The detail and reopen trigger stay under R-06 above.
+- **R-03 — Cloud Run build/deploy decoupling.** Closed 2026-10-13: did not materialise in either deploy (the 2026-10-08 slice and the Sprint 5 full deploy; traffic verified at 100%). The detail and reopen trigger stay under R-03 above.
+- **R-15 — Provider capacity.** Realized 2026-10-13: the free tier returned 504s; mitigated by moving the deployed services to the paid key (ADR-104, ADR-105). The detail stays under R-15 above.
+- **R-19 — The sentiment model weights have no path into a Cloud Run image.** Closed 2026-10-13: resolved by ADR-100 and verified serving. The detail stays under R-19 above.

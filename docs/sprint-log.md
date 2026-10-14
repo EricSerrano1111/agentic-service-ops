@@ -854,23 +854,30 @@ now written; they record the planning decisions above.*
 **Goal (increment):** Deployed system with a working UI; routing accuracy reported with failure analysis.
 
 **Planned:**
-- [ ] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
-- [ ] Held-out routing set (never used to revise a prompt), written by Eric
+- [x] Routing eval harness + failure-case analysis (ambiguous, multi-domain, and out-of-scope intents included)
+  *2026-10-13 (Sprint 5 close): done.* Harness `evals/results/sprint5_x/harness.py` and scorers (`score_routing.py`, `score_golden.py`), the pre-registered scoring (`golden_scoring.md`, `evals/sprint5_gates.md`), and the failure analysis `evals/results/sprint5_failure_analysis.md` (ambiguous, multi-domain and out-of-scope intents included; data in `sprint5_failure_data.md`).
+- [x] Held-out routing set (never used to revise a prompt), written by Eric
   *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `routing_heldout_v1` (`evals/generated/`).*
   *2026-10-11: frozen, commit `8ed47771fa084794fe663506ae489339f5db4459`: `routing_heldout_v1`, 50 items (target 50), 3 owner drops at the skim replaced from skimmed-Y reserve items of the same category. Final sets are append-never; a change is a `_v2` under a new ADR. Hashes: `evals/generated/manifest.json`.*
   *2026-10-12 (Prompt W, ADR-103): **evaluation freeze.** The system Prompt X measures is recorded in `evals/freeze_s5.json` (commit `1d105ea`, every prompt file's SHA-256, models and thinking levels, mode flags, caps, the data dictionary's hash, default router `route_v3`) and checked by `tests/unit/test_eval_freeze.py`; tag `eval-freeze-s5`. Both Sprint 5 gates failed (ADR-101, ADR-102), so the frozen system keeps `route_v3` and the advisory interpretation check. Scoring for X is pre-registered in `evals/sprint5_gates.md` (B3). Not ticked: Prompt X runs the held-out set.*
   *2026-10-13 (Prompt X): **held-out routing run on the deployed, frozen system (images `9607fa72`, paid mode, `route_v3`).** `routing_heldout_v1`, k=3: 38, 38, 38 of 50 correct (range 38 to 38, no flipping items); 38, 38, 38 of 43 without the 7 ambiguous items (labelled as such). All 21 ambiguous item-runs are wrong by construction under `route_v3` ("ambiguous not flagged"); the other wrong item-runs are 15, all "out-of-scope accepted" (5 items: OOS-01, OOS-03, OOS-14, NM-14, NM-20). No wrong area, false ambiguous, multi-domain miss or error. Per-run median latency 3.5 to 3.8 s, p95 5.1 to 17.6 s; none over 120 s. Not ticked (Prompt Y). The set is now spent for blind use. Data: `evals/results/sprint5_x.md`, `evals/results/sprint5_failure_data.md`.*
+  *2026-10-13 (Sprint 5 close): done, with the disclosure.* `routing_heldout_v1` (50 items) was run once, k=3, on the deployed frozen system: 38, 38, 38 of 50, no flipping items; 38 of 43 without the 7 ambiguous items. It was generated under ADR-094, not written by Eric, and is now spent for blind use (L-86 update). Summary: `evals/results/sprint5_summary.md`.
 - [ ] Run the real-data QA suites on Cloud SQL after the sentiment predictions backfill there (`tests/integration/test_qa_sentiment_agrees.py` and the sentiment figures suites): locally they need the stored predictions, so CI skips them (L-78). *Added 2026-10-09.*
+  *2026-10-13 (Sprint 5 close): not done; carried to Sprint 6.* The scoped L-78 run on Cloud SQL needs a reviewed credential plan (Sprint 6 backlog). The sentiment oracle's counts were checked against the deployed system by the golden run instead (G04, G20, G21 equal the oracle), which is not the same suites.
 - [ ] A second interpretation-gate attempt for QA's check (L-74), **only on an owner-written set** of question and parsed-request pairs, with a new pre-registered gate; the 84 assistant-drafted pairs have been used to judge `qa_interp_v1` and `v2` and can't confirm a third prompt. Review the 13 rejected correct pairs listed in L-74 first. *Added 2026-10-09.*
   *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `interp_fresh_v1`; the pairs are built from `intent` at the freeze, not yet.*
   *2026-10-11: frozen, commit `8ed47771fa084794fe663506ae489339f5db4459`: `interp_fresh_v1`, 23 items (target 24; reporting 10, forecast 7, sentiment 6: one sentiment slot had no eligible reserve item, so the set is one short) and `interp_pairs_v1`, 46 pairs (23 correct, 23 wrong; `pairs_plan.md`, committed before the pairs were built). 3 items had a field with no documented request representation or no applicable mutation and were removed; 2 were refilled from the reserve by plan.md's rule.*
   *2026-10-12 (Prompt W, ADR-102): **gate failed; the check stays advisory with `qa_interp_v2` (L-74 stands, L-92 opened). Not ticked.** The frozen pairs are not owner-written (ADR-094). The check also covers sentiment (ADR-090), so the gate ran on all three domains (23 correct, 23 wrong; reporting 10, forecast 7, sentiment 6 per role) and its cap was raised from 522 to 561 before any call. One revision, `qa_interp_v3` (`07ca35b`). Criteria restated as rates, strict rounding: at most 1 false reject of 23, at least 19 of 23 caught, all 3 runs. Run 1 (46 calls): 3 false rejects (a) FAIL, 19 caught (b) PASS; runs 2 and 3 not made, as pre-registered. Development diagnostic, not held-out: 3 false rejects on 7 decline pairs of the used set (the frozen gate has 1 decline pair, L-92).*
-- [ ] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.* The tie order for rate breakdowns changed too (L-72 ruling 2: worse rate, then the larger denominator, then the name), so a golden item that expects a particular group in the top 25 of a tied breakdown may differ. *Added 2026-10-09.*
+  *2026-10-13 (Sprint 5 close): attempted and failed; stays open.* The attempt ran on generated pairs, not an owner-written set (ADR-094), and failed on (a) (ADR-102). A further attempt needs a decline-heavy interpretation set first (L-92). Not carried as a planned Sprint 6 item: the owner decides whether it is.
+- [x] Golden-set items about one region or one account may have a different correct answer after ADR-086: check them at the evaluation and make a `golden_v3` with disclosure if needed (do not open the golden set before then). *Added 2026-10-08.* The tie order for rate breakdowns changed too (L-72 ruling 2: worse rate, then the larger denominator, then the name), so a golden item that expects a particular group in the top 25 of a tied breakdown may differ. *Added 2026-10-09.*
   *2026-10-13 (Prompt X): **first `golden_v2` run, deployed system.** Mechanical score 29 of 36 (`evals/results/sprint5_x/golden_scoring.md`, fixed before the run); `must` / `must_not` are with the owner (`golden_owner_review.csv`). Stretch items: G02, G04, G10 pass the mechanical score; G05 fails (range). G35 fails as expected (L-58). The region, account and tie-order items (G04, G20, G21, G12, G13, G18) equal the oracle; **no expectation looks wrong for those reasons**, so no `golden_v3` is called for by them. Other failures: G03 ("district" read as an unsupported breakdown), G07 (period read as calendar 2027, 8 weeks shown), G08 (routed to forecast, declined there), G21 (p-value shown to 4 places; every other figure equal), G28 (`answered` with no weeks, item accepts `not_available`). Items whose expectation the owner may want to look at: G03, G07, G28 (`golden_assistant_reading.md`). Not ticked (Prompt Y).*
+  *2026-10-13 (Sprint 5 close): checked, no `golden_v3` called for by these.* G04, G20, G21 (one region), G12 (one account) and the tie-order items G12, G13, G18 equal the oracle on the deployed system (`golden_assistant_reading.md`, check notes). A `golden_v3` is in the Sprint 6 backlog for a different reason: the G21 scorer comparison (L-95).
 - [ ] An owner-written fresh set of region and account questions for the reporting parse (the `parse_v4` set was drafted by its prompt's author, L-69), used for any later prompt change. *Added 2026-10-08.*
   *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). Set: `parse_filters_v1` (optional, 12 filtered items).*
   *2026-10-11: frozen, commit `8ed47771fa084794fe663506ae489339f5db4459`: `parse_filters_v1`, 12 items (target 12), unchanged by the skim.*
-- [ ] Every routing eval reports k=3 runs: range and flipping items (L-17).
+  *2026-10-13 (Sprint 5 close): not used; unticked.* `parse_filters_v1` is frozen (12 items) but no reporting-parse prompt changed in Sprint 5, so nothing was measured on it. It was generated, not owner-written (ADR-094). It stays for any later parse prompt change.
+- [x] Every routing eval reports k=3 runs: range and flipping items (L-17).
+  *2026-10-13 (Sprint 5 close): done.* The FR-03 gate (ADR-101) and the held-out run (X) both ran k=3 and report range and flipping items (none flipped in X).
 - [ ] FR-03 (ambiguous questions not force-routed) is open (L-58, ADR-075, ADR-076). Any
   reattempt needs a new owner-written fresh set: `fr03_fresh_v1` has now been used to
   judge `route_v5` and can't confirm a revision made after seeing its results.
@@ -879,55 +886,136 @@ now written; they record the planning decisions above.*
   *2026-10-11: frozen, commit `8ed47771fa084794fe663506ae489339f5db4459`: `fr03_fresh_v2`, 16 items (target 16), 2 owner drops at the skim replaced from skimmed-Y reserve ambiguous items.*
   *2026-10-12 (Prompt W, ADR-101): **gate failed on (c); FR-03 stays open (L-58). Not ticked.** One revision, `route_v6` (`031426b`, written from used development material only, example-overlap test), run once on the frozen `fr03_fresh_v2` (8 ambiguous, 8 not; k=3 each for `route_v6` and `route_v3`; pre-registered at `458f105`, 2026-10-12 16:24 CDT, before the first gate call). (a) PASS (0 non-ambiguous routed `ambiguous`), (b1) PASS (43.00 against a floor of 42.00), (b2) PASS at the boundary (7.00 against 7.00), (c) **FAIL: 4 of 8** recognised in at least 2 of 3 runs (needed 6; AMB-08, AMB-11, AMB-17, AMB-18 missed in 3 of 3). `route_v3` stays the default; no further attempts in Sprint 5. 288 calls in all (A1 192, C1 96).*
   *Academic note for `05` (2026-10-12): FR-03 is still not met in the running system: on 8 fresh ambiguous questions the best revision (`route_v6`) recognised 4 and failed the pre-registered floor of 6, and the default router (`route_v3`) recognised 0 of 8; this is the same known-failing scenario as the `05` draft, with new evidence (ADR-101), not a change.*
+  *2026-10-13 (Sprint 5 close): attempted, failed, stays open.* `route_v6` failed (c), 4 of 8 against 6 (ADR-101). On the held-out set the 7 ambiguous items are wrong in all 21 item-runs under `route_v3`; golden G35 fails as predicted (L-58).
 - [ ] Rating cross-check sensitivity: flip a few percent of ratings to mimic real-world rating/text disagreement; report the QA catch rate with and without (L-24).
   *2026-10-10 (owner correction): still open. This item flips **ratings** (real-world rating/text disagreement with a correct classifier) and tests **false alarms** on correct answers, that is, whether the p0 = 1% floor is enough. The fault injection (ADR-091, K05 to K80) flipped **predictions** (classifier errors) and tested the **catch** side only: contradictions at 0.5, 1, 2, 4 and 8% of the covered set were caught 0/10, 0/10, 1/10, 8/10 and 10/10, matching the pre-registered rule in all 50 cases. That is evidence for the catch side; it says nothing about false alarms when the classifier is right and the ratings disagree.*
+  *2026-10-13 (Sprint 5 close): not done; unticked, not carried as a planned item.* The false-alarm side (L-24) stays unmeasured; the owner decides whether it goes to Sprint 6.
 - [ ] QA model comparison (Flash-Lite vs `gemini-3.1-pro-preview`): optional, buffer only (ADR-056).
-- [ ] FastAPI gateway + thin React UI
-  - [ ] Pin Next.js to the current patched release at build time (security release scheduled 2026-09-30); verify the version then.
+  *2026-10-13 (Sprint 5 close): not done.* Optional, buffer only (ADR-056). Left.
+- [x] FastAPI gateway + thin React UI
+  *2026-10-13 (Sprint 5 close): done and deployed.* PR #46 (ADR-097); the gateway runs as `ops-gateway-00001-8st`, one of the six services (`sprint5_x.md`). Access is by invite link, not IAP (ADR-097).
+  - [x] Pin Next.js to the current patched release at build time (security release scheduled 2026-09-30); verify the version then.
     *Source: https://nextjs.org/blog/tag/security. As of 2026-09-30 the patched releases are 16.3.8 (Active LTS) and 15.5.27 (Maintenance LTS).*
     *2026-10-12: built locally (branch `feat/gateway-ui`, PR open, not merged; nothing deployed, no GCP change). `services/api_gateway` (FastAPI: invite-link sign-in, session cookie, limits, `/api/ask` in front of the orchestrator, the static export at `/`), `web/` (a Next.js static export, one screen), `scripts/invites.py`, and a `gateway` compose service on 127.0.0.1:8080. Access control is ADR-097; the display rules are data dictionary §6, "Answer display (UI)". The orchestrator's `/ask` gains `parsed_request` for a decline (validated; no answer changes). Local smoke: three questions verified with the right "Interpreted as:" line; revocation and the logging check passed; the degraded path did not behave as expected (L-89).*
     *2026-10-12: **Next.js pinned to 16.3.8** (exact; `web/scripts/check-next-version.mjs` fails the build below it; `npm audit --omit=dev`: 0 vulnerabilities). Source and date read: the 2026-10-12 read of the GitHub Security Advisories API for vercel/next.js (GHSA-h694-7cp9-m8p3, patched 16.3.8; most of the 2026-09-30 advisories list their patched version only as `16.3.?`), the npm registry (16.3.8 published 2026-09-30; 15.5.27 the Maintenance backport; 16.4.0 published 2026-10-06, `latest`) and the nextjs.org blog index. The tag URL in the prompt, https://nextjs.org/blog/tag/security, returned 404 (Next.js moved it). 16.4.0 is not pinned: no advisory confirms its patch status. **Next.js announced an out-of-band security update for 2026-10-14** (two Critical and one High, in upstream dependencies; versions not yet published): Prompts U and V must re-read the advisories and raise `MIN_NEXT` before the deploy. A static export does not run Next.js's server code, so these do not apply to the deployed gateway (ADR-080); the pin stays anyway.*
     *2026-10-12 (Prompt U): corrected source. The tag URL above (`https://nextjs.org/blog/tag/security`) is dead (404 on 2026-10-12, Next.js moved it) and is not to be used. The sources actually used are the GitHub Security Advisories API for `vercel/next.js` (`https://api.github.com/repos/vercel/next.js/security-advisories`) and the npm registry (`npm view next dist-tags`). The out-of-band release announced for 2026-10-14 is not out yet: the runbook's pre-flight checks both at the window and bumps the pin only if an advisory confirms the patched version, else deploys 16.3.8.*
     *2026-10-12 (against the Sprint 5 plan): **Identity-Aware Proxy was replaced by invite-link access** (ADR-097). IAP was never recorded in an ADR; the grader's Northwestern address is on Microsoft 365, so a Google identity may not be available. Cost: the authentication code is ours (L-88).*
     *2026-10-12 (browser check, no model call): the gateway image and a headless Chromium (Playwright 1.55, Chromium 140) over the real export: a fresh invite link signs in, the fragment is cleared, the `__Host-session` cookie is `Secure`, `HttpOnly`, `SameSite=Strict` on `http://127.0.0.1`, a reload keeps the session, sign-out works, the 404 page renders, no horizontal scroll at 390 px, zero CSP violations; the inline scripts of `/` and `/404.html` are all in the served policy (no `unsafe-inline`). The first run found that a link opened in an already-loaded tab was not read (a same-document hash change); the page now also reads the fragment on `hashchange`. `/api/ask` was not used there; the answer strings were checked through the API.*
-- [ ] Extend deployment to all services; complete Cloud SQL migration
+  *2026-10-13 (Sprint 5 close): pinned to 16.3.8 on 2026-10-12 (see above).* The out-of-band release announced for 2026-10-14 is a Sprint 6 gateway-only redeploy (backlog); a static export does not run Next.js's server code (ADR-080).
+- [x] Extend deployment to all services; complete Cloud SQL migration
   *2026-10-12 (Prompt U, deploy readiness; local only, nothing deployed, no GCP change): ready except the sentiment service. ADR-098 (the `volume_v2` files baked into the forecast and QA images, 171-forecast clean check 0 mismatches) and ADR-099 (the six service definitions, `deploy/plan_full.py`, the connection arithmetic 46 of 60, `cloudbuild.yaml` and `deploy/trigger_full.yaml` extended to six services). The runbook is `deploy/RUNBOOK_V.md` (13 steps, about 3 h 55 min). **Blocked on the owner: `ops-sentiment`** (R-19, L-90), whose image cannot start without the 438 MB weights; it is skipped by `_DEPLOY_SENTIMENT=false`. The pricing pages could not be read, so the costs are estimates. The client-IP rule for Cloud Run is a documented gap (note under ADR-097).*
   *2026-10-12 (Prompt U2, ADR-100; local only, nothing deployed, no GCP change): **sentiment unblocked.** The owner chose option B: deployed sentiment reads stored, offline-scored predictions and the classifier is out of the request path (`MCP_FEEDBACK_SCORING=stored_only`; the `stored` image target has no torch and no weights; a gap in the stored predictions fails closed with `predictions_incomplete`). `_DEPLOY_SENTIMENT` is `true` and `ops-sentiment` deploys with the other five; its `mcp-feedback` container is 512 Mi (measured peak 96 MiB after 20 queries in the built image). R-19's blocker is removed; L-90 is resolved for serving and L-91 records what replaces it. The runbook is split into two sittings (Thu 10-15 about 1.5 h; Fri 10-16 about 2.5 h) and deploys one service at a time (R-20). Branch `feat/sentiment-stored-only`, PR open, not merged.*
+  *2026-10-13 (Sprint 5 close): done.* Six services deployed on frozen images tagged `9607fa72` (revisions `ops-forecast-00002-m79`, `ops-gateway-00001-8st`, `ops-orchestrator-00006-bvj`, `ops-qa-00003-hwq`, `ops-reporting-00006-md5`, `ops-sentiment-00002-cxz`; identical at the start and end of the X run). Cloud SQL: the eight tables the oracles read equal the local database in row counts and in per-table and per-column hashes, `sentiment_predictions` included (`evals/results/sprint5_x/data_parity_{local,cloud}.json`). `verify.py` 11 of 11 (3 paid calls, about $0.0015) and the per-step record are in `docs/deploy-window-log.md` (2026-10-12/13).
 - [ ] Re-enable the build trigger `deploy-reporting-slice` (disabled 2026-10-08, ADR-083) when the deploy is extended; the command is in `deploy/README.md`.
   *2026-10-12 (Prompt U): `deploy/trigger_full.yaml` (disabled; filters and substitutions for six services, `web/**`, the baked manifests and parameter files included; docs, READMEs and the runbook ignored; prompts still trigger). Apply and enable commands are in `deploy/RUNBOOK_V.md`, steps 5a and 8. The filter is tested offline (`tests/unit/test_deploy_trigger.py`).*
-- [ ] Backfill `sentiment_predictions` on Cloud SQL before the sentiment service deploys (`test_golden_oracles` skips without stored predictions; the load truncates them).
+  *2026-10-13 (Sprint 5 close): not done, by decision.* The trigger `deploy-reporting-slice` stays disabled outside deploy windows (ADR-105). Enabling it and the docs-only merge check are Sprint 6 backlog items.
+- [x] Backfill `sentiment_predictions` on Cloud SQL before the sentiment service deploys (`test_golden_oracles` skips without stored predictions; the load truncates them).
   *2026-10-12 (Prompt U): plan and check ready, not run. The backfill re-scores 7,521 comments with the local weights through `cloud-sql-proxy` as `app_sentiment` (about 15 min; it is not a row copy). `scripts/predictions_fingerprint.py` prints the count and a content hash (no timestamps); recorded locally: 7,521 rows, SHA-256 `a340b82d8af178173afae34cb17bb7f2a1e3a944baa879321f34c4ac137e259f`. It unblocks `test_golden_oracles` (sentiment oracle), `test_qa_baseline` and `test_qa_sentiment_agrees`. Commands: `deploy/RUNBOOK_V.md`, step 4. The sentiment service itself is blocked on R-19.*
-- [ ] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)
+  *2026-10-13 (Sprint 5 close): done.* `sentiment_predictions` on Cloud SQL matches the local table in rows and hashes (`data_parity_cloud.json`), and the deployed sentiment service answered G04, G20, G21 and G22 on stored predictions. The backfill fingerprint (7,521 rows, `a340b82d…e259f`, an exact match to local, twice) is in `docs/deploy-window-log.md` (2026-10-12/13).
+- [x] Verify revision promotion immediately after deploy (known failure mode from a prior project — see risk register)
+  *2026-10-13 (Sprint 5 close): done.* Traffic verified at 100% on every service (step 5e and the serving-revisions check after the paid-key switch, `docs/deploy-window-log.md` (2026-10-12/13)), and the six revisions were identical at the start and end of the X run (`sprint5_x.md`). R-03 closed.
 - [ ] Trace ID in web-server access logs (carried from Sprint 4, 2026-10-10): an access-log middleware in all seven servers and a trace-ID header on the A2A and MCP clients, with its own short ADR when built. Sprint 6 observability depends on it. *Source: the Sprint 4 backlog item of 2026-10-08.*
-- [ ] Decision: build or not an answer-time check that every served forecast number equals the model's own prediction, re-implemented in QA from the manifest's stored coefficients (L-83(a); a check against the model, not a prediction, so consistent with ADR-055). The owner leans towards building it, as the condition for "QA verifies forecasts" meaning more than arithmetic. *Source: ADR-092, L-83.*
+  *2026-10-13 (Sprint 5 close): not done; carried to Sprint 6.* Nothing changed after the freeze (ADR-103). Sprint 6 observability depends on it.
+- [x] Decision: build or not an answer-time check that every served forecast number equals the model's own prediction, re-implemented in QA from the manifest's stored coefficients (L-83(a); a check against the model, not a prediction, so consistent with ADR-055). The owner leans towards building it, as the condition for "QA verifies forecasts" meaning more than arithmetic. *Source: ADR-092, L-83.*
   *2026-10-11: built (ADR-095, branch `feat/qa-forecast-recompute`, PR open, not merged). QA recomputes the weekly point, the 80% range and the period total from the `volume_v2` parameter files in pure Python. Measurement 3: owner fault 2 caught 6 of 6 (0 of 6 before), 223 of 223 overall, 0 false alarms on 171 unmodified forecasts, no regression; consistent misparses still 0 of 71. Evidence the fix works, not a catch rate (ADR-092, L-85). Unchecked: the 95% ends and a total interval (L-87); L-83(b) remains offline. Deployment of QA needs the parameter files mounted.*
   *Academic note for `05` and `06` (2026-10-11): "QA now recomputes forecast numbers independently" from the stored model parameters and requires an exact match after display rounding. Measurement 3 (6 of 6 on the owner's holiday-weeks fault, 223 of 223 overall) is evidence the fix works on the case it was designed from, not a new catch rate; the faults are drafted by the assistant that built QA. It does not catch a model that misses a holiday (judged offline) or a misparse (R-18, the interpretation check stays advisory).*
-- [ ] Schedule owner writing time for three sets: the held-out routing set (above), a fresh FR-03 set and a fresh interpretation set. *Source: the Sprint 4 retro, change 4.*
+  *2026-10-13 (Sprint 5 close): built and deployed.* ADR-095, ADR-096; QA recomputes served forecast numbers from the baked parameter files (ADR-098) on the deployed `ops-qa`.
+- [x] Schedule owner writing time for three sets: the held-out routing set (above), a fresh FR-03 set and a fresh interpretation set. *Source: the Sprint 4 retro, change 4.*
   *2026-10-11: generated under ADR-094, not owner-written (drafts; the owner's skim comes first). The sets were written by an independent model instead (capacity), so no owner writing time is needed for them; the skim is the owner's part.*
   *2026-10-11: owner approved the brief's design and ruled on the one policy difference before generation; owner read `brief_v2.md` in full after generation and before the skim.*
   *2026-10-11: owner drops at the skim were made on persona grounds: a question a dispatcher or call-centre agent would ask, but not a senior operations leader with an overview of the business unit (the brief's stated asker). Labels were not changed. The owner hadn't seen any system output for these items. Selection effect to disclose: persona drops may remove the more granular, operational questions, which leaves sets weighted toward broad leadership questions. Prompt Y's failure analysis reports the drop count.*
+  *2026-10-13 (Sprint 5 close): closed by ADR-094.* The three sets were generated; the owner's part was the brief review and the skim.
 - [ ] Option: owner-written faults added to QA's fault catalogue and reported apart from the assistant-drafted ones (L-85). *Source: ADR-091, ADR-092.*
   - *2026-10-10 (Sprint 4 close): the re-enabled trigger excludes `**/*.md`, so a docs-only merge deploys nothing. Source: the Sprint 4 close.*
+  *2026-10-13 (Sprint 5 close): dropped.* ADR-094 dropped it for the same capacity reason as the owner-written sets; recorded here as that ADR said it would be.
 
-**Shipped:**
-*(fill in at sprint end)*
+**Close (2026-10-13, day 2 of a sprint planned as 2026-10-12 to 10-25; owner-endorsed, assistant-drafted).**
+**Goal: met, with stated limits.** "A deployed system with a working UI; routing accuracy reported with failure analysis." The system is deployed (six services, a gateway with invite-link access and an "Interpreted as:" line) and routing accuracy is reported with a failure analysis. The limits:
+- **FR-03 is open.** `route_v6` failed its gate (4 of 8 against 6, ADR-101); `route_v3` stays and ambiguous questions are best-fit routed (L-58).
+- **The interpretation check is advisory.** `qa_interp_v3` failed (a), 3 false rejects against at most 1 (ADR-102); misparses are not caught by QA (L-74, L-92; R-18).
+- **The golden owner-item gap.** Owner-written items score lower than drafted ones: mechanical 6 of 10 against 23 of 26, owner judgement 7 of 10 against 24 of 26 (L-54). Ten items is too few to size it.
 
-**Carried over:**
-*(fill in at sprint end)*
+**Figures (the one page is `evals/results/sprint5_summary.md`; the analysis is `evals/results/sprint5_failure_analysis.md`):**
+- **Held-out routing (`routing_heldout_v1`, k=3):** 38, 38, 38 of 50, no flipping items; 38 of 43 without the 7 ambiguous items (labelled as such). 21 ambiguous-not-flagged and 15 out-of-scope-accepted item-runs, nothing else wrong.
+- **Golden (`golden_v2`):** **29 of 36 mechanical (pre-registered) and 31 of 36 on the owner's judgement, reported side by side; neither replaces the other.** The owner's N marks: G03, G05, G07, G27, G35. G21 is "30/36 if compared at display precision. A correction made after seeing results; not the pre-registered score" (L-95). G35 fails as predicted (L-58).
+- **The gates (W):** FR-03 failed (c), 4 of 8 against 6; interpretation failed (a), 3 false rejects against 1; `qa_interp_v3` not shipped despite better development numbers (pre-registration held).
+- **QA (S):** measurement 3 is 223 of 223, owner fault 2 caught 6 of 6: "evidence the fix works, not a catch rate" (ADR-092, L-85).
+- **Deploy:** six services, frozen images `9607fa72`, paid key (ADR-104). Per `docs/deploy-window-log.md` (2026-10-12/13): `verify.py` 11 of 11; the cold-start question 55.87 s in the browser (54.47 s at the gateway) against 120 s. X latency: per-run median about 3.7 s, p95 at most 17.6 s.
 
-**Blockers encountered:**
-*(fill in at sprint end)*
+**The schedule:** closed 2026-10-13, against the plan's 2026-10-25 (ADR-093): 12 days returned to the buffer. The buffer is 2026-11-09 to 12-05; scope expansion is decided at this close under the working agreement; this record proposes none, and the owner decides. The open gaps are quality gaps (FR-03, the interpretation check, the decline-heavy gate), not missing capacity. The divergence from ADR-093's calendar is on the post-submission list below.
 
-**Retro:**
+**Cost:** paid key spend this sprint, list-price estimates (L-71): Q about $0.16 (owner-reported in the Prompt Y brief) and V3 about $0.0015 (3 paid `verify.py` calls, `docs/deploy-window-log.md` (2026-10-12/13)), W $0.2719 (`evals/results/sprint5_w_ledger.json`), X $0.1727 (`sprint5_x_ledger.json`), plus the smoke questions (not itemised). The prepaid balance is about $2.9 after X (owner-reported, an estimate; R-02). GCP spend for the window: not provided at the close; the owner adds it from Billing.
+
+**Shipped (PRs #43 to #51, 2026-10-11 to 10-13, and the deploy window of 2026-10-13):**
+- *The evaluation sets:* #43 generation (ADR-094) and #44 the freeze (`routing_heldout_v1`, `fr03_fresh_v2`, `interp_fresh_v1`, `interp_pairs_v1`, `parse_filters_v1`).
+- *QA forecast recompute:* #45 (ADR-095, ADR-096).
+- *The gateway and UI:* #46 (ADR-097), Next.js pinned to 16.3.8.
+- *Deploy readiness:* #47 the full-system deploy configuration and parameter files (ADR-098, ADR-099); #48 sentiment from stored predictions only (ADR-100).
+- *The gates and the freeze:* #49 `route_v6` and `qa_interp_v3` gate results (ADR-101, ADR-102), the evaluation freeze (ADR-103).
+- *The paid key:* #50 (ADR-104, L-93).
+- *The blind runs:* #51 held-out routing and golden (Prompt X; L-94, L-95).
+- *The deploy:* six services on Cloud Run, one at a time, on the frozen images.
+- *This close:* the results summary, the failure analysis, ADR-105, the risk review (R-21 added) and these records.
+
+**Carried over or dropped (each with its reason in the item's dated note above):**
+- Carried to Sprint 6: the Cloud SQL real-data QA suites (L-78), the trace ID in access logs, enabling the trigger, and the post-freeze fixes listed under Sprint 6.
+- Attempted and still open: FR-03; the interpretation gate (needs a decline-heavy set, L-92).
+- Not done and not carried as planned items: rating cross-check sensitivity, QA model comparison (optional), the owner-written parse set (the generated `parse_filters_v1` is unused).
+- Dropped: owner-written QA faults (ADR-094).
+- **`ops-db` stop (ADR-105):** the decision is recorded. The stop command was **not** run in this session: the permission classifier denied it, and it was not retried. The instance read `RUNNABLE ALWAYS` on 2026-10-13 before the attempt. The owner runs the command (in ADR-105) and the state is confirmed as `STOPPED NEVER`.
+
+**Blockers encountered:** factual; the first four are recorded in `docs/deploy-window-log.md` (2026-10-12/13):
+- The free tier returned `504 DEADLINE_EXCEEDED` on 2026-10-13 (ADR-104, R-15).
+- An unquoted comma list in `--update-env-vars` broke the value; the fail-fast config caught it.
+- Cloud Run's front end reserves `/healthz`; the public health route has to be renamed.
+- `deploy/plan_full.py` needs `shell=True` on Windows.
+
+**Retro (owner-endorsed, assistant-drafted, 2026-10-13):**
 - What went well:
-- What didn't:
+  1. **State checks caught wrong prompt assumptions before damage, five times:** the interpretation-check scope (it covers sentiment too, ADR-102), the response cost fields (L-94), `/healthz`, the deny rules and `plan_full.py`.
+  2. **Pre-registration held under a tempting result.** `qa_interp_v3` had better development numbers and was not shipped after it failed the gate (ADR-102).
+  3. **The fail-fast config caught the comma bug** before a service ran with a split value.
+  4. **Honest degraded results under the free-tier outage** (R-15, ADR-104).
+- What went badly:
+  1. **The prompt author's assumptions about the environment:** Windows PowerShell 5.1, the Cloud Run reserved path, the response fields.
+  2. **Spec-first missed once** (Prompt U; ADR-098 states the order it was written in).
+  3. **Budget caps are per process** (L-93): the caps in the services were not a ceiling.
+  4. **The runbook lacked commands that work as written** (the Sprint 6 backlog lists the fixes).
 - What changes next sprint:
+  1. **Example commands in prompts are written for Windows PowerShell 5.1 and quoted.**
+  2. **A prompt that depends on a response field or a path names where it was verified.**
+  3. **Budget enforcement lives in a harness ledger, never in per-process caps.**
+  4. **No "don't ask again" during deploy windows.** Narrow deny rules stay permanently.
 
 **Academic deliverable status:**
-- No numbered deliverable due.
+- `05-test-scenarios.md` (due 2026-11-01) and `06-production-support.md` (due 2026-11-08) are the owner's and were not edited. What they will need to reflect:
+  - **`05` (due 11-01), wording changes:**
+    - FR-03: still not met in the running system; on the held-out set, 0 of 21 ambiguous item-runs recognised under `route_v3`, and the best revision recognised 4 of 8 against a floor of 6 (ADR-101).
+    - The interpretation check is advisory (ADR-102, L-92); "verified" means the figures are correct for the request as interpreted.
+    - The held-out figures (38, 38, 38 of 50; 38 of 43 without the ambiguous items) with their disclosure: the sets were generated, not owner-written (ADR-094), and the persona-drop selection effect (L-86).
+    - Deployed, with invite-link access (ADR-097) and "Interpreted as:" shown with every answer.
+    - Model calls on the paid key (ADR-104, ADR-105); the system is available in announced windows.
+    - The golden figure as two numbers: 29 of 36 mechanical and 31 of 36 owner judgement.
+  - **`06` (due 11-08), deploy-window material:** the free-tier outage and its diagnosis (one call per key, ADR-104); the comma-quoting failure caught by the fail-fast config; `/healthz` reserved by Cloud Run; `plan_full.py` on Windows; sequential deploys (R-20); the stored-predictions design (ADR-100, L-91).
 - Weekly status report due (maintained by Eric) — the last report covers the week ending 2026-11-22
+  *2026-10-13, post-submission divergence list (carry to the evaluation report; nothing in a submitted document was edited):*
+  - *`04`'s three sentiment lines differ from the built system (ADR-100: deployed sentiment reads stored predictions only).*
+  - *The ADR-093 calendar: Sprint 5 closed on 2026-10-13, 12 days before 2026-10-25, so the Sprint 5 window and the buffer start differ from `03` and ADR-093 again.*
+  - *Identity-Aware Proxy was replaced by invite-link access (ADR-097).*
 
 **Decisions made this sprint:**
+- ADR-094 — Evaluation sets are written by an independent model (2026-10-11)
+- ADR-095 — QA recomputes served forecast numbers independently (2026-10-11)
+- ADR-096 — QA also checks the 95% interval ends (2026-10-12; supersedes ADR-095 in part)
+- ADR-097 — Invite-link access to the gateway (2026-10-12)
+- ADR-098 — The `volume_v2` parameter files are baked into the forecast and QA images (2026-10-12)
+- ADR-099 — Deploy configuration for the full system (2026-10-12)
+- ADR-100 — Deployed sentiment reads stored predictions only (2026-10-12)
+- ADR-101 — The FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c) (2026-10-12)
+- ADR-102 — The interpretation gate: `qa_interp_v3` failed (a) (2026-10-12)
+- ADR-103 — Evaluation freeze for Sprint 5 (2026-10-12)
+- ADR-104 — Deployed model calls use the paid key for the evaluation and grading window (2026-10-13)
+- ADR-105 — Grading availability: `ops-db` stopped by default, started for announced windows (2026-10-13)
 
 ---
 
@@ -946,6 +1034,18 @@ now written; they record the planning decisions above.*
 - [ ] Production-grade checklist (`architecture.md` §7) audited item by item
 - [ ] Evaluation report (`docs/evaluation-report.md`), presentation, demo rehearsal (ADR-044)
 - [ ] Batch-scoring job for new comments (Cloud Run Job, weights from a bucket, ingest-time scoring, coverage disclosure). Portfolio value, not required at this scale (ADR-100). *Added 2026-10-12.*
+- [ ] `deploy/plan_full.py` lacks `shell=True` for Windows (deploy window). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Runbook (`deploy/RUNBOOK_V.md`) fixes, each from the window: step 3 needs `--skip-deploy`; step 5e should check the tag at the template; steps 5f and 5f-2 should read the Cloud SQL annotation; step 7 needs `POSTGRES_ADMIN_*`; quote the comma lists in `--update-env-vars`; add Windows PowerShell 5.1 notes. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Rename the public `/healthz` route (Cloud Run's front end reserves it), and replace the runbook's step 12 loop. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Log the error class and status of each retried LLM call (L-93's neighbour; found diagnosing the 504s, ADR-104). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Sync `deploy/cloudrun/*.yaml` to paid mode: the repo says `LLM_MODE: free` and the deployed configuration is paid (ADR-104's drift note). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] The Next.js bump for the 2026-10-14 release, as a gateway-only redeploy (ADR-080; the pin is 16.3.8). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Runbook step 7: a scoped L-78 run on Cloud SQL, with a reviewed credential plan (also the first Sprint 5 item above). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Runbook step 8: enable the build trigger, and add the docs-only merge check (ADR-105 keeps it disabled outside windows). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] Extend `deploy/verify.py` to the four services it does not cover (forecast, QA, sentiment and gateway). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] **G21:** a scorer comparison at display precision, as a `golden_v3` scoring change, with disclosure (L-95). The pre-registered 29 of 36 is not changed retroactively. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] The runbook's step 12 second idle wait (the cold-start measurement's second leg, R-05). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [ ] **The orchestrator response:** consider exposing `cost_usd` and `model_calls` in `AskResponse` (L-94; deviation 1 in `sprint5_x.md`). A redeploy, so after any freeze. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -980,5 +1080,5 @@ now written; they record the planning decisions above.*
 | 2 | Yes; checkpoint 2 met 2026-09-26 (deadline 10-07); engineering complete 2026-09-30 | Tests built from the author's assumptions passed while the code was wrong; real error captures and production-config runs found both bugs | Yes: all agents on Flash-Lite after comparison (ADR-049); site region stored (ADR-051); routing prompt revised twice (ADR-053, ADR-054); repeat-visit drivers and incident-count breakdowns deferred to Sprint 3 |
 | 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 (final 2026-10-05) | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
 | 4 | Yes, with stated limits, 2026-10-10 (day 5 of a sprint planned to 10-25) | Pre-registration held and fault injection found what the checks' author did not think of (a false alarm on a correct answer, missing small-sample checks); a check that accepts every reading where the spec is silent checks nothing (L-72); 219 of 223 caught (98.2%, an upper bound), consistent misparses 0 of 71, and 223 of 223 after fixes designed from the misses | Yes: the deploy pulled forward and finished in one day (ADR-084); the interpretation check ships advisory (L-74); QA fixes and a second measurement added (ADR-092); Sprints 5 and 6 pulled forward and the buffer kept whole (ADR-093) |
-| 5 | | | |
+| 5 | Yes, with stated limits, 2026-10-13 (day 2 of a sprint planned to 10-25) | Both pre-registered gates failed and the frozen system shipped as it stood; the held-out run (38, 38, 38 of 50) and the golden run (29 of 36 mechanical, 31 of 36 owner) put numbers on FR-03 and the owner/drafted gap; state checks caught wrong prompt assumptions five times; budget caps per process are not a ceiling (L-93) | Yes: IAP replaced by invite links (ADR-097); sentiment served from stored predictions (ADR-100); the paid key for the deployed services (ADR-104); `ops-db` stopped between announced windows (ADR-105) |
 | 6 | | | |

@@ -228,3 +228,99 @@ trigger: `_CLOUD_SQL_INSTANCE`, `_GEMINI_MODEL_ORCHESTRATOR`, `_GEMINI_MODEL_SPE
   build trigger `deploy-reporting-slice` was disabled the same evening (ADR-083); re-enabling
   is in `deploy/README.md`. Live calls used: 7 of 8. Records: ADR-083 to ADR-085, L-64 to
   L-66, and the R-03, R-14 and R-15 updates.
+
+## Deploy window 2026-10-12 to 2026-10-13 (Sprint 5, Prompts V1, V2, V3)
+
+*Owner-endorsed, assistant-drafted from the Claude Code session reports. These sessions made no repo edits by design (the system was frozen), so this entry is the written record.*
+
+### Sitting 1: 2026-10-12, 19:41 to 20:09 CDT (V1)
+
+**Setup:** Windows PowerShell 5.1.19041 (`pwsh` isn't installed). The tree equaled `eval-freeze-s5^{tree}` (`117198ea…`). Pre-flight 0a to 0f passed; unit suite 2578 passed, 1 skipped.
+
+**Step 1:** `ops-db` reached `RUNNABLE ALWAYS` in about 7 minutes.
+
+**Step 2:** `gateway-session-key` and `gateway-invites` created. Windows PowerShell 5.1's piping adds a trailing CRLF to the stored value. That is harmless: the gateway signs and verifies with the same value, and the JSON parse ignores it.
+
+**Step 3:** `plan_full.py`'s real run failed, for two reasons:
+- the runbook's command lacks `--skip-deploy`, so it exits with code 2;
+- the check step runs `subprocess.run` without `shell=True`, so on Windows `gcloud.cmd` gives `FileNotFoundError`.
+
+So **the 22 mutating commands were run by hand, verbatim from the dry run,** each approved by the owner. All succeeded. Results:
+- new service accounts: `run-sentiment`, `run-forecast`, `run-qa`, `run-gateway`;
+- `run-gateway` is the only accessor of both gateway secrets.
+
+**Step 4:**
+- **Backfill:** 270.8 s (estimated 15 minutes), 7,521 of 7,521 inserted, `complete: true`.
+- **Fingerprint:** rows 7521, sha256 `a340b82d…e259f`, model version `0fa27f64…33ad`. **Exact match.**
+
+**End of window:** `ops-db` `STOPPED NEVER`; trigger disabled.
+
+### Sitting 2: 2026-10-13, morning (V2)
+
+**Database:** `ops-db` start took about 13 minutes, against the runbook's 5; the CLI's wait timed out. The fingerprint matched again.
+
+**Build (5b):**
+- build `3e63cdc4-1f11-4969-b1bb-deecbd5b51a8`, `COMMIT_SHA` `9607fa722c4d…`;
+- SUCCESS in about 5.6 minutes;
+- **the commit's tree equals the freeze tag's;**
+- `triggers run` accepted the disabled trigger.
+
+**5c:** 7 invoker bindings applied by hand from the dry run (the same Windows bug as step 3).
+
+**5d:** `allUsers` on `ops-gateway` only.
+
+**5e:** every service at 100% traffic. Revision-level image fields show digests, so the tag was checked at the service template instead.
+
+**5f:** Cloud SQL appears as the `run.googleapis.com/cloudsql-instances` annotation, on exactly the four database services.
+
+**5g:**
+- `status.url` is the legacy host `ops-gateway-vszrpegifq-uc.a.run.app`;
+- the deterministic host (`$G`) is listed in `run.googleapis.com/urls` and serves the app: `GET /` gave 200 with the app's title, and `/auth/exchange` with a bad token gave 401;
+- `/healthz` returns an empty 404 on both hosts. Cloud Run's front end reserves the path, so it never reaches the container.
+
+**5h:** the logged `remoteIp` was the caller's real address, not the spoofed `203.0.113.7`, so the client-IP rule holds.
+
+**Step 6, `verify.py` check 6, failed twice:** the routing call timed out after 30 s each time. Diagnosis, in order:
+1. **Configuration ruled out.** Comparing orchestrator revision 00004 (which worked) with 00005: identical key reference, egress and timeouts.
+2. **Error class inferred** from the 0.27 s retry wait: a transient failure, not a 429.
+3. **One local free-key call** gave `504 DEADLINE_EXCEEDED` after 29.96 s.
+4. **One local paid-key call** answered 200 in 1.85 s.
+
+**Conclusion:** the free-tier path for `gemini-3.5-flash-lite` was failing, not the deployment.
+
+**Step 7, deferred:** the integration suites need `POSTGRES_ADMIN_*`, and running their fixtures with superuser rights against the evaluation database was refused. The fingerprint stands as the data-parity evidence.
+
+**Step 8, deferred:** the trigger stays disabled until after Prompt X.
+
+### Sitting 3: 2026-10-13, 10:45 to about 12:15 CDT (V3, paid-key switch)
+
+**The record and the secret:**
+- ADR-104 merged as PR #50 (docs only) before any change.
+- `gemini-api-key-paid` created **by the owner in his own shell**, through a temp file without a newline. Its accessors are exactly the five model-calling service accounts.
+
+**The first update failed:** `ops-qa-00002-zct` didn't start, with `LLMConfigError`. The cause was the unquoted commas in `--update-env-vars`, which Windows PowerShell 5.1 turns into an array, so `LLM_MODE` became one space-joined string. Fail-fast worked: **no traffic moved, and no model call was made.** The update was retried with the argument quoted.
+
+**Serving revisions** (all at 100%, every container's image `9607fa72…`, model-calling containers on `LLM_MODE=paid`):
+
+| Service | Revision |
+|---|---|
+| `ops-qa` | `00003-hwq` |
+| `ops-sentiment` | `00002-cxz` |
+| `ops-forecast` | `00002-m79` |
+| `ops-reporting` | `00006-md5` |
+| `ops-orchestrator` | `00006-bvj` |
+| `ops-gateway` | `00001-8st` |
+
+**`verify.py`:** 11 PASS, exit 0. 3 paid calls, about $0.0015.
+
+**Owner steps 9 to 11:**
+- invites created: `owner-laptop` (14 days) and `test`;
+- the checks: valid gave 200, expired gave 401, revoked (after 70 s) gave 401;
+- three smoke questions (reporting, sentiment, forecast) answered, with a correct "Interpreted as:" line and verification line each.
+
+**The cold-start question** (after 15 minutes idle):
+- 55.87 s in the browser, 54.47 s at the gateway, against 120 s;
+- new instances at the gateway, orchestrator, reporting (about 20 s start) and QA (about 14 s start);
+- each model call about 1.5 s.
+
+**End:** `ops-db` left running for Prompt X; the trigger disabled.

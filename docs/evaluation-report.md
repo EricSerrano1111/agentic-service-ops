@@ -1022,3 +1022,10 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** none of these produces a wrong figure; (1) to (3) are interpretation or labelling, (4) is the known stretch gap (L-56), and (5) is a display rule.
 - **Fix (option):** owner rulings on (1) and (2) as product questions; a `golden_v3` with disclosure only if the owner wants the expectations changed. Not done in this run.
 - **Recorded in:** `evals/results/sprint5_x/golden_assistant_reading.md`.
+
+### L-96 — Future-tense questions on out-of-scope subjects are routed to forecast; the user still gets a decline (2026-10-13)
+- **What:** `route_v3` sends a question about what will happen to the forecast specialist even when its subject is out of scope (ADR-053's reading of "what will happen"). The owner's 2026-10-11 clarification (ADR-094) says such a question is `out_of_scope`. In the Sprint 5 runs this affected NM-14 (technician staffing headcount, next 4 weeks) and NM-20 (dispatch calendar, tomorrow) in all 3 runs, 6 of the 15 `out-of-scope accepted` item-runs, and golden G08 (overtime labour spend this month). Each ended as `not_available`: the specialist declined and no figure was shown. The route label is wrong and the outcome is right; the decline text names only the forecast specialist's coverage, not all three domains. Past-tense out-of-scope subjects (OOS-01, OOS-03, OOS-14) reached reporting and were declined there, the other 9 item-runs.
+- **Why accepted:** no wrong figure is shown, and the clarification postdates `route_v3`. A router revision needs its own pre-registered gate on a fresh set (ADR-094: the sets are spent), and FR-03 work already failed its gate in Sprint 5 (ADR-101).
+- **Fix (option):** a router revision stating the owner's rule, gated on a new set that includes future-tense out-of-scope subjects; or a decline text that names all three domains whichever specialist declines.
+- **Recorded in:** `evals/results/sprint5_failure_analysis.md` (pattern 2); `evals/results/sprint5_failure_data.md`.
+
