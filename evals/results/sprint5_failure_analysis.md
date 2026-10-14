@@ -77,7 +77,7 @@ Two items need a note beyond the failures:
 2. **A future-tense question on an out-of-scope subject is routed to forecast.** NM-14, NM-20, G08;
    the past-tense subjects reach reporting (OOS-01, OOS-03, OOS-14). The user always gets a decline,
    so no wrong figure is shown, but the route label is wrong and the decline text names only one
-   specialist's coverage. **New limitation proposed** (not appended: see the report): "The router
+   specialist's coverage. **New limitation: L-96** (`docs/evaluation-report.md`): "The router
    sends out-of-scope subjects to the specialist whose tense matches; the specialist declines, so
    the route is wrong and the outcome is right. Accepted at this scale; the fix is a router
    revision that needs its own gate (the owner's 2026-10-11 clarification, ADR-094)."
