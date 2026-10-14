@@ -107,11 +107,69 @@ def test_cloud_sql_is_mounted_into_the_mcp_sidecar_only():
 def test_secrets_go_only_to_the_containers_that_need_them():
     cs = containers(rendered("reporting"))
     assert secret_names(cs["mcp-incidents"]) == {"DB_ROLE_REPORTING_PASSWORD"}
-    assert secret_names(cs["agent-reporting"]) == {"GOOGLE_AI_API_KEY"}
+    assert secret_names(cs["agent-reporting"]) == {"GOOGLE_AI_API_KEY", "GOOGLE_AI_API_KEY_PAID"}
     assert not any(n.startswith("DB_") for n in env_names(cs["agent-reporting"]))
     orch = containers(rendered("orchestrator"))["orchestrator"]
-    assert secret_names(orch) == {"GOOGLE_AI_API_KEY"}
+    assert secret_names(orch) == {"GOOGLE_AI_API_KEY", "GOOGLE_AI_API_KEY_PAID"}
     assert not any(n.startswith(("DB_", "POSTGRES", "CLOUD_SQL")) for n in env_names(orch))
+
+
+#: The five containers that call the model (ADR-104), by service file.
+MODEL_CALLING = {
+    "orchestrator": "orchestrator",
+    "reporting": "agent-reporting",
+    "sentiment": "agent-sentiment",
+    "forecast": "agent-forecast",
+    "qa": "agent-qa",
+}
+
+
+def _raw_containers(service: str) -> dict[str, dict]:
+    """The checked-in definition, unrendered: `${...}` placeholders are plain strings."""
+    doc = yaml.safe_load((DEPLOY / "cloudrun" / f"{service}.yaml").read_text("utf-8"))
+    return {c["name"]: c for c in doc["template"]["containers"]}
+
+
+def _env_values(container: dict) -> dict[str, object]:
+    return {
+        e["name"]: (e.get("value") if "value" in e else e["valueSource"]["secretKeyRef"])
+        for e in container.get("env", [])
+    }
+
+
+@pytest.mark.parametrize(("service", "name"), sorted(MODEL_CALLING.items()))
+def test_the_five_model_calling_containers_are_in_paid_mode_as_deployed(service, name):
+    """The repo definition equals the deployed configuration of 2026-10-13 (ADR-104).
+
+    Otherwise the first deploy after the trigger is enabled would revert the five services to
+    the free key. The free key stays referenced beside the paid one (a revert is one env change).
+    """
+    env = _env_values(_raw_containers(service)[name])
+    assert env["LLM_MODE"] == "paid"
+    assert env["LLM_MAX_REQUESTS"] == "1500"
+    assert env["LLM_MAX_SPEND_USD"] == "1.00"
+    assert env["GOOGLE_AI_API_KEY_PAID"] == {"secret": "gemini-api-key-paid", "version": "latest"}
+    assert env["GOOGLE_AI_API_KEY"] == {"secret": "gemini-api-key", "version": "latest"}
+
+
+def test_no_sidecar_and_not_the_gateway_is_in_paid_mode_or_holds_a_model_key():
+    for service in ("reporting", "sentiment", "forecast", "qa", "orchestrator", "gateway"):
+        for name, container in _raw_containers(service).items():
+            if name == MODEL_CALLING.get(service):
+                continue
+            env = _env_values(container)
+            assert env.get("LLM_MODE") != "paid", (service, name)
+            assert not {"GOOGLE_AI_API_KEY", "GOOGLE_AI_API_KEY_PAID"} & set(env), (service, name)
+
+
+def test_exactly_the_five_model_calling_containers_are_in_paid_mode():
+    paid = {
+        (service, name)
+        for service in ("reporting", "sentiment", "forecast", "qa", "orchestrator", "gateway")
+        for name, c in _raw_containers(service).items()
+        if _env_values(c).get("LLM_MODE") == "paid"
+    }
+    assert paid == {(service, name) for service, name in MODEL_CALLING.items()}
 
 
 def test_the_agent_waits_for_a_sidecar_whose_probe_is_its_readiness_endpoint():

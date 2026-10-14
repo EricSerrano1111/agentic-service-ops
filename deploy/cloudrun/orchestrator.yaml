@@ -44,7 +44,7 @@ template:
         - name: ROUTE_TIMEOUT_S
           value: "30"
         - name: LLM_MODE
-          value: free
+          value: paid # ADR-104; the free key stays mounted beside the paid one (revert is one env change)
         - name: GEMINI_MODEL_ORCHESTRATOR
           value: ${GEMINI_MODEL_ORCHESTRATOR}
         - name: LOG_LEVEL
@@ -54,6 +54,15 @@ template:
             secretKeyRef:
               secret: gemini-api-key
               version: latest
+        - name: GOOGLE_AI_API_KEY_PAID
+          valueSource:
+            secretKeyRef:
+              secret: gemini-api-key-paid
+              version: latest
+        - name: LLM_MAX_REQUESTS
+          value: "1500"
+        - name: LLM_MAX_SPEND_USD
+          value: "1.00"
       resources:
         limits:
           cpu: "1"

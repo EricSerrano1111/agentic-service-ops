@@ -3474,6 +3474,8 @@ The per-process caps are `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00`. T
 - L-93 is added to the Limitations log: the per-process caps are not a ceiling.
 
 
+**Note 2026-10-14 (Z2a; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted): the drift is closed in the repo.** `deploy/cloudrun/{orchestrator,reporting,sentiment,forecast,qa}.yaml` now match the deployed configuration read with `gcloud run services describe` on 2026-10-14: `LLM_MODE=paid`, `LLM_MAX_REQUESTS=1500`, `LLM_MAX_SPEND_USD=1.00`, `GOOGLE_AI_API_KEY_PAID` from `gemini-api-key-paid:latest`, and the free `gemini-api-key` still referenced as `GOOGLE_AI_API_KEY`. `tests/unit/test_deploy_config.py` asserts paid mode on exactly those five containers and on no MCP sidecar or the gateway. **The sync is in a PR and not yet deployed; the build trigger may be enabled only after it is merged.**
+
 ### ADR-105 — Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing)
 *Date: 2026-10-13. Owner decision ("default"), given at the Sprint 5 close. Fills the "Duration" paragraph ADR-104 left open for the close.*
 

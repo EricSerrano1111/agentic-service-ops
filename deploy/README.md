@@ -1,5 +1,7 @@
 # Deploy: reporting slice on Cloud Run (ADR-078, ADR-079, ADR-081)
 
+> **Hard rule (Z2a, 2026-10-14): the build trigger may be enabled only after the paid-mode YAML sync (ADR-104 note of 2026-10-14) is merged to `main`.** Until then the repo definitions and the deployed services differ, and the first deploy would revert five services to the free key.
+>
 > **Updated 2026-10-14 (Z1):** the full system was deployed 2026-10-13 and runs on the paid key (ADR-104); `ops-db` is stopped outside announced grading windows (ADR-105); the window procedure is `RUNBOOK_GRADING.md` (ADR-107). The build trigger is disabled and must not be enabled until `cloudrun/*.yaml` is synced to paid mode (Z2). Statements below about the free key describe the reporting slice as deployed on 2026-10-08.
 >
 > **Full system (2026-10-12, ADR-099):** six services now. `RUNBOOK_V.md` is the window runbook, `plan_full.py` the plan, `cloudrun/*.yaml` the six definitions, `trigger_full.yaml` the trigger. Everything below describes the reporting slice and still holds for it; where this README and `RUNBOOK_V.md` differ, the runbook is current. `ops-sentiment` deploys with the others, reading stored predictions only (ADR-100, which resolved R-19); the runbook is two sittings.

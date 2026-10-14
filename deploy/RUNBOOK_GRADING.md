@@ -5,6 +5,8 @@ Window A (2026-10-31 to 2026-11-09). Windows PowerShell 5.1, from the repo root,
 Every `gcloud` command carries `--project`. Every comma list is quoted (an unquoted comma is an array in
 5.1; it broke `--update-env-vars` on 2026-10-13, `docs/deploy-window-log.md`).
 
+> **Hard rule (Z2a, 2026-10-14): the build trigger may be enabled only after the paid-mode YAML sync (ADR-104 note of 2026-10-14) is merged to `main`.** Until then the repo definitions and the deployed services differ, and the first deploy would revert five services to the free key.
+>
 > **Warning: never enable the build trigger `deploy-reporting-slice` while `deploy/cloudrun/*.yaml` still
 > say `LLM_MODE: free`.** The first deploy after an enable would redeploy the five model-calling
 > services on the free key and silently revert ADR-104. The order is fixed in Z2: sync the YAML to paid
