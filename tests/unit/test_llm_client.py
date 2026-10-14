@@ -763,3 +763,68 @@ async def test_unknown_model_is_refused_rather_than_guessed():
     with pytest.raises(LLMConfigError, match="no thinking levels recorded"):
         await c.generate("x", model="gemini-9-unknown", trace_id="t")
     assert transport.calls == 0
+
+
+# --------------------------------------------------------------------------- failed attempts
+
+
+def _attempts(log_lines) -> list[dict]:
+    return [x for x in log_lines(everything=True) if x["msg"] == "llm attempt failed"]
+
+
+def _deadline_exceeded_504() -> genai_errors.ServerError:
+    body = copy.deepcopy(REAL_503)
+    body["error"].update(code=504, status="DEADLINE_EXCEEDED", message=f"upstream {KEY} timed out")
+    return genai_errors.ServerError(504, body)
+
+
+async def test_each_failed_attempt_is_logged_with_its_class_status_wait_and_elapsed(log_lines):
+    """ADR-108: the 2026-10-13 504s were retried and left no trace."""
+    c, _, sleeps = client(_deadline_exceeded_504(), server_error(503), Response("ok"))
+    await c.generate("a prompt about Quillfeather", trace_id="trace-x")
+    first, second = _attempts(log_lines)
+    assert (first["attempt"], first["error_class"], first["http_status"]) == (1, "ServerError", 504)
+    assert (second["attempt"], second["http_status"]) == (2, 503)
+    assert first["kind"] == "transient" and first["trace_id"] == "trace-x"
+    assert first["next_wait_s"] == round(sleeps.delays[0], 3)
+    assert second["next_wait_s"] == round(sleeps.delays[1], 3)
+    assert first["elapsed_s"] >= 0 and second["elapsed_s"] >= first["elapsed_s"]
+
+
+async def test_a_failed_attempt_line_never_carries_the_key_the_prompt_or_the_error_text(log_lines):
+    c, _, _ = client(_deadline_exceeded_504(), Response("ok"))
+    await c.generate("PROMPT-WITH-NAME Quillfeather Zanthia", trace_id="t")
+    text = json.dumps(_attempts(log_lines))
+    for forbidden in (KEY, "Quillfeather", "PROMPT-WITH-NAME", "timed out"):
+        assert forbidden not in text, forbidden
+
+
+async def test_a_connection_error_is_logged_by_class_with_no_status(log_lines):
+    c, _, _ = client(ConnectionError("reset by peer"), Response("ok"))
+    await c.generate("hi", trace_id="t")
+    [line] = _attempts(log_lines)
+    assert line["error_class"] == "ConnectionError" and line["http_status"] is None
+    assert line["next_wait_s"] is not None
+
+
+async def test_a_429_logs_the_server_given_wait(log_lines):
+    c, _, sleeps = client(per_minute_429("7s"), Response("ok"))
+    await c.generate("hi", trace_id="t")
+    [line] = _attempts(log_lines)
+    assert line["http_status"] == 429 and line["kind"] == "rate_limit"
+    assert line["next_wait_s"] == 7.0 == sleeps.delays[0]
+
+
+async def test_the_last_attempt_logs_no_next_wait(log_lines):
+    c, _, _ = client(*[server_error(503)] * 5)
+    with pytest.raises(LLMUnavailable):
+        await c.generate("hi", trace_id="t")
+    lines = _attempts(log_lines)
+    assert [x["attempt"] for x in lines] == [1, 2, 3]
+    assert [x["next_wait_s"] is None for x in lines] == [False, False, True]
+
+
+async def test_an_attempt_that_succeeds_logs_no_failure(log_lines):
+    c, _, _ = client(Response("ok"))
+    await c.generate("hi", trace_id="t")
+    assert _attempts(log_lines) == []

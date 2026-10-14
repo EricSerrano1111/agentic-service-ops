@@ -262,30 +262,63 @@ class LLMClient:
                     if c.code == 429:
                         _capture_first_429(exc, model, self._secrets, trace_id)
                     detail = self._scrub(c.message)[:300]
+
+                    def failed_attempt(
+                        next_wait_s: float | None,
+                        *,
+                        exc: Exception = exc,
+                        c=c,
+                        attempt: int = attempts,
+                        since: float = began,
+                    ) -> None:
+                        # One line per failed attempt (ADR-108): which attempt, what failed, how
+                        # long until the next, and how long it has taken. Never the key, never
+                        # the prompt, never the error's text.
+                        with bind_trace_id(trace_id):
+                            log.warning(
+                                "llm attempt failed",
+                                extra={
+                                    "model": model,
+                                    "attempt": attempt,
+                                    "error_class": type(exc).__name__,
+                                    "http_status": c.code,
+                                    "kind": c.kind.value,
+                                    "next_wait_s": None
+                                    if next_wait_s is None
+                                    else round(next_wait_s, 3),
+                                    "elapsed_s": round(time.perf_counter() - since, 3),
+                                },
+                            )
+
                     if c.kind is Kind.RATE_LIMIT:
                         delay = c.retry_delay_s
                         if delay is None:
                             delay = FALLBACK_RATE_LIMIT_WAIT_S
                         if waited + delay > self.settings.max_retry_wait_s:
+                            failed_attempt(None)
                             raise LLMRateLimited(
                                 f"{model}: per-minute quota 429 would need {waited + delay:g}s "
                                 f"of waiting, over LLM_MAX_RETRY_WAIT_S="
                                 f"{self.settings.max_retry_wait_s:g}s"
                             ) from None
+                        failed_attempt(delay)
                         await self._sleep(delay)
                         waited += delay
                         continue
                     if c.kind is Kind.TRANSIENT:
                         if transient >= MAX_TRANSIENT_RETRIES:
+                            failed_attempt(None)
                             raise LLMUnavailable(
                                 f"{model}: {c.code or type(exc).__name__} persisted through "
                                 f"{MAX_TRANSIENT_RETRIES} retries: {detail}"
                             ) from None
                         delay = random.uniform(0, min(BACKOFF_CAP_S, BACKOFF_BASE_S * 2**transient))
                         transient += 1
+                        failed_attempt(delay)
                         await self._sleep(delay)
                         waited += delay
                         continue
+                    failed_attempt(None)  # every path below ends the call
                     if c.kind is Kind.DAILY_QUOTA:
                         raise LLMDailyQuotaExhausted(model, c.quota_id) from None
                     if c.kind in (Kind.BILLING, Kind.AUTH):
