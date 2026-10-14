@@ -1,7 +1,8 @@
 # Evaluation Report — Agentic Service Operations Intelligence Platform
 
-*Stub. The report itself is written in Sprint 6 from the Sprint 5 eval runs (ADR-044).
+*Stub. Written in Sprint 6 from the Sprint 5 runs; results in `evals/results/sprint5_summary.md` (ADR-044).
 Until then, only the limitations log below is maintained.*
+*Updated 2026-10-14.*
 
 ---
 
@@ -965,6 +966,11 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 
 **Update 2026-10-12 (Prompt U):** the client-IP rule was not confirmed against Cloud Run's documentation for a service without a load balancer: the container-contract and HTTPS-request pages are silent, the request-headers URL returned 404, and the one page that describes `X-Forwarded-For` is Cloud Functions'. The default (the last entry) and its test are unchanged; the exchange limit is keyed by a weaker, unverified rule until the runbook's step 5h observes it (note under ADR-097).
 
+**Update 2026-10-14 (Z1, records reconciliation; owner-decided 2026-10-14; assistant-drafted):**
+- *Client IP.* The 2026-10-13 probe (runbook step 5h) logged a `remoteIp` that was the caller's real address, not the spoofed value, which is consistent with the rule. **The evidence is Cloud Run's logged `remoteIp` only, so the rule is observed, not documented**; the gateway's own keying was not shown. It stays a stated limit.
+- *The backstop.* "Google's quota is the backstop for spend" assumed the free 500 requests a day. The deployed key is paid (ADR-104), so the backstop is the prepaid balance and the gateway's caps (L-93, ADR-105).
+- *Grader caps.* ADR-097 sized 50 questions a day and 15 an hour per invite for the owner's own use; ADR-105 relies on graders using the system. ADR-107 raises the hourly cap to 30 (applied in Z2, gateway configuration only) and keeps the daily cap at 50.
+
 ### L-89 — A database outage behind a healthy agent is a 502 error, not the degraded result (2026-10-12)
 - **What:** found in the Prompt T local smoke. With the database container stopped while the agents and MCP servers stayed up, a reporting question returned the orchestrator's `502 agent_task_failed` ("The incidents query failed.", the agent's `tool_error` task failure), not the `outcome: degraded` result of FR-13 / ADR-088 with `escalate: true`. The degraded result is produced for a breaker trip, a transport failure, a timeout, the cost cap or a QA failure; a task the agent itself reports as failed with `tool_error` takes the error path. The gateway passes the sentence on ("The incidents query failed."), so the user sees an honest error, but with no follow-up flag and no warning wording of §6, "Answer display (UI)", rule 4.
 - **Why accepted (for now):** changing which failures count as dependency failures is a change to ADR-088's behaviour and to the orchestrator's error contract, outside this work's brief. No answer is wrong and no unverified figure is shown.
@@ -1029,3 +1035,8 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (option):** a router revision stating the owner's rule, gated on a new set that includes future-tense out-of-scope subjects; or a decline text that names all three domains whichever specialist declines.
 - **Recorded in:** `evals/results/sprint5_failure_analysis.md` (pattern 2); `evals/results/sprint5_failure_data.md`.
 
+### L-97 — The freeze test does not check the data-dictionary hash (2026-10-14)
+- **What:** ADR-103 says `tests/unit/test_eval_freeze.py` "recomputes" the freeze record. It recomputes the prompt-file hashes, the default router and interpretation prompt, the mode flags (QA's two in `deploy/cloudrun/qa.yaml` and sentiment's scoring mode), the role models and thinking levels, and the retry cap, as-of date and timeouts. It does not recompute `data_dictionary_sha256` (`evals/freeze_s5.json`, the data dictionary's whole-file hash). Found by the 2026-10-14 gap audit and confirmed by reading the test. Checked by hand the same day: the file's LF-normalised hash equals the recorded `8fccfe6f...ae18`, so the record holds today.
+- **Why accepted:** the dictionary has not changed since the freeze and a one-off check shows it; the record is otherwise as ADR-103 states it. Adding the check is code, outside a docs-only reconciliation.
+- **Fix (option):** add a test that recomputes the hash with the same LF normalisation.
+- **Recorded in:** ADR-103 (note 2026-10-14); `tests/unit/test_eval_freeze.py`.

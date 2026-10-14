@@ -1,5 +1,7 @@
 # Deploy window log (ADR-045, ADR-078, ADR-081, ADR-084)
 
+> **Updated 2026-10-14:** this log now covers two deploy windows: 2026-10-08 to 10-10 (the reporting slice) and 2026-10-12 to 10-13 (the full system and the paid-key switch). The header paragraph below describes the first window; its stop rule was that window's. Grading windows (ADR-107) are recorded at the end of this file as they happen.
+
 Project `a2a-agentic-service-ops-gcp`, region `us-central1`. Window 2026-10-08 to 2026-10-10;
 the stop rule falls at the end of 2026-10-10. Evidence for `06` and the R-03 and R-14
 updates. No secrets, and no values that could be secrets, appear here. Times are local
@@ -324,3 +326,9 @@ So **the 22 mutating commands were run by hand, verbatim from the dry run,** eac
 - each model call about 1.5 s.
 
 **End:** `ops-db` left running for Prompt X; the trigger disabled.
+
+## Addenda, 2026-10-14 (Z1, records reconciliation; the entries above are unchanged)
+
+- **Sitting 2, step 5h ("the client-IP rule holds").** The logged `remoteIp` was the caller's real address, not the spoofed `203.0.113.7`, which is consistent with the rule. The evidence is Cloud Run's logged `remoteIp` only; the gateway's own keying was not shown, so the rule is observed, not documented (L-88, note under ADR-097).
+- **Sitting 3, "`ops-db` left running for Prompt X".** True at the time. The owner stopped `ops-db` after the Sprint 5 close (2026-10-13, per ADR-105); a read-only `describe` on 2026-10-14 read `STOPPED NEVER`. The time of the stop is not recorded.
+- **Invite host.** Every invite created in this window used the deterministic host, `--base-url $G` = `https://ops-gateway-587647038690.us-central1.run.app` (ADR-107).
