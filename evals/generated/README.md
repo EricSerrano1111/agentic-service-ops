@@ -81,3 +81,7 @@ system output for these items.
 **A selection effect to disclose.** Persona drops may remove the more granular, operational
 questions, which leaves the sets weighted toward broad leadership questions. The failure
 analysis reports the drop count.
+
+## Spent for blind use (2026-10-13)
+
+`sets/routing_heldout_v1.jsonl` was run against the deployed, frozen system on 2026-10-13 (Prompt X; results in `evals/results/routing_heldout_v1/2026-10-13/`, item text in `evals/results/sprint5_failure_data.md`). It is no longer blind: a score on it after any change that read those results must say so (L-86). The files here are unchanged.
