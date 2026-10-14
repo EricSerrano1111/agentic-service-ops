@@ -14,6 +14,7 @@ import time
 from collections.abc import Callable
 
 import httpx
+from common import TRACE_ID_HEADER
 
 log = logging.getLogger("gateway.upstream")
 
@@ -79,10 +80,10 @@ class Orchestrator:
         self._tokens = tokens
         self._client = httpx.AsyncClient(timeout=timeout_s, transport=transport)
 
-    async def ask(self, question: str) -> tuple[int, dict]:
+    async def ask(self, question: str, *, trace_id: str | None = None) -> tuple[int, dict]:
         """(status, JSON body). Raises `OrchestratorUnavailable`; the cause is never passed
         on, since a transport error can name an internal host."""
-        headers = {}
+        headers = {TRACE_ID_HEADER: trace_id} if trace_id else {}
         try:
             if self._tokens is not None:
                 headers["Authorization"] = f"Bearer {await self._tokens.token()}"

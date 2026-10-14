@@ -12,6 +12,7 @@ from a2a.server.routes import (
     create_jsonrpc_routes,
 )
 from a2a.server.tasks import InMemoryTaskStore
+from common import TraceAccessLog
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from llm import LLMClient
@@ -58,6 +59,7 @@ def create_app(
         agent_card=card,
     )
     app = FastAPI(title="agent_qa", version="0.1.0")
+    app.add_middleware(TraceAccessLog)  # one access line per request, with its trace id (ADR-108)
     add_a2a_routes_to_fastapi(
         app,
         agent_card_routes=create_agent_card_routes(card),

@@ -25,6 +25,13 @@ from contextlib import contextmanager
 #: The key the trace id travels under, in both A2A message metadata and MCP `_meta`.
 TRACE_ID_KEY = "trace_id"
 
+#: The HTTP header it also travels under, so a server's own access line can carry it (ADR-108).
+TRACE_ID_HEADER = "X-Trace-Id"
+
+# The width `new_trace_id()` mints. Nothing else is accepted from a caller: a client-supplied
+# value must not be able to put its own text, or a newline, into a log line.
+_VALID_TRACE_ID = re.compile(r"[0-9a-f]{32}")
+
 _trace_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("trace_id", default=None)
 
 # Attributes every LogRecord has; anything else on a record came from `extra=`.
@@ -62,6 +69,13 @@ def redact_secrets(text: str) -> str:
 def new_trace_id() -> str:
     """A fresh trace id: 32 hex characters, the W3C trace-context width."""
     return uuid.uuid4().hex
+
+
+def valid_trace_id(value: object) -> str | None:
+    """`value` if it is a trace id this system would mint (32 lowercase hex), else None."""
+    if isinstance(value, str) and _VALID_TRACE_ID.fullmatch(value):
+        return value
+    return None
 
 
 def current_trace_id() -> str | None:

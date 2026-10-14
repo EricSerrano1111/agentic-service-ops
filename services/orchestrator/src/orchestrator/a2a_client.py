@@ -26,7 +26,7 @@ from a2a.types import (
     SendMessageRequest,
     Task,
 )
-from common import TRACE_ID_KEY, Deadline
+from common import TRACE_ID_HEADER, TRACE_ID_KEY, Deadline
 
 from .auth import BearerForOrigin, IdTokenProvider, audience_of
 
@@ -108,7 +108,13 @@ async def send_question(
         if token_provider is not None:
             audience = audience_of(agent_url)
             auth = BearerForOrigin(await token_provider.token(audience), audience)
-        async with httpx.AsyncClient(timeout=timeout_s + 1, transport=transport, auth=auth) as http:
+        # The trace id also rides as a header, so the agent's own access line carries it (ADR-108).
+        async with httpx.AsyncClient(
+            timeout=timeout_s + 1,
+            transport=transport,
+            auth=auth,
+            headers={TRACE_ID_HEADER: trace_id},
+        ) as http:
             try:
                 return await _exchange(agent_url, request, http, card_cache)
             except BaseException:

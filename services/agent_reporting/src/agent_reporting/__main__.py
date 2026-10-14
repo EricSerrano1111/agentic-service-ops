@@ -14,7 +14,13 @@ from .config import Settings
 def main() -> None:
     settings = Settings.from_env()
     configure_logging("agent_reporting", os.environ.get("LOG_LEVEL", "INFO"))
-    uvicorn.run(create_app(settings), host=settings.host, port=settings.port, log_config=None)
+    uvicorn.run(
+        create_app(settings),
+        host=settings.host,
+        port=settings.port,
+        log_config=None,
+        access_log=False,
+    )
 
 
 if __name__ == "__main__":

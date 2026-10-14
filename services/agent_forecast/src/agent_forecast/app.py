@@ -12,6 +12,7 @@ from a2a.server.routes import (
     create_jsonrpc_routes,
 )
 from a2a.server.tasks import InMemoryTaskStore
+from common import TraceAccessLog
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from llm import LLMClient
@@ -41,6 +42,7 @@ def create_app(
         agent_card=card,
     )
     app = FastAPI(title="agent_forecast", version="0.1.0")
+    app.add_middleware(TraceAccessLog)  # one access line per request, with its trace id (ADR-108)
 
     async def check_mcp() -> bool:
         return await (ready or (lambda: mcp_ready(settings.mcp_volume_url)))()

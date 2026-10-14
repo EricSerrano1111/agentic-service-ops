@@ -16,7 +16,7 @@ def main() -> None:
     app = create_app(settings)
     # After the MCPServer exists: it installs its own root handler, which this replaces.
     configure_logging("mcp_incidents", os.environ.get("LOG_LEVEL", "INFO"))
-    uvicorn.run(app, host=settings.host, port=settings.port, log_config=None)
+    uvicorn.run(app, host=settings.host, port=settings.port, log_config=None, access_log=False)
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Annotated, Any
 
 import anyio
-from common import TRACE_ID_KEY, bind_trace_id
+from common import TRACE_ID_KEY, TraceAccessLog, bind_trace_id
 from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
@@ -446,7 +446,7 @@ def create_server(settings: Settings, backend: Backend | None = None) -> MCPServ
 
 def create_app(settings: Settings, backend: Backend | None = None) -> Starlette:
     server = create_server(settings, backend)
-    return server.streamable_http_app(
+    app = server.streamable_http_app(
         stateless_http=True,
         json_response=True,  # blocking request/response; nothing here streams
         transport_security=TransportSecuritySettings(
@@ -455,3 +455,5 @@ def create_app(settings: Settings, backend: Backend | None = None) -> Starlette:
             allowed_origins=[],
         ),
     )
+    app.add_middleware(TraceAccessLog)  # one access line per request, with its trace id (ADR-108)
+    return app

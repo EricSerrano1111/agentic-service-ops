@@ -21,7 +21,13 @@ CLI_TIMEOUT_S = 130.0
 def _serve() -> int:
     settings = Settings.from_env()
     configure_logging("orchestrator", os.environ.get("LOG_LEVEL", "INFO"))
-    uvicorn.run(create_app(settings), host=settings.host, port=settings.port, log_config=None)
+    uvicorn.run(
+        create_app(settings),
+        host=settings.host,
+        port=settings.port,
+        log_config=None,
+        access_log=False,
+    )
     return 0
 
 
