@@ -122,6 +122,9 @@ def test_static_files_are_public_and_never_shadow_the_api(tmp_path, export):
     assert kit.client.get("/").status_code == 200
     assert kit.client.get("/api/session").status_code == 401
     assert kit.client.get("/healthz").json() == {"status": "ok"}
+    # The public probe: Cloud Run's front end reserves /healthz on the service URL (ADR-097 note).
+    r = kit.client.get("/health")
+    assert (r.status_code, r.json()) == (200, {"status": "ok"})
 
 
 def test_security_headers_are_on_every_kind_of_response(tmp_path, export):

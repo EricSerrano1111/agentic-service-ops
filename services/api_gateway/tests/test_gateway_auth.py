@@ -165,7 +165,7 @@ def test_every_registered_api_route_is_401_without_a_session(kit):
 
 def test_the_only_non_api_routes_are_the_documented_public_ones(kit):
     public = {p for p, _ in registered_routes(kit.app) if not p.startswith("/api/")}
-    assert public == {"/healthz", "/auth/exchange", "/auth/logout"}
+    assert public == {"/health", "/healthz", "/auth/exchange", "/auth/logout"}
     assert not any(isinstance(r, Mount) for r in kit.app.routes)  # no static dir in this kit
 
 

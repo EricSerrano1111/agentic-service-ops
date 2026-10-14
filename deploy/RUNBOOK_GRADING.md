@@ -60,6 +60,8 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
 5. **Smoke check.** In the browser, open the owner link and ask one question (for example "How many
    incidents last quarter?"). Expect an answer with an "Interpreted as:" line and a verification line. A
    first answer after idle can take about 56 s (cold start, 55.87 s on 2026-10-13; the deadline is 120 s).
+   Reachability alone is `Invoke-WebRequest "$G/health" -UseBasicParsing` (200, `{"status":"ok"}`).
+   `/healthz` does not work on the public URL: Cloud Run's front end reserves it.
    Also confirm the trigger is still disabled (expect `True`):
    ```powershell
    gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format "value(disabled)"

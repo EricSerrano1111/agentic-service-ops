@@ -3161,6 +3161,8 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - **"Google's quota is the backstop for spend" no longer holds.** The daily-cap arithmetic above assumes the free 500-requests-a-day quota. The deployed services run on the paid key (ADR-104), so the ceiling is the prepaid balance together with the gateway's caps (ADR-105, L-93).
 - **The hourly cap is 30, not 15, from Z2** (ADR-107). The daily cap stays 50. Invites carry the deterministic gateway host (ADR-107).
 
+**Note 2026-10-14 (Z2a; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted): the public health route is `/health`.** Cloud Run's front end reserves `/healthz` on a service's public URL, so the request never reaches the container (found 2026-10-13, `docs/deploy-window-log.md`, sitting 2, step 5g). The gateway gains `GET /health`, public, returning `{"status":"ok"}` and no data. `/healthz` stays for local tooling, compose and the container's own probes, which reach the container directly. No answer, route or `qa_status` changes (ADR-103).
+
 ### ADR-098 — The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087)
 *Date: 2026-10-12. Written alongside the Dockerfile, `.gitignore`, `.dockerignore` and compose changes it describes, on the same branch (`feat/deploy-readiness`): the file changes and their tests came first and this entry followed within the session, not before them. Recorded here so the entry does not claim a spec-first order it did not have.*
 

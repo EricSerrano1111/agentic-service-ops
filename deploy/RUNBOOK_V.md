@@ -444,21 +444,32 @@ line that does not match the question.
 
 ## 12. Cold-start timings after 15 minutes idle (about 45 min elapsed, 5 min of work)
 
+*Updated 2026-10-14 (Z2a): the original per-service `/healthz` loop does not work. Cloud Run's front end
+reserves `/healthz` on a service's public URL (found 2026-10-13: an empty 404 on both gateway hosts), so
+the request never reaches the container. The gateway's public reachability probe is now `GET /health`
+(ADR-097 note). The cold start is measured as below.*
+
 R-05: the 120 s request deadline against a cold chain (gateway, orchestrator, then reporting or forecast
-and QA). Wait 15 minutes with no traffic, then time one `/healthz` per service, in chain order:
+and QA). Wait 15 minutes with no traffic, then:
 
-```powershell
-$tok = gcloud auth print-identity-token
-foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment','ops-qa','ops-forecast') {
-  $u = "https://$s-$N.$R.run.app/healthz"
-  $t = Measure-Command { try { Invoke-WebRequest -Uri $u -Headers @{ Authorization = "Bearer $tok" } -UseBasicParsing | Out-Null } catch {} }
-  "{0}: {1:N1} s" -f $s, $t.TotalSeconds
-}
-```
+1. **Reachability, not a timing:** `Invoke-WebRequest "$G/health" -UseBasicParsing` returns 200 with
+   `{"status":"ok"}` (the gateway only; the other five are not public).
+2. **The timed first question**, through the UI or with a session cookie, as on 2026-10-13: note the
+   elapsed time of one real question end to end.
+3. **Where the time went**, once ADR-108 is deployed: read the question's `request` access lines by its trace
+   id (the `X-Trace-Id` response header, or the `trace_id` the answer's log line carries). Each service
+   writes one with `duration_ms`; the first request to a cold instance shows the start-up in that number.
+   ```powershell
+   gcloud logging read "resource.type=cloud_run_revision AND jsonPayload.trace_id=`"<trace id>`" AND jsonPayload.msg=`"request`"" --project $P --format="table(jsonPayload.service,jsonPayload.path,jsonPayload.status,jsonPayload.duration_ms)"
+   ```
+   The field names are those of the services' JSON lines (`packages/common/src/common/logging.py`); Cloud
+   Run turns stdout JSON into `jsonPayload`, which Z2b confirms with one `--limit 1` read before relying on it.
+   Before ADR-108 is deployed, read the instance start-ups from the logs as on 2026-10-13
+   (`docs/deploy-window-log.md`, sitting 3).
 
-(The owner's token is accepted by Cloud Run for a project Owner.) Record the six numbers. Then wait
-15 minutes again and time one real question through the UI end to end (question 1). **Pass:** the chain's
-sum is well under 120 s, and the real question returns an answer (not the time-limit degraded result).
+Record the end-to-end time and the per-hop durations. Then wait 15 minutes again and repeat the timed
+question once. **Pass:** the end-to-end time is well under 120 s, and the real question returns an answer
+(not the time-limit degraded result).
 A service over 40 s alone: record it under R-05 and consider `min_instances=1` for it (cost below). The
 sentiment sidecar no longer hashes 438 MB or loads a model (ADR-100): its start-up is a manifest read and
 one database ping, so it should be in line with `ops-reporting`. If it is not, that is a finding.

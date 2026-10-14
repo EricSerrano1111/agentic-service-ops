@@ -220,6 +220,12 @@ def create_app(
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
+    # Cloud Run's front end reserves `/healthz` on a service's public URL (the request never
+    # reaches the container), so the public reachability probe is `/health` (ADR-097 note).
+    @app.get("/health")
+    async def health() -> dict[str, str]:
+        return {"status": "ok"}
+
     @app.post("/auth/exchange")
     async def exchange(request: Request) -> Response:
         ip = client_ip(request, settings.trusted_proxy_hops)
