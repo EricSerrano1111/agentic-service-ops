@@ -44,7 +44,7 @@ ignoredFiles:
   - docs/**
   - README.md
   - "**/README.md"
-  - deploy/RUNBOOK_V.md
+  - deploy/**/*.md
 substitutions:
   _CLOUD_SQL_INSTANCE: a2a-agentic-service-ops-gcp:us-central1:ops-db
   _INSTANCE_NAME: ops-db
