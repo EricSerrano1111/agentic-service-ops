@@ -1017,6 +1017,43 @@ now written; they record the planning decisions above.*
 - ADR-104 — Deployed model calls use the paid key for the evaluation and grading window (2026-10-13)
 - ADR-105 — Grading availability: `ops-db` stopped by default, started for announced windows (2026-10-13)
 
+### Sprint 5 close: records corrections, 2026-10-14 (Z1)
+
+*Added 2026-10-14, after the Sprint 5 close. Source: the 2026-10-14 gap audit, each finding verified against the file and line it cites. Nothing above is edited; each item below is a dated correction citing both places. Owner-decided 2026-10-14 ("defaults"); assistant-drafted.*
+
+**Decisions recorded:** ADR-106 (the Sprint 6.5 scope decision moves to the Sprint 6 close; supersedes ADR-093 in part) and ADR-107 (grading windows A, 2026-10-31 to 11-09, and B, 2026-12-01 to 12-12; the hourly cap to 30 in Z2). The window procedure is `deploy/RUNBOOK_GRADING.md`.
+
+**Corrections:**
+- **`05` status.** `05` is held, not submitted; it will be revised with Sprint 5 evidence before 11-01 (owner, D1). Its "Assignment complete" mark (`05:9`) dates from 2026-10-05. *Contradicts:* `05:9` against the Sprint 5 close's Academic deliverable status above, `architecture.md` §10 and ADR-093, which treat `05` as a Sprint 6 deliverable.
+- **G04.** Two descriptions, both right about different things. L-56 (`evaluation-report.md`) describes the question: complaint themes since an app update, a stretch item. The Sprint 4 backlog note above and R-16 describe the deployed answer: a one-region sentiment item whose counts equal the oracle. From `evals/results/sprint5_x/golden_assistant_reading.md`: G04 passes mechanically; the answer is the region's sentiment counts, shares and range, with the range stated as assumed, verbatim quotes and no invented theme or app-update date; it does not say the qualifier was ignored (the stretch gap). The 6.5 candidate "G04 complaint themes" is right that theme extraction does not exist; G04 itself is answered, not declined. (R-16 carries the same line.)
+- **The forecast-recompute decision item, ticked and unticked.** The Sprint 4 backlog's "Sprint 5 decision item (2026-10-10, owner; L-83 split in ADR-092): build or not an answer-time check..." is `[ ]`, and the Sprint 5 list's "Decision: build or not an answer-time check..." is `[x]`. They are one decision. **Real status: decided and built** (ADR-095, 2026-10-11), the 95% ends added (ADR-096), and deployed on `ops-qa` (2026-10-13). The `[ ]` copy is stale and is not edited.
+- **`ops-db` stop.** `ops-db` stopped by the owner 2026-10-13 after the Sprint 5 close (STOPPED NEVER), per ADR-105; the time is not recorded (evening). A read-only `describe` on 2026-10-14 read `STOPPED NEVER`. This replaces the Sprint 5 close line "the stop command was not run in this session ... the owner runs the command".
+- **Client IP.** The 2026-10-13 probe logged a `remoteIp` that was the caller's real address, which is consistent with the rule; the evidence is Cloud Run's logged `remoteIp` only, so it is **observed, not documented**. Recorded under L-88, as a note under ADR-097, and as an addendum to `docs/deploy-window-log.md`. *Contradicts:* L-88 and ADR-097 ("unverified") against the window log ("the rule holds"); both now say observed, not documented.
+- **G21 and `golden_v3`.** A `golden_v3` scoring change needs a golden-run prompt with explicit permission to open `evals/golden/`; it is not a Z item. Owner decides in 6.5 (L-95). *Contradicts:* the Sprint 6 backlog's G21 item (a `golden_v3` for the scorer) against L-95 ("only if the owner wants expectations changed. Not done"); the backlog item is no longer a Sprint 6 task.
+- **Buffer dates.** The Sprint 6 section's two closing notes disagree: "the buffer is 2026-11-09 to 12-05" (ADR-093, 2026-10-10) and "the buffer is 2026-11-23 to 12-05" (ADR-082, 2026-10-08, not marked superseded). **The log shows otherwise than the "Sprint 5 close to Sprint 6 start" reading:** both lines are the buffer after Sprint 6. ADR-093's later line stands: Sprint 6 runs 2026-10-26 to 11-08 and the buffer 2026-11-09 to 12-05; 11-23 is ADR-082's superseded date. Separately, the interval from the Sprint 5 close (2026-10-13) to the Sprint 6 start (2026-10-26) is unscheduled (the Sprint 5 close counts it as 12 days returned against ADR-093's 2026-10-25 end). Sprint 6.5, if any, is about 11-09 to 11-29 inside the buffer (ADR-106).
+- **R-14.** Closed against its stated condition (the Sprint 5 deploy of every service); see the risk register.
+- **Grader caps.** ADR-097 sized the caps for the owner's use; ADR-105 relies on graders. Resolved by ADR-107: hourly 15 to 30 in Z2, daily 50. (L-88 update.)
+- **Freeze record.** `freeze_s5.json`'s `llm_mode_in_services: free` is superseded for deployed serving by ADR-104 (note under ADR-103); the freeze test does not check the data-dictionary hash (L-97). The record is not changed.
+- **Scope-decision timing.** ADR-093, `architecture.md` §10 and R-10 said "at the Sprint 5 close"; the Sprint 5 close above says "this record proposes none, the owner decides"; the 6.5 note says "at or near the Sprint 6 close". Resolved by ADR-106: the Sprint 6 close.
+- **Default compute service account holding Editor:** already backlogged (Sprint 6 Planned: "Review the default compute service account's project-level Editor role"). No new item.
+
+**Notes for `05` (due 2026-11-01), the owner's revision checklist.** Every line below is from the audit, checked against the file on 2026-10-14. `05` is not edited by the assistant.
+1. `05:9`, "(Assignment complete)": held, not submitted; revise with Sprint 5 evidence (ADR-106 keeps 6.5 out of it).
+2. `05:102`, Test Approach: "free tier limited to 500 requests per day". The deployed key is paid (ADR-104). Re-verify the limit or reword as "paid key in deployment (ADR-104)" (R-11).
+3. `05:120`, Test Environment table, sentiment classifier "Same artifact": the deployed service reads stored, offline-scored predictions and the classifier is out of the request path (ADR-100, `MCP_FEEDBACK_SCORING=stored_only`).
+4. `05:147`, precondition 6, "either the free tier or the capped paid project": deployed on the paid key; the free key stays mounted for a revert (ADR-104).
+5. `05:209`, `05:234-236`, Scenario Summary Table and status "as of October 5, 2026 ... 1 known failing, 9 not yet built, 10 not yet run": out of date; the QA agent and revision loop (ADR-089 to ADR-092), the gateway and UI (ADR-097) and the deployment (ADR-099, 2026-10-13) exist.
+6. `05:221-224`, TS-09 to TS-12 "Not yet built": built; QA measured (223 of 223 after fixes, ADR-092).
+7. `05:226`, `:228-230`, `:232`, TS-14, TS-16, TS-17, TS-18, TS-20 "Not yet built": deployed; they run in Window A (2026-10-31 to 11-09, ADR-107).
+8. `05:238-240`, the definition of "Not yet built" lists the QA agent, loop, authentication, gateway, interface and deployment: all exist now.
+9. `05:558`, Known Failures, FR-03: "five fresh ambiguous questions, recognized three". The record: held-out under `route_v3`, 0 of 21 ambiguous item-runs recognised; the best revision, `route_v6`, recognised 4 of 8 against a floor of 6 (ADR-101). FR-03 is **unmet**, described so in `05` and `06` (ADR-106).
+10. `05:559` and `05:473`, TS-15-D: the router's `reason` and unredacted tracebacks in logs (L-60) are fixed in Z2, and TS-15-D also needs the trace ID on access-log lines (not built; Z2, own ADR). The case fails until Z2 ships.
+11. `05:567`, "free-tier model whose limits and availability the project does not control": the deployed system is on the paid key (ADR-104); the availability point stands (R-15 realised on 2026-10-13).
+12. The numbers to carry (Sprint 5 close above): held-out 38, 38, 38 of 50 (38 of 43 without the ambiguous items); golden 29 of 36 mechanical and 31 of 36 owner judgement, side by side (L-95); both sets generated, not owner-written (ADR-094, L-86).
+13. How `05` reaches the deployed system: by invite, in a window (ADR-107, `RUNBOOK_GRADING.md`), with `ops-db` otherwise stopped (ADR-105).
+
+**Notes for `06` (due 2026-11-08).** Stub; outline waits on the assignment text (owner to supply). Material: the deploy-window log, ADR-104, ADR-105, ADR-107, `RUNBOOK_GRADING.md`, L-88, L-89, R-21.
+
 ---
 
 ## Sprint 6 (2026-10-26 to 2026-11-08; re-baselined, ADR-093) — Hardening & delivery
@@ -1046,6 +1083,20 @@ now written; they record the planning decisions above.*
 - [ ] **G21:** a scorer comparison at display precision, as a `golden_v3` scoring change, with disclosure (L-95). The pre-registered 29 of 36 is not changed retroactively. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [ ] The runbook's step 12 second idle wait (the cold-start measurement's second leg, R-05). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [ ] **The orchestrator response:** consider exposing `cost_usd` and `model_calls` in `AskResponse` (L-94; deviation 1 in `sprint5_x.md`). A redeploy, so after any freeze. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+
+- [ ] **Z2: the trace ID in web-server access-log lines**, with its own ADR (carried from Sprint 4: the `[ ]` item of 2026-10-08 and the Sprint 5 item above; `security-model.md` §5). Sprint 6 observability and `05`'s TS-15-D depend on it. *Added 2026-10-14 (Z1). Source: audit, section 1; the Sprint 5 close.*
+- [ ] **Z2: the L-60 redaction** (the router's `reason` and unredacted tracebacks out of the logs; owner decision D3). `evaluation-report.md` L-60: "revisited with the Sprint 6 hardening". `05`'s TS-15-D fails until it is done. *Added 2026-10-14 (Z1). Source: audit, section 1.*
+- [ ] **Z2, hard ordering: sync `deploy/cloudrun/*.yaml` to paid mode (`LLM_MODE: paid`, `gemini-api-key-paid`) before the build trigger is enabled.** The repo YAML still says `LLM_MODE: free`; the first deploy after an enable would silently revert ADR-104 on five services. This item must be merged and verified before the "enable the build trigger" item above is acted on. *Added 2026-10-14 (Z1). Source: audit, section 1; ADR-104's drift note; the warning in `deploy/RUNBOOK_GRADING.md`.*
+- [ ] **Z2: the hourly per-invite cap from 15 to 30** (ADR-107): set `GATEWAY_ASKS_PER_SESSION_HOUR` in `deploy/cloudrun/gateway.yaml` (the code default is 15, `services/api_gateway/src/api_gateway/config.py`); the daily cap stays 50. A gateway-only redeploy, no answer change (ADR-103). *Added 2026-10-14 (Z1). Source: ADR-107.*
+- [ ] **Window A (2026-10-31 to 11-09): run `05`'s deployed scenarios** (TS-14, TS-16, TS-17, TS-18, TS-20, as `05` marks them). Needs the window opened as in `deploy/RUNBOOK_GRADING.md`: paid balance $5 or more, `ops-db` started, an invite. *Added 2026-10-14 (Z1). Source: audit, section 4 (items for `05`); ADR-107.*
+- [ ] **Window A: time the cold start on the sentiment and forecast paths.** Only the reporting path was measured (55.87 s in the browser, 2026-10-13). *Added 2026-10-14 (Z1). Source: audit, section 1.*
+- [ ] **R-11 / `05` (owner item for the `05` revision): re-verify the free-tier limits wherever `05` states them** (`05:102`, `05:567`), or reword them as "paid key in deployment (ADR-104)". *Added 2026-10-14 (Z1). Source: R-11 (2026-09-30 and 2026-10-10 lines).*
+- [ ] **L-92 and L-24: the owner decides at the Sprint 6 close** whether the decline-heavy interpretation set (L-92) and the false-alarm sensitivity work (L-24) are built or dropped (6.5 brainstorm). *Added 2026-10-14 (Z1). Source: the Sprint 4 close ("the owner decides") and audit, section 1.*
+- [ ] **The divergence list goes into the evaluation report** (Sprint 6 writing): the post-submission list at the Sprint 5 close (`04`'s three sentiment lines against ADR-100; the ADR-093 calendar; Identity-Aware Proxy replaced by invite links, ADR-097). *Added 2026-10-14 (Z1). Source: the Sprint 5 close; ADR-094's note.*
+- [ ] **6.5 candidates (see that section):** L-89's degraded result, the L-95 rulings ("district", "end of next year") and L-96's router and decline-text fix. They change answers, so they are decided at the Sprint 6 close (ADR-106), not in Sprint 6. *Added 2026-10-14 (Z1). Source: audit, section 1.*
+- [ ] **A paid-balance check and top-up before each window** (ADR-105, ADR-107, R-21): in `deploy/RUNBOOK_GRADING.md`; the dates are Window A and Window B. L-93's programmatic budget stop stays an option, not scheduled. *Added 2026-10-14 (Z1). Source: audit, section 1.*
+
+*Backlog correction, 2026-10-14 (Z1):* the **G21 item** above (a scorer comparison "as a `golden_v3` scoring change") needs a golden-run prompt with explicit permission to open `evals/golden/`. It is not a Z item. Owner decides in 6.5 (L-95).
 
 **Shipped:**
 *(fill in at sprint end)*
@@ -1096,6 +1147,12 @@ disclosed difference from the evaluated system).
   Changes answers; likely roadmap.
 - [ ] FR-03 third attempt on a freshly generated blind set (the Q/R pipeline).
   Closes the one unmet MVP requirement. Changes answers.
+
+
+*Added 2026-10-14 (Z1; owner-decided 2026-10-14, "defaults"; assistant-drafted). Scope is decided at the Sprint 6 close (ADR-106); nothing here is counted in `05` or `06`.*
+- [ ] **L-89: a stopped database gives the degraded result, not an error** (map the agent's `tool_error` to `DegradedResult("dependency", ...)`; a new ADR superseding the relevant part of ADR-088). Changes behaviour; it is what a grader sees outside a window.
+- [ ] **The L-95 rulings:** "district" (G03) and "end of next year" (G07), as product questions. They change answers.
+- [ ] **L-96: the router and decline-text fix** (a router revision stating the owner's out-of-scope rule, gated on a new set, or a decline text naming all three domains). Changes answers.
 
 ---
 

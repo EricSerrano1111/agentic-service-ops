@@ -12,11 +12,31 @@ decision is in [decisions-log.md](docs/decisions-log.md).
 
 ## Status
 
-Sprint 1 goal met (2026-09-25). The database layer, the frozen feedback corpus, and the
-synthetic data generator are built; the dataset is loaded and validated (`validate.py`,
-66/66 checks), and CI runs lint, unit and integration jobs. Sprint 2 (2026-09-28 to
-10-11) builds the first vertical slice. Its walking skeleton runs: orchestrator → A2A →
-reporting agent → MCP → incidents server → Postgres, with no LLM yet (ADR-047).
+*Updated 2026-10-14 (records reconciliation after the Sprint 5 close).*
+
+Sprint 5 closed on 2026-10-13. The system is built end to end and deployed: a gateway with
+invite-link sign-in and a single-screen UI, the orchestrator, the reporting, sentiment and forecast
+agents with their MCP servers, and the QA agent that verifies each answer before it returns. It
+runs on Cloud Run over Cloud SQL (`ops-db`, stopped outside announced grading windows,
+ADR-105, ADR-107). Model calls use the paid Gemini key with the free key still mounted beside it
+(ADR-104). One MVP functional requirement is unmet: FR-03, handling
+ambiguous questions, which failed two pre-registered gates (ADR-075, ADR-076, ADR-101). The
+interpretation check is advisory (ADR-102). The build trigger is disabled until the deploy YAML is
+synced to the paid key (Z2). Sprint 6 (2026-10-26 to 11-08) is hardening and delivery. Sprint
+status is in [docs/sprint-log.md](docs/sprint-log.md); requirement-by-requirement evidence is in
+[docs/requirements-traceability.md](docs/requirements-traceability.md).
+
+### Deployed architecture
+
+Six Cloud Run services: the **gateway** (FastAPI plus the static UI; the only public ingress; invite
+links, ADR-097), the **orchestrator** (routes by LLM and sends A2A messages), and the **reporting**,
+**sentiment** and **forecast** agents plus the **QA** agent. Each MCP server is a sidecar of its
+agent and the only holder of that domain's database role (ADR-079). Deployed sentiment reads stored,
+offline-scored predictions only (ADR-100). Services authenticate to each other with Cloud Run IAM
+ID tokens (ADR-081). Only the gateway is public. Access for graders is by invite link in announced
+windows; the procedure is [deploy/RUNBOOK_GRADING.md](deploy/RUNBOOK_GRADING.md).
+
+*Architecture diagram: placeholder. The owner draws it and adds it here.*
 
 ## Local setup
 
@@ -40,7 +60,7 @@ docker compose up -d postgres
 .venv\Scripts\python -m alembic upgrade head
 ```
 
-That applies seven migrations: the schema, the five least-privilege agent roles with the
+That applies every migration in `data/migrations/versions/`, beginning with the schema, the five least-privilege agent roles with the
 grants from [data-dictionary.md §7](docs/data-dictionary.md), the column-level narrowing
 of the sentiment and forecast grants (ADR-027, ADR-035), two schema changes to the
 ground-truth tables (ADR-037, ADR-038), and the site region on `locations` (ADR-051).
@@ -52,17 +72,18 @@ To load the synthetic dataset from the committed corpus and validate it:
 .venv\Scripts\python data/generator/validate.py
 ```
 
-Postgres stays local through Sprint 4; Cloud SQL is provisioned only from Sprint 5
-(ADR-007), so the same migrations run against both.
+Local development uses Docker Postgres; the deployed system uses Cloud SQL. The same
+migrations run against both, and the deployed database holds the same generated dataset
+(a data-parity check on 2026-10-13 matched the local one).
 
-## Run the skeleton locally
+## Run the system locally
 
-The walking skeleton is the thinnest end-to-end path, with every hop real. The
-orchestrator fetches the reporting agent's Agent Card and sends one A2A `SendMessage`.
-The agent calls `get_incidents_by_date_range` on the incidents MCP server over
-streamable HTTP, and the server queries Postgres as `app_reporting`. There is no LLM
-yet: the agent answers every question for a fixed date range until question parsing
-lands (ADR-046).
+*Updated 2026-10-14. This section began as the walking-skeleton walkthrough; the stack is now the
+full system.* `docker compose up -d --build` builds and starts Postgres, the three MCP servers, the
+four agents, the orchestrator and the gateway. A routed, parsed and verified answer needs a model
+key in `.env` (`GOOGLE_AI_API_KEY`; `LLM_MODE` blank means the free key, ADR-104 describes the paid
+mode) and, for the sentiment MCP server, the gitignored model weights under `/models/` (ADR-066).
+The fastest end-to-end check is the orchestrator's CLI:
 
 ```
 docker compose up -d postgres
@@ -72,11 +93,13 @@ docker compose up -d --build
 .venv\Scripts\python -m orchestrator ask "How many incidents were reported last quarter?"
 ```
 
-Only the orchestrator publishes a host port (8000). The agent and orchestrator
-containers hold no database credentials, and `mcp_incidents` holds only
-`app_reporting`'s. Every service logs JSON lines carrying the same `trace_id`. To follow
-one request across all three, run `docker compose logs mcp_incidents agent_reporting
-orchestrator`. The e2e test checks all of this against the running stack:
+The gateway needs `GATEWAY_SESSION_KEY` and an invite
+(`.venv\Scripts\python scripts/invites.py create --label me --days 7` prints the link once). Only the
+orchestrator and the gateway publish host ports, both on loopback. The agent and orchestrator
+containers hold no database credentials; each MCP server holds only its own role. Every service logs
+JSON lines carrying the same `trace_id`. To follow one request across services, run
+`docker compose logs orchestrator agent_reporting mcp_incidents`. The e2e tests check this against the
+running stack:
 
 ```
 $env:RUN_E2E=1; .venv\Scripts\python -m pytest tests/e2e -q -rs
@@ -146,20 +169,27 @@ of `service_feedback` and `service_requests`, with the expected outcome computed
 
 ## Repository layout
 
-See [architecture.md §11](docs/architecture.md). Implemented so far:
+*Updated 2026-10-14.* See [architecture.md §11](docs/architecture.md).
 
 ```
-packages/db_models/     SQLAlchemy models, 23 controlled vocabularies, §7 access matrix
+packages/db_models/     SQLAlchemy models, controlled vocabularies, §7 access matrix
 packages/common/        JSON-line logging and trace-id propagation
-packages/schemas/       Pydantic contracts shared across services (IncidentSummary)
-services/mcp_incidents/ incidents MCP server: one aggregate-only tool, as app_reporting
-services/agent_reporting/  reporting agent: A2A server, MCP client, template answers
-services/orchestrator/  POST /ask and a CLI; hardcoded route to the reporting agent
-data/migrations/        Alembic — identical local and Cloud SQL
+packages/schemas/       Pydantic contracts shared across services
+packages/a2a_core/      shared A2A server and client plumbing
+packages/llm/           model client: retries, breaker, spend caps, free and paid modes
+packages/forecast_runtime/  the forecast model's serving code
+services/mcp_incidents/ mcp_feedback/ mcp_volume/   one MCP server per domain, each as its own role
+services/agent_reporting/ agent_sentiment/ agent_forecast/   the specialist agents
+services/agent_qa/      the QA agent: independent recomputation and checks
+services/orchestrator/  POST /ask, the router, the bounded revision loop, the CLI
+services/api_gateway/   invite-link sign-in, limits and the static UI (web/ builds the export)
+web/                    the single-screen Next.js front end
+data/migrations/        Alembic: identical local and Cloud SQL
 data/generator/         parameters, frozen feedback corpus, generator, loader, validation
-tests/unit/             offline contract, generator and corpus tests
-tests/integration/      live grants suite; MCP figures vs independent SQL as app_eval
-tests/e2e/              the skeleton through docker-compose (RUN_E2E=1)
-.github/workflows/      CI: lint, unit, integration
-docker-compose.yml      local Postgres 16 plus the three skeleton services
+ml/                     sentiment classifier and volume forecast training
+evals/                  routing, parse, QA, golden and generated evaluation sets and results
+deploy/                 Cloud Run definitions, runbooks, verify.py
+tests/                  unit, integration (live grants, MCP figures), e2e (RUN_E2E=1)
+.github/workflows/      CI: lint, unit, integration (CD trigger disabled, ADR-105)
+docker-compose.yml      the full local stack
 ```

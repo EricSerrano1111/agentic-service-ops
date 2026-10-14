@@ -1,5 +1,7 @@
 # Deploy: reporting slice on Cloud Run (ADR-078, ADR-079, ADR-081)
 
+> **Updated 2026-10-14 (Z1):** the full system was deployed 2026-10-13 and runs on the paid key (ADR-104); `ops-db` is stopped outside announced grading windows (ADR-105); the window procedure is `RUNBOOK_GRADING.md` (ADR-107). The build trigger is disabled and must not be enabled until `cloudrun/*.yaml` is synced to paid mode (Z2). Statements below about the free key describe the reporting slice as deployed on 2026-10-08.
+>
 > **Full system (2026-10-12, ADR-099):** six services now. `RUNBOOK_V.md` is the window runbook, `plan_full.py` the plan, `cloudrun/*.yaml` the six definitions, `trigger_full.yaml` the trigger. Everything below describes the reporting slice and still holds for it; where this README and `RUNBOOK_V.md` differ, the runbook is current. `ops-sentiment` deploys with the others, reading stored predictions only (ADR-100, which resolved R-19); the runbook is two sittings.
 
 Two Cloud Run services, `ops-orchestrator` and `ops-reporting` (the reporting agent with
@@ -73,7 +75,10 @@ the four account emails, each `<id>@$PROJECT_ID.iam.gserviceaccount.com`: `ORCH_
    passed as an echoed argument. All cloud passwords are **newly generated**, never copied from
    the local `.env`, and piped straight into `gcloud secrets create --data-file=-`.
    - `gemini-api-key`: the **free** Gemini key. **Mounted** in the orchestrator and in
-     `agent-reporting`. Never the paid key.
+     `agent-reporting`. *Updated 2026-10-14 (ADR-104):* the five model-calling services now also mount
+     `gemini-api-key-paid` and run `LLM_MODE=paid`; the free key stays mounted beside it as
+     `GOOGLE_AI_API_KEY`, so a revert to the free tier is a single env change. The reporting-slice
+     deploy of 2026-10-08 used the free key only.
    - `db-role-reporting-password`: the `app_reporting` password. **Mounted** in `mcp-incidents`
      only.
    - **Stored only so the roles can be recreated; no service account has access** to any of
@@ -183,8 +188,8 @@ account. The trigger lives in **us-central1**, the region of the Cloud Build 2nd
 4. Reporting's IAM policy grants `roles/run.invoker` to exactly the orchestrator's account and
    binds neither `allUsers` nor `allAuthenticatedUsers`.
 5. Neither service runs as the default compute service account, and each runs as its own.
-6. The orchestrator answers one reporting question end to end (one live free-tier model call
-   for routing and one for parsing).
+6. The orchestrator answers one reporting question end to end (one live model call
+   for routing and one for parsing; free tier on 2026-10-08, the paid key since 2026-10-13, ADR-104).
 7. Cloud SQL `authorizedNetworks` is empty.
 
 Not tested, by design (printed as INFO): that the owner's own token is refused by reporting.
