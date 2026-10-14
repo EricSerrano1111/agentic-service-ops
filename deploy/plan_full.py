@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import os
 import secrets
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -374,35 +375,59 @@ def format_step(index: int, step: Step) -> str:
     return "\n".join(lines)
 
 
+def resolve_executable(name: str, which=shutil.which) -> str:
+    """The program's full path, as the shell would find it.
+
+    On Windows `gcloud` is `gcloud.cmd`, which `subprocess` cannot start from the bare name
+    without a shell (the 2026-10-13 failure). `shutil.which` applies `PATHEXT` and returns the
+    real file, so no shell is involved and no argument is parsed by `cmd.exe`. A program that is
+    not found keeps its bare name, and the run reports it by name instead of failing obscurely.
+    """
+    if name == "python":
+        return sys.executable
+    return which(name) or name
+
+
 def run_plan(
     steps: list[Step],
     cfg: Config,
-    run=subprocess.run,
+    run=None,
     generate=lambda: secrets.token_urlsafe(48),
     out=print,
+    which=shutil.which,
 ) -> int:
-    """Execute the plan. `run` and `generate` are injected for the tests."""
+    """Execute the plan. `run`, `generate` and `which` are injected for the tests; `run` is
+    looked up at call time so a test can replace `subprocess.run` for the whole module."""
+    run = run if run is not None else subprocess.run
     env = {**os.environ, **cfg.render_env()}
     for index, step in enumerate(steps, 1):
         if step.blocked:
             out(f"[{index:02d}] SKIP (blocked: {step.blocked}): {step.title}")
             continue
         if step.check is not None:
-            done = run(list(step.check), capture_output=True, text=True, env=env, cwd=ROOT)
+            check = [resolve_executable(step.check[0], which), *step.check[1:]]
+            try:
+                done = run(check, capture_output=True, text=True, env=env, cwd=ROOT)
+            except FileNotFoundError:
+                out(f"[{index:02d}] FAILED: {step.check[0]} was not found on PATH: {step.title}")
+                return 1
             if done.returncode == 0:
                 out(f"[{index:02d}] exists, skipped: {step.title}")
                 continue
         payload = (generate() if step.stdin == "token" else step.stdin) if step.stdin else None
         for n, command in enumerate(step.commands):
-            argv = [sys.executable if command[0] == "python" else command[0], *command[1:]]
-            result = run(
-                argv,
-                input=payload if n == 0 else None,
-                text=True,
-                env=env,
-                cwd=ROOT,
-                shell=sys.platform == "win32" and command[0] == "gcloud",
-            )
+            argv = [resolve_executable(command[0], which), *command[1:]]
+            try:
+                result = run(
+                    argv,
+                    input=payload if n == 0 else None,
+                    text=True,
+                    env=env,
+                    cwd=ROOT,
+                )
+            except FileNotFoundError:
+                out(f"[{index:02d}] FAILED: {command[0]} was not found on PATH: {step.title}")
+                return 1
             if result.returncode != 0:
                 out(f"[{index:02d}] FAILED: {step.title}")
                 return 1
@@ -436,8 +461,14 @@ def main(argv: list[str] | None = None) -> int:
             print(format_step(index, step))
         print(f"\n{len(steps)} steps; {sum(1 for s in steps if s.blocked)} blocked. Dry run: done.")
         return 0
-    if not args.skip_deploy and cfg.image_tag.startswith("<"):
-        print("error: --image-tag is required to run the plan", file=sys.stderr)
+    deploys = any(s.id.startswith("deploy-") for s in steps)
+    if deploys and cfg.image_tag.startswith("<"):
+        print(
+            "error: this run renders and deploys services, so it needs --image-tag <commit sha>; "
+            "pass --skip-deploy to run only the accounts, secrets and invoker bindings "
+            "(the case when Cloud Build deployed).",
+            file=sys.stderr,
+        )
         return 2
     return run_plan(steps, cfg)
 

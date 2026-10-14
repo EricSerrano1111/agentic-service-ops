@@ -68,6 +68,18 @@ def secrets_by_container() -> dict[tuple[str, str], set[str]]:
     return out
 
 
+@pytest.fixture(autouse=True)
+def no_real_process(monkeypatch):
+    """Nothing in this file may start a process: a test that reaches `plan_full.run_plan` without
+    an injected `run` would run real `gcloud` commands against the project (it did, once, on
+    2026-10-14: four idempotent IAM bindings; see ADR-108's note)."""
+
+    def refuse(*args, **kwargs):
+        raise AssertionError(f"a test started a real process: {args[:1]}")
+
+    monkeypatch.setattr(plan_full.subprocess, "run", refuse)
+
+
 def dry_run() -> list[plan_full.Step]:
     return plan_full.build_plan(CFG)
 
@@ -421,3 +433,64 @@ def test_the_connection_budget_fits_max_connections():
     # the gateway and the orchestrator hold no connection: no socket, no database variable
     for name in ("gateway", "orchestrator"):
         assert "volumes" not in rendered(name)["template"]
+
+
+# ------------------------------------------------------------------------ Windows and the CLI
+
+WIN_GCLOUD = r"C:\Program Files (x86)\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.CMD"
+
+
+def test_gcloud_is_resolved_with_which_and_started_without_a_shell():
+    """2026-10-13: `subprocess` cannot start the bare name `gcloud` (it is gcloud.cmd) without a
+    shell. `shutil.which` finds the real file; no `shell=True` is needed (ADR-108 section 8)."""
+    seen: list[tuple[list[str], dict]] = []
+
+    class Done:
+        returncode = 0
+
+    def run(argv, input=None, **kwargs):
+        seen.append((argv, kwargs))
+        return Done()
+
+    def which(name):
+        return WIN_GCLOUD if name == "gcloud" else None
+
+    steps = plan_full.select(dry_run(), "1", True)
+    assert plan_full.run_plan(steps, CFG, run=run, out=lambda _: None, which=which) == 0
+    gcloud_calls = [(a, k) for a, k in seen if "gcloud" in a[0].lower()]
+    assert gcloud_calls and all(a[0] == WIN_GCLOUD for a, _ in gcloud_calls)
+    assert all(not k.get("shell") for _, k in seen)
+
+
+def test_the_plan_never_asks_for_a_shell():
+    assert "shell=True" not in (DEPLOY / "plan_full.py").read_text("utf-8")
+    assert "shell=" not in (DEPLOY / "plan_full.py").read_text("utf-8").replace(
+        "no `shell=True`", ""
+    ).replace("without a shell", "")
+
+
+def test_a_missing_gcloud_is_reported_by_name_not_as_a_traceback():
+    def run(argv, **kwargs):
+        raise FileNotFoundError(argv[0])
+
+    lines: list[str] = []
+    steps = plan_full.select(dry_run(), "1", True)
+    rc = plan_full.run_plan(steps, CFG, run=run, out=lines.append, which=lambda name: None)
+    assert rc == 1 and any("gcloud was not found on PATH" in x for x in lines)
+
+
+def test_python_steps_use_the_running_interpreter():
+    assert plan_full.resolve_executable("python", which=lambda n: "nope") == sys.executable
+
+
+def test_a_real_run_that_deploys_needs_an_image_tag_or_skip_deploy(capsys):
+    # Phase 6 holds the render and deploy steps; no image tag was given.
+    assert any(s.id.startswith("deploy-") for s in plan_full.select(dry_run(), "6", False))
+    assert plan_full.main(["--phases", "6"]) == 2
+    err = capsys.readouterr().err
+    assert "--image-tag" in err and "--skip-deploy" in err
+
+
+def test_a_run_with_no_deploy_step_needs_no_image_tag(monkeypatch):
+    monkeypatch.setattr(plan_full, "run_plan", lambda steps, cfg: 0)
+    assert plan_full.main(["--phases", "1,2", "--skip-deploy"]) == 0
