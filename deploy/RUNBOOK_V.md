@@ -4,17 +4,14 @@
 > 2026-10-12 (V1), 2026-10-13 morning (V2) and 2026-10-13 10:45 to about 12:15 CDT (V3, the paid-key switch,
 > ADR-104). The body below is the runbook as written on 2026-10-12 and is kept as written except where marked
 > *Updated 2026-10-14*. **For a grading window use `RUNBOOK_GRADING.md` (ADR-107).**
-> **Known corrections pending in Z2** (each is a Sprint 6 backlog item, `sprint-log.md`):
-> - step 3 needs `--skip-deploy`; step 5e should check the image tag at the service template; steps 5f and
->   5f-2 should read the Cloud SQL annotation; step 7 needs `POSTGRES_ADMIN_*` and a reviewed credential plan;
-> - every comma list in `--update-env-vars` must be quoted (Windows PowerShell 5.1 turns an unquoted one into an array);
->   add Windows PowerShell 5.1 notes throughout;
-> - `/healthz` is reserved by Cloud Run's front end: rename the public route and replace step 12's loop;
->   step 12's second idle wait (the cold-start measurement's second leg, R-05);
-> - step 8: enable the build trigger and add the docs-only merge check. **Never enable the trigger before
->   `deploy/cloudrun/*.yaml` is synced to paid mode** (they still say `LLM_MODE: free`);
-> - `deploy/plan_full.py` needs `shell=True` on Windows; extend `deploy/verify.py` to the forecast, QA,
->   sentiment and gateway services; log the error class and status of each retried model call.
+> **Corrections made in Z2a (2026-10-14), deployed with Z2b:** step 3 passes `--skip-deploy`; 5e reads the
+> image tag at the service template; 5f and 5f-2 read the Cloud SQL annotation; step 6 runs the extended
+> `verify.py` (all six services); step 7 states its scope and credentials; Windows PowerShell 5.1 notes are
+> added; `/healthz` is replaced by `/health` for reachability and step 12 measures the cold start as a
+> timed question plus the per-hop `request` lines; `plan_full.py` resolves `gcloud` without a shell.
+> **Still open:** enabling the build trigger and its docs-only merge check (step 8; only after the
+> paid-mode YAML sync is merged, ADR-104 note); the retried-call logging reaches the deployed services
+> with ADR-108 in Z2b.
 
 Written 2026-10-12 in Prompt U; **revised the same day in Prompt U2 (ADR-100)**: sentiment is no longer
 blocked, the window is two sittings, and the deploy is one service at a time (R-20).
@@ -115,8 +112,8 @@ same two steps, skipping a secret that exists.) Roll back: `gcloud secrets delet
 ## 3. Service accounts and bindings (about 10 min)
 
 ```powershell
-.venv\Scripts\python deploy\plan_full.py --dry-run --phases 1,2,3,4,5      # read it first
-.venv\Scripts\python deploy\plan_full.py --phases 1,2,3,4,5                # skips what exists
+.venv\Scripts\python deploy\plan_full.py --dry-run --phases 1,2,3,4,5 --skip-deploy   # read it first
+.venv\Scripts\python deploy\plan_full.py --phases 1,2,3,4,5 --skip-deploy             # skips what exists
 gcloud iam service-accounts list --project $P --format="value(email)"
 gcloud secrets get-iam-policy gateway-invites --project $P
 ```
@@ -270,22 +267,38 @@ foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment',
 }
 ```
 
-Expect, for each, `traffic=<the same revision as ready>=100`, and the image tag on each revision equal to
-the build's `COMMIT_SHA`:
-`gcloud run revisions describe <rev> --region $R --project $P --format="value(spec.containers[].image)"`.
+Expect, for each, `traffic=<the same revision as ready>=100`, and the image tag equal to the build's
+`COMMIT_SHA`. **Read the tag at the service template, not at a revision:** a revision's image fields show
+digests, which is why the first run of this check could not compare them (2026-10-13).
+
+```powershell
+$sha = (gcloud builds list --region $R --project $P --limit 1 --format="value(substitutions.COMMIT_SHA)")
+foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment','ops-qa','ops-forecast') {
+  $j = gcloud run services describe $s --region $R --project $P --format=json | ConvertFrom-Json
+  foreach ($c in $j.spec.template.spec.containers) {
+    "{0}/{1}: tag matches build={2}" -f $s, $c.name, $c.image.EndsWith(":$sha")
+  }
+}
+```
+
+Expect `True` on every container (`deploy/verify.py` makes the same check for all six services).
 **Stop and roll back** a service whose ready revision does not hold 100%.
 
 **5f. The sockets and secrets are where ADR-099 says:**
 
+Cloud Run's v2 resource shows the Cloud SQL socket as an **annotation** on the service template
+(`run.googleapis.com/cloudsql-instances`), not as a volume mount on a container (found 2026-10-13):
+
 ```powershell
-foreach ($s in 'ops-qa','ops-forecast','ops-reporting','ops-sentiment') {
-  gcloud run services describe $s --region $R --project $P --format=json |
-    ConvertFrom-Json | ForEach-Object { $_.spec.template.spec.containers | ForEach-Object {
-      "{0}/{1}: mounts={2}" -f $s, $_.name, (($_.volumeMounts | ForEach-Object { $_.name }) -join ',') } }
+foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment','ops-qa','ops-forecast') {
+  $j = gcloud run services describe $s --region $R --project $P --format=json | ConvertFrom-Json
+  $a = $j.spec.template.metadata.annotations.'run.googleapis.com/cloudsql-instances'
+  "{0}: cloudsql={1}" -f $s, $a
 }
 ```
 
-Expect `cloudsql` mounted on `agent-qa`, `mcp-volume`, `mcp-incidents` and `mcp-feedback` only.
+Expect `<project>:us-central1:ops-db` on `ops-reporting`, `ops-sentiment`, `ops-forecast` and `ops-qa`,
+and nothing on `ops-gateway` and `ops-orchestrator` (exactly the four database services).
 
 **5f-2. Sentiment carries no model (ADR-100):**
 
@@ -297,7 +310,8 @@ gcloud run services describe ops-sentiment --region $R --project $P --format=jso
       (($_.volumeMounts | ForEach-Object { $_.name }) -join ',') } }
 ```
 
-Expect `mem=512Mi scoring=stored_only volumes=cloudsql`. Then the container's log must say the artifact
+Expect `mem=512Mi scoring=stored_only volumes=` (empty: the socket is the annotation of 5f, not a
+volume; read 2026-10-14). Then the container's log must say the artifact
 was verified with `"scoring_mode": "stored_only"` and `"files"` of the manifest, and contain no
 `model loaded` line:
 `gcloud logging read "resource.labels.service_name=ops-sentiment AND resource.labels.container_name=mcp-feedback" --limit 20 --project $P`.
@@ -342,11 +356,21 @@ $env:CLOUD_SQL_INSTANCE_NAME = 'ops-db'
 .venv\Scripts\python deploy\verify.py
 ```
 
-Expect `PASS` on every line and exit 0. `verify.py` covers the orchestrator and reporting only (its
-checks 1, 4 and 5 name two services); steps 5d to 5f above are the equivalent for the other three, and
-extending the script is a task after the window. Check 6 makes two model calls (free tier when written; the paid key since 2026-10-13, ADR-104).
+Expect `PASS` on every line and exit 0. *Updated 2026-10-14 (Z2a): `verify.py` now covers all six
+services: for each, the exact invoker set (ADR-099), the dedicated service account, 100% of traffic on the
+latest ready revision with the image tag read at the template, and paid mode on exactly the five
+model-calling containers (ADR-104). The end-to-end question stays one question.* Steps 5d to 5f are the
+same checks by hand. Check 6 makes two model calls (free tier when written; the paid key since 2026-10-13, ADR-104).
 
 ## 7. Real-data suites on Cloud SQL (L-78) (about 20 min)
+
+*Updated 2026-10-14 (Z2a): scope and credentials.* Run **only** the sentiment figures suite and
+`tests/integration/test_qa_sentiment_agrees.py` here, and only if their fixtures run with read-only roles
+and without the superuser (`sprint-log.md`, the Z2a note of 2026-10-14, records what was found). The
+whole `tests/integration` run needs `POSTGRES_ADMIN_*` (the grants suite creates and drops objects), and
+running fixtures with superuser rights against the evaluation database was refused on 2026-10-13. A run
+that needs it stays deferred; do not export `POSTGRES_ADMIN_*` into this shell to make it pass. Windows
+PowerShell 5.1 has no `pwsh` and turns an unquoted comma list into an array: quote them.
 
 With the proxy from step 4 still running:
 
@@ -357,7 +381,8 @@ foreach ($r in 'reporting','sentiment','forecast','qa','eval','generator','train
   Set-Item "env:DB_ROLE_$($r.ToUpper())_PASSWORD" (gcloud secrets versions access latest --secret "db-role-$r-password" --project $P)
 }
 $env:REQUIRE_INTEGRATION_DB = '1'
-.venv\Scripts\python -m pytest tests/integration -q -rs
+# the scoped suites only (see the note above); never `tests/integration` as a whole from here
+.venv\Scripts\python -m pytest tests/integration/test_agent_sentiment_figures.py tests/integration/test_qa_sentiment_agrees.py -q -rs
 ```
 
 Expect no failures; the skips are the live-model ones only. A skip naming "no stored bert_v1
@@ -404,7 +429,7 @@ A helper for the three checks (the token is the part after `#invite=`):
 
 ```powershell
 function Test-Invite($link) {
-  $t = $link.Split('#invite=')[1]
+  $t = ($link -split '#invite=')[1]   # not .Split('#invite='): in 5.1 that splits on each character
   $b = @{ token = $t } | ConvertTo-Json -Compress
   try { (Invoke-WebRequest -Method Post -Uri "$G/auth/exchange" -ContentType 'application/json' `
         -Headers @{ Origin = $G } -Body $b -UseBasicParsing).StatusCode }
@@ -473,6 +498,23 @@ question once. **Pass:** the end-to-end time is well under 120 s, and the real q
 A service over 40 s alone: record it under R-05 and consider `min_instances=1` for it (cost below). The
 sentiment sidecar no longer hashes 438 MB or loads a model (ADR-100): its start-up is a manifest read and
 one database ping, so it should be in line with `ops-reporting`. If it is not, that is a finding.
+
+## Windows PowerShell 5.1 notes (added 2026-10-14, Z2a)
+
+Every command here is written for Windows PowerShell 5.1 (`powershell.exe`); `pwsh` is not assumed.
+
+- **Quote every comma list.** `--update-env-vars "LLM_MODE=paid,LLM_MAX_REQUESTS=1500"`. An unquoted
+  `A=1,B=2` is an array in 5.1; it turned `LLM_MODE` into one space-joined string on 2026-10-13 and the
+  fail-fast config refused to start (`docs/deploy-window-log.md`, sitting 3). The same applies to
+  `--phases 1,2,3`.
+- **Split with `-split`, not `.Split('abc')`.** In 5.1 `.Split('abc')` splits on each of the characters.
+  Step 10's helper uses `-split '#invite='` for that reason.
+- **`gcloud` is `gcloud.cmd`.** `plan_full.py` and `verify.py` resolve it with `shutil.which` and start it
+  with no shell; do not add `shell=True` back.
+- **No `&&` or `||`.** Chain with `;` and test `$?`, or use separate commands.
+- **Avoid `2>&1` on a native program.** In 5.1 it wraps each stderr line in an error record and sets `$?`
+  to false even on exit code 0.
+- **Write files that other tools read with `-Encoding utf8`** (`Set-Content` defaults to the ANSI code page).
 
 ## Rollback (per service)
 
