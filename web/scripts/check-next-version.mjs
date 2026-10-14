@@ -3,7 +3,7 @@
 // its source and the date it was read are recorded in docs/sprint-log.md.
 import { readFileSync } from "node:fs";
 
-const MIN_NEXT = "16.3.8"; // GHSA-h694-7cp9-m8p3 patched release, read 2026-10-12
+const MIN_NEXT = "16.4.1"; // GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr, GHSA-p3m5-59mp-jv5r patched release, read 2026-10-14
 
 const parse = (v) => v.split("-")[0].split(".").map((n) => Number.parseInt(n, 10));
 const isBelow = (have, need) => {

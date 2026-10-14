@@ -2466,6 +2466,7 @@ training grants.
 - The UI and the API are one deploy unit, since the gateway serves the static files.
 - The submitted `04` names Node.js LTS for the interface. Node remains a build tool only. Recorded as a post-submission divergence in the sprint log.
 
+**Note, 2026-10-14 (Next.js 16.4.1; no change to the decision).** GHSA-2464-fhr4-w9xw (Image Optimization RCE), GHSA-673q-mjm6-r5xr (`use cache` RCE) and GHSA-p3m5-59mp-jv5r (Server Action DoS) name 16.4.1 as the fix. This ADR's rationale held: the export has no Next.js server, no image optimiser, no Server Actions and no `use cache`, so none is reachable. The pin moved from 16.3.8 to exactly 16.4.1 anyway, and the build-time minimum with it ("the patch pin stays anyway"). Details and file references: `docs/sprint-log.md`, Z2a section.
 
 ### ADR-081 — Deploy configuration for the reporting slice
 *Date: 2026-10-08. Clarifies ADR-079 ("internal with IAM"); builds on ADR-045 and ADR-078. Supersedes nothing.*
