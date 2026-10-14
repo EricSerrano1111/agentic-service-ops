@@ -1120,6 +1120,15 @@ now written; they record the planning decisions above.*
   - *Not covered live:* sentiment and forecast before/after (the cap). Their answers are covered by the unchanged answer-text tests (the whole suite passes with only three log-field assertions changed, listed in the PR), and QA marked both `verified`.
 - **Suites at the end of Z2a:** unit and services, integration (`REQUIRE_INTEGRATION_DB=1`, local Postgres, 1127 passed), ruff clean; `test_eval_freeze.py` and `test_eval_set_manifest.py` pass; no file under `services/*/prompts/` changed.
 
+**Next.js 16.4.1 bump, 2026-10-14 (PR `fix/nextjs-16.4.1`, local only, no live calls, no GCP; assistant-drafted).** Supersedes the "not done in Z2a" line above: an advisory now names a fixed version.
+- **Advisories, read 2026-10-14** on `github.com/vercel/next.js/security/advisories/<id>` (not yet in the global advisory database or OSV at the time of reading); all published 2026-10-14; `next@16.4.1` is on the npm registry (published 2026-10-14T17:43:55Z, `latest`):
+  - GHSA-2464-fhr4-w9xw, critical (CVSS v4 9.5): remote code execution in the Image Optimization API when SVG files are used (via `sharp`); patched 16.4.1 (and 15.5.28).
+  - GHSA-673q-mjm6-r5xr, critical (9.5): remote code execution in `use cache` functions returning typed arrays (App Router with Cache Components); patched 16.4.1.
+  - GHSA-p3m5-59mp-jv5r, high (8.2): denial of service in the App Router with at least one Server Action; patched 16.4.1 (and 15.5.28).
+- **Exposure finding: none of the three is reachable in the deployed gateway.** `web/next.config.mjs:4` sets `output: "export"`; `:5` sets `images: { unoptimized: true }`; `web/app/` contains no `"use server"`, no `"use cache"`, no `next/image` import and no `cacheComponents` setting (searched, no match); the gateway image has no Node runtime (final stage of `services/api_gateway/Dockerfile` is `python:3.12-slim` serving `/app/static`). All three are server-runtime paths, and there is no Next.js server in production (ADR-080).
+- **Bumped as defence in depth**, not because anything was exploitable: `next` pinned to exactly 16.4.1 in `web/package.json` and `web/package-lock.json` (only `next` and its platform packages changed; there is no `eslint-config-next`); `MIN_NEXT` in `web/scripts/check-next-version.mjs` raised to 16.4.1. `web/out` rebuilt; `npm audit --omit=dev --audit-level=high` reports 0 vulnerabilities. The UI is unchanged: gateway suite (114) passes, including the CSP hash check on the real export and the section 6 wording tests; no file under `services/*/prompts/` changed.
+- Deploy of the new image is Z2b's, with the rest of Z2a.
+
 **Shipped:**
 *(fill in at sprint end)*
 
