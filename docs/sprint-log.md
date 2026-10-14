@@ -1071,6 +1071,34 @@ now written; they record the planning decisions above.*
 
 ---
 
+## Sprint 6.5 candidates (brainstorm, not committed) — recorded 2026-10-14
+
+Owner's note: a possible Sprint 6.5 (about 2026-11-09 to 11-29, inside the
+buffer before the 12-05 final) to expand scope where it adds value. Nothing
+here is committed: scope is decided at a brainstorming session at or near the
+Sprint 6 close, as an ADR-093 buffer-and-scope decision. Each candidate notes
+whether it changes answers (and so needs a fresh blind evaluation or a
+disclosed difference from the evaluated system).
+
+- [ ] Response transparency: live elapsed timer; after-answer timeline (route,
+  per-hop durations, QA); estimated cost per answer (list price, L-71). No
+  answer change; one ADR. Optional stretch: live stage streaming via A2A
+  status updates.
+- [ ] Cost framing: cost per answer, and "savings" only against a measured
+  baseline (ADR-049 Flash vs Flash-Lite; ADR-100 stored vs query-time scoring).
+- [ ] UI appearance upgrade scoped to the presentation. No answer change if
+  §6 answer wording is kept.
+- [ ] Executive-style analysis: option 1 deterministic "what changed" lines
+  (QA-verifiable); option 2 model narrative constrained to verified facts with
+  new QA checks (roadmap unless time allows). Changes answers.
+- [ ] Expanded agent abilities (from the limitations log: L-68 districts/cities,
+  L-67 repeat drivers by region, G04 complaint themes, L-47 monthly forecasts).
+  Changes answers; likely roadmap.
+- [ ] FR-03 third attempt on a freshly generated blind set (the Q/R pipeline).
+  Closes the one unmet MVP requirement. Changes answers.
+
+---
+
 ## Cumulative Summary
 *(fill in progressively — one line per sprint, for a fast look-back when writing the evaluation report and final presentation)*
 
