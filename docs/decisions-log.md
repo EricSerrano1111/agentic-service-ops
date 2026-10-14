@@ -3463,3 +3463,42 @@ The per-process caps are `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00`. T
 - Every model call from the deployed system is now billed at list price. At the daily cap that is cents; R-02's paid-spend exposure now includes deployed traffic.
 - The owner's own browser questions bill to the paid key.
 - L-93 is added to the Limitations log: the per-process caps are not a ceiling.
+
+
+### ADR-105 — Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing)
+*Date: 2026-10-13. Owner decision ("default"), given at the Sprint 5 close. Fills the "Duration" paragraph ADR-104 left open for the close.*
+
+**Decision:**
+- **`ops-db` is stopped by default** (`activation-policy NEVER`). It is started for announced grading windows and only then. The window is stated to the grader together with the invite link (ADR-097), with its start and end.
+- **The paid key stays on.** ADR-104 continues: the five model-calling services keep `LLM_MODE=paid`. Reverting to the free key is not done.
+- **The paid balance is topped up to at least $5 before each window.** It is checked in the Billing console, not inferred (R-02, R-21).
+- **The build trigger `deploy-reporting-slice` stays disabled outside deploy windows** (ADR-083). Enabling it, and the docs-only merge check that goes with it, is a Sprint 6 item.
+
+**Commands** (Windows PowerShell 5.1, quoted):
+```powershell
+# start, before a window
+gcloud sql instances patch ops-db --activation-policy ALWAYS --project "a2a-agentic-service-ops-gcp"
+# stop, after it
+gcloud sql instances patch ops-db --activation-policy NEVER --project "a2a-agentic-service-ops-gcp"
+# state: expect RUNNABLE ALWAYS or STOPPED NEVER
+gcloud sql instances describe ops-db --project "a2a-agentic-service-ops-gcp" --format "value(state,settings.activationPolicy)"
+```
+After a start, one question through the gateway confirms the data path before the window is announced.
+
+**Context:**
+- **Cost.** The database costs about $0.30 a day while running (owner-reported estimate; not read from Billing). Storage and the reserved address continue when it is stopped, so a stopped database is not free, only cheaper. The Cloud Run services are idle at `min_instances=0` and cost nothing while idle.
+- **What a grader sees when the database is stopped.** The gateway shows the fixed message "The data service is unavailable right now. Please try again later." (L-89's 2026-10-12 update); the orchestrator's detail is logged and never returned. The system is up and the data is not; the message is honest and does not say when to return, which is why the window is stated with the link.
+- **Why stopped by default.** The system has no traffic outside invited reviews, and at this scale a running database is the largest idle cost. A stopped database also removes the Cloud SQL connection ceiling (R-20) and the exposure of an always-on data path.
+- **Why the paid key stays.** On 2026-10-13 the free tier returned `504 DEADLINE_EXCEEDED` twice from Cloud Run and once from the owner's machine (R-15 realised, ADR-104). The paid key's exposure is bounded by the gateway's 50-question daily cap and the prepaid balance, which is a ceiling the per-process caps are not (L-93).
+
+**Alternatives considered:**
+- *Leave `ops-db` running.* Rejected: about $0.30 a day with no one using it; the grader would still see the same system.
+- *Start and stop on demand with no announced window.* Rejected: a grader who arrives while it is stopped sees an unavailable system with no explanation, which is the failure R-21 and this decision exist to prevent.
+- *Revert to the free key.* Rejected: the free tier was unreliable on 2026-10-13 (ADR-104).
+- *Auto-reload on the paid balance.* Not chosen: auto-reload turns a runaway into a bill. A manual top-up before each window keeps the ceiling (R-02).
+
+**Consequences:**
+- Outside a window the deployed system answers every data question with the fixed unavailable message. That is the intended state, not a fault.
+- Each window needs three owner actions: top up and check the balance, start `ops-db`, and confirm one answer. Each window's end is the stop command.
+- R-21 (paid balance runs out during a grading window) is added to the risk register; its mitigations are the top-up, the gateway's daily cap and the fail-closed paid mode.
+- The state of `ops-db` after this entry is recorded in the sprint log's Sprint 5 close, not here.
