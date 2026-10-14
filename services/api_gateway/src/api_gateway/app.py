@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from common import TraceAccessLog, current_trace_id
+from common import TraceAccessLog, current_trace_id, text_fields
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
@@ -319,10 +319,9 @@ def create_app(
                 "invite_id": invite.id,
                 "status": status,
                 "upstream_error": code[:40] if isinstance(code, str) else None,
-                # Logged, never returned: it can be an agent's own task text (L-89).
-                "upstream_detail": (
-                    detail[:LOGGED_DETAIL_CHARS] if isinstance(detail, str) else None
-                ),
+                # Never returned and no longer logged as text: it can be an agent's own task
+                # sentence, which can name what the user typed (L-89, ADR-108).
+                **(text_fields("upstream_detail", detail) if isinstance(detail, str) else {}),
                 "upstream_trace_id": body.get("trace_id"),
             },
         )

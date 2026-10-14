@@ -27,6 +27,7 @@ from common import (
     bind_trace_id,
     clamp_to_deadline,
     current_cost_usd,
+    text_fields,
     track_request_cost,
     with_reviewer_note,
 )
@@ -296,7 +297,11 @@ class SentimentExecutor(AgentExecutor):
         reason: str,
         parsed_request: dict | None = None,
     ) -> None:
-        log.warning("task failed", extra={"task_id": task_id, "code": code, "reason": reason})
+        # The sentence can repeat what the user typed: length and hash only (ADR-108).
+        log.warning(
+            "task failed",
+            extra={"task_id": task_id, "code": code, **text_fields("reason", reason)},
+        )
         # A decline also carries how the question was read, for QA (ADR-090); not logged.
         await updater.failed(
             updater.new_agent_message(

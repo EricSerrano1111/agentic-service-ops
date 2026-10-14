@@ -16,7 +16,7 @@ import datetime as dt
 import logging
 from typing import Protocol
 
-from common import bind_trace_id
+from common import bind_trace_id, text_fields
 from llm import LLMResult
 from llm.prompts import Prompt, load_prompt
 from schemas import DATASET_WINDOW_END, Domain, RouteDecision
@@ -71,7 +71,8 @@ class Router:
             for value in decision.dropped_candidates:
                 log.warning(
                     "route candidate dropped",
-                    extra={"route": decision.route, "candidate": value[:50]},
+                    # Model-written text can repeat the question: length and hash only (ADR-108).
+                    extra={"route": decision.route, **text_fields("candidate", value)},
                 )
         log.info(
             "route decision",
@@ -79,7 +80,9 @@ class Router:
                 "route": decision.route,
                 "domains": list(decision.domains),
                 "candidates": list(decision.candidates),
-                "reason": decision.reason,
+                # The model's own reason can paraphrase what the user typed (L-60): its length
+                # and hash are logged; the text is in the response body's route (ADR-108).
+                **text_fields("reason", decision.reason),
                 "prompt_version": self.prompt.version,
                 "prompt_sha": self.prompt.sha,
                 "model": result.model,

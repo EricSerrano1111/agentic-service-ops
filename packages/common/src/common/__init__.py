@@ -50,6 +50,8 @@ from .logging import (
     current_trace_id,
     new_trace_id,
     redact_secrets,
+    safe_exception,
+    text_fields,
     valid_trace_id,
 )
 
@@ -93,5 +95,7 @@ __all__ = [
     "current_trace_id",
     "new_trace_id",
     "redact_secrets",
+    "safe_exception",
+    "text_fields",
     "valid_trace_id",
 ]

@@ -37,6 +37,7 @@ from common import (
     current_trace_id,
     max_cost_per_run_usd,
     new_trace_id,
+    text_fields,
     track_request_cost,
 )
 from fastapi import FastAPI
@@ -615,7 +616,8 @@ def create_app(
                 extra={
                     "agent": spec.key,
                     "task_id": exc.task_id,
-                    "reason": exc.reason,
+                    # An agent's sentence can name what the user typed (ADR-108).
+                    **text_fields("reason", exc.reason),
                     "code": exc.error_code,
                 },
             )
