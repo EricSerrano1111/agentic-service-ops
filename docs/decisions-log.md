@@ -3156,6 +3156,11 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 
 **Note 2026-10-12 (Prompt U; the entry above is unchanged): the client-IP rule is not confirmed for a Cloud Run service, so it stays a stated limit.** Read 2026-10-12: Cloud Run's container contract page (https://docs.cloud.google.com/run/docs/container-contract) and the HTTPS-request page (https://docs.cloud.google.com/run/docs/triggering/https-request) say nothing about how `X-Forwarded-For` is formed; the Cloud Run request-headers URL returned 404; the only page that describes the header, Cloud Functions' request headers (https://docs.cloud.google.com/functions/docs/reference/headers), says "the first IP in this list is generally the IP of the client" and does not address a Cloud Run service without a load balancer, nor whether the front end appends the connecting address. So "the last entry, 1 hop" is neither confirmed nor corrected, and the default and its test are left as they are. The sign-in rate limit is therefore keyed by a rule that is documented only as the standard right-to-left handling of an append-only header (L-88). Prompt V settles it by observation: a request with a made-up `X-Forwarded-For` from a known address is compared with the `httpRequest.remoteIp` Cloud Run logs for it (runbook, pre-flight).
 
+**Note 2026-10-14 (Z1, records reconciliation; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted):**
+- **The client-IP rule was observed, not documented.** The 2026-10-13 probe (runbook step 5h, `docs/deploy-window-log.md`, sitting 2) logged a `remoteIp` that was the caller's real address, not the spoofed `X-Forwarded-For` value, which is consistent with taking the last entry. The evidence is Cloud Run's logged `remoteIp` only; the gateway's own keying was not shown, and Google's documentation is still silent (note of 2026-10-12 above). It stays a stated limit (L-88).
+- **"Google's quota is the backstop for spend" no longer holds.** The daily-cap arithmetic above assumes the free 500-requests-a-day quota. The deployed services run on the paid key (ADR-104), so the ceiling is the prepaid balance together with the gateway's caps (ADR-105, L-93).
+- **The hourly cap is 30, not 15, from Z2** (ADR-107). The daily cap stays 50. Invites carry the deterministic gateway host (ADR-107).
+
 ### ADR-098 — The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087)
 *Date: 2026-10-12. Written alongside the Dockerfile, `.gitignore`, `.dockerignore` and compose changes it describes, on the same branch (`feat/deploy-readiness`): the file changes and their tests came first and this entry followed within the session, not before them. Recorded here so the entry does not claim a spec-first order it did not have.*
 
@@ -3431,6 +3436,10 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 **Consequences:**
 - Prompt X reports against this state. Any difference found between the deployed services and this record is a finding, not something to correct silently.
 
+**Note 2026-10-14 (Z1, records reconciliation; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted):**
+- `evals/freeze_s5.json` records `llm_mode_in_services: free`, and the Context above says the services run on the free key. **For deployed serving that is superseded by ADR-104** (2026-10-13): the five model-calling services run `LLM_MODE=paid`. Prompts, models, thinking levels, flags and the images (`9607fa72`) are unchanged. The freeze record is not edited and stays as frozen; this note is the correction.
+- The freeze test does not recompute the data-dictionary hash that the record also holds. See L-97.
+
 ### ADR-104 — Deployed model calls use the paid key for the evaluation and grading window
 *Date: 2026-10-13. Supersedes ADR-048 in part (its per-session opt-in for paid mode, for the five deployed model-calling containers only) and ADR-103 in part (its recorded deploy-time `LLM_MODE`, free). Builds on ADR-041.*
 
@@ -3502,3 +3511,48 @@ After a start, one question through the gateway confirms the data path before th
 - Each window needs three owner actions: top up and check the balance, start `ops-db`, and confirm one answer. Each window's end is the stop command.
 - R-21 (paid balance runs out during a grading window) is added to the risk register; its mitigations are the top-up, the gateway's daily cap and the fail-closed paid mode.
 - The state of `ops-db` after this entry is recorded in the sprint log's Sprint 5 close, not here.
+
+### ADR-106 — Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part)
+*Date: 2026-10-14. Owner-decided 2026-10-14 ("defaults"); assistant-drafted. Supersedes the part of ADR-093 that puts the buffer-and-scope decision at the Sprint 5 close; everything else in ADR-093 stands.*
+
+**Decision:**
+- **The scope decision moves to the Sprint 6 close** (2026-11-08). ADR-093, `architecture.md` §10 and R-10 said "at the Sprint 5 close". The Sprint 5 close (2026-10-13) proposed none and left it to the owner (`sprint-log.md`, Sprint 5 close); the 6.5 candidates note (2026-10-14) said "at or near the Sprint 6 close". This entry makes that the record.
+- **Sprint 6.5, if there is one, runs about 2026-11-09 to 11-29**, before the 12-05 final. Whether it runs, and what is in it, is decided at the Sprint 6 close from the candidates list in `sprint-log.md`.
+- **Nothing from 6.5 is counted in `05` (due 2026-11-01) or `06` (due 2026-11-08).** Both are written against the system as frozen (ADR-103, ADR-104).
+- **FR-03 is described as unmet in both.** A third attempt could only happen in 6.5, after both are due.
+
+**Context:** the three places that said "Sprint 5 close" were written before Sprint 5 ran. By its close the gates had failed and the open gaps were quality gaps, not capacity (`sprint-log.md`, Sprint 5 close); deciding scope then would have been deciding without the Sprint 6 hardening results.
+
+**Alternatives considered:**
+- *Decide now.* Rejected: Sprint 6's hardening and `05`/`06` writing will show how much room the buffer really has.
+- *Leave the three statements uncorrected.* Rejected: they contradict the 6.5 note; the register of record should say one thing.
+
+**Consequences:**
+- ADR-093's calendar is otherwise unchanged. `architecture.md` §10 and R-10 carry a dated note citing this entry; ADR-093 itself is not edited.
+- A 6.5 that changes answers needs a fresh blind evaluation or a disclosed difference from the evaluated system (6.5 candidates note).
+
+### ADR-107 — Grading windows and grader access (extends ADR-105; supersedes nothing that still holds)
+*Date: 2026-10-14. Owner-decided 2026-10-14 ("defaults"); assistant-drafted.*
+
+**Decision:**
+- **Window A: 2026-10-31 to 2026-11-09.** It covers the run of `05`'s deployed scenarios (due 11-01) and `06` grading (due 11-08).
+- **Window B: 2026-12-01 to 2026-12-12**, for the final (due 12-05).
+- **Before each window:** top the paid balance up to $5 or more and check it in the console (R-21; there is no API for it); start `ops-db` (ADR-105); create the grader's invite to expire at the window's end; renew the owner's invite (`owner-laptop` expires about 2026-10-27).
+- **After each window:** stop `ops-db` and revoke the grader's invite.
+- **The invite host is the deterministic URL** `https://ops-gateway-587647038690.us-central1.run.app`. Every invite so far used it (`--base-url $G`; `docs/deploy-window-log.md`, 2026-10-13). `status.url` reports the legacy host `ops-gateway-vszrpegifq-uc.a.run.app`. Both serve, and the gateway's Origin check accepts only the deterministic one, so an invite must carry the deterministic host.
+- **The hourly per-invite question cap rises from 15 to 30.** The daily cap stays 50. Decided here; applied in Z2, as gateway configuration only, with no answer change. It is not applied by this entry.
+- **Out of scope (roadmap, not Sprint 6):** `min_instances` (the 56 s cold start, 55.87 s in the browser on 2026-10-13, is inside the 120 s deadline; one path measured), Terraform (ADR-061), the batch-scoring job (ADR-100), `verify-caller` (ADR-085).
+- **The procedure** is `deploy/RUNBOOK_GRADING.md`.
+
+**Context:**
+- ADR-097 sized the caps (50 a day, 15 an hour per invite) for the owner's own use. ADR-105 relies on graders using the system. A grader working through `05`'s deployed scenarios in one sitting can exceed 15 an hour; 30 an hour with the unchanged 50 a day keeps the worst-case spend to cents (L-93).
+- ADR-105 left the window dates open ("announced windows"); the course dates fix them.
+
+**Alternatives considered:**
+- *`min_instances=1` for each window.* Rejected for now: a standing cost to remove a 56 s first-answer delay that is inside the deadline.
+- *Raise the daily cap.* Not chosen: the daily cap is the spend ceiling L-93 relies on; the hourly cap is the one that binds a grader.
+
+**Consequences:**
+- The invite expiry is the access control: an invite that outlives its window is a deviation. The close procedure revokes it.
+- The first window needs the build trigger still disabled and `deploy/cloudrun/*.yaml` synced to paid before any enable (Z2; see the warning in `RUNBOOK_GRADING.md`).
+- The hourly-cap change is a gateway redeploy, so it falls under ADR-103's "may change after the freeze" (no answer or `qa_status` change).
