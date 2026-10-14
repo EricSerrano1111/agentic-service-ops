@@ -56,7 +56,7 @@ Two scores, reported side by side. **Neither replaces the other.**
 ## Deploy (ADR-099, ADR-100, ADR-104)
 
 - Six services on Cloud Run, the frozen images (tag `9607fa72`), model calls on the paid key (ADR-104). Revisions were identical at the start and end of the X run (`sprint5_x.md`).
-- **Owner-reported in the Prompt Y brief, 2026-10-13 (no record in the repo):** `verify.py` 11 of 11; the cold-start question 55.9 s against the 120 s ceiling.
+- **Per `docs/deploy-window-log.md` (2026-10-12/13):** `verify.py` 11 of 11; the cold-start question 55.87 s in the browser (54.47 s at the gateway) against the 120 s ceiling.
 - X latency: per-run median 3.5 to 3.8 s (about 3.7 s); p95 at most 17.6 s; none over 120 s.
 - X spend: $0.1727 for 186 requests, a list-price estimate from logs (L-71, L-94).
 
