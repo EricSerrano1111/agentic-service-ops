@@ -1,8 +1,24 @@
 # Runbook for Prompt V: deploy the full system (ADR-098, ADR-099, ADR-100)
 
+> **Updated 2026-10-14 (Z1). Executed 2026-10-12/13; see `docs/deploy-window-log.md`.** The three sittings ran
+> 2026-10-12 (V1), 2026-10-13 morning (V2) and 2026-10-13 10:45 to about 12:15 CDT (V3, the paid-key switch,
+> ADR-104). The body below is the runbook as written on 2026-10-12 and is kept as written except where marked
+> *Updated 2026-10-14*. **For a grading window use `RUNBOOK_GRADING.md` (ADR-107).**
+> **Known corrections pending in Z2** (each is a Sprint 6 backlog item, `sprint-log.md`):
+> - step 3 needs `--skip-deploy`; step 5e should check the image tag at the service template; steps 5f and
+>   5f-2 should read the Cloud SQL annotation; step 7 needs `POSTGRES_ADMIN_*` and a reviewed credential plan;
+> - every comma list in `--update-env-vars` must be quoted (Windows PowerShell 5.1 turns an unquoted one into an array);
+>   add Windows PowerShell 5.1 notes throughout;
+> - `/healthz` is reserved by Cloud Run's front end: rename the public route and replace step 12's loop;
+>   step 12's second idle wait (the cold-start measurement's second leg, R-05);
+> - step 8: enable the build trigger and add the docs-only merge check. **Never enable the trigger before
+>   `deploy/cloudrun/*.yaml` is synced to paid mode** (they still say `LLM_MODE: free`);
+> - `deploy/plan_full.py` needs `shell=True` on Windows; extend `deploy/verify.py` to the forecast, QA,
+>   sentiment and gateway services; log the error class and status of each retried model call.
+
 Written 2026-10-12 in Prompt U; **revised the same day in Prompt U2 (ADR-100)**: sentiment is no longer
 blocked, the window is two sittings, and the deploy is one service at a time (R-20).
-**Nothing here has been run against GCP.** Every step has a
+**Nothing here had been run against GCP when this was written (it has since, see the note above).** Every step has a
 verification command and its expected output. Every `gcloud` command carries `--project`.
 PowerShell, from the repo root, with `.venv` built (`uv sync --locked --all-packages --all-extras`).
 
@@ -24,12 +40,12 @@ $G  = "https://ops-gateway-$N.$R.run.app"  # the gateway; compare with step 5g b
   and its fingerprint) must pass before sentiment deploys, and why it is never skipped or reordered.**
   If the fingerprint does not match, sentiment does not deploy: pass `_DEPLOY_SENTIMENT=false` in 5b and
   the other five proceed.
-- **Unverified: the client-IP rule on Cloud Run** (note under ADR-097). Step 5h measures it.
+- **Client-IP rule on Cloud Run** (note under ADR-097). *Updated 2026-10-14:* step 5h ran on 2026-10-13 and the logged `remoteIp` was the caller's real address, not the spoofed one, which is consistent with the rule. The evidence is Cloud Run's logged `remoteIp` only, so it is observed, not documented; it stays a stated limit (L-88).
 - **Prices:** the Google pricing pages could not be read (see Costs); figures there are estimates.
 
 ## The two sittings
 
-| | Sitting 1 (owner's plan: Thu 2026-10-15, about 1.5 h) | Sitting 2 (Fri 2026-10-16, about 2.5 h) |
+| | Sitting 1 (planned Thu 2026-10-15, about 1.5 h; **ran 2026-10-12**) | Sitting 2 (planned Fri 2026-10-16, about 2.5 h; **ran 2026-10-13**) |
 |---|---|---|
 | Steps | 0 pre-flight (including Next.js), 1 start `ops-db`, 2 secrets, 3 service accounts and bindings, 4 backfill and its fingerprint, then stop `ops-db` | 0b to 0f again, start `ops-db`, re-run the fingerprint, then 5 deploy and everything after |
 | Estimated | about 70 min (details under Time) | about 185 min in full; **about 140 min** without the three deferrable items (step 7, step 12's second idle wait, step 8's merge check) |
@@ -328,7 +344,7 @@ $env:CLOUD_SQL_INSTANCE_NAME = 'ops-db'
 
 Expect `PASS` on every line and exit 0. `verify.py` covers the orchestrator and reporting only (its
 checks 1, 4 and 5 name two services); steps 5d to 5f above are the equivalent for the other three, and
-extending the script is a task after the window. Check 6 makes two free-tier calls.
+extending the script is a task after the window. Check 6 makes two model calls (free tier when written; the paid key since 2026-10-13, ADR-104).
 
 ## 7. Real-data suites on Cloud SQL (L-78) (about 20 min)
 
@@ -380,7 +396,7 @@ $S = "projects/$N/secrets/gateway-invites"
 ```
 
 Each `create` prints its link once (`$G/#invite=...`); copy them to a password manager, never the repo.
-Expect `list` to show three `active` rows and no hash. Roll back: `scripts\invites.py --secret $S revoke --id <id>`.
+Expect `list` to show three `active` rows and no hash. *Updated 2026-10-14: on 2026-10-13 two invites were created, `owner-laptop` (14 days) and `test` (`docs/deploy-window-log.md`, sitting 3); `owner-phone` was not.* Roll back: `scripts\invites.py --secret $S revoke --id <id>`.
 
 ## 10. Valid, expired and revoked (about 10 min)
 
@@ -406,7 +422,7 @@ Test-Invite '<the test invite link>'                  # valid: 200
 - A valid exchange sets `__Host-session` (`Secure; HttpOnly; SameSite=Strict`); the body of a failed one is
   identical for expired, unknown and malformed tokens.
 
-## 11. Three smoke questions in the deployed UI (about 15 min; about 9 free-tier calls)
+## 11. Three smoke questions in the deployed UI (about 15 min; about 9 model calls; the paid key since 2026-10-13, ADR-104)
 
 Open the owner's link in a browser. The Prompt T list was not in the repository, so these three stand
 in; replace them with Prompt T's if different:
@@ -473,7 +489,7 @@ invoker binding (`gcloud run services remove-iam-policy-binding`), and leave the
 | 12 | over the deadline: not a rollback; record R-05 and decide on `min_instances` |
 
 The 2026-10-14 stop rule (ADR-078) is unchanged: if the revisions are not verified serving at the end of
-2026-10-14, record R-03 as realised.
+2026-10-14, record R-03 as realised. *Updated 2026-10-14: met; the six revisions were verified serving at 100% on 2026-10-13 and R-03 is closed.*
 
 ## End of window
 
@@ -490,7 +506,7 @@ Auth Proxy, and remove the `DB_ROLE_*` variables from the shell.
 
 ## Time
 
-**Sitting 1 (Thu 10-15; plan 1.5 h)**
+**Sitting 1 (planned Thu 10-15, ran 10-12; plan 1.5 h)**
 
 | Step | Minutes |
 |---|---|
@@ -502,7 +518,7 @@ Auth Proxy, and remove the `DB_ROLE_*` variables from the shell.
 | stop `ops-db` | 3 |
 | **Sitting 1** | **about 68 (1 h 10 min), 20 min of slack in the 1.5 h** |
 
-**Sitting 2 (Fri 10-16; plan 2.5 h)**
+**Sitting 2 (planned Fri 10-16, ran 10-13; plan 2.5 h)**
 
 | Step | Minutes |
 |---|---|
@@ -548,7 +564,7 @@ apply." `ops-db` is `db-f1-micro`, Enterprise, zonal, 10 GB SSD, no backups, no 
 **Grading window with `ops-db` running (database about $0.36 a day with storage; everything else
 about $0.01 to $0.05):** **7 days about $2.5 to $3; 14 days about $5 to $6**, plus about $1 for builds
 and any option above. Both are an order of magnitude under the $50 and $80 budget alerts (ADR-078).
-Model calls are free tier (ADR-029) and cost nothing here.
+*Updated 2026-10-14:* model calls were free tier (ADR-029) when this was written; the free tier failed on 2026-10-13 and the deployed system runs on the paid key (ADR-104). Measured: `verify.py`'s three paid calls cost about $0.0015, and Sprint 5's paid use is about $0.61 in list-price estimates (`sprint-log.md`, Sprint 5 close). The estimate above covers Cloud services only.
 
 Idle storage while stopped: about $0.06 a day, so about $1.80 a month: stop `ops-db` between windows
 and delete nothing.
