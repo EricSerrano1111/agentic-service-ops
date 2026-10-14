@@ -45,7 +45,7 @@ class Settings:
     #: response is what the user sees rather than a gateway timeout.
     upstream_timeout_s: float = 125.0
     exchange_per_minute: int = 10
-    asks_per_session_hour: int = 15
+    asks_per_session_hour: int = 30  # per invite; ADR-107 (was 15, ADR-097)
     daily_question_cap: int = 50
     trusted_proxy_hops: int = 1
     port: int = 8080
@@ -79,7 +79,7 @@ class Settings:
             static_dir=Path(static) if static else None,
             upstream_timeout_s=float(env("GATEWAY_UPSTREAM_TIMEOUT_S") or cls.upstream_timeout_s),
             exchange_per_minute=_int(env, "GATEWAY_EXCHANGE_PER_MINUTE", 10),
-            asks_per_session_hour=_int(env, "GATEWAY_ASKS_PER_SESSION_HOUR", 15),
+            asks_per_session_hour=_int(env, "GATEWAY_ASKS_PER_SESSION_HOUR", 30),
             daily_question_cap=_int(env, "GATEWAY_DAILY_QUESTION_CAP", 50),
             trusted_proxy_hops=_int(env, "GATEWAY_TRUSTED_PROXY_HOPS", 1),
             port=_int(env, "GATEWAY_PORT", 8080),

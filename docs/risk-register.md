@@ -298,6 +298,8 @@
 
 **Update 2026-10-13 (Sprint 5 close):** **Realised**, in a related form. The free tier returned `504 DEADLINE_EXCEEDED` for `gemini-3.5-flash-lite` from Cloud Run twice and from the owner's machine once; the paid key answered the same call with 200 in 1.85 s (ADR-104). That is one call per key, so it shows the free tier failing that day, not a failure rate. It is a deadline error, not the 503 "high demand" this entry names, but the exposure is the same: the first hop of every request. Mitigation: ADR-104 moved the five model-calling services to the paid key and ADR-105 keeps it. Status: Mitigating to Realized (mitigated by ADR-104).
 
+**Update 2026-10-14 (Z2a, ADR-108; owner-decided 2026-10-14; assistant-drafted):** the diagnosis gap this risk exposed on 2026-10-13 is closed in the repo: each failed model-call attempt now logs its attempt number, error class, HTTP status, failure kind, the wait before the next attempt and the elapsed time (never the key, the prompt or the error text). Tests: `tests/unit/test_llm_client.py` (a 504, a 503, a connection error and a 429). Not deployed until Z2b; status stays Realized.
+
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
 **Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.

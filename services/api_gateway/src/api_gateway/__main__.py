@@ -42,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
         host="0.0.0.0",  # noqa: S104  # inside the container; compose binds the port to loopback
         port=settings.port,
         log_config=None,
+        access_log=False,  # replaced by the trace-id access line (ADR-108)
         # Cloud Run's front end is the only peer; the forwarded-for rule is applied in code.
         proxy_headers=False,
     )

@@ -14,16 +14,25 @@ from __future__ import annotations
 
 import contextvars
 import datetime as dt
+import hashlib
 import json
 import logging
 import re
 import sys
+import traceback
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 
 #: The key the trace id travels under, in both A2A message metadata and MCP `_meta`.
 TRACE_ID_KEY = "trace_id"
+
+#: The HTTP header it also travels under, so a server's own access line can carry it (ADR-108).
+TRACE_ID_HEADER = "X-Trace-Id"
+
+# The width `new_trace_id()` mints. Nothing else is accepted from a caller: a client-supplied
+# value must not be able to put its own text, or a newline, into a log line.
+_VALID_TRACE_ID = re.compile(r"[0-9a-f]{32}")
 
 _trace_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("trace_id", default=None)
 
@@ -59,9 +68,53 @@ def redact_secrets(text: str) -> str:
     return text
 
 
+def text_fields(prefix: str, text: str) -> dict[str, object]:
+    """What a log line may say about text that can hold what the user typed: its length and
+    a short SHA-256 prefix (ADR-108). Two equal texts show as equal; the text is not logged."""
+    digest = hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:12]
+    return {f"{prefix}_chars": len(text), f"{prefix}_sha": digest}
+
+
+def safe_exception(exc_info: tuple) -> str:
+    """An exception as class names and `file:line in function` frames, never its message.
+
+    The message can carry text the user typed (a technician's name in a failed lookup, a
+    phrase in a validation error), so it is dropped whatever it says (ADR-108, L-60). The
+    chain (`__cause__`, `__context__`) and an exception group's members are named by class.
+    """
+    _, value, tb = exc_info
+    lines = ["Traceback (exception messages omitted):"]
+    for frame in traceback.extract_tb(tb):
+        lines.append(f"  {frame.filename}:{frame.lineno} in {frame.name}")
+    names: list[str] = []
+    seen: set[int] = set()
+
+    def walk(exc: BaseException | None) -> None:
+        if exc is None or id(exc) in seen:
+            return
+        seen.add(id(exc))
+        names.append(type(exc).__name__)
+        for member in getattr(exc, "exceptions", ()):  # ExceptionGroup
+            walk(member)
+        walk(exc.__cause__)
+        if not exc.__suppress_context__:
+            walk(exc.__context__)
+
+    walk(value)
+    lines.append("  raised: " + " <- ".join(names) if names else "  raised: unknown")
+    return "\n".join(lines)
+
+
 def new_trace_id() -> str:
     """A fresh trace id: 32 hex characters, the W3C trace-context width."""
     return uuid.uuid4().hex
+
+
+def valid_trace_id(value: object) -> str | None:
+    """`value` if it is a trace id this system would mint (32 lowercase hex), else None."""
+    if isinstance(value, str) and _VALID_TRACE_ID.fullmatch(value):
+        return value
+    return None
 
 
 def current_trace_id() -> str | None:
@@ -98,7 +151,7 @@ class JsonFormatter(logging.Formatter):
             if key not in _RESERVED and key not in line:
                 line[key] = value
         if record.exc_info:
-            line["exc"] = self.formatException(record.exc_info)
+            line["exc"] = safe_exception(record.exc_info)
         # Last step, over the finished line, so no field or library message escapes it.
         return redact_secrets(json.dumps(line, default=str))
 
@@ -125,3 +178,5 @@ def configure_logging(service: str, level: str = "INFO") -> None:
     # Hold its loggers at INFO or above whatever LOG_LEVEL says; redaction stays as a second
     # layer.
     logging.getLogger("a2a").setLevel(max(logging.INFO, root.level))
+    # The MCP SDK can log request payloads (tool arguments, so what the user typed) at DEBUG.
+    logging.getLogger("mcp").setLevel(max(logging.INFO, root.level))

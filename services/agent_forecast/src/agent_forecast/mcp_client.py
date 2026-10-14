@@ -7,7 +7,7 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx2
-from common import TRACE_ID_KEY, clamp_to_deadline
+from common import TRACE_ID_HEADER, TRACE_ID_KEY, clamp_to_deadline
 from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
 from pydantic import BaseModel
@@ -37,7 +37,11 @@ async def call_tool[R: BaseModel](
     timeout_s = clamp_to_deadline(timeout_s)
     async with asyncio.timeout(timeout_s):
         async with (
-            httpx2.AsyncClient(timeout=timeout_s) as http,
+            # The id also rides as a header so the sidecar's access line carries it (ADR-108).
+            httpx2.AsyncClient(
+                timeout=timeout_s,
+                headers={TRACE_ID_HEADER: trace_id} if trace_id else None,
+            ) as http,
             Client(
                 streamable_http_client(url, http_client=http),
                 mode=MCP_PROTOCOL_VERSION,

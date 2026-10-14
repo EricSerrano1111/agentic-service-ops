@@ -1,4 +1,10 @@
-"""Post-deploy checks for the reporting slice. Prints PASS or FAIL per check; exits 1 on any FAIL.
+"""Post-deploy checks for the deployed system. Prints PASS or FAIL per check; exits 1 on any FAIL.
+
+*Updated 2026-10-14 (Z2a, ADR-108): all six services are checked (ADR-099), not only the
+orchestrator and reporting: the invoker policy of each, its dedicated service account, 100% of
+traffic on the latest ready revision built from this commit (the tag is read at the service
+template, not from a revision digest), and paid mode on exactly the five model-calling
+containers (ADR-104). The end-to-end question stays one question.*
 
     python deploy/verify.py            # needs gcloud, signed in as the caller to test with
 
@@ -16,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import urllib.error
@@ -25,6 +32,26 @@ from dataclasses import dataclass
 ORCHESTRATOR = "ops-orchestrator"
 REPORTING = "ops-reporting"
 PUBLIC_PRINCIPALS = {"allUsers", "allAuthenticatedUsers"}
+
+#: The six services (ADR-099): short name -> (dedicated account, who may invoke it). An invoker
+#: is a short service-account name, or `allUsers` for the gateway, the only public service. The
+#: orchestrator is also invoked by the build account (the pipeline's end-to-end check).
+SIX = {
+    "qa": ("run-qa", {"run-orchestrator"}),
+    "sentiment": ("run-sentiment", {"run-orchestrator"}),
+    "forecast": ("run-forecast", {"run-orchestrator"}),
+    "reporting": ("run-reporting", {"run-orchestrator"}),
+    "orchestrator": ("run-orchestrator", {"run-gateway", "build-deploy"}),
+    "gateway": ("run-gateway", {"allUsers"}),
+}
+#: The containers that call the model, per service; every other container is not in paid mode.
+MODEL_CALLING = {
+    "qa": "agent-qa",
+    "sentiment": "agent-sentiment",
+    "forecast": "agent-forecast",
+    "reporting": "agent-reporting",
+    "orchestrator": "orchestrator",
+}
 INVOKER_ROLE = "roles/run.invoker"
 DEFAULT_QUESTION = "How many incidents were reported last month?"
 
@@ -104,6 +131,37 @@ def invokers(policy: dict, expected_member: str) -> Check:
     return Check(name, True, expected_member)
 
 
+def invokers_exactly(service: str, policy: dict, allowed: set[str]) -> Check:
+    """The members holding `run.invoker` are exactly `allowed` (full member strings, or
+    `allUsers`); nothing else is bound, and no public principal unless `allUsers` is allowed."""
+    name = f"{service}: invokers are exactly the expected set"
+    bindings = policy.get("bindings", [])
+    members = sorted({m for b in bindings if b.get("role") == INVOKER_ROLE for m in b["members"]})
+    if members != sorted(allowed):
+        return Check(name, False, f"run.invoker members: {members}, expected {sorted(allowed)}")
+    others = sorted(
+        {m for b in bindings for m in b.get("members", []) if m in PUBLIC_PRINCIPALS} - allowed
+    )
+    if others:
+        return Check(name, False, f"public principals bound: {others}")
+    return Check(name, True, ", ".join(members))
+
+
+def paid_mode(service: dict, model_container: str | None) -> Check:
+    """`LLM_MODE=paid` on the service's one model-calling container, and on no other container
+    (an MCP sidecar, the gateway) of it (ADR-104). `model_container` None: no container is."""
+    label = service.get("metadata", {}).get("name", "?")
+    name = f"{label}: paid mode on the model-calling container only"
+    wrong = []
+    for container in service["spec"]["template"]["spec"]["containers"]:
+        env = {e.get("name"): e.get("value") for e in container.get("env", [])}
+        is_paid = env.get("LLM_MODE") == "paid"
+        should = container.get("name") == model_container
+        if is_paid != should:
+            wrong.append(f"{container.get('name')}: LLM_MODE={env.get('LLM_MODE')!r}")
+    return Check(name, not wrong, "; ".join(wrong))
+
+
 def not_default_compute(service: dict, project_number: str, expected_sa: str) -> Check:
     name = f"{service.get('metadata', {}).get('name', '?')}: runs as its dedicated service account"
     sa = service["spec"]["template"]["spec"].get("serviceAccountName", "")
@@ -132,8 +190,9 @@ def answered(status: int, body: dict) -> Check:
 
 
 def gcloud(*args: str) -> str:
+    # `shutil.which` finds gcloud.cmd on Windows, so no shell is needed (ADR-108).
     return subprocess.run(
-        ["gcloud", *args], check=True, capture_output=True, text=True, shell=sys.platform == "win32"
+        [shutil.which("gcloud") or "gcloud", *args], check=True, capture_output=True, text=True
     ).stdout.strip()
 
 
@@ -206,6 +265,8 @@ def main() -> int:
     describe = lambda s: gcloud_json("run", "services", "describe", s, f"--region={region}")  # noqa: E731
     orchestrator, reporting = describe(ORCHESTRATOR), describe(REPORTING)
     orch_url, rep_url = orchestrator["status"]["url"], reporting["status"]["url"]
+    domain = f"{env['PROJECT_ID']}.iam.gserviceaccount.com"
+    six = {name: describe(f"ops-{name}") for name in SIX}
 
     def identity_token(*extra: str) -> str:
         return gcloud("auth", "print-identity-token", *extra)
@@ -261,6 +322,25 @@ def main() -> int:
             gcloud_json("sql", "instances", "describe", env["CLOUD_SQL_INSTANCE_NAME"])
         )
     )
+
+    # All six services (ADR-099, ADR-104): the invoker policy, the dedicated account, the serving
+    # revision and the mode. Orchestrator and reporting are repeated here by name, so the list
+    # is complete in one place.
+    for name, (account, allowed) in SIX.items():
+        full = {a if a == "allUsers" else f"serviceAccount:{a}@{domain}" for a in allowed}
+        service = six[name]
+        results += [
+            serving_revision(service, tag),
+            invokers_exactly(
+                f"ops-{name}",
+                gcloud_json(
+                    "run", "services", "get-iam-policy", f"ops-{name}", f"--region={region}"
+                ),
+                full,
+            ),
+            not_default_compute(service, env["PROJECT_NUMBER"], f"{account}@{domain}"),
+            paid_mode(service, MODEL_CALLING.get(name)),
+        ]
 
     for r in results:
         print(r.line())

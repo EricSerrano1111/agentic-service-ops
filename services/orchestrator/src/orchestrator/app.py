@@ -32,9 +32,12 @@ from common import (
     Deadline,
     DeadlineExceeded,
     RequestCost,
+    TraceAccessLog,
     bind_trace_id,
+    current_trace_id,
     max_cost_per_run_usd,
     new_trace_id,
+    text_fields,
     track_request_cost,
 )
 from fastapi import FastAPI
@@ -354,6 +357,9 @@ def create_app(
         llm if llm is not None else LLMClient.from_env("orchestrator"), as_of=settings.as_of
     )
     app = FastAPI(title="orchestrator", version="0.1.0")
+    # One access line per request with its trace id; a valid incoming X-Trace-Id (the gateway's)
+    # is kept, otherwise one is minted (ADR-108).
+    app.add_middleware(TraceAccessLog, mint=True)
     # None locally: no token is fetched or sent. On Cloud Run (A2A_AUTH=google_id_token) one
     # provider caches a token per specialist.
     tokens = IdTokenProvider() if settings.a2a_auth == "google_id_token" else None
@@ -497,7 +503,7 @@ def create_app(
     @app.post("/ask", response_model=AskResponse)
     async def ask(body: AskRequest) -> Any:
         """PROVISIONAL: the request/response contract is decided with the gateway in Sprint 5."""
-        trace_id = new_trace_id()
+        trace_id = current_trace_id() or new_trace_id()
         with bind_trace_id(trace_id), track_request_cost() as spend:
             began = time.perf_counter()
             state = RequestState(trace_id, Deadline.start(), spend, max_cost)
@@ -610,7 +616,8 @@ def create_app(
                 extra={
                     "agent": spec.key,
                     "task_id": exc.task_id,
-                    "reason": exc.reason,
+                    # An agent's sentence can name what the user typed (ADR-108).
+                    **text_fields("reason", exc.reason),
                     "code": exc.error_code,
                 },
             )

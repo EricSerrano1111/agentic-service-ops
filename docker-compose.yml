@@ -321,7 +321,7 @@ services:
       GATEWAY_INVITES_FILE: /run/gateway/invites.json
       GATEWAY_PUBLIC_ORIGIN: ${GATEWAY_PUBLIC_ORIGIN:-http://127.0.0.1:8080}
       GATEWAY_DAILY_QUESTION_CAP: ${GATEWAY_DAILY_QUESTION_CAP:-50}
-      GATEWAY_ASKS_PER_SESSION_HOUR: ${GATEWAY_ASKS_PER_SESSION_HOUR:-15}
+      GATEWAY_ASKS_PER_SESSION_HOUR: ${GATEWAY_ASKS_PER_SESSION_HOUR:-30}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       # The invite store (gitignored; scripts/invites.py writes it). Read-only here.

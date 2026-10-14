@@ -466,7 +466,10 @@ def test_route_decision_is_logged_with_prompt_version(monkeypatch):
     lines = [json.loads(x) for x in stream.getvalue().splitlines()]
     [line] = [x for x in lines if x["msg"] == "route decision"]
     assert line["prompt_version"] == "route_v3" and len(line["prompt_sha"]) == 12
-    assert (line["route"], line["reason"]) == ("forecast", "future volume")
+    # The model's reason is not logged: its length and hash are (ADR-108, L-60).
+    assert line["route"] == "forecast" and "reason" not in line
+    assert line["reason_chars"] == len("future volume") and len(line["reason_sha"]) == 12
+    assert "future volume" not in json.dumps(line)
     assert line["trace_id"] == body["trace_id"]
 
 
@@ -724,7 +727,8 @@ async def test_dropped_candidates_are_logged_with_the_trace_id():
         logger.disabled = was_disabled
     lines = [json.loads(x) for x in stream.getvalue().splitlines()]
     [drop] = [x for x in lines if x["msg"] == "route candidate dropped"]
-    assert (drop["candidate"], drop["trace_id"]) == ("weather", "t-drop")
+    assert "candidate" not in drop and "weather" not in json.dumps(drop)
+    assert (drop["candidate_chars"], drop["trace_id"]) == (len("weather"), "t-drop")
 
 
 @pytest.mark.parametrize(

@@ -260,7 +260,7 @@ def test_no_upstream_detail_string_reaches_the_response(kit, code):
     assert set(r.json()) == {"error", "detail"}
 
 
-def test_the_upstream_detail_is_logged_with_the_trace_id_not_returned(kit):
+def test_the_upstream_detail_is_fingerprinted_in_the_log_and_not_returned(kit):
     import logging
 
     class Records(logging.Handler):
@@ -291,7 +291,10 @@ def test_the_upstream_detail_is_logged_with_the_trace_id_not_returned(kit):
         logger.disabled = was_disabled
     assert "incidents query" not in r.text
     record = next(x for x in handler.records if x.getMessage() == "ask refused upstream")
-    assert record.upstream_detail == "The incidents query failed."
+    # The sentence can name what the user typed, so only its length and hash are logged (ADR-108).
+    assert not hasattr(record, "upstream_detail")
+    assert record.upstream_detail_chars == len("The incidents query failed.")
+    assert len(record.upstream_detail_sha) == 12
     assert record.upstream_trace_id == "trace-123"
 
 

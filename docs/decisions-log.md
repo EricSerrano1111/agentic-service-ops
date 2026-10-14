@@ -3161,6 +3161,8 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - **"Google's quota is the backstop for spend" no longer holds.** The daily-cap arithmetic above assumes the free 500-requests-a-day quota. The deployed services run on the paid key (ADR-104), so the ceiling is the prepaid balance together with the gateway's caps (ADR-105, L-93).
 - **The hourly cap is 30, not 15, from Z2** (ADR-107). The daily cap stays 50. Invites carry the deterministic gateway host (ADR-107).
 
+**Note 2026-10-14 (Z2a; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted): the public health route is `/health`.** Cloud Run's front end reserves `/healthz` on a service's public URL, so the request never reaches the container (found 2026-10-13, `docs/deploy-window-log.md`, sitting 2, step 5g). The gateway gains `GET /health`, public, returning `{"status":"ok"}` and no data. `/healthz` stays for local tooling, compose and the container's own probes, which reach the container directly. No answer, route or `qa_status` changes (ADR-103).
+
 ### ADR-098 — The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087)
 *Date: 2026-10-12. Written alongside the Dockerfile, `.gitignore`, `.dockerignore` and compose changes it describes, on the same branch (`feat/deploy-readiness`): the file changes and their tests came first and this entry followed within the session, not before them. Recorded here so the entry does not claim a spec-first order it did not have.*
 
@@ -3474,6 +3476,8 @@ The per-process caps are `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00`. T
 - L-93 is added to the Limitations log: the per-process caps are not a ceiling.
 
 
+**Note 2026-10-14 (Z2a; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted): the drift is closed in the repo.** `deploy/cloudrun/{orchestrator,reporting,sentiment,forecast,qa}.yaml` now match the deployed configuration read with `gcloud run services describe` on 2026-10-14: `LLM_MODE=paid`, `LLM_MAX_REQUESTS=1500`, `LLM_MAX_SPEND_USD=1.00`, `GOOGLE_AI_API_KEY_PAID` from `gemini-api-key-paid:latest`, and the free `gemini-api-key` still referenced as `GOOGLE_AI_API_KEY`. `tests/unit/test_deploy_config.py` asserts paid mode on exactly those five containers and on no MCP sidecar or the gateway. **The sync is in a PR and not yet deployed; the build trigger may be enabled only after it is merged.**
+
 ### ADR-105 — Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing)
 *Date: 2026-10-13. Owner decision ("default"), given at the Sprint 5 close. Fills the "Duration" paragraph ADR-104 left open for the close.*
 
@@ -3556,3 +3560,42 @@ After a start, one question through the gateway confirms the data path before th
 - The invite expiry is the access control: an invite that outlives its window is a deviation. The close procedure revokes it.
 - The first window needs the build trigger still disabled and `deploy/cloudrun/*.yaml` synced to paid before any enable (Z2; see the warning in `RUNBOOK_GRADING.md`).
 - The hourly-cap change is a gateway redeploy, so it falls under ADR-103's "may change after the freeze" (no answer or `qa_status` change).
+
+**Note 2026-10-14 (Z2a; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted): the hourly cap of 30 is built, not deployed.** `api_gateway.config` defaults `GATEWAY_ASKS_PER_SESSION_HOUR` to 30, `deploy/cloudrun/gateway.yaml` and `docker-compose.yml` say 30, and the daily cap stays 50 (`GATEWAY_DAILY_QUESTION_CAP`). The gateway's "Too many questions this hour" message reads the setting, so it states 30. A gateway-only redeploy in Z2b; no answer, route or `qa_status` changes (ADR-103).
+
+### ADR-108 — Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing)
+*Date: 2026-10-14. Owner-decided 2026-10-14 (Prompt Z2a); assistant-drafted. Written before the code it describes. Resolves L-60 and the Sprint 4 backlog item "trace ID in web-server access logs".*
+
+**The freeze (ADR-103).** Every change here is logging, not an answer: no route, parse, QA verdict, `qa_status`, outcome, figure or answer text changes, and no prompt file is touched. Prompt X's runs stay valid. The proof is Z2a section 9: three questions locally before and after, with the route, the parsed request, `qa_status`, the outcome and the figures compared.
+
+**Decision: trace ID**
+- **One header, `X-Trace-Id`**, carried beside the existing metadata key `trace_id` (A2A message metadata, MCP `_meta`), which stays the authority inside a service.
+- **A valid ID is 32 lowercase hex characters** (the width `new_trace_id()` mints). Any other incoming value is ignored and replaced, so a client cannot put its own text or a newline into a log line.
+- **The gateway** accepts a valid incoming ID or mints one, binds it for the request, returns it as the `X-Trace-Id` response header, and forwards it to the orchestrator. It is **not shown in the UI** (data dictionary §6 answer rules are unchanged).
+- **The orchestrator** takes a valid incoming ID instead of always minting (a request with none still gets one), and puts it on every A2A call as the HTTP header as well as the metadata key.
+- **Access lines.** Every HTTP server writes one `request` line per request through a shared ASGI middleware in `packages/common`: method, path (no query string), status, duration, and the bound trace ID. Uvicorn's own access log is turned off in each `__main__` so the line is not written twice and without an ID. Health and readiness probes (`/healthz`, `/readyz`, `/health`) are logged at DEBUG. An agent or QA service reads the ID from the header for its access line; its executor still binds it from the A2A metadata for everything inside the task.
+- **MCP sidecars.** The agents add the header to their MCP HTTP client, so the sidecar's access line carries it as well as its tool-call lines.
+
+**Decision: redaction (L-60)**
+- **The router's `reason`** is no longer logged. The `route decision` line carries `reason_chars` and `reason_sha` (the first 12 hex characters of its SHA-256) with the route, domains, prompt version and model. The `reason` is still returned in the response body where the API already returns it (unchanged; not a log line). A dropped candidate is logged as its length and hash, not its text.
+- **Exception text.** The shared formatter writes an exception as its class names (the chain, `__cause__` and `__context__` included) and each frame's file, line and function. It never writes the exception message, which can carry what the user typed. A log call that formats an exception into its own message is the call's bug and is found by the test below.
+- **An agent's failure sentence** can name what the user typed (for example "No technician matches <name>.", `agent_reporting/executor.py`). The orchestrator's `agent task failed` line and the gateway's `ask refused upstream` line (`upstream_detail`) therefore log the failure code and the length and hash of the sentence, not the sentence. The sentence is still returned to the gateway in the orchestrator's error body; it is never put in a log line.
+- **SDK loggers.** `mcp` is held at INFO or above beside `a2a`, since the MCP SDK can log request payloads at DEBUG.
+- **Residual, accepted:** Google's own error sentence for a rejected request is still logged (capped at 500 characters, key redacted). It is the only diagnostic for a rejected request (the 2026-09-26 thinking-level failure) and is Google's wording about our request. If it were ever to echo user text, the test below would not see it.
+
+**Decision: retry error logging (`packages/llm`)**
+- **Each failed attempt writes one `llm attempt failed` line:** attempt number, error class, HTTP status (when there is one), the failure kind, the wait before the next attempt (or none, when it is the last), and elapsed time. Never the key and never the prompt.
+- **Why:** on 2026-10-13 the free tier returned `504 DEADLINE_EXCEEDED` and the retried failures left no trace; the diagnosis had to be rebuilt from three manual calls (ADR-104).
+
+**Required vs portfolio value.** Required. `05`'s TS-15-D asserts that every log entry for a request carries its trace ID and no typed name, and the Sprint 6 observability and the log-based alert on degraded answers depend on the ID. The access-log middleware is the smallest way to cover every server; a tracing backend (OpenTelemetry) is portfolio value and out of scope.
+
+**Alternatives considered:**
+- *OpenTelemetry.* Rejected for now: a new dependency and an exporter for one request path; the log-correlated ID is enough for the question the operator asks (what happened to this request).
+- *Hash only, never log the router's `reason`.* That is what is decided; the length and hash let two identical reasons be seen as identical without the text.
+- *Keep full tracebacks and redact by pattern.* Rejected: a pattern cannot know that a word is a technician's name.
+
+**Consequences:**
+- A request's log lines can be found across the gateway, orchestrator, agent, QA and MCP containers by one ID.
+- The router's reason is no longer readable in the logs. The place to read it is the response body.
+- Exception messages are not in the logs. A diagnosis that needs one reproduces the failure locally.
+- Deployed only in Prompt Z2b; until then the deployed services log as before.

@@ -5,6 +5,8 @@ Window A (2026-10-31 to 2026-11-09). Windows PowerShell 5.1, from the repo root,
 Every `gcloud` command carries `--project`. Every comma list is quoted (an unquoted comma is an array in
 5.1; it broke `--update-env-vars` on 2026-10-13, `docs/deploy-window-log.md`).
 
+> **Hard rule (Z2a, 2026-10-14): the build trigger may be enabled only after the paid-mode YAML sync (ADR-104 note of 2026-10-14) is merged to `main`.** Until then the repo definitions and the deployed services differ, and the first deploy would revert five services to the free key.
+>
 > **Warning: never enable the build trigger `deploy-reporting-slice` while `deploy/cloudrun/*.yaml` still
 > say `LLM_MODE: free`.** The first deploy after an enable would redeploy the five model-calling
 > services on the free key and silently revert ADR-104. The order is fixed in Z2: sync the YAML to paid
@@ -58,6 +60,8 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
 5. **Smoke check.** In the browser, open the owner link and ask one question (for example "How many
    incidents last quarter?"). Expect an answer with an "Interpreted as:" line and a verification line. A
    first answer after idle can take about 56 s (cold start, 55.87 s on 2026-10-13; the deadline is 120 s).
+   Reachability alone is `Invoke-WebRequest "$G/health" -UseBasicParsing` (200, `{"status":"ok"}`).
+   `/healthz` does not work on the public URL: Cloud Run's front end reserves it.
    Also confirm the trigger is still disabled (expect `True`):
    ```powershell
    gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format "value(disabled)"
@@ -90,7 +94,7 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
 - **Why the host matters:** `status.url` reports the legacy host `ops-gateway-vszrpegifq-uc.a.run.app`.
   Both hosts serve, but the gateway's Origin check accepts only the deterministic one, so a link built on
   the legacy host would load the page and fail the exchange (ADR-107; deploy-window log, 2026-10-13).
-- **Caps (ADR-097, ADR-107):** 50 questions a day globally; per invite, 15 an hour until Z2 raises it to 30.
+- **Caps (ADR-097, ADR-107):** 50 questions a day globally; per invite, 30 an hour (ADR-107; 15 in the revision deployed on 2026-10-13, until Z2b deploys this change).
   The counters are in process and reset on a cold start (L-88).
 - **Spend ceiling:** the prepaid balance and the daily cap. The per-process caps are not one (L-93).
 - **If the balance runs out mid-window:** the paid key fails closed and answers degrade (R-21). Top up in

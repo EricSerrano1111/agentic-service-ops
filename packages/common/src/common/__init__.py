@@ -6,6 +6,7 @@ Deliberately dependency-free, so it costs nothing in any container that installs
 
 from __future__ import annotations
 
+from .access import PROBE_PATHS, TraceAccessLog
 from .breaker import COOLDOWN_S, FAILURE_THRESHOLD, BreakerOpen, CircuitBreaker
 from .cost import (
     COST_KEY,
@@ -41,6 +42,7 @@ from .guidance import (
     with_reviewer_note,
 )
 from .logging import (
+    TRACE_ID_HEADER,
     TRACE_ID_KEY,
     JsonFormatter,
     bind_trace_id,
@@ -48,6 +50,9 @@ from .logging import (
     current_trace_id,
     new_trace_id,
     redact_secrets,
+    safe_exception,
+    text_fields,
+    valid_trace_id,
 )
 
 __all__ = [
@@ -80,11 +85,17 @@ __all__ = [
     "CONNECT_TIMEOUT_VAR",
     "DEFAULT_CONNECT_TIMEOUT_S",
     "connect_timeout_s",
+    "PROBE_PATHS",
+    "TRACE_ID_HEADER",
     "TRACE_ID_KEY",
+    "TraceAccessLog",
     "JsonFormatter",
     "bind_trace_id",
     "configure_logging",
     "current_trace_id",
     "new_trace_id",
     "redact_secrets",
+    "safe_exception",
+    "text_fields",
+    "valid_trace_id",
 ]

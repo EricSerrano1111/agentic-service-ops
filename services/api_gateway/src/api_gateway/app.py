@@ -17,6 +17,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from common import TraceAccessLog, current_trace_id, text_fields
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
@@ -184,6 +185,10 @@ def create_app(
             h["Cache-Control"] = "no-store"
         return response
 
+    # Outermost: every response, errors and static files included, carries the trace id, and one
+    # access line per request is written with it (ADR-108). The gateway mints it when none came.
+    app.add_middleware(TraceAccessLog, mint=True)
+
     # -- shared checks ----------------------------------------------------------------------
     def check_csrf(request: Request) -> None:
         """Same-origin JSON only: the Origin must be this gateway's, the body JSON. (The cookie is
@@ -213,6 +218,12 @@ def create_app(
     # -- public routes ----------------------------------------------------------------------
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
+        return {"status": "ok"}
+
+    # Cloud Run's front end reserves `/healthz` on a service's public URL (the request never
+    # reaches the container), so the public reachability probe is `/health` (ADR-097 note).
+    @app.get("/health")
+    async def health() -> dict[str, str]:
         return {"status": "ok"}
 
     @app.post("/auth/exchange")
@@ -287,7 +298,7 @@ def create_app(
                 "It resets at midnight Pacific time.",
             )
         try:
-            status, body = await orchestrator.ask(question)
+            status, body = await orchestrator.ask(question, trace_id=current_trace_id())
         except OrchestratorTimeout:
             raise Reject(504, "deadline_exceeded", DEADLINE_MESSAGE) from None
         except OrchestratorUnavailable:
@@ -314,10 +325,9 @@ def create_app(
                 "invite_id": invite.id,
                 "status": status,
                 "upstream_error": code[:40] if isinstance(code, str) else None,
-                # Logged, never returned: it can be an agent's own task text (L-89).
-                "upstream_detail": (
-                    detail[:LOGGED_DETAIL_CHARS] if isinstance(detail, str) else None
-                ),
+                # Never returned and no longer logged as text: it can be an agent's own task
+                # sentence, which can name what the user typed (L-89, ADR-108).
+                **(text_fields("upstream_detail", detail) if isinstance(detail, str) else {}),
                 "upstream_trace_id": body.get("trace_id"),
             },
         )
