@@ -40,6 +40,8 @@ template:
           value: projects/${PROJECT_NUMBER}/secrets/gateway-invites
         - name: GATEWAY_TRUSTED_PROXY_HOPS
           value: "1" # unverified for Cloud Run services (note under ADR-097)
+        - name: GATEWAY_ASKS_PER_SESSION_HOUR
+          value: "30" # per invite (ADR-107; was 15 in ADR-097). The daily cap stays 50.
         - name: LOG_LEVEL
           value: INFO
         - name: GATEWAY_SESSION_KEY

@@ -94,7 +94,7 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
 - **Why the host matters:** `status.url` reports the legacy host `ops-gateway-vszrpegifq-uc.a.run.app`.
   Both hosts serve, but the gateway's Origin check accepts only the deterministic one, so a link built on
   the legacy host would load the page and fail the exchange (ADR-107; deploy-window log, 2026-10-13).
-- **Caps (ADR-097, ADR-107):** 50 questions a day globally; per invite, 15 an hour until Z2 raises it to 30.
+- **Caps (ADR-097, ADR-107):** 50 questions a day globally; per invite, 30 an hour (ADR-107; 15 in the revision deployed on 2026-10-13, until Z2b deploys this change).
   The counters are in process and reset on a cold start (L-88).
 - **Spend ceiling:** the prepaid balance and the daily cap. The per-process caps are not one (L-93).
 - **If the balance runs out mid-window:** the paid key fails closed and answers degrade (R-21). Top up in

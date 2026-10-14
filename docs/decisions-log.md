@@ -3561,6 +3561,8 @@ After a start, one question through the gateway confirms the data path before th
 - The first window needs the build trigger still disabled and `deploy/cloudrun/*.yaml` synced to paid before any enable (Z2; see the warning in `RUNBOOK_GRADING.md`).
 - The hourly-cap change is a gateway redeploy, so it falls under ADR-103's "may change after the freeze" (no answer or `qa_status` change).
 
+**Note 2026-10-14 (Z2a; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted): the hourly cap of 30 is built, not deployed.** `api_gateway.config` defaults `GATEWAY_ASKS_PER_SESSION_HOUR` to 30, `deploy/cloudrun/gateway.yaml` and `docker-compose.yml` say 30, and the daily cap stays 50 (`GATEWAY_DAILY_QUESTION_CAP`). The gateway's "Too many questions this hour" message reads the setting, so it states 30. A gateway-only redeploy in Z2b; no answer, route or `qa_status` changes (ADR-103).
+
 ### ADR-108 — Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing)
 *Date: 2026-10-14. Owner-decided 2026-10-14 (Prompt Z2a); assistant-drafted. Written before the code it describes. Resolves L-60 and the Sprint 4 backlog item "trace ID in web-server access logs".*
 

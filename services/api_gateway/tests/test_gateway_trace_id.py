@@ -48,3 +48,21 @@ def test_every_response_carries_an_id_errors_and_unknown_paths_included(tmp_path
     assert HEX32.fullmatch(kit.client.get("/healthz").headers["X-Trace-Id"])
     assert HEX32.fullmatch(kit.client.get("/no-such-path").headers["X-Trace-Id"])
     assert HEX32.fullmatch(kit.ask().headers["X-Trace-Id"])  # a 401: no session
+
+
+def test_the_hourly_cap_defaults_to_30_and_the_daily_cap_to_50():
+    """ADR-107: raised from 15; the daily cap is unchanged."""
+    from api_gateway.config import Settings
+
+    settings = Settings(session_key="k" * 48, public_origin="https://x.test")
+    assert settings.asks_per_session_hour == 30
+    assert settings.daily_question_cap == 50
+
+
+def test_the_cloud_definition_and_compose_say_30():
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parents[3]
+    cloud = (root / "deploy" / "cloudrun" / "gateway.yaml").read_text("utf-8")
+    assert 'GATEWAY_ASKS_PER_SESSION_HOUR\n          value: "30"' in cloud.replace("\r\n", "\n")
+    assert "GATEWAY_ASKS_PER_SESSION_HOUR:-30" in (root / "docker-compose.yml").read_text("utf-8")
