@@ -204,6 +204,56 @@ next import of `trigger_full.yaml`.
 Not tested, by design (printed as INFO): that the owner's own token is refused by reporting.
 Project Owner invokes any service through the basic role, so the check would fail by design.
 
+## Window-day options (added 2026-10-15, S6-T1)
+
+```
+python deploy/verify.py [--ipv4] [--gcloud-timeout SECONDS]
+```
+
+On 2026-10-14 (Z2b) IPv6 to `*.run.app` black-holed from the owner's PC and each `gcloud` call took
+one to four minutes, so one `verify.py` run hung for about 35 minutes with nothing printed. These
+options are for that PC. The pipeline passes no arguments, so its invocation is unchanged
+(`cloudbuild.yaml` is not edited), and a run with no options does the same checks in the same
+order with the same exit code.
+
+1. **`--ipv4` (opt-in; default off).** Every HTTP connection `verify.py` opens to `*.run.app`
+   resolves the host for IPv4 only and connects to those addresses only. The URL, the TLS
+   server name and the `Host` header are unchanged. Without the flag, name resolution is
+   unchanged (IPv4 and IPv6, in the resolver's order).
+2. **Connect timeout on every HTTP call: 10 s, no flag.** It applies in both modes.
+   - It is per resolved address, as with `socket.create_connection`: an address that does not
+     answer in 10 s is abandoned and the next one is tried. Only when every address has failed
+     to connect is the call a failure, and the check's line is `FAIL  <check name>: connect
+     timeout` (never a traceback).
+   - It covers connecting only. The read timeout stays 150 s, because the end-to-end question
+     makes two model calls. A read timeout is not reported as a connect timeout.
+   - **The one default-behaviour change:** before, a single 150 s timeout covered each connect
+     attempt and each read. Now a connect attempt waits 10 s. This differs from the old
+     behaviour only where a connect would otherwise have waited more than 10 s. On this PC, a
+     black-holed IPv6 address now costs about 10 s before the IPv4 address is tried, so
+     `--ipv4` mostly saves that wait, and no longer decides whether the run completes.
+3. **Timeout on each `gcloud` call: 300 s, `--gcloud-timeout SECONDS` to change it.**
+   - Before each `gcloud` call a line is printed naming it, for example
+     `INFO  gcloud run services describe ops-gateway --region us-central1 (timeout 300 s)`.
+     Arguments only; `gcloud`'s output (tokens, the account) is never printed.
+   - On expiry the call and its whole process tree are killed (on Windows `gcloud.cmd` starts a
+     child, which must not be left holding the pipes), and the check that needed it prints
+     `FAIL  <check name>: gcloud timed out after N s: <the call>`.
+   - The run **continues** with every check that does not need the failed call; a check that
+     needs it fails at once with the same reason, and the call is not repeated. Exit code 1.
+   - A `gcloud` call that exits non-zero is a FAIL line with its first error line, not a
+     traceback (check 6's mint failure already was).
+4. **Incremental output.** Each check prints its `PASS` or `FAIL` line as it finishes, flushed.
+   The closing INFO lines and the exit code are as before.
+
+The checks themselves, their order and their pass conditions are unchanged. Three added
+behaviours also apply in the pipeline, because they have no switch: the 10 s connect timeout,
+the 300 s `gcloud` timeout, and the INFO line before each `gcloud` call (log text only).
+Unit tests cover all four options with no network and no `gcloud`
+(`tests/unit/test_verify_window_day.py`). The root `conftest.py` points `CLOUDSDK_CONFIG` at an
+empty temporary folder for every test session and unsets `GOOGLE_APPLICATION_CREDENTIALS` and
+`CLOUDSDK_CORE_PROJECT`, so no test can reach real `gcloud` state.
+
 ## Local parity
 
 Compose is unchanged in shape: separate containers, TCP to Postgres (`POSTGRES_HOST`),
