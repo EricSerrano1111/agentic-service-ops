@@ -110,7 +110,7 @@ Run order: **1** open, **2** cold starts (with the no-traffic part of 3 inside t
 grader session, **3** scenarios, **4** failure path, **3.7 and 3.8** (TS-18-C, TS-18-D, last), **5b**
 revoke and re-test, **6** close.
 
-Clock is minutes from **T0**, the moment the `ops-db` start command is issued. The 3-hour stop is T0 + 180.
+Clock is minutes from **T0**, the moment the `ops-db` start command is issued. The stop is T0 + 240 (4 hours; moved from 3 hours, see "Owner decisions 2026-10-15" at the end).
 
 | T0 + | What | Who |
 |---|---|---|
@@ -130,8 +130,8 @@ Clock is minutes from **T0**, the moment the `ops-db` start command is issued. T
 | 160 | Revoke, re-test, then close | OWNER, CLAUDE-CODE |
 | 175 | Close complete (`ops-db` STOPPED NEVER) | OWNER |
 
-That leaves **5 minutes of slack**. It is thin. **Cut order if behind:** (1) idle wait 3 and its repeat
-question, (2) TS-18-C, (3) the TS-14-D image scan, (4) the repeat runs in 3.9. Nothing is ever cut from
+That leaves **65 minutes of slack** to the 4-hour stop. **Cut order if behind:** (1) idle wait 3 and its repeat
+question, (2) TS-18-C, (3) the TS-14-D image scan. (The 3.9 repeat runs are dropped: single run, decision 3.) Nothing is ever cut from
 the close. **TS-18-D is the last step that may start, and only by T0 + 150**; after that go straight to 5b and 6.
 
 ---
@@ -246,7 +246,7 @@ was not the final one, ask the same question once more here.
 | Needs clarification | "What is the SLA compliance for technician Priya?" (`05` TS-06-D, second input) | A list of matching technicians (at most five) and a question about which is meant. This replaces TS-02-A, which is **known failing** (force-routed) and would answer. |
 | Must be split | "How many repeat visits did we have last quarter, and what will request volume be next month?" (`05` TS-03-A) | The split instruction; no specialist called. |
 
-**3.7 TS-18-C (CLAUDE-CODE, through the ledgered driver, direct to the orchestrator).** Six reporting
+**3.7 TS-18-C (CLAUDE-CODE, through the session driver and the gateway; the driver's `ask --parallel`, with the `session1-grader` invite; supersedes "direct to the orchestrator").** Six reporting
 questions in parallel (threads) with one forecast question, the question text varied so no answer is shared:
 the six are the `05` TS-05-B text with six different regions or months; the forecast is the TS-08-B text.
 **Expected:** the forecast answered with weeks 5 to 8 served and weeks 1 to 4 unserved; the six reporting
@@ -265,6 +265,27 @@ then sends **31** copies of **"How do our response times compare with other fiel
 sits before the model call in `api_gateway/app.py`, `/api/ask`). The gateway runs `maxInstanceCount: 1`,
 so its in-process counter is one counter; if the gateway was cold-started after the 30th, the counter
 reset and the result is void: record it and stop. This test uses **30 of the 50 daily questions**.
+
+**3.8a Pre-check before TS-18-D (a stop condition, not a judgement; added 2026-10-15, S6-W2).** The daily
+cap is **global**, not per invite or per session: one `DailyCap` for the whole gateway instance, counted by
+Pacific-time day (`api_gateway/limits.py:52-69`; created once at `app.py:149`; taken at `app.py:293`).
+TS-18-D needs 30 free slots, and 31 questions on one invite can hit `daily_limit` first, which the driver
+records as **inconclusive**, not a pass. So:
+
+1. **Count N**, the gateway's questions so far today, as the larger of (a) the ledger's gateway-counted
+   questions (`status`: `answered` + `clarify` + `failure` + `declined`, **minus 1** for the `verify.py`
+   tally, which went to the orchestrator) and (b) the number of `ops-gateway` log lines with
+   `msg="ask answered"` or `msg="ask refused upstream"` since 00:00 Pacific today (CLAUDE-CODE,
+   read-only `gcloud logging read`). The log count includes questions from before a restart, so it
+   errs high, which is the safe side.
+2. **If N is above 19, skip the optional items** that have not yet run: 3.5, then 3.7 (TS-18-C). Recount.
+3. **If N is still above 19, TS-18-D is deferred to a later session.** Record "TS-18-D deferred: N = ..."
+   in the log entry, run steps 5b and 6, and stop. Nothing is run on a smaller question count and no
+   cap is changed.
+4. Do the same count once before 3.7 (step 2 applies there too: if N is already above 19, 3.5 and 3.7
+   are skipped from the start).
+
+Planned N before TS-18-D is 3 (browser) + 4 to 5 (3.4, 3.6) + 7 (3.7) + 2 (4) = 16 to 17.
 
 **3.9 Repeat runs (optional, section 5's second reading of `05` §2).** CLAUDE-CODE, through the ledgered
 driver, direct to the orchestrator: runs 2 and 3 of the TS-20-A, TS-20-C and the three TS-20-D questions,
@@ -297,7 +318,7 @@ the `degraded` line was read from the code only (Z2b, 2026-10-14).
 
 | # | Who | Action | Expected | Evidence |
 |---|---|---|---|---|
-| 4.1 | CLAUDE-CODE | Send the question through the ledgered driver, direct to the orchestrator, owner's gcloud identity, `--ipv4`. | HTTP `422`, `error` `invalid_range` (or `unclear_question`, if the parser rejects it first). **Not a 5xx.** | Status, body, `trace_id`. |
+| 4.1 | CLAUDE-CODE | Send the question with the session driver's `ask --kind failure` through the gateway (supersedes "direct to the orchestrator"; the gateway returns the upstream 422 with the `invalid_range` or `unclear_question` error code). | HTTP `422`, `error` `invalid_range` (or `unclear_question`, if the parser rejects it first). **Not a 5xx.** | Status, body, `trace_id`. |
 | 4.2 | CLAUDE-CODE | `gcloud logging read` by that `trace_id` (RUNBOOK_V step 12.3 form), without the `msg="request"` clause. | A `msg="agent task failed"` line with `.agent`, `.code` equal to the failure code, `reason_chars` and `reason_sha`; `request` lines for the orchestrator and reporting. **No** question text, no router reason, no exception message (ADR-108; TS-15-D). | The line, field by field. |
 
 ### Step 5: Grader-access check
@@ -391,7 +412,7 @@ runs one instance (`maxInstanceCount: 1`), so each is one counter.
 | `owner-laptop` | 3 (2.2, 2.5, 2.8) | 3 |
 | `session1-grader` | 4 to 5 (3.4, 3.5, 3.6 x3) | 5 |
 | `session1-cap` | **30** (+1 refused) | **Deliberately at the cap** |
-| No invite (direct to the orchestrator: 1.6, 3.7, 3.9, 4) | n/a, ledger only | |
+| `verify.py` (1.6, direct to the orchestrator; tally it as 1) | n/a, ledger only | |
 
 **The "24 or fewer an hour" rule cannot hold for TS-18-D.** The case needs 30 accepted questions on one
 invite inside an hour. The plan keeps **every other invite at 5 or fewer** and gives TS-18-D its own invite
@@ -424,7 +445,9 @@ logged `cost_usd` total (and re-read from the console at step 6.4). Per-process 
 
 Stop and go to step 6 if **any** of:
 
-1. the ledger reaches its total (60 requests or $0.25);
+1. the ledger reaches its total (75 requests or $0.25; amended from 60, see "Owner decisions");
+1a. the 3.8a pre-check finds N above 19 after the optional items are skipped: **TS-18-D is deferred**,
+   and the session goes to 5b and 6;
 2. the balance would fall below **$3**: opening console balance minus the logged `cost_usd` total (an
    estimate, there is no API);
 3. an **unexpected 5xx** appears. Expected statuses are: `200`; `422` for the failure path; `401`/`403` for
@@ -433,7 +456,7 @@ Stop and go to step 6 if **any** of:
 4. a step's result differs from its expected result. **Record it; don't fix it. No deploys during the
    session.** Cases `05` already records as known failing (TS-20-E, and TS-02-A if asked) are expected to
    fail and do not stop it; TS-20-B is recorded "not run, no trigger", not as a difference;
-5. **3 hours** have passed since T0.
+5. **4 hours** have passed since T0 (was 3; moved 2026-10-15, an assistant rule, not an ADR).
 
 Also: if 1.5 shows a newer build, or the trigger enabled, stop before any model call. Whatever the stop
 reason, **step 6 still runs**, and `ops-db` is never left running.
@@ -469,7 +492,7 @@ reason, **step 6 still runs**, and `ops-db` is never left running.
 | Failure path, TS-18-C (CLAUDE-CODE) | 20 min | 0 min |
 | TS-18-D (the owner runs the driver) | 10 min | 5 min |
 | Revoke, re-test, close, closing balance | 15 min | 10 min |
-| **Total** | **175 min from T0 (about 2 h 55 min), 5 min of slack to the 3 h stop** | **about 65 to 70 min** |
+| **Total** | **175 min from T0 (about 2 h 55 min), 65 min of slack to the 4 h stop** | **about 65 to 70 min** |
 
 The longest single item is `verify.py` (about 40 min last time). If it runs past 50 minutes, cut idle wait
 3 first.
@@ -520,3 +543,102 @@ The longest single item is `verify.py` (about 40 min last time). If it runs past
 **A choice the plan made that the owner should confirm:** the failure path is an invalid range, not a
 refused name, because a refused name returns `needs_clarification` before the `agent task failed` line is
 written, so it would not show a `.code` (step 4).
+
+---
+
+## Owner decisions 2026-10-15
+
+*Dated 2026-10-15 (Prompt S6-W1; owner-decided 2026-10-15; assistant-drafted). These supersede the text
+above where they differ; the text above is edited only at the lines named in "Edits made".*
+
+1. **Ledger.** `scripts/session_driver.py` enforces **75 requests and $0.25** (`init --max-requests 75
+   --max-dollars 0.25`; amended 2026-10-15, S6-W2, from 60). Browser questions go in by `tally`. The
+   driver counts exchanges and probes as requests too: about 44 driver questions, 4 tallies, roughly 8
+   exchanges and 8 probes come to about 64, so 60 would have refused the last few. The $0.25 cap is
+   untouched and is still the tighter limit on spend. The caps never change after `init`.
+2. **TS-18-D is an exception to the 24-per-hour rule, by design.** It runs on its own invite
+   (`session1-cap`); the hourly cap is a rolling 60 minutes per invite.
+3. **Single run for TS-14, TS-16, TS-18 and TS-20.** `05` §2's three-run rule is not applied to them;
+   the owner scopes it in the `05` revision. The repeat runs (3.9) are dropped.
+4. **TS-20-B is not run:** there is no trigger without a deploy, and deploys are barred in the session.
+5. **TS-14-D's evidence is a grep of the build context** (the files each Dockerfile copies) at the
+   deployed commit (`9ab7c77`), plus the deployed environment configuration. **Built images are not
+   scanned; that is the recorded limit.**
+6. **TS-17 stays Local,** per `05`.
+7. **The balance is $7.88,** topped up 2026-10-15. Step 1.1's console reading governs.
+8. **The failure path is an invalid date range,** for the reason given in step 4 (a refused name
+   returns `needs_clarification` before `agent task failed` is written).
+9. **The session stop moves from 3 hours to 4 hours** (T0 + 240). The 3-hour cap was an assistant rule,
+   not an ADR, and the plan had 5 minutes of slack; it now has 65.
+
+### Edits made
+
+Stop rule 5, the schedule's slack and cut order, the owner-time total, and the three "direct to the
+orchestrator" request steps (3.7, 4.1, the invite table) now say the driver and the gateway. Daily cap
+arithmetic changes with them: gateway-counted questions are 3 (browser) + 4 to 5 (3.4, 3.6) + 7 (3.7) +
+2 (4) + 30 (3.8) = **46 to 47 of 50**. That is tight; the 31st TS-18-D question is refused before it
+takes a daily slot, and the gateway's counters reset on a cold start (L-88).
+
+### The driver commands, in order
+
+Windows PowerShell 5.1, from the repo root. The credential is **`SESSION_INVITE_LINK`**, one invite at a
+time. Commands that read it are **OWNER**: the link prints once and never goes to a chat or to Claude Code.
+`init`, `status`, `tally` and `probe` need no credential and are **CLAUDE-CODE**. Output is counts and
+statuses only.
+
+```powershell
+$L = 'evals\results\session1\2026-10-17\ledger.json'
+$D = '.venv\Scripts\python scripts\session_driver.py --ledger ' + $L
+
+# Step 1 (after 1.5): create the ledger, then tally verify.py's question (1.6)           CLAUDE-CODE
+.venv\Scripts\python scripts\session_driver.py --ledger $L init --max-requests 75 --max-dollars 0.25
+.venv\Scripts\python scripts\session_driver.py --ledger $L tally --count 1 --kind answered --scenario S1-open --note "verify.py end-to-end question"
+
+# Step 2: after each browser cold-start question (2.2, 2.5, 2.8), one tally each          CLAUDE-CODE
+.venv\Scripts\python scripts\session_driver.py --ledger $L tally --count 1 --kind answered --scenario TS-16-D --note "browser cold start: sentiment"
+
+# Step 3.2: TS-14-B and TS-14-C, no credential; one per URL from `gcloud run services describe`   CLAUDE-CODE
+.venv\Scripts\python scripts\session_driver.py --ledger $L probe --scenario TS-14-B --url "<service url>/" --method GET --mode nosession
+
+# Step 3.3: TS-14-A, no session and a made-up cookie                                       CLAUDE-CODE
+.venv\Scripts\python scripts\session_driver.py --ledger $L probe --scenario TS-14-A --mode nosession
+.venv\Scripts\python scripts\session_driver.py --ledger $L probe --scenario TS-14-A --mode badtoken
+
+# Steps 5a, 3.4, 3.6: with session1-grader's link in the OWNER's shell                    OWNER
+$env:SESSION_INVITE_LINK = '<session1-grader link>'
+.venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario TS-20-A --question "What was SLA compliance in the west region in July 2026?"
+.venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario TS-20-D --kind declined --question "How do our response times compare with other field service companies?"
+.venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario TS-20-D --kind clarify --question "What is the SLA compliance for technician Priya?"
+.venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario TS-20-D --kind declined --question "How many repeat visits did we have last quarter, and what will request volume be next month?"
+
+# Step 4: the failure path (an invalid range)                                              OWNER
+.venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario S4-failure --kind failure --question "What was SLA compliance in the west region from August 2026 to January 2026?"
+
+# Step 3.7: TS-18-C, six reporting and one forecast at once                                OWNER
+.venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario TS-18-C --parallel 7 `
+  --question "What was SLA compliance in the west region in July 2026?" `
+  --question "What was SLA compliance in the central region in July 2026?" `
+  --question "What was SLA compliance in the southeast region in July 2026?" `
+  --question "What was SLA compliance in the northeast region in July 2026?" `
+  --question "What was SLA compliance in the west region in June 2026?" `
+  --question "What was SLA compliance in the northeast region in June 2026?" `
+  --question "How many install requests should we expect over the next 8 weeks?"
+
+# Step 3.8: TS-18-D, with session1-cap's link (set SESSION_INVITE_LINK to it first)        OWNER
+.venv\Scripts\python scripts\session_driver.py --ledger $L cap-test --scenario TS-18-D
+
+# Any time, and at the close                                                               CLAUDE-CODE
+.venv\Scripts\python scripts\session_driver.py --ledger $L status
+Remove-Item Env:SESSION_INVITE_LINK
+```
+
+The optional driver cold start (`coldstart --path reporting|sentiment|forecast --wait-seconds 900`)
+exchanges the invite, idles in-process with no request, then times one question. The browser technique
+in step 2 stays the primary reading because it matches 2026-10-13's measurement; the driver's reading is
+client-side only and is a cross-check. Evidence lines are in `ledger.json.evidence.jsonl` beside the
+ledger. The dataset has **four** regions: `northeast`, `southeast`, `central`, `west`
+(`docs/data-dictionary.md:91, 313, 355`; the state mapping is `data/generator/parameters.py:825-826` and
+following). The six TS-18-C reporting questions are those four regions in July 2026 plus the west and
+northeast in June 2026; the earlier "east" was not a region. Before TS-18-D, run the 3.8a pre-check; the
+driver prints `cap-test verdict: pass` only for a `session_limit` refusal at question 31, and
+`inconclusive` (with the error and index in the evidence line) for anything else.
