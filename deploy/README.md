@@ -254,6 +254,21 @@ Unit tests cover all four options with no network and no `gcloud`
 empty temporary folder for every test session and unsets `GOOGLE_APPLICATION_CREDENTIALS` and
 `CLOUDSDK_CORE_PROJECT`, so no test can reach real `gcloud` state.
 
+**Amended after implementation, 2026-10-15.** The sections above are the spec as written. The
+build changed default behaviour beyond the timeouts and the flushing, and the pipeline gets all
+of it, because none of it has a switch:
+- A `gcloud` call that exits non-zero, or a missing `gcloud`, is a `FAIL` line with its first
+  error line instead of a traceback.
+- The run continues after a failure or timeout. A check that needs a failed call fails at once
+  with the same reason, and the call is not repeated.
+- An `INFO  gcloud …` line precedes every `gcloud` call, so it also appears in Cloud Build logs.
+- Connecting to `*.run.app` without `--ipv4` waits about 10 s on a black-holed IPv6 address
+  before trying IPv4.
+- **The paid end-to-end question is guarded.** It is the only check that calls a model. Because
+  the run now continues after a failure, it prints `FAIL  …: skipped: earlier failure` and makes
+  no call (no token, no question) when any earlier check failed. Before, a failed pure check did
+  not stop it; only an exception did. It is now stricter than that.
+
 ## Local parity
 
 Compose is unchanged in shape: separate containers, TCP to Postgres (`POSTGRES_HOST`),

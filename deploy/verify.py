@@ -600,6 +600,11 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     def end_to_end() -> Check:
+        # The only check that calls a model (two paid calls). A failed gcloud call used to stop
+        # the run before it got here; now the run continues, so it must not spend on a deploy
+        # that has already failed a check.
+        if not all(r.ok for r in results):
+            return Check(ANSWER_NAME, False, "skipped: earlier failure")
         orch_url = url(ORCHESTRATOR)
         caller = gc.text("config", "get-value", "account")
         try:

@@ -92,8 +92,16 @@ class FakeGcloud:
         if outcome is not None:
             raise outcome
         if args[:3] == ("run", "services", "describe"):
-            return json.dumps(service_json(args[3]))
+            doc = service_json(args[3])
+            account = {"ops-orchestrator": "ORCHESTRATOR_SA", "ops-reporting": "REPORTING_SA"}
+            if args[3] in account:
+                doc["spec"]["template"]["spec"]["serviceAccountName"] = ENV[account[args[3]]]
+            return json.dumps(doc)
         if args[:3] == ("run", "services", "get-iam-policy"):
+            if args[3] == "ops-reporting":
+                member = f"serviceAccount:{ENV['ORCHESTRATOR_SA']}"
+                bindings = [{"role": "roles/run.invoker", "members": [member]}]
+                return json.dumps({"bindings": bindings})
             return json.dumps({"bindings": []})
         if args[:2] == ("auth", "print-identity-token"):
             return TOKEN
@@ -272,7 +280,8 @@ def test_a_connect_timeout_is_a_fail_line_naming_the_check_not_an_exception(
     out = capsys.readouterr().out
     assert code == 1
     assert "FAIL  orchestrator refuses an unauthenticated POST /ask: connect timeout" in out
-    assert "FAIL  orchestrator answers a reporting question end to end: connect timeout" in out
+    # an earlier check failed, so the paid end-to-end question is skipped, not attempted
+    assert "FAIL  orchestrator answers a reporting question end to end: skipped: earlier" in out
     assert "FAIL  reporting refuses a caller that is not the orchestrator: connect timeout" in out
     assert "Traceback" not in out
 
@@ -365,6 +374,36 @@ def test_a_gcloud_failure_exit_is_a_fail_line_with_its_first_error_line(monkeypa
     assert "FAIL  cloud sql: authorizedNetworks is empty: gcloud failed: ERROR: denied" in (
         capsys.readouterr().out
     )
+
+
+def test_the_paid_question_is_skipped_after_any_earlier_failure(monkeypatch, env, capsys):
+    """The end-to-end check is the only model call. After a failed earlier check (here a
+    timed-out describe) it neither mints a token nor sends the question."""
+    sent: list = []
+    fake = FakeGcloud(
+        fail=lambda a: (
+            expired(a) if a[:4] == ("run", "services", "describe", "ops-reporting") else None
+        )
+    )
+    monkeypatch.setattr(verify, "run_process", fake)
+    monkeypatch.setattr(verify, "http", lambda *a, **k: sent.append((a, k)) or (403, {}))
+    assert verify.main([]) == 1
+    out = capsys.readouterr().out
+    assert (
+        "FAIL  orchestrator answers a reporting question end to end: skipped: earlier failure"
+        in out
+    )
+    assert not [a for a in fake.calls if a[:2] == ("config", "get-value")]
+    assert not [a for a in fake.calls if a[:2] == ("auth", "print-identity-token")]
+    assert not [s for s in sent if s[0][0] == "POST" and (len(s[0]) > 2 and s[0][2])]
+
+
+def test_the_paid_question_is_asked_when_every_earlier_check_passed(monkeypatch, env):
+    sent: list = []
+    monkeypatch.setattr(verify, "run_process", FakeGcloud())
+    monkeypatch.setattr(verify, "http", lambda *a, **k: sent.append(a) or (403, {}))
+    verify.main([])
+    assert [a for a in sent if a[0] == "POST" and len(a) > 2 and a[2] == TOKEN]
 
 
 def test_a_failed_token_mint_stays_its_own_fail_line(monkeypatch, env, capsys):
