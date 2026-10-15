@@ -234,7 +234,7 @@ order with the same exit code.
      `--ipv4` mostly saves that wait, and no longer decides whether the run completes.
 3. **Timeout on each `gcloud` call: 300 s, `--gcloud-timeout SECONDS` to change it.**
    - Before each `gcloud` call a line is printed naming it, for example
-     `INFO  gcloud run services describe ops-gateway --region us-central1 (timeout 300 s)`.
+     `INFO  gcloud run services describe ops-gateway --region=us-central1 --format=json (timeout 300 s)`.
      Arguments only; `gcloud`'s output (tokens, the account) is never printed.
    - On expiry the call and its whole process tree are killed (on Windows `gcloud.cmd` starts a
      child, which must not be left holding the pipes), and the check that needed it prints
