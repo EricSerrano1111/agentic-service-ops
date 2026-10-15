@@ -362,6 +362,8 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 *Updated 2026-10-14 (Z1): the scope decision is at the Sprint 6 close, and Sprint 6.5 if any is about 11-09 to 11-29 (ADR-106).*
 
+*Updated 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.) Sprint 6 runs 2026-10-15 to 10-25 and the buffer is 10-26 to 12-05; the scope decision is at the 10-25 close and Sprint 6.5 if any runs 10-26 to about 11-29 (ADR-109, which supersedes ADR-093's Sprint 6 dates and ADR-106 in part). The calendar table and Sprint 6 heading below still show the ADR-093 dates and are not edited. `05` and `06` keep the course's dates (11-01, 11-08), and no 6.5 change is deployed before `06` is submitted. Owner verification sessions are allowed outside the grading windows (ADR-110).*
+
 Every sprint ends with a **demoable increment** and a **sprint review + retro entry** in `sprint-log.md`. Academic deliverables are interleaved, not bolted on at the end. Risk register is reviewed and updated every sprint boundary.
 
 **Calendar.** Sprint 1 started Monday 2026-09-14. **Re-baselined 2026-10-08 (ADR-082) and again at the Sprint 4 close on 2026-10-10 (ADR-093): Sprint 4 closed on day 5, Sprint 5 runs 2026-10-12 to 10-25, Sprint 6 runs 10-26 to 11-08, and 2026-11-09 to 12-05 is buffer.** **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.

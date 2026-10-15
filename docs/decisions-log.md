@@ -104,10 +104,24 @@
 | 090 | QA checks for sentiment answers; `not_checked` no longer stands for "no check yet" | Accepted |
 | 091 | The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate (extends ADR-055 and ADR-087) | Accepted |
 | 092 | QA fixes from the fault injection: answer text by position, zero denominators, small samples, `qa_status: failed`, and measurement 2 (extends ADR-091) | Accepted |
-| 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted |
+| 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted — superseded in part by ADR-109 |
+| 094 | Evaluation sets are written by an independent model (supersedes "owner-written" for the Sprint 5 sets only) | Accepted |
 | 095 | QA recomputes served forecast numbers independently (L-83(a)) | Accepted |
+| 096 | QA also checks the 95% interval ends (supersedes ADR-095 in part) | Accepted |
+| 097 | Invite-link access to the gateway (builds on ADR-079, ADR-080 and ADR-081; supersedes nothing) | Accepted |
 | 098 | The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087) | Accepted |
 | 099 | Deploy configuration for the full system (extends ADR-081 to six services) | Accepted |
+| 100 | Deployed sentiment reads stored predictions only; scoring is an offline batch (supersedes ADR-062 in part; builds on ADR-099; resolves R-19's blocker) | Accepted |
+| 101 | The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default | Accepted |
+| 102 | The Sprint 5 interpretation gate: `qa_interp_v3` failed (a) in run 1; the check stays advisory with `qa_interp_v2` | Accepted |
+| 103 | Evaluation freeze for Sprint 5: the system Prompt X measures | Accepted |
+| 104 | Deployed model calls use the paid key for the evaluation and grading window | Accepted |
+| 105 | Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing) | Accepted — superseded in part by ADR-110 |
+| 106 | Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part) | Accepted — superseded in part by ADR-109 |
+| 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted |
+| 108 | Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing) | Accepted |
+| 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted |
+| 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted |
 
 ---
 
@@ -3602,3 +3616,67 @@ After a start, one question through the gateway confirms the data path before th
 - The router's reason is no longer readable in the logs. The place to read it is the response body.
 - Exception messages are not in the logs. A diagnosis that needs one reproduces the failure locally.
 - Deployed only in Prompt Z2b; until then the deployed services log as before.
+
+### ADR-109 — Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part)
+*Date: 2026-10-15. Owner-decided 2026-10-15; assistant-drafted. Supersedes ADR-093's Sprint 6 dates and ADR-106 in part (its 6.5 start and the date of the scope decision). Everything else in ADR-093, ADR-106 and ADR-107 stands.*
+
+**Decision:**
+- **Sprint 6 runs 2026-10-15 to 10-25**, 11 days.
+  - The start moves forward from 10-26 into the unscheduled interval after the Sprint 5 close (the Z1 corrections named it).
+  - The end moves from 11-08 to 10-25.
+  - This departs from the two-week cadence, as ADR-082 did for Sprint 4's three weeks.
+- **The buffer is 2026-10-26 to 12-05.** The final date, 12-05, is unchanged.
+- **ADR-106 in part:**
+  - The scope decision stays "at the Sprint 6 close", which is now 10-25.
+  - Sprint 6.5, if any, runs from 10-26 to about 11-29 (it was about 11-09 to 11-29).
+  - ADR-106's rule that nothing from 6.5 is counted in `05` or `06` stands.
+- **New rule: no 6.5 change is deployed before `06` is submitted.** It may be built and merged, and the trigger stays disabled (ADR-105).
+  - Reason: 6.5 can now start before `05` (due 11-01) and `06` (due 11-08) are submitted, and `06` describes the live system.
+- **`05` and `06`:** the due dates are the course's. Both fall after the close; submitting them is owner work in the buffer if it is not done by 10-25.
+- **Planning-time scope.** The Sprint 6 goal is fixed and not reworded ("Production-grade checklist closed out; demo rehearsed").
+  - Its "demo rehearsed" is **not expected inside Sprint 6**. This is recorded now, at planning, rather than found at the close.
+  - Targets, all in the buffer:
+    - evaluation report draft (the Sprint 5 results plus the divergence list) by 11-08, final by 12-01;
+    - presentation draft by 11-22;
+    - demo rehearsal by 11-29.
+
+**Context:** the owner wants room for 6.5 and for tidying the academic documents. The grader is expected around 12-05.
+
+**Alternatives considered:**
+- *Keep the 11-08 end.* Rejected by the owner: it holds the buffer back.
+- *A two-week sprint, 10-15 to 10-28.* Rejected: it matches neither the work nor the course dates.
+
+**Consequences:**
+- `architecture.md` §10 and R-10 carry a dated note citing this entry; ADR-093 and ADR-106 are not edited, and their index Status cells say "superseded in part by ADR-109".
+- **Post-submission divergence (carry to the evaluation report):** `03` quotes the calendar, which this entry moves again; `03` is Eric's to edit and nothing was changed.
+
+### ADR-110 — Owner verification sessions outside grading windows (supersedes ADR-105 in part)
+*Date: 2026-10-15. Owner-decided 2026-10-15; assistant-drafted. Supersedes ADR-105 in part: "started for announced grading windows and only then". The rest of ADR-105 and all of ADR-107 stand.*
+
+**Decision:**
+- **`ops-db` may be started for an owner-only verification session** outside an announced window.
+  - It is started and stopped in one sitting.
+  - No grader invite is created.
+  - The paid-balance check ($5 or more, in the console) applies as before a window.
+- **A test invite** may be created to confirm that grader-style access works. It expires at the session's end and is revoked there.
+- **The first session** falls on a weekend before 10-25 (the date goes in the sprint log). It:
+  - runs `05`'s deployed scenarios;
+  - times the sentiment and forecast cold starts, including the second idle wait (R-05);
+  - exercises one failure path to read its log codes live;
+  - confirms grader access with a test invite, from a browser profile with no owner session.
+
+  These are the three confirmations `06` waits on.
+- **Windows A (10-31 to 11-09) and B (12-01 to 12-12) are unchanged** (ADR-107).
+  - A is kept as a precaution, in case a grader tests after `05` and `06` are submitted.
+  - The owner expects grading around 12-05, inside B.
+
+**Context:**
+- Window A opens the day before `05` is due, which leaves no slack to run the scenarios and revise.
+- Opening A on 10-24 instead would cost about $2 of `ops-db` time and keep a grader invite live a week longer. ADR-107 treats invite expiry as the access control.
+
+**Alternatives considered:**
+- *Open Window A on 10-24.* Rejected for the reasons in Context.
+
+**Consequences:**
+- Each session gets a dated entry in `docs/deploy-window-log.md`.
+- R-21 is unchanged.
