@@ -62,7 +62,7 @@ All take `--scenario ID` (for example `TS-20-A`) and `--evidence PATH` (default:
 | `ask --question TEXT [--question ...] [--repeat N] [--parallel K] [--kind T]` | Exchanges the invite once, then sends each question N times, K at a time. Each request is reserved first. |
 | `probe --url URL [--mode nosession\|badtoken\|wrongorigin] [--method M]` | One request with no invite (`nosession`), a made-up cookie (`badtoken`) or a wrong `Origin` (`wrongorigin`). Counted as a request at $0. Needs no credential. |
 | `coldstart --path reporting\|sentiment\|forecast [--wait-seconds N]` | Exchanges the invite, waits N seconds with **no request**, then asks the path's fixed question once and prints the client-side latency and the trace ID. |
-| `cap-test [--max 31] [--question TEXT]` | Sends up to 31 questions in sequence on one invite (default: a declined-at-routing question). Stops at the first refusal and records its 1-based index. |
+| `cap-test [--max 31] [--question TEXT]` | Sends up to 31 questions in sequence on one invite (default: a declined-at-routing question). Stops at the first refusal and records its 1-based index and its `error`. **Only `session_limit` at index 31 is `pass`**; a `daily_limit` refusal, a refusal at any other index, or no refusal is `inconclusive` (the error and index are in the evidence line). |
 
 Fixed questions for `coldstart` are the `05` texts used in the plan: reporting TS-05-B, sentiment TS-07-A,
 forecast TS-08-B.

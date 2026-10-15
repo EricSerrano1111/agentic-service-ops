@@ -265,6 +265,7 @@ class Driver:
         self.transport, self.scenario, self.sleep, self.out = transport, scenario, sleep, out
         self.cookie: str | None = None
         self.cap_hit = False
+        self.cap_verdict: str | None = None
 
     # -- one request: reserve, send, record
     def _send(
@@ -376,6 +377,7 @@ class Driver:
     def cap_test(self, token: str, maximum: int, question: str) -> int | None:
         """Questions in sequence on one invite; stops at the first refusal. Returns its 1-based
         index, or None when no refusal came (or the ledger stopped it first)."""
+        self.cap_verdict = "inconclusive"
         if not self.sign_in(token):
             return None
         for i in range(1, maximum + 1):
@@ -383,15 +385,31 @@ class Driver:
             if reply is None:
                 return None
             if reply.status == 429 and reply.body.get("error") in ("session_limit", "daily_limit"):
+                error = reply.body.get("error")
+                # Only the hourly cap at the 31st question is a PASS (TS-18-D); a daily-cap
+                # refusal or a refusal at another index says nothing about the hourly limit.
+                self.cap_verdict = (
+                    "pass" if error == "session_limit" and i == 31 else "inconclusive"
+                )
                 self.evidence.write(
                     scenario=self.scenario,
                     subcommand="cap-test",
                     index=i,
                     refused=True,
-                    outcome=reply.body.get("error"),
+                    error=error,
+                    outcome=self.cap_verdict,
                 )
-                self.out(f"[{self.scenario}] cap-test: refused at question {i}")
+                self.out(f"[{self.scenario}] cap-test: refused at question {i} ({error})")
                 return i
+        self.cap_verdict = "inconclusive"
+        self.evidence.write(
+            scenario=self.scenario,
+            subcommand="cap-test",
+            index=None,
+            refused=False,
+            error=None,
+            outcome="inconclusive",
+        )
         return None
 
 
@@ -498,6 +516,7 @@ def main(
         elif args.command == "cap-test":
             index = driver.cap_test(token, args.max, args.question)
             out(f"refusal index: {index}")
+            out(f"cap-test verdict: {driver.cap_verdict}")
     except LedgerError as exc:
         out(f"error: {exc}")
         return EXIT_USAGE

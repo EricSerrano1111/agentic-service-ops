@@ -266,6 +266,27 @@ sits before the model call in `api_gateway/app.py`, `/api/ask`). The gateway run
 so its in-process counter is one counter; if the gateway was cold-started after the 30th, the counter
 reset and the result is void: record it and stop. This test uses **30 of the 50 daily questions**.
 
+**3.8a Pre-check before TS-18-D (a stop condition, not a judgement; added 2026-10-15, S6-W2).** The daily
+cap is **global**, not per invite or per session: one `DailyCap` for the whole gateway instance, counted by
+Pacific-time day (`api_gateway/limits.py:52-69`; created once at `app.py:149`; taken at `app.py:293`).
+TS-18-D needs 30 free slots, and 31 questions on one invite can hit `daily_limit` first, which the driver
+records as **inconclusive**, not a pass. So:
+
+1. **Count N**, the gateway's questions so far today, as the larger of (a) the ledger's gateway-counted
+   questions (`status`: `answered` + `clarify` + `failure` + `declined`, **minus 1** for the `verify.py`
+   tally, which went to the orchestrator) and (b) the number of `ops-gateway` log lines with
+   `msg="ask answered"` or `msg="ask refused upstream"` since 00:00 Pacific today (CLAUDE-CODE,
+   read-only `gcloud logging read`). The log count includes questions from before a restart, so it
+   errs high, which is the safe side.
+2. **If N is above 19, skip the optional items** that have not yet run: 3.5, then 3.7 (TS-18-C). Recount.
+3. **If N is still above 19, TS-18-D is deferred to a later session.** Record "TS-18-D deferred: N = ..."
+   in the log entry, run steps 5b and 6, and stop. Nothing is run on a smaller question count and no
+   cap is changed.
+4. Do the same count once before 3.7 (step 2 applies there too: if N is already above 19, 3.5 and 3.7
+   are skipped from the start).
+
+Planned N before TS-18-D is 3 (browser) + 4 to 5 (3.4, 3.6) + 7 (3.7) + 2 (4) = 16 to 17.
+
 **3.9 Repeat runs (optional, section 5's second reading of `05` §2).** CLAUDE-CODE, through the ledgered
 driver, direct to the orchestrator: runs 2 and 3 of the TS-20-A, TS-20-C and the three TS-20-D questions,
 checking `route`, `outcome`, `qa_status`, `parsed_request`. These check consistency, not rendering. First
@@ -424,7 +445,9 @@ logged `cost_usd` total (and re-read from the console at step 6.4). Per-process 
 
 Stop and go to step 6 if **any** of:
 
-1. the ledger reaches its total (60 requests or $0.25);
+1. the ledger reaches its total (75 requests or $0.25; amended from 60, see "Owner decisions");
+1a. the 3.8a pre-check finds N above 19 after the optional items are skipped: **TS-18-D is deferred**,
+   and the session goes to 5b and 6;
 2. the balance would fall below **$3**: opening console balance minus the logged `cost_usd` total (an
    estimate, there is no API);
 3. an **unexpected 5xx** appears. Expected statuses are: `200`; `422` for the failure path; `401`/`403` for
@@ -528,13 +551,11 @@ written, so it would not show a `.code` (step 4).
 *Dated 2026-10-15 (Prompt S6-W1; owner-decided 2026-10-15; assistant-drafted). These supersede the text
 above where they differ; the text above is edited only at the lines named in "Edits made".*
 
-1. **Ledger.** `scripts/session_driver.py` enforces **60 requests and $0.25** (`init --max-requests 60
-   --max-dollars 0.25`). Browser questions go in by `tally`. **Arithmetic the owner should check:** the
-   driver counts exchanges and probes as requests too. About 44 driver questions, 4 tallies (three browser
-   cold-start questions and `verify.py`), roughly 8 exchanges and 8 probes come to about 64. At 60 the
-   driver will refuse the last few. Either `init` with `--max-requests 75` (the $0.25 cap is untouched
-   and still the tighter limit on spend), or cut the optional items (3.5, the TS-14-B probes of
-   services that `verify.py` already checks). The owner decides at `init`; the caps never change after.
+1. **Ledger.** `scripts/session_driver.py` enforces **75 requests and $0.25** (`init --max-requests 75
+   --max-dollars 0.25`; amended 2026-10-15, S6-W2, from 60). Browser questions go in by `tally`. The
+   driver counts exchanges and probes as requests too: about 44 driver questions, 4 tallies, roughly 8
+   exchanges and 8 probes come to about 64, so 60 would have refused the last few. The $0.25 cap is
+   untouched and is still the tighter limit on spend. The caps never change after `init`.
 2. **TS-18-D is an exception to the 24-per-hour rule, by design.** It runs on its own invite
    (`session1-cap`); the hourly cap is a rolling 60 minutes per invite.
 3. **Single run for TS-14, TS-16, TS-18 and TS-20.** `05` §2's three-run rule is not applied to them;
@@ -570,7 +591,7 @@ $L = 'evals\results\session1\2026-10-17\ledger.json'
 $D = '.venv\Scripts\python scripts\session_driver.py --ledger ' + $L
 
 # Step 1 (after 1.5): create the ledger, then tally verify.py's question (1.6)           CLAUDE-CODE
-.venv\Scripts\python scripts\session_driver.py --ledger $L init --max-requests 60 --max-dollars 0.25
+.venv\Scripts\python scripts\session_driver.py --ledger $L init --max-requests 75 --max-dollars 0.25
 .venv\Scripts\python scripts\session_driver.py --ledger $L tally --count 1 --kind answered --scenario S1-open --note "verify.py end-to-end question"
 
 # Step 2: after each browser cold-start question (2.2, 2.5, 2.8), one tally each          CLAUDE-CODE
@@ -596,11 +617,11 @@ $env:SESSION_INVITE_LINK = '<session1-grader link>'
 # Step 3.7: TS-18-C, six reporting and one forecast at once                                OWNER
 .venv\Scripts\python scripts\session_driver.py --ledger $L ask --scenario TS-18-C --parallel 7 `
   --question "What was SLA compliance in the west region in July 2026?" `
-  --question "What was SLA compliance in the east region in July 2026?" `
   --question "What was SLA compliance in the central region in July 2026?" `
   --question "What was SLA compliance in the southeast region in July 2026?" `
   --question "What was SLA compliance in the northeast region in July 2026?" `
   --question "What was SLA compliance in the west region in June 2026?" `
+  --question "What was SLA compliance in the northeast region in June 2026?" `
   --question "How many install requests should we expect over the next 8 weeks?"
 
 # Step 3.8: TS-18-D, with session1-cap's link (set SESSION_INVITE_LINK to it first)        OWNER
@@ -615,4 +636,9 @@ The optional driver cold start (`coldstart --path reporting|sentiment|forecast -
 exchanges the invite, idles in-process with no request, then times one question. The browser technique
 in step 2 stays the primary reading because it matches 2026-10-13's measurement; the driver's reading is
 client-side only and is a cross-check. Evidence lines are in `ledger.json.evidence.jsonl` beside the
-ledger. The regions in the TS-18-C questions are examples; use five region names the dataset has.
+ledger. The dataset has **four** regions: `northeast`, `southeast`, `central`, `west`
+(`docs/data-dictionary.md:91, 313, 355`; the state mapping is `data/generator/parameters.py:825-826` and
+following). The six TS-18-C reporting questions are those four regions in July 2026 plus the west and
+northeast in June 2026; the earlier "east" was not a region. Before TS-18-D, run the 3.8a pre-check; the
+driver prints `cap-test verdict: pass` only for a `session_limit` refusal at question 31, and
+`inconclusive` (with the error and index in the evidence line) for anything else.

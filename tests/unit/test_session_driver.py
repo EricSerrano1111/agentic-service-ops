@@ -30,9 +30,15 @@ ANSWER = "The SLA compliance was 0.8813 across 160 requests. SECRET-ANSWER-TEXT"
 class FakeGateway:
     """Records every request; answers like the gateway for the paths the driver uses."""
 
-    def __init__(self, refuse_after: int | None = None, crash_on: int | None = None) -> None:
+    def __init__(
+        self,
+        refuse_after: int | None = None,
+        crash_on: int | None = None,
+        refuse_error: str = "session_limit",
+    ) -> None:
         self.calls: list[tuple[str, str, dict, dict | None]] = []
         self.refuse_after = refuse_after
+        self.refuse_error = refuse_error
         self.crash_on = crash_on
         self.asks = 0
         self.lock = threading.Lock()
@@ -60,7 +66,7 @@ class FakeGateway:
                 if self.refuse_after is not None and self.asks > self.refuse_after:
                     return sd.Reply(
                         429,
-                        {"error": "session_limit", "detail": "Too many questions this hour"},
+                        {"error": self.refuse_error, "detail": "Too many questions this hour"},
                         {"x-trace-id": "r" * 32},
                         {},
                         0.01,
@@ -219,8 +225,41 @@ def test_cap_test_stops_at_the_first_refusal_and_records_index_31(paths):
     lines = [json.loads(x) for x in evidence.read_text("utf-8").splitlines()]
     refusal = [x for x in lines if x.get("refused")]
     assert len(refusal) == 1 and refusal[0]["index"] == 31
-    assert refusal[0]["outcome"] == "session_limit"
-    assert "refusal index: 31" in out[-1]
+    assert refusal[0]["error"] == "session_limit" and refusal[0]["outcome"] == "pass"
+    assert "refusal index: 31" in out[-2] and out[-1] == "cap-test verdict: pass"
+
+
+def test_cap_test_daily_limit_refusal_is_inconclusive_even_at_31(paths):
+    ledger, evidence = paths
+    init(ledger)
+    gw = FakeGateway(refuse_after=30, refuse_error="daily_limit")
+    code, out = run(ledger, ["cap-test", "--scenario", "TS-18-D"], gw)
+    assert code == 0 and len(gw.ask_calls) == 31
+    refusal = [json.loads(x) for x in evidence.read_text("utf-8").splitlines()][-1]
+    assert refusal["index"] == 31 and refusal["error"] == "daily_limit"
+    assert refusal["outcome"] == "inconclusive"
+    assert out[-1] == "cap-test verdict: inconclusive"
+
+
+def test_cap_test_session_limit_at_another_index_is_inconclusive(paths):
+    ledger, evidence = paths
+    init(ledger)
+    gw = FakeGateway(refuse_after=19)  # earlier questions on the same invite used the hour
+    code, out = run(ledger, ["cap-test", "--scenario", "TS-18-D"], gw)
+    refusal = [json.loads(x) for x in evidence.read_text("utf-8").splitlines()][-1]
+    assert refusal["index"] == 20 and refusal["error"] == "session_limit"
+    assert refusal["outcome"] == "inconclusive"
+    assert out[-1] == "cap-test verdict: inconclusive"
+
+
+def test_cap_test_with_no_refusal_is_inconclusive(paths):
+    ledger, evidence = paths
+    init(ledger)
+    gw = FakeGateway()
+    code, out = run(ledger, ["cap-test", "--scenario", "TS-18-D"], gw)
+    last = [json.loads(x) for x in evidence.read_text("utf-8").splitlines()][-1]
+    assert len(gw.ask_calls) == 31 and last["outcome"] == "inconclusive"
+    assert out[-2] == "refusal index: None"
 
 
 def test_cap_test_stops_when_the_ledger_does(paths):
@@ -229,7 +268,7 @@ def test_cap_test_stops_when_the_ledger_does(paths):
     gw = FakeGateway()
     code, out = run(ledger, ["cap-test", "--scenario", "TS-18-D"], gw)
     assert code == sd.EXIT_CAP and len(gw.ask_calls) == 4
-    assert out[-1] == "refusal index: None"
+    assert out[-2] == "refusal index: None" and out[-1] == "cap-test verdict: inconclusive"
 
 
 def test_probe_is_a_request_at_zero_dollars_and_needs_no_credential(paths, monkeypatch):
