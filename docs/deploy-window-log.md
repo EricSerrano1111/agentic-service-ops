@@ -375,3 +375,11 @@ The previous set (`9607fa72…`) is the rollback target: gateway `00001-8st`, or
 - Each showed its "Interpreted as:" line and the verification line. These timings are warm or partly cold instances and are not the R-05 measurement.
 
 **Trigger proof and end state.** This entry is the docs-only merge under test, so its result is not in it. The enable, the merge check and the disable are reported in the Z2b report and recorded in the next dated entry.
+
+### Z2b addendum, 2026-10-14: the trigger proof and the end state (the entry above is unchanged; owner-approved; assistant-drafted)
+
+- **Enabled** by importing `deploy/trigger_full.yaml` with `disabled: false` from a temp copy (runbook step 8), about 22:19 CDT. The live trigger carried `deploy/**/*.md` in `ignoredFiles` (re-imported disabled before the deploy, PR #57). The latest build was `0dc5aae1-2a6c-498e-bbca-f709c2c91149`.
+- **Docs-only merge:** the owner merged PR #58 (`docs/z2b-deploy-record`: `deploy/RUNBOOK_V.md`, `deploy/RUNBOOK_GRADING.md` and three files under `docs/`) at about 22:26 CDT; `origin/main` read `82501b0` at 22:27. Read-only `gcloud builds list` at 22:27, 22:30 and 22:33 CDT showed the latest build still `0dc5aae1…`: **no build started in at least 6 minutes** (the criterion was 3). The offline matcher (`tests/unit/test_deploy_trigger.py`) agreed (`builds: False` for the same file set).
+- **Disabled again** the same way, from the repo file; `describe` reads `disabled: True`. The trigger was enabled for about 20 minutes with `ops-db` running.
+- **End state:** six services serving the Z2b revisions; trigger disabled (ADR-107, ADR-083); `ops-db` stopped at the end of the window (below, if the stop is recorded). Window A opens 2026-10-31 from `deploy/RUNBOOK_GRADING.md`.
+- **Not verified in Z2b:** the logging of each failed model-call attempt (no retry occurred); the failure-path `code` and `outcome=degraded` lines live (sprint-log, Sprint 6 items).
