@@ -380,6 +380,7 @@ The same steps are in the README's "Local environment recovery". Check the memor
 - The gateway's 50-question daily cap (ADR-097) bounds spend at about $0.35 a day (ADR-104).
 - Paid mode fails closed: `LLM_MODE=paid` refuses to start without its own key and caps (`packages/llm/src/llm/config.py`) and does not take the free key. What a service does on an exhausted balance at call time has not been tested.
 **Review trigger:** before each grading window; any budget alert.
+**Update 2026-10-15 (S6-W1; owner-decided 2026-10-15; assistant-drafted):** the paid balance is **$7.88** after the 2026-10-15 top-up (owner-reported; the console reading at the next session's opening governs, ADR-105). The "about $2.9" in the Description above is the 2026-10-13 estimate and is superseded; it is not edited. The balance is above the $5 minimum ADR-105 sets. Status stays Open: the balance is still not watched programmatically and auto-reload is off.
 
 ---
 
