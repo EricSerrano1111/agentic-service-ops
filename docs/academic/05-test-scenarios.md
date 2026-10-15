@@ -16,7 +16,7 @@ Due Date: November 1 **(Assignment complete)**
 
 This document defines the test scenarios for the Agentic Service Operations Intelligence Platform. Its purpose is to show, for every requirement in the Detailed Requirements Analysis, how the system will be verified: what is tested, under what starting conditions, and what result counts as a pass. Twenty scenarios are defined, each broken into specific test cases with stated inputs and expected results. Together they cover every functional and non-functional requirement the project is committed to delivering.
 
-The document is written before several components are built, so it is a reference specification and not a live test record. It defines what is to be tested and what result counts as a pass. Each scenario carries an execution status as of the date of writing, so a reader can tell what had been run at that point.
+The document was first written before several components were built, and revised once they were built and deployed. It is a reference specification, not a live test record: it defines what is to be tested and what result counts as a pass. Each scenario carries an execution status as of October 14, 2026.
 
 **System Under Test**
 
@@ -26,9 +26,9 @@ The platform lets a user ask a plain-language question about a simulated field s
 - Reporting agent: answers incident and quality questions: incident rate, SLA compliance, first-time fix rate, and repeat-visit drivers.
 - Sentiment agent: classifies and summarizes customer feedback.
 - Forecast agent: forecasts weekly service request volume.
-- QA agent: independently checks each specialist's draft and can reject it for revision.
+- QA agent: independently re-checks each specialist's answer before it reaches the user, and withholds any answer whose figures it cannot confirm.
 
-Each specialist reaches data only through its own narrowly scoped tool server and its own least-privilege database role. The services run as separate containers on Google Cloud Platform, behind a web gateway and interface, all data is synthetic.
+Each specialist reaches data only through its own narrowly scoped tool server and its own least-privilege database role. The system is deployed on Google Cloud Platform as six services: a web gateway, which is the only service reachable from the internet, the orchestrator, the three specialists and the QA agent. Each tool server runs alongside its specialist in the same service. All data is synthetic.
 
 **Scope**
 
@@ -39,7 +39,7 @@ Every requirement, FR-01 to FR-19, and the five non-functional areas. Question i
 **Out of Scope:**
 
 - Multi-turn follow-up, multi-specialist answers to one question, and the external research agent. These are not committed deliverables, and no scenario depends on them.
-- Accuracy evaluation of the models and the routing logic. Routing accuracy, sentiment precision and recall, forecast error against the baseline, and QA catch rate. These are measured as percentages in a separate evaluation. The scenarios here are pass/fail checks of behavior. Where a scenario touches an evaluated quantity, such as a forecast's stored error, it checks that the system reports it correctly, not whether the figure is good.
+- Accuracy evaluation of the models and the routing logic. Routing accuracy, sentiment precision and recall, forecast error against the baseline, and QA catch rate. These are measured as percentages in a separate evaluation. The scenarios here are pass/fail checks of behavior. Where a scenario touches an evaluated quantity, such as a forecast's stored error, it checks that the system reports it correctly, not whether the figure is good. Section 7 summarizes the results at the date of writing.
 - Throughput and large-scale load testing. Latency is tested for a handful of concurrent users, and no throughput target is set.
 - Testing against real customer data. Everything is synthetic by design.
 
@@ -55,29 +55,28 @@ Section 5 summarizes all twenty scenarios.
 
 Section 6 gives the full detail of each one.
 
-Section 7 records known failures and limitations.
+Section 7 records known failures, limitations and evaluation results at the date of writing.
 
 **Conventions Used in the Scenarios**
 
-Scenarios are numbered TS-01 to TS-20, and test cases carry the scenario number and a sequence letter (TS-05-A, TS-05-B). Requirements are cited by the identifiers used in the Requirements Analysis (FR-01 to FR-22 for functional requirements, and the numbered non-functional requirements). Each scenario states one of four execution statuses:
+Scenarios are numbered TS-01 to TS-20, and test cases carry the scenario number and a sequence letter (TS-05-A, TS-05-B). Requirements are cited by the identifiers used in the Requirements Analysis (FR-01 to FR-22 for functional requirements, and the numbered non-functional requirements). Each scenario states one of three execution statuses as of the date of writing:
 
 - Passed: executed, and all cases met their expected results.
-- Not yet run: the component under test is built or planned, but the scenario has not been executed.
-- Not yet built: the component under test does not exist yet.
+- Not yet run: the components under test are built, but the scenario has not been executed as defined in this document.
 - Known failing: executed, and the system does not meet the requirement. The expected result stays at what the requirement demands, and the actual result is recorded beside it.
 
-## **Test Approach**
+## **2\. Test Approach**
 
 **Test Levels**
 
 Verification happens at four levels, each scenario names the level or levels its cases use:
 
-| **Level**   | **What it checks**                                                                                                                        | **How it runs**                                                         |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Unit        | Individual functions and data contracts with no network or model: metric calculations, response formats, trend rules, the retry counter   | Automated, offline, on every code change                                |
-| Integration | Services against a live PostgreSQL database: database grants, tool server behavior, figures against independent queries                   | Automated, on every code change                                         |
-| End-to-end  | A question sent through the full chain (orchestrator, specialist, tool server, QA) on the containerized stack, including real model calls | Automated where possible, run on demand because it consumes model quota |
-| Manual      | Behavior that needs observation: the web interface, stopping a service mid-run, the deployed environment                                  | Run by hand against the deployed system, with the result recorded       |
+| **Level**   | **What it checks**                                                                                                                        | **How it runs**                                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Unit        | Individual functions and data contracts with no network or model: metric calculations, response formats, trend rules, the retry counter   | Automated, offline, on every code change                                      |
+| Integration | Services against a live PostgreSQL database: database grants, tool server behavior, figures against independent queries                   | Automated, on every code change                                               |
+| End-to-end  | A question sent through the full chain (orchestrator, specialist, tool server, QA) on the containerized stack, including real model calls | Automated where possible, run on demand because it consumes model quota       |
+| Manual      | Behavior that needs observation: the web interface, stopping a service mid-run, the deployed environment                                  | Run by hand, locally or against the deployed system, with the result recorded |
 
 **Deriving Expected Results**
 
@@ -99,26 +98,27 @@ QA scenarios need a draft that is wrong in a known way. Rather than waiting for 
 
 All cases run against the frozen synthetic dataset described in Section 3. The data is generated from a saved random seed, so it is identical on every run.
 
-The runtime model is on a free tier limited to 500 requests per day. A full execution of every case at three runs each, at two to four model calls per question, can exceed that. Execution is therefore planned in batches across days, or run on a separate paid project with a fixed spending cap. Cases that need no model (database isolation, the dataset, the unit-level checks) run without using quota.
+Locally, model calls use the provider's free tier, whose daily limit is set by the provider and can change. The deployed system uses a paid key with a prepaid balance, and its web gateway caps use at 50 questions a day in total and 30 an hour for each invite. A full execution of every case at three runs each, at two to four model calls per question, can exceed these limits, so execution is planned in batches across days. Cases that need no model (database isolation, the dataset, the unit-level checks) use no quota.
 
 **Pass Criteria and Failures**
 
 A case passes when its observed result matches the expected result. A scenario passes when all its cases pass. A failing case is recorded with its actual result and not edited to match the system. If the failure reflects a requirement the system does not yet meet, the scenario is marked known failing and listed in Section 7, with the expected result unchanged, so the gap stays visible instead of being absorbed into the test.
 
-## **Test Environment & Preconditions**
+## **3\. Test Environment & Preconditions**
 
 **Test Environments**
 
 Cases run in one of two environments. Most run locally, where every service and the database run as containers on one machine. Cases that depend on the deployed system (public exposure, access control, cold starts, and the web interface) run on the deployed environment on Google Cloud Platform. Each scenario in Section 6 states which it uses.
 
-| **Component**        | **Local**                                                                                | **Deployed**                                                             |
-| -------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Services             | Containers on one machine: orchestrator, three specialists, QA agent, three tool servers | The same services as separate Cloud Run services, behind the web gateway |
-| Database             | PostgreSQL 16 in a container                                                             | Cloud SQL, PostgreSQL 16, same schema migrations                         |
-| Credentials          | Environment configuration                                                                | Secret Manager                                                           |
-| Language model       | Gemini 3.5 Flash-Lite for classification, parsing, and QA's interpretation check         | Same                                                                     |
-| Sentiment classifier | Fine-tuned transformer (version 1), loaded from a stored artifact                        | Same artifact                                                            |
-| Forecast model       | Regression with year-end indicator (version 2), loaded from a stored artifact            | Same artifact                                                            |
+| **Component**        | **Local**                                                                                | **Deployed**                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Services             | Containers on one machine: orchestrator, three specialists, QA agent, three tool servers | Six Cloud Run services: the web gateway (the only public service), the orchestrator, the three specialists and the QA agent. Each tool server runs alongside its specialist. |
+| Database             | PostgreSQL 16 in a container                                                             | Cloud SQL, PostgreSQL 16, same schema migrations                                                                                                                             |
+| Credentials          | Environment configuration; services reachable from the developer's machine only          | Secret Manager; every service except the gateway requires a cloud service identity                                                                                           |
+| Language model       | Gemini 3.5 Flash-Lite for classification, parsing, and QA's interpretation check         | Same model, on a paid key with a prepaid balance                                                                                                                             |
+| Sentiment classifier | Fine-tuned transformer (version 1); a prediction is stored for every comment             | Not loaded; the service reads the stored predictions, scored offline by the same classifier                                                                                  |
+| Forecast model       | Regression with year-end indicator (version 2), loaded from a stored artifact            | Same model files, built into the service image                                                                                                                               |
+| User access          | None; the stack is reachable from the developer's machine only                           | Invite link, exchanged for a session                                                                                                                                         |
 
 **Dataset Reference Values**
 
@@ -126,14 +126,15 @@ All cases run against the same synthetic dataset, generated from a saved random 
 
 Expected results in later sections refer to these figures:
 
-| **Item**                    | **Value**                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------- |
-| History                     | 36 months, 156 complete weeks (2023-09-04 to 2026-08-30)                        |
-| Service requests            | 20,230 (18,063 completed; cancellation rate 10.2%)                              |
-| Incidents                   | 2,067                                                                           |
-| Customer feedback responses | 7,521 (sentiment mix 50.2% positive, 22.4% neutral, 19.6% negative, 7.8% mixed) |
-| Reference data              | 50 accounts, 197 locations, 32 technicians, 198 contacts, 15 internal users     |
-| Injected anomalies          | One account volume drop, one regional volume drop, one billing surcharge window |
+| **Item**                     | **Value**                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| History                      | 36 months, 156 complete weeks (2023-09-04 to 2026-08-30)                        |
+| Service requests             | 20,230 (18,063 completed; cancellation rate 10.2%)                              |
+| Incidents                    | 2,067                                                                           |
+| Customer feedback responses  | 7,521 (sentiment mix 50.2% positive, 22.4% neutral, 19.6% negative, 7.8% mixed) |
+| Stored sentiment predictions | 7,521 (one per comment)                                                         |
+| Reference data               | 50 accounts, 197 locations, 32 technicians, 198 contacts, 15 internal users     |
+| Injected anomalies           | One account volume drop, one regional volume drop, one billing surcharge window |
 
 **Preconditions Common to All Scenarios**
 
@@ -144,15 +145,16 @@ Unless a scenario states otherwise, these hold before any case runs:
 3. Model artifacts present. The sentiment classifier and forecast model are in place, and each tool server has verified the integrity of its artifact at start-up.
 4. Fixed as-of date. The system resolves relative dates ("last month," "the past 30 days," "next quarter") against a fixed as-of date, set to the final day of the dataset, August 30, 2026, and not against the current date. Every answer states the as-of date it used. This makes each question mean the same thing on every run, whenever the test is executed
 5. Credentials configured. Each service holds only its own database role, and the evaluation role used to compute expected values is available to the tester only, never to a deployed service.
-6. Model access available. A valid model key with quota remaining is configured, either the free tier or the capped paid project.
+6. Model access available. Locally, a valid free-tier key with quota remaining. On the deployed system, the paid key, with the prepaid balance topped up to at least \$5.
 7. Logging on. Structured logging is enabled, so every request leaves a trace ID that can be followed across services.
 8. Clean state. No other traffic is running, and any service stopped during an earlier case has been restored.
+9. Deployed system open. Deployed cases run during the announced availability window, October 31 to November 9, 2026. Outside a window the database is stopped to save cost, and the interface says the data service is unavailable. A tester needs an invite link issued for the window.
 
 **Test Inputs**
 
-Test questions are written for this document and are kept separate from the question sets used in the accuracy evaluations. Reusing evaluation questions here would let tuning against one contaminate the other.
+Test questions are written for this document and are kept separate from the question sets used in the accuracy evaluations. Reusing evaluation questions here would let tuning against one contaminate the other
 
-## **Coverage Matrix**
+## **4\. Coverage Matrix**
 
 Every requirement in the Detailed Requirements Analysis is mapped below to the scenarios that verify it. Requirements that several scenarios share are listed once, with all their scenarios. Non-functional requirements are numbered NFR-1 to NFR-5 in the order they appear in that document.
 
@@ -204,9 +206,9 @@ Every requirement in the Detailed Requirements Analysis is mapped below to the s
 - FR-03 is covered by a scenario that is known to fail at the time of writing. The gap is described in Section 7.
 - Security (NFR-2) is spread over three scenarios on purpose. TS-13 verifies the database layer, TS-14 verifies who can reach the system, and TS-15 verifies how it handles hostile input. That matches the requirement's design that no single control carries the security model.
 
-## **Scenario Summary Table**
+## **5\. Scenario Summary Table**
 
-Twenty scenarios verify the requirements. The table gives each scenario's coverage, test level, environment, and execution status as of October 5, 2026. Section 6 gives the full detail.
+Twenty scenarios verify the requirements. The table gives each scenario's coverage, test level, environment, and execution status as of October 14, 2026. Section 6 gives the full detail.
 
 | **ID** | **Scenario**                                        | **Covers**            | **Level**               | **Environment** | **Status**    |
 | ------ | --------------------------------------------------- | --------------------- | ----------------------- | --------------- | ------------- |
@@ -218,30 +220,24 @@ Twenty scenarios verify the requirements. The table gives each scenario's covera
 | TS-06  | Repeat-visit drivers and technician-level reporting | FR-06                 | Integration, end-to-end | Local           | Not yet run   |
 | TS-07  | Sentiment analysis                                  | FR-07                 | Integration, end-to-end | Local           | Not yet run   |
 | TS-08  | Volume forecast                                     | FR-08                 | Integration, end-to-end | Local           | Not yet run   |
-| TS-09  | QA verifies reporting                               | FR-09                 | Integration, end-to-end | Local           | Not yet built |
-| TS-10  | QA verifies forecast                                | FR-10                 | Integration, end-to-end | Local           | Not yet built |
-| TS-11  | QA verifies sentiment without circularity           | FR-11                 | Integration, end-to-end | Local           | Not yet built |
-| TS-12  | Bounded revision loop and degraded result           | FR-12, FR-13          | Unit, end-to-end        | Local           | Not yet built |
+| TS-09  | QA verifies reporting                               | FR-09                 | Integration, end-to-end | Local           | Not yet run   |
+| TS-10  | QA verifies forecast                                | FR-10                 | Integration, end-to-end | Local           | Not yet run   |
+| TS-11  | QA verifies sentiment without circularity           | FR-11                 | Integration, end-to-end | Local           | Not yet run   |
+| TS-12  | Bounded revision loop and degraded result           | FR-12, FR-13          | Unit, end-to-end        | Local           | Not yet run   |
 | TS-13  | Database isolation                                  | FR-14 to FR-17, NFR-2 | Integration             | Local           | Not yet run   |
-| TS-14  | Access control and exposure                         | NFR-2                 | Manual                  | Deployed        | Not yet built |
+| TS-14  | Access control and exposure                         | NFR-2                 | Manual                  | Deployed        | Not yet run   |
 | TS-15  | Hostile and malformed input                         | NFR-2                 | Integration, end-to-end | Local           | Not yet run   |
-| TS-16  | Time ceiling, latency, and cost                     | NFR-1                 | End-to-end, manual      | Local, deployed | Not yet built |
-| TS-17  | Availability and graceful degradation               | NFR-4                 | Manual                  | Local           | Not yet built |
-| TS-18  | Rate limits and scalability                         | NFR-3                 | End-to-end, manual      | Local, deployed | Not yet built |
+| TS-16  | Time ceiling, latency, and cost                     | NFR-1                 | End-to-end, manual      | Local, deployed | Not yet run   |
+| TS-17  | Availability and graceful degradation               | NFR-4                 | Manual                  | Local           | Not yet run   |
+| TS-18  | Rate limits and scalability                         | NFR-3                 | End-to-end, manual      | Local, deployed | Not yet run   |
 | TS-19  | Synthetic dataset                                   | FR-18, NFR-5          | Integration             | Local           | Not yet run   |
-| TS-20  | Web interface and decision-support transparency     | FR-19, NFR-5          | Manual                  | Deployed        | Not yet built |
+| TS-20  | Web interface and decision-support transparency     | FR-19, NFR-5          | Manual                  | Deployed        | Not yet run   |
 
-**Status as of October 5, 2026:**
+**Status as of October 14, 2026:** 1 known failing, 19 not yet run. Every component the scenarios depend on is built, and the system is deployed. No scenario has yet been executed exactly as defined here, although testing during development covers much of the same ground; Section 7 summarizes the results. The deployed cases of TS-14, TS-16, TS-18 and TS-20 run in the availability window of October 31 to November 9, 2026.
 
-1 known failing, 9 not yet built, 10 not yet run.
+## **6\. Detailed Scenarios**
 
-No scenario has been executed as defined in this document. "Not yet built" means a component the scenario depends on does not exist yet:
-
-The QA agent and revision loop, the single request deadline, circuit breakers, service-to-service authentication, the web gateway and interface, or the deployment.
-
-## **Detailed Scenarios**
-
-Each scenario lists its coverage, test level, and status as of October 5, 2026, followed by a description, any preconditions beyond the common ones in Section 3, the test cases, and the pass criteria. All questions are written for this document. Expected figures are computed independently, as described in Section 2.
+Each scenario lists its coverage, test level, and status as of October 14, 2026, followed by a description, any preconditions beyond the common ones in Section 3, the test cases, and the pass criteria. All questions are written for this document. Expected figures are computed independently, as described in Section 2. When a QA case below says an answer is "rejected", the answer is withheld: the user receives a degraded result that names the failed check, says the answer is not shown, and sets the follow-up flag.
 
 **TS-01: Clear questions reach the right specialist**
 
@@ -251,12 +247,12 @@ Verifies that a clear single-domain question is classified and handed to the spe
 
 **Preconditions:** All three specialists are running and reachable from the orchestrator.
 
-| **Case** | **Input / steps**                                                                | **Expected result**                                                                                                                                   |
-| -------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TS-01-A  | "What was our SLA compliance in the west region last month?"                     | Routed to the reporting agent. The answer covers July 2026, states the as-of date, and carries the reporting agent's figures.                         |
-| TS-01-B  | "Has customer sentiment in the southeast gotten worse over the past six months?" | Routed to the sentiment agent. The answer covers the six months to the as-of date for the southeast region.                                           |
-| TS-01-C  | "How many install requests should we expect over the next 8 weeks?"              | Routed to the forecast agent. The answer is a weekly forecast for the 8 weeks following the as-of date.                                               |
-| TS-01-D  | Retrieve the Agent Card of each specialist.                                      | Each card is published, names the specialist's capability, and exposes no tool schemas. The orchestrator routes using only the advertised capability. |
+| **Case** | **Input / steps**                                                                | **Expected result**                                                                                                                                                                                         |
+| -------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-01-A  | "What was our SLA compliance in the west region last month?"                     | Routed to the reporting agent. The answer covers July 2026 and the west region only, and states the as-of date.                                                                                             |
+| TS-01-B  | "Has customer sentiment in the southeast gotten worse over the past six months?" | Routed to the sentiment agent. The answer covers the six months to the as-of date for the southeast region.                                                                                                 |
+| TS-01-C  | "How many install requests should we expect over the next 8 weeks?"              | Routed to the forecast agent. The answer covers the 8 weeks starting August 31, 2026.                                                                                                                       |
+| TS-01-D  | Retrieve the Agent Card of each specialist.                                      | Each card is published at its standard address and advertises the specialist's capability and example questions only: no tool schemas, credentials or internal addresses, and no streaming or push support. |
 
 **Pass criteria:** The specialist that answered matches the expected one in A to C in all three runs, and D holds.
 
@@ -266,15 +262,15 @@ Verifies that a clear single-domain question is classified and handed to the spe
 
 Verifies that a question that could mean different measurable things to different specialists is not guessed at. The system should ask the user to clarify and call no specialist. A question that clearly belongs to one domain but omits a detail (a period, for example) is not ambiguous and should be answered using stated defaults. Case C checks that the clarification behavior does not over-trigger.
 
-| **Case** | **Input / steps**                                                     | **Expected result**                                                                                                                                                                          |
-| -------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TS-02-A  | "Is service getting better or worse?"                                 | No specialist is called. The response asks for clarification, states that the question is ambiguous, and names what each candidate domain could answer, with an example rephrasing for each. |
-| TS-02-B  | "How is the west region performing?"                                  | As TS-02-A.                                                                                                                                                                                  |
-| TS-02-C  | "What is the incident rate for the central region?" (no period given) | Routed to the reporting agent, with no clarification request. The answer covers July 2026, the month before the as-of date, and says it assumed that range.                                  |
+| **Case** | **Input / steps**                                                     | **Expected result**                                                                                                                                                                               |
+| -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-02-A  | "Is service getting better or worse?"                                 | No specialist is called. The response asks for clarification, states that the question is ambiguous, and names what each candidate domain could answer, with an example rephrasing for each.      |
+| TS-02-B  | "How is the west region performing?"                                  | As TS-02-A.                                                                                                                                                                                       |
+| TS-02-C  | "What is the incident rate for the central region?" (no period given) | Routed to the reporting agent, with no clarification request. The answer gives the central region's incident rate for July 2026, the month before the as-of date, and says it assumed that range. |
 
 **Pass criteria:** A and B produce a clarification with no specialist call, and C produces an answer, all in three of three runs.
 
-**Result at the date of writing:** In testing on five fresh ambiguous questions, the router recognized three and sent the other two to a best-fit specialist. The scenario is therefore recorded as known failing, and the expected results above are unchanged. See Section 7.
+**Result at the date of writing:** The default router recognized none of eight fresh ambiguous questions, and none of the seven ambiguous questions in the held-out routing set in any of three runs. The best revised router recognized four of eight fresh ambiguous questions, short of the six required before it could replace the default, so it was not adopted. The scenario is recorded as known failing, and the expected results above are unchanged. See Section 7.
 
 **TS-03: Multi-domain question gets a split instruction**
 
@@ -314,7 +310,7 @@ Verifies that the reporting agent returns the three headline quality metrics usi
 | **Case** | **Input / steps**                                                                               | **Expected result**                                                                                                                                                                 |
 | -------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | TS-05-A  | "What was the overall incident rate from September 2023 through August 2026?"                   | 2,067 incidents over 18,063 completed requests, a rate of 11.4433 per 100.                                                                                                          |
-| TS-05-B  | "What was SLA compliance in the west region in July 2026?"                                      | Counts and rate match the independent calculation exactly. Undispatched requests are excluded from the denominator.                                                                 |
+| TS-05-B  | "What was SLA compliance in the west region in July 2026?"                                      | Counts and rate match the independent calculation exactly, for the west region only. Undispatched requests are excluded from the denominator.                                       |
 | TS-05-C  | "What was the first-time fix rate from September 2023 through August 2026?"                     | 0.9798, with cancelled repeat requests excluded. The rate that would result if they were counted (0.9777) is not returned.                                                          |
 | TS-05-D  | "Break down incidents by region for the full history." Repeat for service type and for account. | Each breakdown matches the independent calculation. Groups sum to the total of 2,067, are ordered highest first, and for account show at most 25 groups with the full count stated. |
 
@@ -326,14 +322,14 @@ Verifies that the reporting agent returns the three headline quality metrics usi
 
 Verifies the repeat-visit analysis and questions about an individual technician. A group is reported as standing out only if it has at least 20 jobs, its repeat rate is above the rest, and a significance test supports it. A technician name must resolve to exactly one technician before any figure is returned.
 
-**Preconditions:** A technician with a unique name, and a first name shared by at least two technicians, are chosen from the dataset before the run.
+**Preconditions:** A technician with a unique name is chosen from the dataset before the run. Two technicians share the first name Priya.
 
-| **Case** | **Input / steps**                                                                                                                          | **Expected result**                                                                                                                                                                  |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TS-06-A  | "Which incident types are most associated with repeat visits from September 2025 through August 2026?"                                     | The groups reported as standing out, with their repeat rates and job counts, match the independent calculation. If none qualifies, the answer says the types did not differ clearly. |
-| TS-06-B  | "Which service types have the highest repeat-visit rate over the full history?"                                                            | Groups are ordered by repeat rate, highest first. Rates, job counts, and the stand-out verdicts match the independent calculation.                                                   |
-| TS-06-C  | "What is the first-time fix rate for technician \[unique name\]?"                                                                          | The technician is identified, and the figure equals both the independent calculation and that technician's group in the technician breakdown.                                        |
-| TS-06-D  | Two inputs: "What is the incident rate for technician Zzyzx Quill?" and "What is the SLA compliance for technician \[shared first name\]?" | The first reports that no such technician was found. The second lists the matching technicians (at most five) and asks which is meant. Neither returns a figure.                     |
+| **Case** | **Input / steps**                                                                                                          | **Expected result**                                                                                                                                                                                                                                           |
+| -------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-06-A  | "Which incident types are most associated with repeat visits from September 2025 through August 2026?"                     | The groups reported as standing out, with their repeat rates and job counts, match the independent calculation. If none qualifies, the answer says the types did not differ clearly.                                                                          |
+| TS-06-B  | "Which service types have the highest repeat-visit rate over the full history?"                                            | Groups are ordered by repeat rate, highest first. Rates, job counts, and the stand-out verdicts match the independent calculation.                                                                                                                            |
+| TS-06-C  | "What is the first-time fix rate for technician \[the technician chosen in the precondition\]?"                            | The technician is identified, and the figure equals both the independent calculation and that technician's group in the technician breakdown. If the technician has fewer than 20 completed jobs, the answer marks the figure as too few to compare reliably. |
+| TS-06-D  | Two inputs: "What is the incident rate for technician Zzyzx Quill?" and "What is the SLA compliance for technician Priya?" | The first reports that no such technician was found. The second lists the matching technicians (at most five) and asks which is meant. Neither returns a figure.                                                                                              |
 
 **Pass criteria:** Figures and verdicts match the independent calculation, and D returns no figures, in three of three runs.
 
@@ -343,12 +339,14 @@ Verifies the repeat-visit analysis and questions about an individual technician.
 
 Verifies that the sentiment agent summarizes customer feedback by label, reports confidence-based review flags, applies the trend rule, and quotes comments faithfully.
 
-| Case    | Input / steps                                                            | Expected result                                                                                                                                                                                                                                                                |
-| ------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TS-07-A | "What does customer sentiment look like across all sites for July 2026?" | Counts and shares for positive, neutral, negative, and mixed match the independent calculation. The answer states the range and as-of date, and the number of comments flagged for human review.                                                                               |
-| TS-07-B | "Is sentiment in the northeast getting worse over the past six months?"  | Monthly buckets for the northeast. A rise or fall is reported only if the latest month and the earlier months each have at least 20 comments and a two-proportion test gives p < 0.05. Otherwise the answer says there is no clear change. Shares and counts are always shown. |
-| TS-07-C | "Show me some negative comments from the central region in June 2026."   | At most 3 comments. Each exists in the database for that region and month, with the stated label and its text unaltered.                                                                                                                                                       |
-| TS-07-D | Check every stored prediction.                                           | Each has a label, a confidence between 0 and 1, and a review flag set exactly when confidence is below the stored threshold. The label is the class with the highest probability.                                                                                              |
+**Preconditions:** Every comment has a stored prediction. The deployed service answers only from stored predictions and declines a range that contains an unscored comment.
+
+| Case    | Input / steps                                                            | Expected result                                                                                                                                                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-07-A | "What does customer sentiment look like across all sites for July 2026?" | Counts and shares for positive, neutral, negative, and mixed match the independent calculation. The answer states the range and as-of date, and the number of comments flagged for human review.                                                                                                        |
+| TS-07-B | "Is sentiment in the northeast getting worse over the past six months?"  | Monthly buckets for the northeast. A rise or fall is reported only if the latest month and the earlier months each have at least 20 comments and a two-proportion test gives p < 0.05. Otherwise the answer says there is no clear change. Shares and counts are always shown.                          |
+| TS-07-C | "Show me some negative comments from the central region in June 2026."   | Three comments: the highest-confidence negative comments for that region and month, ties broken by the lowest comment ID. Each exists in the database with the stated label and its text unaltered.                                                                                                     |
+| TS-07-D | Check every stored prediction.                                           | Each has a label, a confidence between 0 and 1, and a review flag set exactly when confidence is below the stored threshold. Because stored confidence is rounded to four decimal places, either flag is accepted within 0.00005 of the threshold. The label is the class with the highest probability. |
 
 **Pass criteria:** Counts, shares, trend verdicts, and flags match the independent calculation, in three of three runs for A to C.
 
@@ -361,71 +359,73 @@ Verifies the forecast agent's answers and that its reliability is reported hones
 | **Case** | **Input / steps**                                                   | **Expected result**                                                                                                                                                                                                                                                                 |
 | -------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | TS-08-A  | "What will request volume be in December?"                          | Weekly forecasts for the weeks whose Monday falls in December 2026, each with an 80% range. A total equals the sum of the weekly figures and carries no range. Year-end weeks carry a caveat that the holiday adjustment is unvalidated. The stored error for the horizon is shown. |
-| TS-08-B  | "How many install requests should we expect over the next 8 weeks?" | Served. Weekly figures with ranges match the stored model. The stored error for the 5 to 13 week band is shown.                                                                                                                                                                     |
+| TS-08-B  | "How many install requests should we expect over the next 8 weeks?" | Weeks 1 to 4 are not served: each is listed with the stored error for that horizon and no number. Weeks 5 to 8 are served, with figures and ranges that match the stored model and the stored error for the 5-to-13-week band.                                                      |
 | TS-08-C  | "How many upgrade requests should we expect over the next 8 weeks?" | Not served. The answer names the stored error and states that no forecast is given. It contains no forecast numbers.                                                                                                                                                                |
-| TS-08-D  | Inspect the stored evaluation of the total volume forecast.         | On the final 26 held-out weeks, the model's error is reported next to the seasonal-naive baseline's. A model that does not beat the baseline is reported as such.                                                                                                                   |
+| TS-08-D  | Inspect the stored evaluation of the total volume forecast.         | On the final 26 held-out weeks, the model's error is reported next to the seasonal-naive baseline's: 8.81% against 14.80% mean absolute percentage error for total volume.                                                                                                          |
 
 **Pass criteria:** A to C show the stated content, with served figures matching the stored model and no numbers for unserved cases, in three of three runs. D shows both errors.
 
 **TS-09: QA verifies reporting**
 
-**Covers:** FR-09 | Level: Integration, end-to-end | Status: Not yet built
+**Covers:** FR-09 | Level: Integration, end-to-end | Status: Not yet run
 
 Verifies that the QA agent recomputes reporting figures independently and rejects a wrong draft, including one whose figures are right but answer a different question. A test harness substitutes the specialist's draft.
 
-| **Case** | **Input / steps**                                                          | **Expected result**                                                                                     |
-| -------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| TS-09-A  | Submit a correct draft for the TS-05-A question.                           | Accepted. The log shows QA queried the database with its own role and called no specialist tool server. |
-| TS-09-B  | Submit the same draft with the incident count changed from 2,067 to 2,167. | Rejected, with guidance naming the failed check (the incident count) and the recomputed value.          |
-| TS-09-C  | Ask for July 2026, but submit a draft with correct figures for June 2026.  | Rejected for misreading the question. The guidance says the period does not match.                      |
+| **Case** | **Input / steps**                                                                                          | **Expected result**                                                                                                                                                                                                                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TS-09-A  | Submit a correct draft for the TS-05-A question.                                                           | Accepted. The log shows QA queried the database with its own role and called no specialist tool server.                                                                                                                                                                                                            |
+| TS-09-B  | Submit the same draft with the incident count changed from 2,067 to 2,167.                                 | Rejected, naming the failed check (the incident count). The draft is not sent back for revision.                                                                                                                                                                                                                   |
+| TS-09-C  | Ask for July 2026, but submit a draft whose stated request is July 2026 and whose figures are June 2026's. | Rejected for figures that do not match the stated request, as in TS-09-B.                                                                                                                                                                                                                                          |
+| TS-09-D  | Ask for July 2026, but submit a draft whose stated request and figures are both June 2026.                 | The figures are correct for the request as interpreted, so they pass. The interpretation check reports the mismatch, but at the date of writing it is advisory and does not withhold the answer. The answer's "Interpreted as" line shows June 2026, so the user can see the misreading. Known gap; see Section 7. |
 
-**Pass criteria:** A is accepted, and B and C are rejected, with B, whose check needs no model, rejected consistently and C rejected in three of three runs.
+**Pass criteria:** A is accepted, B and C are rejected, and D behaves as stated, with model-dependent cases in three of three runs.
 
 **TS-10: QA verifies forecast**
 
-**Covers:** FR-10 | Level: Integration, end-to-end | Status: Not yet built
+**Covers:** FR-10 | Level: Integration, end-to-end | Status: Not yet run
 
-No one can verify a future value, so QA verifies the method. The backtest against held-out weeks is run once, when the model is evaluated and released. Its error for each service type and horizon band is stored with the model. At answer time, QA checks the draft's input history and arithmetic, then looks up the stored error for the requested slice. A forecast is accepted only if that slice and band are marked as served.
+No one can verify a future value, so QA verifies the method. The backtest against held-out weeks is run once, when the model is evaluated and released. Its error for each service type and horizon band is stored with the model. At answer time, QA checks the draft's input history and arithmetic, then looks up the stored error for the requested slice. It also recomputes every served number from the stored model parameters and requires an exact match after rounding. A forecast is accepted only if that slice and band are marked as served.
 
-| **Case** | **Input / steps**                                                                     | **Expected result**                                                                               |
-| -------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| TS-10-A  | Submit a correct draft for TS-08-B.                                                   | Accepted. The shown error equals the stored value.                                                |
-| TS-10-B  | Submit a draft in which one weekly 80% range does not contain its own point forecast. | Rejected, with guidance naming the failed arithmetic check.                                       |
-| TS-10-C  | Submit a draft whose recent weekly history differs from the database.                 | Rejected, with guidance naming the history check.                                                 |
-| TS-10-D  | Submit a draft with forecast numbers for the upgrade slice (TS-08-C).                 | Rejected because the slice is not served. The stored error is shown and the numbers are withheld. |
+| **Case** | **Input / steps**                                                                                                           | **Expected result**                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| TS-10-A  | Submit a correct draft for TS-08-B.                                                                                         | Accepted. The shown errors equal the stored values, and the unserved weeks carry no numbers.      |
+| TS-10-B  | Submit a draft in which one weekly 80% range does not contain its own point forecast.                                       | Rejected, with guidance naming the failed arithmetic check.                                       |
+| TS-10-C  | Submit a draft whose recent weekly history differs from the database.                                                       | Rejected, with guidance naming the history check.                                                 |
+| TS-10-D  | Submit a draft with forecast numbers for the upgrade slice (TS-08-C).                                                       | Rejected because the slice is not served. The stored error is shown and the numbers are withheld. |
+| TS-10-E  | Submit a draft in which two served weekly figures and their ranges are changed together, keeping the arithmetic consistent. | Rejected, because the figures do not match the model's own numbers.                               |
 
-**Pass criteria:** A is accepted and B to D are rejected, with the stated guidance.
+**Pass criteria:** A is accepted and B to E are rejected, each naming the failed check.
 
 **TS-11: QA verifies sentiment without circularity**
 
-**Covers:** FR-11 | Level: Integration, end-to-end | Status: Not yet built
+**Covers:** FR-11 | Level: Integration, end-to-end | Status: Not yet run
 
 Sentiment has no answer-time ground truth. QA therefore cross-checks labels against the star rating, which the sentiment agent cannot read, and checks the comment set, counts, and flags. It never re-runs the classifier. Only clear contradictions count: positive on 1 to 2 stars, or negative on 4 to 5 stars. An answer is rejected only when its contradiction rate is clearly above the rate normally seen.
 
-| **Case** | **Input / steps**                                                                                     | **Expected result**                                                                                                                          |
-| -------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| TS-11-A  | Submit a correct draft for TS-07-A.                                                                   | Accepted. Counts match, the review flags match the stored threshold, and the answer reports how many comments had a rating to check against. |
-| TS-11-B  | Submit a draft in which labels are altered so many positive labels fall on 1 to 2 star comments.      | Rejected. The guidance gives the contradiction rate against the normal rate.                                                                 |
-| TS-11-C  | Submit a draft quoting a comment that does not exist, and another with a quote whose text is altered. | Both rejected, naming the quote check.                                                                                                       |
-| TS-11-D  | Submit a draft whose flagged count differs from re-applying the threshold.                            | Rejected, naming the flag check.                                                                                                             |
-| TS-11-E  | Inspect QA's database permissions and its call log.                                                   | QA has no permission on the gold-label table. It makes no call to the sentiment model.                                                       |
+| **Case** | **Input / steps**                                                                                                                | **Expected result**                                                                                                                          |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-11-A  | Submit a correct draft for TS-07-A.                                                                                              | Accepted. Counts match, the review flags match the stored threshold, and the answer reports how many comments had a rating to check against. |
+| TS-11-B  | Submit a draft whose labels are altered so that 8% of the rated comments become clear contradictions (positive on 1 to 2 stars). | Rejected. The verdict gives the contradiction rate against the normal rate of 1%.                                                            |
+| TS-11-C  | Submit a draft quoting a comment that does not exist, and another with a quote whose text is altered.                            | Both rejected, naming the quote check.                                                                                                       |
+| TS-11-D  | Submit a draft whose flagged count differs from re-applying the threshold.                                                       | Rejected, naming the flag check.                                                                                                             |
+| TS-11-E  | Inspect QA's database permissions and its call log.                                                                              | QA has no permission on the gold-label table. It makes no call to the sentiment model.                                                       |
 
 **Pass criteria:** A is accepted, B to D are rejected for the stated reason, and E holds, with model-dependent cases passing in three of three runs.
 
 **TS-12: Bounded revision loop and degraded result**
 
-**Covers:** FR-12, FR-13 | Level: Unit, end-to-end | Status: Not yet built
+**Covers:** FR-12, FR-13 | Level: Unit, end-to-end | Status: Not yet run
 
-Verifies that a rejected draft is revised with specific guidance, at most twice, and that a final failure returns a degraded result and never an unverified answer presented as verified. A test harness makes the specialist return scripted drafts.
+Verifies the bounded revision loop and the degraded result. Only a failure a revision can fix is sent back: a misread question (an interpretation failure) is returned to the specialist with QA's guidance, at most twice. A figures failure is never retried, because the figures come from deterministic code and would disagree again; it ends at once in the degraded result. At the date of writing the interpretation check is advisory in the running system, so these cases run with it set to enforcing in a test environment, using scripted drafts.
 
-| **Case** | **Input / steps**                             | **Expected result**                                                                                                                                                                                                      |
-| -------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TS-12-A  | First draft wrong, second correct.            | Accepted after one revision. The guidance sent to the specialist names the failed check. The response is marked verified.                                                                                                |
-| TS-12-B  | First and second drafts wrong, third correct. | Accepted after two revisions.                                                                                                                                                                                            |
-| TS-12-C  | Every draft wrong.                            | After two revisions (three drafts and three QA reviews in total), the response is marked degraded, carries a warning that the answer could not be verified, and has the escalation flag set. No further attempt is made. |
-| TS-12-D  | A draft fails two checks at once.             | The guidance lists each failed check separately.                                                                                                                                                                         |
+| **Case** | **Input / steps**                                               | **Expected result**                                                                                                                                                                                               |
+| -------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-12-A  | First draft misreads the question, second is correct.           | Accepted after one revision. The guidance sent to the specialist names the misread field. The response is marked verified.                                                                                        |
+| TS-12-B  | First and second drafts misread the question, third is correct. | Accepted after two revisions.                                                                                                                                                                                     |
+| TS-12-C  | Every draft misreads the question.                              | After two revisions (three drafts and three QA reviews in total), the answer is not shown; the response carries a warning that it failed verification and has the follow-up flag set. No further attempt is made. |
+| TS-12-D  | First draft has a wrong figure.                                 | Degraded result at once, naming the failed check, with no revision.                                                                                                                                               |
 
-**Pass criteria:** The specialist is never called more than three times for one request, and a degraded result is never marked verified.
+**Pass criteria:** The specialist is never called more than three times for one request, a figures failure is never retried, and a degraded result is never marked verified.
 
 **TS-13: Database isolation**
 
@@ -444,16 +444,16 @@ Verifies that the access matrix is enforced by the database and does not depend 
 
 **TS-14: Access control and exposure**
 
-**Covers:** NFR-2 | Level: Manual | Environment: Deployed | Status: Not yet built
+**Covers:** NFR-2 | Level: Manual | Environment: Deployed | Status: Not yet run
 
-Verifies who can reach the system. Only authorized users may call it, and only the gateway is exposed to the internet.
+Verifies who can reach the system. Only holders of a valid invite may use it, and only the gateway is exposed to the internet.
 
-| **Case** | **Input / steps**                                                                         | **Expected result**                                                                    |
-| -------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| TS-14-A  | Send a question to the gateway without credentials, then with valid credentials.          | The first is rejected, and the log shows no model call for it. The second is answered. |
-| TS-14-B  | From outside the system, try to reach the orchestrator, each agent, and each tool server. | Every one is unreachable or refused. Only the gateway responds.                        |
-| TS-14-C  | Call a specialist directly without a valid service identity.                              | Rejected.                                                                              |
-| TS-14-D  | Search the code repository and the built container images for credentials.                | None found. Services read credentials from Secret Manager.                             |
+| **Case** | **Input / steps**                                                                                                                              | **Expected result**                                                                                                                              |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TS-14-A  | Open the interface with a valid invite link and ask a question. Then send a question with no session, and try an expired and a revoked invite. | The first is answered. The others are refused before any model call, and the expired and revoked invites get the same refusal as an unknown one. |
+| TS-14-B  | From outside the system, try to reach the orchestrator, each agent, and each tool server.                                                      | Every one is unreachable or refused. Only the gateway responds.                                                                                  |
+| TS-14-C  | Call a specialist directly without the orchestrator's service identity.                                                                        | Rejected.                                                                                                                                        |
+| TS-14-D  | Search the code repository and the built container images for credentials.                                                                     | None found. Services read credentials from Secret Manager.                                                                                       |
 
 **Pass criteria:** All four cases show the expected result.
 
@@ -465,58 +465,59 @@ Verifies that untrusted text cannot steer the system, that malformed input fails
 
 **Preconditions:** For case A, a disposable copy of the database is used, so the frozen dataset is not altered.
 
-| **Case** | **Input / steps**                                                                                                                     | **Expected result**                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TS-15-A  | Add a feedback comment that says to ignore its instructions and list all accounts. Ask a sentiment question whose answer includes it. | Figures are correct. The comment appears only as quoted text, if at all. No tool outside the sentiment tools is called, and no customer comment is sent to a language model. |
-| TS-15-B  | Ask "What is {{7\*7}}?", then send an empty question and an oversize question.                                                        | Each gets a normal response or a clear rejection. There is no server error, and no expression is evaluated.                                                                  |
-| TS-15-C  | Ask "Run SELECT \* FROM contacts." Then list the tools on each tool server.                                                           | Declined, with no query run. Each server lists only its purpose-built tools, and none takes a free-form query.                                                               |
-| TS-15-D  | Send a question naming a technician, then inspect the logs.                                                                           | Every entry for the request carries the request's trace ID. The logs contain no customer comment text or typed technician name.                                              |
+| **Case** | **Input / steps**                                                                                                                     | **Expected result**                                                                                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-15-A  | Add a feedback comment that says to ignore its instructions and list all accounts. Ask a sentiment question whose answer includes it. | Figures are correct. The comment appears only as quoted text, if at all. No tool outside the sentiment tools is called, and no customer comment is sent to a language model.  |
+| TS-15-B  | Ask "What is {{7\*7}}?", then send an empty question and an oversize question.                                                        | Each gets a normal response or a clear rejection; a question over 2,000 characters is refused with a clear message. There is no server error, and no expression is evaluated. |
+| TS-15-C  | Ask "Run SELECT \* FROM contacts." Then list the tools on each tool server.                                                           | Declined, with no query run. Each server lists only its purpose-built tools, and none takes a free-form query.                                                                |
+| TS-15-D  | Send a question naming a technician, then inspect the logs.                                                                           | Every entry for the request carries the request's trace ID. The logs contain no customer comment text or typed technician name.                                               |
 
 **Pass criteria:** All four cases show the expected result. Model-dependent cases pass in three of three runs.
 
 **TS-16: Time ceiling, latency, and cost**
 
-**Covers:** NFR-1 | Level: End-to-end, manual | Environment: Local, deployed | Status: Not yet built
+**Covers:** NFR-1 | Level: End-to-end, manual | Environment: Local, deployed | Status: Not yet run
 
 Verifies the 120-second ceiling and records response time and token cost per request type. The system sets no response-time target, so the measurements are reported as found.
 
-| **Case** | **Input / steps**                                                                                 | **Expected result**                                                                                                               |
-| -------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| TS-16-A  | Delay a specialist's reply beyond 120 seconds.                                                    | At 120 seconds the system stops waiting and returns a degraded result with a warning and an escalation flag.                      |
-| TS-16-B  | Make every draft fail QA and every hop slow, so the revision loop would run past 120 seconds.     | One deadline covers the whole request. It ends at 120 seconds with the same degraded result.                                      |
-| TS-16-C  | Run at least five requests of each type: reporting, sentiment, forecast, declined, and escalated. | Latency and token cost are recorded for each, including requests that needed revision. Every request finishes within 120 seconds. |
-| TS-16-D  | On the deployed system, send a question after services have scaled to zero.                       | A response arrives within 120 seconds. The cold-start latency is recorded.                                                        |
+| **Case** | **Input / steps**                                                                                                                             | **Expected result**                                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| TS-16-A  | Delay a specialist's reply beyond 120 seconds.                                                                                                | At 120 seconds the system stops waiting and returns a degraded result with a warning and an escalation flag.                      |
+| TS-16-B  | Make every draft fail QA and every hop slow, so the revision loop would run past 120 seconds.                                                 | One deadline covers the whole request. It ends at 120 seconds with the same degraded result.                                      |
+| TS-16-C  | Run at least five requests of each type: reporting, sentiment, forecast, declined, and escalated.                                             | Latency and token cost are recorded for each, including requests that needed revision. Every request finishes within 120 seconds. |
+| TS-16-D  | On the deployed system, after services have scaled to zero, send a reporting, a sentiment and a forecast question, each after an idle period. | Each response arrives within 120 seconds, and each cold-start latency is recorded.                                                |
 
 **Pass criteria:** No request exceeds the ceiling, and measurements exist for every request type.
 
 **TS-17: Availability and graceful degradation**
 
-**Covers:** NFR-4 | Level: Manual | Environment: Local | Status: Not yet built
+**Covers:** NFR-4 | Level: Manual | Environment: Local | Status: Not yet run
 
 Verifies that a failed component degrades the system cleanly. It never hangs and never returns an unverified answer.
 
-| **Case** | **Input / steps**                                                                | **Expected result**                                                                                                                                                                                                                       |
-| -------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TS-17-A  | Check health and readiness on every service. Then make the database unreachable. | Every service reports healthy and ready. A service that cannot reach its database reports not ready.                                                                                                                                      |
-| TS-17-B  | Stop each specialist in turn and ask a question for each domain.                 | The stopped domain returns a message naming the unavailable capability, with no hang. The other two domains still answer normally.                                                                                                        |
-| TS-17-C  | Stop the QA agent and ask a question.                                            | The response is a degraded result with a warning and an escalation flag. It is never presented as verified.                                                                                                                               |
-| TS-17-D  | Keep a specialist stopped and send repeated questions to it, then restart it.    | After a set number of consecutive failures the circuit breaker opens and calls fail immediately. After the cool-down one trial call is made, and once the specialist is back the breaker closes. Another service's breaker is unaffected. |
+| **Case** | **Input / steps**                                                                       | **Expected result**                                                                                                                                                                                                                 |
+| -------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-17-A  | Check health and readiness on every service. Then stop the database and ask a question. | Every service reports healthy and ready. With the database stopped, a service that depends on it reports not ready, and the question gets a clear message that the data service is unavailable, with no hang and no raw error.      |
+| TS-17-B  | Stop each specialist in turn and ask a question for each domain.                        | The stopped domain returns a degraded result: a warning naming the unavailable capability and the follow-up flag set, with no hang. The other two domains still answer normally.                                                    |
+| TS-17-C  | Stop the QA agent and ask a question.                                                   | The answer is returned only with the warning that the checking service was unavailable, marked not verified, with the follow-up flag set.                                                                                           |
+| TS-17-D  | Keep a specialist stopped and send repeated questions to it, then restart it.           | After three consecutive failures the circuit breaker opens and calls fail at once. After a 30-second cool-down one trial call is made, and once the specialist is back the breaker closes. Another service's breaker is unaffected. |
 
-**Pass criteria**: All four cases show the expected result. The failure count and cool-down are recorded when the case is run.
+**Pass criteria**: All four cases show the expected result.
 
 **TS-18: Rate limits and scalability**
 
-**Covers:** NFR-3 | Level: End-to-end, manual | Environment: Local, deployed | Status: Not yet built
+**Covers:** NFR-3 | Level: End-to-end, manual | Environment: Local, deployed | Status: Not yet run
 
 Verifies behavior when the language model's limits are reached, and that services scale independently.
 
-| **Case** | **Input / steps**                                                                                       | **Expected result**                                                                                              |
-| -------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| TS-18-A  | Simulate a per-minute rate-limit response from the model provider.                                      | The system waits the stated delay within its bound and retries. The request then completes.                      |
-| TS-18-B  | Simulate a daily quota exhausted response.                                                              | A clear "try again later" message is returned at once, with no silent failure and no retry loop.                 |
-| TS-18-C  | On the deployed system, send several concurrent reporting questions while asking one forecast question. | The forecast question is answered correctly. The reporting service scales up, and the forecast service does not. |
+| **Case** | **Input / steps**                                                                                       | **Expected result**                                                                                                                               |
+| -------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-18-A  | Simulate a per-minute rate-limit response from the model provider.                                      | The system waits the stated delay within its bound and retries. The request then completes.                                                       |
+| TS-18-B  | Simulate a daily quota exhausted response.                                                              | A degraded result at once: a warning that the service is temporarily unavailable and the follow-up flag set, with no retry loop and no raw error. |
+| TS-18-C  | On the deployed system, send several concurrent reporting questions while asking one forecast question. | The forecast question is answered correctly. The reporting service scales up, and the forecast service does not.                                  |
+| TS-18-D  | Through the interface, ask more questions with one invite than the hourly limit of 30 allows.           | The question over the limit is refused with a message stating the limit, and no model is called for it.                                           |
 
-**Pass criteria:** A and B behave as stated using recorded real provider error responses, and C shows independent scaling.
+**Pass criteria:** A, B and D behave as stated, with A and B using recorded real provider error responses, and C shows independent scaling.
 
 **TS-19: Synthetic dataset**
 
@@ -535,33 +536,48 @@ Verifies that the dataset is reproducible, contains the documented signals, sati
 
 **TS-20:** **Web interface and decision-support transparency**
 
-**Covers:** FR-19, NFR-5 | Level: Manual | Environment: Deployed | Status: Not yet built
+**Covers:** FR-19, NFR-5 | Level: Manual | Environment: Deployed | Status: Not yet run
 
 Verifies that a user sees the answer together with how far it can be trusted: its QA status, any escalation flag, low-confidence sentiment results, and the system's stated limitations.
 
-| **Case** | **Input / steps**                                                          | **Expected result**                                                                                                                                    |
-| -------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TS-20-A  | Enter a reporting question in the interface.                               | The answer is shown with its QA status and the as-of date.                                                                                             |
-| TS-20-B  | Trigger a degraded result.                                                 | The interface shows the warning and escalation flag, and the answer is not displayed as verified.                                                      |
-| TS-20-C  | Ask a sentiment question that includes comments flagged for review.        | The count flagged for human review is shown, and flagged results are not presented as certain.                                                         |
-| TS-20-D  | Submit a question that is declined, needs clarification, or must be split. | The explanation is shown clearly. There is no blank screen or raw error.                                                                               |
-| TS-20-E  | Open the interface.                                                        | It states that the data is synthetic and that the sentiment model was trained on synthetically written feedback, so it may not reflect real customers. |
+| **Case** | **Input / steps**                                                          | **Expected result**                                                                                                                                               |
+| -------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TS-20-A  | Enter a reporting question in the interface.                               | The answer is shown with its "Interpreted as" line (the measure, dates, region and any filter as the system read them), its verification line and the as-of date. |
+| TS-20-B  | Trigger a degraded result.                                                 | The interface shows the warning and "Sent for follow-up", and the answer is not displayed as verified.                                                            |
+| TS-20-C  | Ask a sentiment question that includes comments flagged for review.        | The count flagged for human review is shown, and flagged results are not presented as certain.                                                                    |
+| TS-20-D  | Submit a question that is declined, needs clarification, or must be split. | The explanation is shown clearly. There is no blank screen or raw error.                                                                                          |
+| TS-20-E  | Open the interface.                                                        | It states that the data is synthetic and that the sentiment model was trained on synthetically written feedback, so it may not reflect real customers.            |
 
 **Pass criteria:** All five cases show the expected result.
 
-## **Known Failures & Limitations**
+## **7\. Known Failures & Limitations**
 
-The following were known at the date of writing, October 5, 2026.
+The following were known at the date of writing, October 14, 2026.
 
-| **Item**                                             | **Related scenario** | **Description**                                                                                                                                                                                                                                                                                                                                    |
-| ---------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ambiguous questions are force-routed (FR-03)         | TS-02                | In testing on five fresh ambiguous questions, the router recognized three and sent the other two to a best-fit specialist. The scenario's expected results stay at what the requirement demands. The attempted fix is not in use, because it recognized too few ambiguous questions on unseen data and over-flagged a clear question on seen data. |
-| Logs may carry more than they should                 | TS-15-D              | Logs are known to include the router's model-written reasoning and unredacted error traces, which can repeat text the user typed. The case may fail until this is corrected.                                                                                                                                                                       |
-| FR-10 is verified by lookup, not a repeated backtest | TS-10                | The requirement describes a backtest against held-out weeks. The backtest is run once, at model release, and QA checks each answer against the stored result. This is a difference in method and not a failure, and TS-10 is written to the method as built.                                                                                       |
+| **Item**                                                           | **Related scenario** | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ambiguous questions are force-routed (FR-03)                       | TS-02                | The default router recognized none of eight fresh ambiguous questions, and none of the seven in the held-out routing set. The best revision recognized four of eight, short of the six required, so it was not adopted. The expected results stay at what the requirement demands.                                                                                                                                                |
+| A misread question can pass as verified                            | TS-09-D              | QA confirms that the figures are correct for the request as the system interpreted it. The check that the interpretation matches the question failed its acceptance tests in three prompt versions and runs advisory only: it is logged but never withholds an answer. In fault injection, 0 of 71 consistent misreadings were caught. Every answer shows an "Interpreted as" line so the user can see how the question was read. |
+| Future questions on uncovered subjects reach the forecast agent    | TS-04-C              | A question about a future subject the system does not cover, such as staffing or a calendar, is routed to the forecast agent instead of being declined at routing. The forecast agent declines it, so no figure is shown, but the decline names only what forecasts cover. TS-04-C is expected to fail on routing.                                                                                                                |
+| Logging fix not yet deployed                                       | TS-15-D              | The trace ID on every log line, and the removal of model-written routing reasons and error text from the logs, are built and tested but not yet deployed. TS-15-D fails on the deployed system until they are.                                                                                                                                                                                                                    |
+| No synthetic-data notice in the interface                          | TS-20-E              | The interface does not yet state that the data is synthetic or that the sentiment model was trained on synthetic feedback. TS-20-E fails until a notice is added.                                                                                                                                                                                                                                                                 |
+| FR-10 is verified by lookup and recompute, not a repeated backtest | TS-10                | The backtest runs once, when the model is released, and its error for each service type and horizon is stored. At answer time QA checks the answer against those stored errors and recomputes every served number from the stored model. This is a difference in method, not a failure, and TS-10 is written to the method as built.                                                                                              |
+
+**Evaluation results at the date of writing.**
+
+These are measured separately from the pass/fail scenarios and are reported with their limits.
+
+| **Measure**                                                            | **Result**                                                                                                      | **Note**                                                                                                                                                |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Routing, held-out set (50 questions, 3 runs)                           | 38 of 50 in every run; 38 of 43 without the 7 ambiguous questions                                               | No question's result changed between runs. The set was generated by an independent language model from a written brief, not written by users.           |
+| Golden question set (36 questions with independently computed answers) | 29 of 36 under the scoring rules fixed before the run; 31 of 36 on the author's review of each answer           | Reported side by side; neither replaces the other.                                                                                                      |
+| QA catch rate on injected faults                                       | 219 of 223 at first measurement; 223 of 223 after fixes                                                         | The faults were drafted by the same AI assistant that helped build the checks, so both are upper bounds. The second measurement reused the same faults. |
+| Response time on the deployed system                                   | Median about 3.7 seconds and 95th percentile at most 17.6 seconds per run; first question after idle 56 seconds | All within the 120-second ceiling. The cold start was measured on the reporting path only.                                                              |
 
 **Limitations of the tests themselves.**
 
 - All data is synthetic, so results show how well the system recovers known patterns. They do not show how it would perform on real data.
-- The scenarios are pass/fail checks. Routing accuracy, sentiment precision and recall, forecast error against the baseline, and QA catch rate are measured separately.
+- The scenarios are pass/fail checks. Routing accuracy, sentiment precision and recall, forecast error against the baseline, and QA catch rate are measured separately; the results above are as of the date of writing.
 - No throughput target is set, and latency is measured for a handful of concurrent users only.
-- The system depends on a free-tier model whose limits and availability the project does not control, so cases that call it are run in batches across days.
+- The system depends on an external language model whose availability the project does not control. On October 13, 2026 the free tier timed out repeatedly, and the deployed system moved to a paid key. Cases that call the model are run in batches.
+- The deployed system is available only in announced windows. Outside them its database is stopped to save cost.
