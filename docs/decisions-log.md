@@ -3443,6 +3443,8 @@ The blobs equal those at the freeze commit `b5ad1f4`. Measurement 1's `results.j
 - `evals/freeze_s5.json` records `llm_mode_in_services: free`, and the Context above says the services run on the free key. **For deployed serving that is superseded by ADR-104** (2026-10-13): the five model-calling services run `LLM_MODE=paid`. Prompts, models, thinking levels, flags and the images (`9607fa72`) are unchanged. The freeze record is not edited and stays as frozen; this note is the correction.
 - The freeze test does not recompute the data-dictionary hash that the record also holds. See L-97.
 
+**Note 2026-10-14 (Z2b; the entry above is unchanged; owner-decided 2026-10-14; assistant-drafted):** The deployed images now differ from `eval-freeze-s5` by Z2a's changes only (logging, trace ID, redaction, the health route, the hourly cap, tooling, and the YAML sync), plus the Next.js 16.4.1 pin (gateway only; the advisories of 2026-10-14, none reachable in the static export, sprint-log). The deployed commit is `9ab7c775964bd0aae491ca72082e95229c994129`. No prompt changed: `git diff --stat eval-freeze-s5 HEAD -- services/*/prompts` is empty and the freeze tests pass. Answers were shown unchanged on Q1 locally (Z2a section 9) and Q1 deployed (141 of 160). The evaluation results describe `9607fa72`.
+
 ### ADR-104 — Deployed model calls use the paid key for the evaluation and grading window
 *Date: 2026-10-13. Supersedes ADR-048 in part (its per-session opt-in for paid mode, for the five deployed model-calling containers only) and ADR-103 in part (its recorded deploy-time `LLM_MODE`, free). Builds on ADR-041.*
 

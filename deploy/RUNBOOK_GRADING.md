@@ -96,6 +96,14 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
   the legacy host would load the page and fail the exchange (ADR-107; deploy-window log, 2026-10-13).
 - **Caps (ADR-097, ADR-107):** 50 questions a day globally; per invite, 30 an hour (ADR-107; 15 in the revision deployed on 2026-10-13, until Z2b deploys this change).
   The counters are in process and reset on a cold start (L-88).
+- **Reading one request's logs (confirmed 2026-10-14, Z2b):** take the `X-Trace-Id` response header, then
+  `gcloud logging read "resource.type=cloud_run_revision AND jsonPayload.trace_id=`"<id>`"" --project $P --freshness 1h --format json`.
+  Fields: `jsonPayload.trace_id`, `.service`, `.logger`, `.msg`, `.level`, `.ts`; access lines are
+  `.msg=request` with `.path`, `.status`, `.duration_ms`; answers carry `.outcome` and `.route`; a failed
+  agent task carries `.code`. Questions and route reasons are logged as `.question_chars`,
+  `.reason_chars` and `.reason_sha` only. The trace ID is empty on start-up lines. `verify.py` calls the
+  orchestrator directly, so the gateway is on a trace only for a question asked through the UI. If the
+  PC's IPv6 to `*.run.app` hangs, see the Windows PowerShell notes in `RUNBOOK_V.md`.
 - **Spend ceiling:** the prepaid balance and the daily cap. The per-process caps are not one (L-93).
 - **If the balance runs out mid-window:** the paid key fails closed and answers degrade (R-21). Top up in
   the console; no redeploy is needed.
