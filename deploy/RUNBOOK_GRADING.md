@@ -102,8 +102,10 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
   `.msg=request` with `.path`, `.status`, `.duration_ms`; answers carry `.outcome` and `.route`; a failed
   agent task carries `.code`. Questions and route reasons are logged as `.question_chars`,
   `.reason_chars` and `.reason_sha` only. The trace ID is empty on start-up lines. `verify.py` calls the
-  orchestrator directly, so the gateway is on a trace only for a question asked through the UI. If the
-  PC's IPv6 to `*.run.app` hangs, see the Windows PowerShell notes in `RUNBOOK_V.md`.
+  orchestrator directly, so the gateway is on a trace only for a question asked through the UI. Run it
+  from the owner's PC with `--ipv4`, because the PC's IPv6 to `*.run.app` black-holes (Windows PowerShell
+  notes in `RUNBOOK_V.md`):
+  `.venv\Scripts\python deploy\verify.py --ipv4` (*updated 2026-10-15, S6-T1*).
 - **Spend ceiling:** the prepaid balance and the daily cap. The per-process caps are not one (L-93).
 - **If the balance runs out mid-window:** the paid key fails closed and answers degrade (R-21). Top up in
   the console; no redeploy is needed.

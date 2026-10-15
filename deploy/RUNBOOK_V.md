@@ -353,8 +353,11 @@ $env:ORCHESTRATOR_SA = "run-orchestrator@$P.iam.gserviceaccount.com"
 $env:REPORTING_SA = "run-reporting@$P.iam.gserviceaccount.com"
 $env:PROBE_SA = "probe-noauth@$P.iam.gserviceaccount.com"
 $env:CLOUD_SQL_INSTANCE_NAME = 'ops-db'
-.venv\Scripts\python deploy\verify.py
+.venv\Scripts\python deploy\verify.py --ipv4
 ```
+
+*Updated 2026-10-15 (S6-T1): `--ipv4` because this runs from the owner's PC, where IPv6 to `*.run.app`
+black-holes (PowerShell notes below). Leave it off from a machine where IPv6 works.*
 
 Expect `PASS` on every line and exit 0. *Updated 2026-10-14 (Z2a): `verify.py` now covers all six
 services: for each, the exact invoker set (ADR-099), the dedicated service account, 100% of traffic on the
@@ -524,10 +527,17 @@ Every command here is written for Windows PowerShell 5.1 (`powershell.exe`); `pw
   the gateway's `/health` answered 200 while `curl -6` timed out, and `verify.py`'s end-to-end call
   (Python `urllib`, which tries IPv6 first) hung for about 35 minutes with a socket in `SynSent` to a Google
   `2600:1900:` address. Test with `curl.exe -4 -m 20 $G/health` before a window. If only IPv4 answers, run
-  `verify.py` through a wrapper kept in `$env:TEMP` that sets `socket.getaddrinfo` to `AF_INET`, then
-  `runpy.run_path("deploy\\verify.py", run_name="__main__")`; no repo file changes. Each `gcloud` call also
-  took 1 to 4 minutes that day, so the six-service `verify.py` ran about 40 minutes: run it in the
-  background and poll.
+  `verify.py` with `--ipv4`, which opens every HTTP connection over IPv4 only:
+  `.venv\Scripts\python deploy\verify.py --ipv4`. Each `gcloud` call also took 1 to 4 minutes that day, so
+  the six-service `verify.py` ran about 40 minutes. It now prints a line naming each `gcloud` call before
+  it starts and each check's line as it finishes, so a slow call shows as a gap after its `INFO` line.
+  Each call is cut off after 300 s (`--gcloud-timeout 600` raises that) and becomes a `FAIL` line; the run
+  carries on with the checks that do not need it. A connect to `*.run.app` waits 10 s per address and
+  is a `FAIL  ...: connect timeout` line if no address answers. The options are specified in
+  `deploy/README.md`, "Window-day options".
+  *Updated 2026-10-15 (S6-T1): the temporary wrapper (a script in `$env:TEMP` that set
+  `socket.getaddrinfo` to `AF_INET` and called `runpy.run_path`) is replaced by `--ipv4`; no wrapper is
+  needed.*
 
 ## Rollback (per service)
 
