@@ -1056,7 +1056,8 @@ now written; they record the planning decisions above.*
 
 ---
 
-## Sprint 6 (2026-10-26 to 2026-11-08; re-baselined, ADR-093) — Hardening & delivery
+## Sprint 6 (2026-10-15 to 2026-10-25; re-baselined, ADR-109) — Hardening & delivery
+*Planning note, 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Sprint 6 runs 2026-10-15 to 10-25 (11 days) and the buffer is 10-26 to 12-05 (ADR-109, which supersedes ADR-093's Sprint 6 dates and ADR-106 in part). The goal below is unchanged, and its "demo rehearsed" is **not expected inside Sprint 6**: it falls in the buffer. Buffer targets: evaluation report draft (Sprint 5 results plus the divergence list) by 11-08, final by 12-01; presentation draft by 11-22; demo rehearsal by 11-29. `05` (due 11-01) and `06` (due 11-08) keep the course's dates; submitting them is owner work in the buffer if not done by 10-25. No 6.5 change is deployed before `06` is submitted. Owner verification sessions outside the windows are allowed (ADR-110).
 **Goal (increment):** Production-grade checklist closed out; demo rehearsed.
 
 **Planned:**
@@ -1078,7 +1079,8 @@ now written; they record the planning decisions above.*
 - [x] Sync `deploy/cloudrun/*.yaml` to paid mode: the repo says `LLM_MODE: free` and the deployed configuration is paid (ADR-104's drift note). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [x] The Next.js bump for the 2026-10-14 release, as a gateway-only redeploy (ADR-080; the pin is 16.3.8). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [ ] Runbook step 7: a scoped L-78 run on Cloud SQL, with a reviewed credential plan (also the first Sprint 5 item above). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
-- [ ] Runbook step 8: enable the build trigger, and add the docs-only merge check (ADR-105 keeps it disabled outside windows). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [x] Runbook step 8: enable the build trigger, and add the docs-only merge check (ADR-105 keeps it disabled outside windows). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+  - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.) Ticked.* The docs-only merge did not build: PR #58 (`82501b0`: `deploy/RUNBOOK_V.md`, `deploy/RUNBOOK_GRADING.md` and three files under `docs/`) merged about 22:26 CDT on 2026-10-14 with the trigger enabled, and read-only `gcloud builds list` at 22:27, 22:30 and 22:33 showed the latest build still `0dc5aae1…`. The ignore list gained `deploy/**/*.md` in PR #57 (`9ab7c77`). Source: `docs/deploy-window-log.md`, Z2b addendum (2026-10-14).
 - [x] Extend `deploy/verify.py` to the four services it does not cover (forecast, QA, sentiment and gateway). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [ ] **G21:** a scorer comparison at display precision, as a `golden_v3` scoring change, with disclosure (L-95). The pre-registered 29 of 36 is not changed retroactively. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [ ] The runbook's step 12 second idle wait (the cold-start measurement's second leg, R-05). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
@@ -1089,16 +1091,22 @@ now written; they record the planning decisions above.*
 - [x] **Z2, hard ordering: sync `deploy/cloudrun/*.yaml` to paid mode (`LLM_MODE: paid`, `gemini-api-key-paid`) before the build trigger is enabled.** The repo YAML still says `LLM_MODE: free`; the first deploy after an enable would silently revert ADR-104 on five services. This item must be merged and verified before the "enable the build trigger" item above is acted on. *Added 2026-10-14 (Z1). Source: audit, section 1; ADR-104's drift note; the warning in `deploy/RUNBOOK_GRADING.md`.*
 - [x] **Z2: the hourly per-invite cap from 15 to 30** (ADR-107): set `GATEWAY_ASKS_PER_SESSION_HOUR` in `deploy/cloudrun/gateway.yaml` (the code default is 15, `services/api_gateway/src/api_gateway/config.py`); the daily cap stays 50. A gateway-only redeploy, no answer change (ADR-103). *Added 2026-10-14 (Z1). Source: ADR-107.*
 - [ ] **Window A (2026-10-31 to 11-09): run `05`'s deployed scenarios** (TS-14, TS-16, TS-17, TS-18, TS-20, as `05` marks them). Needs the window opened as in `deploy/RUNBOOK_GRADING.md`: paid balance $5 or more, `ops-db` started, an invite. *Added 2026-10-14 (Z1). Source: audit, section 4 (items for `05`); ADR-107.*
+  - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Moved to the owner verification session (ADR-110); Window A stays as a precaution.
 - [ ] **Window A: time the cold start on the sentiment and forecast paths.** Only the reporting path was measured (55.87 s in the browser, 2026-10-13). *Added 2026-10-14 (Z1). Source: audit, section 1.*
+  - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Moved to the owner verification session (ADR-110), including the second idle wait (R-05).
 - [ ] **R-11 / `05` (owner item for the `05` revision): re-verify the free-tier limits wherever `05` states them** (`05:102`, `05:567`), or reword them as "paid key in deployment (ADR-104)". *Added 2026-10-14 (Z1). Source: R-11 (2026-09-30 and 2026-10-10 lines).*
 - [ ] **L-92 and L-24: the owner decides at the Sprint 6 close** whether the decline-heavy interpretation set (L-92) and the false-alarm sensitivity work (L-24) are built or dropped (6.5 brainstorm). *Added 2026-10-14 (Z1). Source: the Sprint 4 close ("the owner decides") and audit, section 1.*
 - [ ] **The divergence list goes into the evaluation report** (Sprint 6 writing): the post-submission list at the Sprint 5 close (`04`'s three sentiment lines against ADR-100; the ADR-093 calendar; Identity-Aware Proxy replaced by invite links, ADR-097). *Added 2026-10-14 (Z1). Source: the Sprint 5 close; ADR-094's note.*
+  - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Add `03`'s calendar, which ADR-109 moves again (Sprint 6 now 10-15 to 10-25; buffer 10-26 to 12-05).
 - [ ] **6.5 candidates (see that section):** L-89's degraded result, the L-95 rulings ("district", "end of next year") and L-96's router and decline-text fix. They change answers, so they are decided at the Sprint 6 close (ADR-106), not in Sprint 6. *Added 2026-10-14 (Z1). Source: audit, section 1.*
 - [ ] **A paid-balance check and top-up before each window** (ADR-105, ADR-107, R-21): in `deploy/RUNBOOK_GRADING.md`; the dates are Window A and Window B. L-93's programmatic budget stop stays an option, not scheduled. *Added 2026-10-14 (Z1). Source: audit, section 1.*
 - [ ] **A repo-wide test guard:** point `CLOUDSDK_CONFIG` at an empty temp folder in the root `conftest.py`, so no test can reach GCP (a Z2a test touched IAM, 2026-10-14). *Added 2026-10-14 (Z2b). Source: the Z2a incident above.*
 - [ ] **Window-day tooling for the owner's PC:** IPv6 to `*.run.app` black-holes and `gcloud` calls take minutes, so `verify.py`'s end-to-end call hangs. Give `verify.py` a connect timeout that falls back to IPv4 (or an `--ipv4` flag) and print each line as it completes. The temp wrapper used on 2026-10-14 is in `RUNBOOK_V.md`'s PowerShell notes. *Added 2026-10-14 (Z2b). Source: `docs/deploy-window-log.md`, Z2b.*
 - [ ] **Failure-path log codes, not seen live:** Z2b confirmed `outcome`, `verdict` and the trace ID on the success path only; `code` on a failed task and `outcome=degraded` are read from the code. Exercise one failure (for example a refused name) in Window A and read its lines. No plain-text-code gap was found. *Added 2026-10-14 (Z2b).*
 - [ ] **Still not verified deployed:** the logging of each failed model-call attempt (no retry occurred in the Z2b requests). *Added 2026-10-14 (Z2b).*
+- [ ] **Owner verification session 1 (ADR-110):** on a weekend before 10-25, date set by the owner. Runs `05`'s deployed scenarios, times the sentiment and forecast cold starts including the second idle wait, exercises one failure path to read its log codes live, and confirms grader access with a test invite from a browser profile with no owner session. Paid balance $5 or more first; `ops-db` started and stopped in one sitting; an entry in `docs/deploy-window-log.md`. *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
+- [ ] **Submit `05`** (due 2026-11-01; owner). *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
+- [ ] **Submit `06`** (due 2026-11-08; owner) after the three confirmations of session 1 (scenarios, cold starts, grader access). *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
 
 *Backlog correction, 2026-10-14 (Z1):* the **G21 item** above (a scorer comparison "as a `golden_v3` scoring change") needs a golden-run prompt with explicit permission to open `evals/golden/`. It is not a Z item. Owner decides in 6.5 (L-95).
 
@@ -1154,6 +1162,9 @@ now written; they record the planning decisions above.*
 - Final product due 2026-12-05 (end of Module 10) — *(status)*
 
 **Decisions made this sprint:**
+
+- ADR-106 (Sprint 6.5 scope at the Sprint 6 close), ADR-107 (grading windows and grader access) and ADR-108 (trace ID, log redaction, retry error logging): decided 2026-10-14, before this sprint's start.
+- ADR-109 (Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26) and ADR-110 (owner verification sessions outside grading windows): decided 2026-10-15.
 
 *Re-baselined 2026-10-10 (ADR-093): this sprint now runs 2026-10-26 to 11-08 and the buffer is 2026-11-09 to 12-05; scope expansion is decided at the Sprint 5 close.*
 *Note (ADR-082, 2026-10-08): this sprint is planned hardening and delivery work. The buffer is 2026-11-23 to 12-05. If Sprints 1–5 ran clean, use the slack for polish and rehearsal — not for starting anything new.*

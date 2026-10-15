@@ -212,6 +212,8 @@
 
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** Reviewed. Sprint 5 closed 2026-10-13 against a plan of 2026-10-25 (ADR-093), returning 12 days. The scope decision moves from "the Sprint 5 close" (ADR-093, `architecture.md` §10, this entry's review trigger) to **the Sprint 6 close**, with Sprint 6.5 if any about 2026-11-09 to 11-29 (ADR-106). Sprint 6 itself now carries the `05` revision (11-01), `06` (11-08, its last day), observability, the Z2 fixes and Window A (2026-10-31 to 11-09, ADR-107), so slippage lands on 6.5 first. Status stays Monitoring.
 
+**Update 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.):** The calendar moves again (ADR-109). Sprint 6 now runs 2026-10-15 to 10-25 and the buffer is 10-26 to 12-05. The scope decision (ADR-106) stays at the Sprint 6 close, now 10-25, and Sprint 6.5 if any starts 10-26 (was about 11-09) and runs to about 11-29. 6.5 can therefore start before `05` (11-01) and `06` (11-08) are submitted, so no 6.5 change is deployed before `06` is submitted. "Demo rehearsed" in the Sprint 6 goal is not expected inside the sprint; it is a buffer target (11-29). Status stays Monitoring.
+
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).
 **Mitigation:** Provider-agnostic LLM interface (ADR-006) keeps a provider swap mechanically cheap; GCP budget alerts at $50/$80 serve as an early warning regardless of root cause.
