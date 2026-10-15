@@ -488,7 +488,12 @@ and QA). Wait 15 minutes with no traffic, then:
    gcloud logging read "resource.type=cloud_run_revision AND jsonPayload.trace_id=`"<trace id>`" AND jsonPayload.msg=`"request`"" --project $P --format="table(jsonPayload.service,jsonPayload.path,jsonPayload.status,jsonPayload.duration_ms)"
    ```
    The field names are those of the services' JSON lines (`packages/common/src/common/logging.py`); Cloud
-   Run turns stdout JSON into `jsonPayload`, which Z2b confirms with one `--limit 1` read before relying on it.
+   Run turns stdout JSON into `jsonPayload`. *Confirmed 2026-10-14 (Z2b) against the deployed revisions:*
+   the keys are `jsonPayload.trace_id`, `.service`, `.logger`, `.level`, `.msg` and `.ts` on every line;
+   the access line is `logger=access`, `msg=request`, with `.method`, `.path`, `.status` and `.duration_ms`.
+   The trace ID is empty on server start-up lines only. A request's other lines carry `.outcome`, `.route`,
+   `.verdict`, `.cost_usd` and `.code` (a failed task); a question and a route reason appear only as
+   `.question_chars`, `.reason_chars` and `.reason_sha`.
    Before ADR-108 is deployed, read the instance start-ups from the logs as on 2026-10-13
    (`docs/deploy-window-log.md`, sitting 3).
 
@@ -515,6 +520,14 @@ Every command here is written for Windows PowerShell 5.1 (`powershell.exe`); `pw
 - **Avoid `2>&1` on a native program.** In 5.1 it wraps each stderr line in an error record and sets `$?`
   to false even on exit code 0.
 - **Write files that other tools read with `-Encoding utf8`** (`Set-Content` defaults to the ANSI code page).
+- **IPv6 to `*.run.app` can black-hole from the owner's machine (found 2026-10-14, Z2b).** `curl -4` to
+  the gateway's `/health` answered 200 while `curl -6` timed out, and `verify.py`'s end-to-end call
+  (Python `urllib`, which tries IPv6 first) hung for about 35 minutes with a socket in `SynSent` to a Google
+  `2600:1900:` address. Test with `curl.exe -4 -m 20 $G/health` before a window. If only IPv4 answers, run
+  `verify.py` through a wrapper kept in `$env:TEMP` that sets `socket.getaddrinfo` to `AF_INET`, then
+  `runpy.run_path("deploy\\verify.py", run_name="__main__")`; no repo file changes. Each `gcloud` call also
+  took 1 to 4 minutes that day, so the six-service `verify.py` ran about 40 minutes: run it in the
+  background and poll.
 
 ## Rollback (per service)
 

@@ -332,3 +332,46 @@ So **the 22 mutating commands were run by hand, verbatim from the dry run,** eac
 - **Sitting 2, step 5h ("the client-IP rule holds").** The logged `remoteIp` was the caller's real address, not the spoofed `203.0.113.7`, which is consistent with the rule. The evidence is Cloud Run's logged `remoteIp` only; the gateway's own keying was not shown, so the rule is observed, not documented (L-88, note under ADR-097).
 - **Sitting 3, "`ops-db` left running for Prompt X".** True at the time. The owner stopped `ops-db` after the Sprint 5 close (2026-10-13, per ADR-105); a read-only `describe` on 2026-10-14 read `STOPPED NEVER`. The time of the stop is not recorded.
 - **Invite host.** Every invite created in this window used the deterministic host, `--base-url $G` = `https://ops-gateway-587647038690.us-central1.run.app` (ADR-107).
+
+## Z2b: deploy of the post-freeze fixes, 2026-10-14 (owner present; assistant-drafted)
+
+Not a grading window. Deploy `main`, verify it, prove the trigger safe, leave the system stopped and locked.
+
+**Before the deploy.**
+- First §0 stopped on the Next.js rule: three advisories published 2026-10-14 name 16.4.1 (GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr, GHSA-p3m5-59mp-jv5r). The owner merged the 16.4.1 pin (PR #56).
+- The second §0 found that `deploy/RUNBOOK_GRADING.md` matched `deploy/**` and was not ignored, so a docs-only edit to it would have started a deploy. The owner approved a widened ignore (`deploy/**/*.md`, PR #57), merged before the deploy; the trigger was re-imported disabled.
+- Deploy target `9ab7c775964bd0aae491ca72082e95229c994129`. Prompt diff against `eval-freeze-s5` empty; freeze, manifest and trigger tests pass (38).
+- `ops-db` started by the owner with `--async` (the assistant's `patch` was refused by the permission layer); `RUNNABLE ALWAYS` at about 20:17 CDT.
+
+**Build.** Trigger run on `main` by the owner, `_RUN_VERIFY=false`. Build `0dc5aae1-2a6c-498e-bbca-f709c2c91149`, `SUCCESS`, `COMMIT_SHA` = the target, 01:26:16Z to 01:33:28Z (about 7 min 12 s).
+
+**Serving revisions** (each at 100%, image tag `9ab7c775…`):
+
+| Service | Revision |
+|---|---|
+| `ops-qa` | `00004-t6m` |
+| `ops-sentiment` | `00003-hx4` |
+| `ops-forecast` | `00003-ndv` |
+| `ops-reporting` | `00007-8mm` |
+| `ops-orchestrator` | `00007-b8z` |
+| `ops-gateway` | `00002-w57` |
+
+The previous set (`9607fa72…`) is the rollback target: gateway `00001-8st`, orchestrator `00006-bvj`, reporting `00006-md5`, sentiment `00002-cxz`, forecast `00002-m79`, qa `00003-hwq`.
+
+**`verify.py`:** every line `PASS`, exit 0, six services: invoker sets (`allUsers` on the gateway only), dedicated service accounts, serving revision and image tag at the template, **paid mode on the five model-calling containers** (the YAML sync held: the deploy from the repo did not revert to the free key), `authorizedNetworks` empty, unauthenticated probes 403, and the end-to-end question (HTTP 200, `outcome=answered`). One live question.
+
+**Finding: IPv6 black-hole.** The first `verify.py` run hung about 35 minutes at its end-to-end call: from the owner's PC, IPv6 to `*.run.app` times out and IPv4 answers (`/health` returned `{"status":"ok"}` over IPv4). No model call was made by the hung run. Re-run through a temp wrapper forcing IPv4 (no repo change); about 40 minutes in total because each `gcloud` call took 1 to 4 minutes. Noted in `RUNBOOK_V.md`.
+
+**Log findings** (the end-to-end request, trace `d9f30a91…`):
+- The trace ID is on 21 lines: orchestrator, reporting (including `mcp_incidents`' `tool call` line) and QA. The gateway was not on this path (`verify.py` calls the orchestrator).
+- The field names actually used are in `RUNBOOK_V.md` step 12 and `RUNBOOK_GRADING.md` Reference: `trace_id`, `service`, `logger`, `level`, `msg`, `ts`; `path`, `status`, `duration_ms` on `msg=request`; `outcome`, `route`, `verdict`, `cost_usd`; `code` on a failed task.
+- Plain text: `outcome=answered` and `verdict=pass` seen live. The failure paths log `code` as a plain field (reporting `task failed`, orchestrator `agent task failed`) and `outcome=degraded`; read from the code, not exercised live. No gap found.
+- No router reason text (`reason_chars`, `reason_sha` only), no question text (`question_chars`), no exception text.
+
+**Owner's smoke check (browser, paid key).**
+- Q1 SLA compliance, Northeast, last month: 141 of 160, 88.13%, 2026-07-01 to 07-31, verification line shown; about 28 s.
+- Q2 sentiment trend by month: 723 comments (positive 366, neutral 176, negative 128, mixed 53), no clear change in the negative share (p = 0.9096); about 27 s.
+- Q3 weekly volume, next 8 weeks: 8 weeks from 2026-08-31, about 1,322 in total; about 39 s.
+- Each showed its "Interpreted as:" line and the verification line. These timings are warm or partly cold instances and are not the R-05 measurement.
+
+**Trigger proof and end state.** This entry is the docs-only merge under test, so its result is not in it. The enable, the merge check and the disable are reported in the Z2b report and recorded in the next dated entry.
