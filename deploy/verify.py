@@ -519,8 +519,23 @@ def main(argv: list[str] | None = None) -> int:
     def policy(service: str) -> dict:
         return gc.json("run", "services", "get-iam-policy", service, f"--region={region}")
 
+    # One describe per use, as before: the top section holds orchestrator's and reporting's once
+    # each, the six-service loop holds each service's once. Each call is minutes on the owner's PC.
+    held: dict[str, dict] = {}
+
+    def described(slot: str, service: str) -> dict:
+        if slot not in held:
+            held[slot] = describe(service)
+        return held[slot]
+
+    def top(service: str) -> dict:
+        return described(f"top:{service}", service)
+
+    def six_described(service: str) -> dict:
+        return described(f"six:{service}", service)
+
     def url(service: str) -> str:
-        return describe(service)["status"]["url"]
+        return top(service)["status"]["url"]
 
     def identity_token(*extra: str) -> str:
         return gc.text("auth", "print-identity-token", *extra)
@@ -537,8 +552,8 @@ def main(argv: list[str] | None = None) -> int:
         results.append(check)
         emit(check.line())
 
-    step(SERVING_NAME.format(ORCHESTRATOR), lambda: serving_revision(describe(ORCHESTRATOR), tag))
-    step(SERVING_NAME.format(REPORTING), lambda: serving_revision(describe(REPORTING), tag))
+    step(SERVING_NAME.format(ORCHESTRATOR), lambda: serving_revision(top(ORCHESTRATOR), tag))
+    step(SERVING_NAME.format(REPORTING), lambda: serving_revision(top(REPORTING), tag))
 
     probe_body = {"question": DEFAULT_QUESTION}  # refused by IAM before it reaches the app
     service_url = {"orchestrator": lambda: url(ORCHESTRATOR), "reporting": lambda: url(REPORTING)}
@@ -576,14 +591,12 @@ def main(argv: list[str] | None = None) -> int:
     step(
         DEDICATED_NAME.format(ORCHESTRATOR),
         lambda: not_default_compute(
-            describe(ORCHESTRATOR), env["PROJECT_NUMBER"], env["ORCHESTRATOR_SA"]
+            top(ORCHESTRATOR), env["PROJECT_NUMBER"], env["ORCHESTRATOR_SA"]
         ),
     )
     step(
         DEDICATED_NAME.format(REPORTING),
-        lambda: not_default_compute(
-            describe(REPORTING), env["PROJECT_NUMBER"], env["REPORTING_SA"]
-        ),
+        lambda: not_default_compute(top(REPORTING), env["PROJECT_NUMBER"], env["REPORTING_SA"]),
     )
 
     def end_to_end() -> Check:
@@ -615,7 +628,9 @@ def main(argv: list[str] | None = None) -> int:
     for name, (account, allowed) in SIX.items():
         service = f"ops-{name}"
         full = {a if a == "allUsers" else f"serviceAccount:{a}@{domain}" for a in allowed}
-        step(SERVING_NAME.format(service), lambda s=service: serving_revision(describe(s), tag))
+        step(
+            SERVING_NAME.format(service), lambda s=service: serving_revision(six_described(s), tag)
+        )
         step(
             INVOKERS_EXACT_NAME.format(service),
             lambda s=service, f=full: invokers_exactly(s, policy(s), f),
@@ -623,12 +638,12 @@ def main(argv: list[str] | None = None) -> int:
         step(
             DEDICATED_NAME.format(service),
             lambda s=service, a=account: not_default_compute(
-                describe(s), env["PROJECT_NUMBER"], f"{a}@{domain}"
+                six_described(s), env["PROJECT_NUMBER"], f"{a}@{domain}"
             ),
         )
         step(
             PAID_NAME.format(service),
-            lambda s=service, n=name: paid_mode(describe(s), MODEL_CALLING.get(n)),
+            lambda s=service, n=name: paid_mode(six_described(s), MODEL_CALLING.get(n)),
         )
 
     emit(

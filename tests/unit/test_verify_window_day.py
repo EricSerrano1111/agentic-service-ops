@@ -277,6 +277,17 @@ def test_a_connect_timeout_is_a_fail_line_naming_the_check_not_an_exception(
     assert "Traceback" not in out
 
 
+def test_the_ipv4_flag_reaches_the_connection_through_main(fake_net, monkeypatch, env, capsys):
+    """`--ipv4` -> Options -> http() -> the HTTPS handler: IPv4 times out, IPv6 would answer,
+    and no IPv6 connect is attempted."""
+    fake_net.slow = {"203.0.113.1"}
+    monkeypatch.setattr(verify, "run_process", FakeGcloud())
+    assert verify.main(["--ipv4"]) == 1
+    out = capsys.readouterr().out
+    assert "FAIL  orchestrator refuses an unauthenticated GET /: connect timeout" in out
+    assert fake_net.connected == []
+
+
 def test_a_read_timeout_is_not_called_a_connect_timeout(server, resolver):
     opts = verify.Options(read_timeout=0.3)
     assert verify.http("GET", f"http://svc.run.app:{server}/slow", opts=opts) == (None, {})
@@ -516,6 +527,38 @@ def test_the_check_order_is_unchanged(monkeypatch, env, capsys):
     assert len(names) == 11 + 4 * len(verify.SIX)
 
 
+def test_the_gcloud_call_pattern_is_the_one_before_s6_t1(monkeypatch, env):
+    """19 calls on a clean run, as before: each call is minutes on the owner's PC."""
+    from collections import Counter
+
+    fake = FakeGcloud()
+    monkeypatch.setattr(verify, "run_process", fake)
+    monkeypatch.setattr(verify, "http", lambda *a, **k: (403, {}))
+    verify.main([])
+    describes = Counter(a[3] for a in fake.calls if a[:3] == ("run", "services", "describe"))
+    policies = Counter(a[3] for a in fake.calls if a[:3] == ("run", "services", "get-iam-policy"))
+    assert describes == {
+        "ops-orchestrator": 2,
+        "ops-reporting": 2,
+        "ops-qa": 1,
+        "ops-sentiment": 1,
+        "ops-forecast": 1,
+        "ops-gateway": 1,
+    }
+    assert policies == {
+        "ops-reporting": 2,
+        "ops-orchestrator": 1,
+        "ops-qa": 1,
+        "ops-sentiment": 1,
+        "ops-forecast": 1,
+        "ops-gateway": 1,
+    }
+    assert sum(a[:2] == ("auth", "print-identity-token") for a in fake.calls) == 2
+    assert sum(a[:2] == ("config", "get-value") for a in fake.calls) == 1
+    assert sum(a[:2] == ("sql", "instances") for a in fake.calls) == 1
+    assert len(fake.calls) == 19
+
+
 # ------------------------------------------------------------------------------- arguments
 
 
@@ -532,7 +575,7 @@ def test_arguments():
 
 # ------------------------------------------------------------------------- cloudbuild is unchanged
 
-#: The verify step as it was before S6-T1, copied from deploy/cloudbuild.yaml at 05a0c34.
+#: The verify step as it was before S6-T1: deploy/cloudbuild.yaml, unchanged since 05a0c34.
 VERIFY_STEP_BEFORE = {
     "id": "verify",
     "name": "gcr.io/google.com/cloudsdktool/cloud-sdk:slim",
