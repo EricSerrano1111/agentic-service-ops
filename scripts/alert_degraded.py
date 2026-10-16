@@ -245,6 +245,52 @@ def access_token(gc: Gcloud) -> str:
         raise RuntimeError("could not get an access token from gcloud") from None
 
 
+class ApiHttpError(RuntimeError):
+    def __init__(self, path: str, code: int) -> None:
+        super().__init__(f"GET {path} gave HTTP {code}")
+        self.code = code
+
+
+#: The alerts endpoint answering 403 or 404 means this account or API surface cannot list
+#: incidents; that stage is then unverified (check the console), not failed.
+UNVERIFIABLE_CODES = (403, 404)
+READBACK_TRIES = 6
+READBACK_EVERY_S = 5.0
+
+
+def readback_argv(entry: dict, project: str) -> list[str]:
+    """Read the synthetic entry back by its trace id (bounded: one entry, ten minutes)."""
+    trace_id = entry["jsonPayload"]["trace_id"]
+    return [
+        "logging",
+        "read",
+        f'resource.type=cloud_run_revision AND jsonPayload.trace_id="{trace_id}"',
+        f"--project={project}",
+        "--freshness=10m",
+        "--limit=1",
+    ]
+
+
+def readback(
+    gc: Gcloud, entry: dict, project: str, sleep: Callable[[float], None] = time.sleep
+) -> list[str] | None:
+    """Differences between what was written and what is stored, or None if it never appears."""
+    argv = readback_argv(entry, project)
+    for attempt in range(READBACK_TRIES):
+        found = gc.json(*argv, label="logging read <trace_id filter> (synthetic entry)")
+        if found:
+            stored = found[0]
+            diff = subset_diff(entry["jsonPayload"], stored.get("jsonPayload", {}), "jsonPayload")
+            labels = stored.get("resource", {}).get("labels", {})
+            diff += subset_diff(entry["resource"]["labels"], labels, "resource.labels")
+            if stored.get("resource", {}).get("type") != entry["resource"]["type"]:
+                diff.append("resource.type: differs")
+            return diff
+        if attempt + 1 < READBACK_TRIES:
+            sleep(READBACK_EVERY_S)
+    return None
+
+
 def api_get(token: str, path: str, params: dict[str, str]) -> dict:
     url = f"{MONITORING_API}/{path}?{urllib.parse.urlencode(params)}"
     request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
@@ -252,7 +298,7 @@ def api_get(token: str, path: str, params: dict[str, str]) -> dict:
         with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT_S) as response:  # noqa: S310
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        raise RuntimeError(f"GET {path} gave HTTP {exc.code}") from None
+        raise ApiHttpError(path, exc.code) from None
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise RuntimeError(f"GET {path} failed: {type(exc).__name__}") from None
 
@@ -291,6 +337,9 @@ def plan_lines(cfg: Config, channel_id: str | None = None) -> list[str]:
         "",
         "== test ==",
         "gcloud " + " ".join(_shown(a) for a in write_argv(entry, project)),
+        "gcloud " + " ".join(_shown(a) for a in readback_argv(entry, project)) + " --format=json",
+        f"  (read back by trace_id, up to {READBACK_TRIES} tries {READBACK_EVERY_S:g} s apart; "
+        "stop if not found or any field differs)",
         "then every 30 s for up to 15 min:",
         "  gcloud auth print-access-token   (token never printed)",
         f"  GET {MONITORING_API}/projects/{project}/timeSeries"
@@ -300,6 +349,8 @@ def plan_lines(cfg: Config, channel_id: str | None = None) -> list[str]:
         f"  GET {MONITORING_API}/projects/{project}/alerts"
         '?filter=policy.name="<policy name>"   -> stage 2: an incident for the policy is OPEN',
         "then print the entry's timestamp and trace id, and which stage (if any) did not fire.",
+        "(a 403 or 404 from the alerts endpoint is reported as: incident stage unverified,",
+        " check the console; it is not a failure)",
         "",
         "-- the synthetic entry (the trace id suffix is random at run time) --",
         json.dumps(entry, indent=2),
@@ -408,6 +459,17 @@ def run_test(
     emit(f"INFO  wrote the synthetic entry at {rfc3339(started)}, trace_id {trace_id}")
     emit("INFO  record both in docs/deploy-window-log.md")
 
+    diff = readback(gc, entry, project, sleep)
+    if diff is None:
+        emit("FAIL  the synthetic entry was not found on read-back; not waiting for the alert")
+        return 1
+    if diff:
+        emit("FAIL  the stored entry differs from what was written; not waiting for the alert:")
+        for line in diff:
+            emit(f"        {line}")
+        return 1
+    emit("PASS  the synthetic entry reads back with every field as written")
+
     display = load(POLICY_FILE)["displayName"]
     policies = gc.json(
         "alpha", "monitoring", "policies", "list", f"--project={project}",
@@ -418,7 +480,7 @@ def run_test(
         return 1
     policy_name = policies[0]["name"]
 
-    metric_seen = incident_seen = False
+    metric_seen = incident_seen = incident_unverified = False
     deadline = started + poll_for
     while True:
         token = access_token(gc)
@@ -433,13 +495,31 @@ def run_test(
         )
         count = metric_count(series)
         metric_seen = metric_seen or count >= 1
-        alerts = get(
-            token, f"projects/{project}/alerts", {"filter": f'policy.name="{policy_name}"'}
-        )
-        incident_seen = incident_seen or incident_open(alerts)
-        emit(f"INFO  metric count {count}, incident open: {incident_open(alerts)}")
+        is_open = False
+        if not incident_unverified:
+            try:
+                alerts = get(
+                    token, f"projects/{project}/alerts", {"filter": f'policy.name="{policy_name}"'}
+                )
+            except ApiHttpError as exc:
+                if exc.code not in UNVERIFIABLE_CODES:
+                    raise
+                incident_unverified = True
+                emit(
+                    f"WARN  incident stage: unverified (alerts endpoint gave HTTP {exc.code}); "
+                    "check the console"
+                )
+            else:
+                is_open = incident_open(alerts)
+                incident_seen = incident_seen or is_open
+        emit(f"INFO  metric count {count}, incident open: {is_open}")
         if metric_seen and incident_seen:
             emit("PASS  the metric counted the entry and the policy opened an incident")
+            emit("INFO  check the owner's inbox for the notification; this does not prove it")
+            return 0
+        if metric_seen and incident_unverified:
+            emit("PASS  the metric counted the entry")
+            emit("UNVERIFIED  incident stage: open the console, Alerting, Incidents, and look")
             emit("INFO  check the owner's inbox for the notification; this does not prove it")
             return 0
         if now() >= deadline:

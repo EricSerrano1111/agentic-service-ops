@@ -188,33 +188,59 @@ def test_subset_diff_ignores_server_additions_and_proto_defaults():
 
 
 class FakeGcloud:
-    """Stands in for the Gcloud wrapper: records calls, answers the two listings."""
+    """Stands in for the Gcloud wrapper: records calls, answers the policy listing and the
+    read-back of whatever was written. `stored`: "same", "missing" or "different"."""
 
-    def __init__(self):
+    def __init__(self, stored="same"):
         self.calls: list[tuple] = []
         self.timeout = 1.0
         self._run = lambda argv, timeout: "SECRET-TOKEN-VALUE"
+        self.stored = stored
+        self.written: dict | None = None
+        self.labels: dict = {}
 
     def __call__(self, *args, label=None):
         self.calls.append(args)
+        if args[:2] == ("logging", "write"):
+            self.written = json.loads(args[3])
+            flag = next(a for a in args if a.startswith("--monitored-resource-labels="))
+            self.labels = dict(p.split("=", 1) for p in flag.split("=", 1)[1].split(","))
         return ""
 
     def json(self, *args, label=None):
         self.calls.append(args)
+        if args[:2] == ("logging", "read"):
+            if self.stored == "missing":
+                return []
+            payload = dict(self.written)
+            if self.stored == "different":
+                payload["capability"] = "forecast"
+            resource = {"type": "cloud_run_revision", "labels": self.labels}
+            return [{"jsonPayload": payload, "resource": resource}]
         return [{"name": "projects/proj-x/alertPolicies/1"}]
+
+
+SERIES_1 = {"timeSeries": [{"points": [{"value": {"int64Value": "1"}}]}]}
+
+
+def run(gc, get, *, poll_for=1000, clock=None):
+    clock = clock if clock is not None else {"t": 1000.0}
+
+    def sleep(seconds):
+        clock["t"] += seconds
+
+    return alert.run_test(
+        alert.Config(ENV), gc, get=get, now=lambda: clock["t"], sleep=sleep, poll_for=poll_for
+    )
 
 
 def test_the_test_polls_until_both_stages_fire(capsys):
     gc = FakeGcloud()
-    clock = {"t": 1000.0}
     answers = iter(
         [
             ({"timeSeries": []}, {"alerts": []}),
-            ({"timeSeries": [{"points": [{"value": {"int64Value": "1"}}]}]}, {"alerts": []}),
-            (
-                {"timeSeries": [{"points": [{"value": {"int64Value": "1"}}]}]},
-                {"alerts": [{"state": "OPEN"}]},
-            ),
+            (SERIES_1, {"alerts": []}),
+            (SERIES_1, {"alerts": [{"state": "OPEN"}]}),
         ]
     )
     pending: list[dict] = []
@@ -224,30 +250,96 @@ def test_the_test_polls_until_both_stages_fire(capsys):
             pending.extend(next(answers))
         return pending.pop(0)
 
-    def sleep(seconds):
-        clock["t"] += seconds
-
-    cfg = alert.Config(ENV)
-    rc = alert.run_test(cfg, gc, get=get, now=lambda: clock["t"], sleep=sleep)
+    assert run(gc, get) == 0
     out = capsys.readouterr().out
-    assert rc == 0 and "PASS" in out
+    assert "PASS  the metric counted the entry and the policy opened an incident" in out
     assert gc.calls[0][:2] == ("logging", "write")
+    assert gc.calls[1][:2] == ("logging", "read")  # read back before anything is waited for
     assert "SECRET-TOKEN-VALUE" not in out
 
 
 def test_the_test_reports_the_stage_that_did_not_fire(capsys):
-    gc = FakeGcloud()
-    clock = {"t": 0.0}
-
     def get(token, path, params):
         return {"timeSeries": [], "alerts": []}
 
-    def sleep(seconds):
-        clock["t"] += seconds
-
-    rc = alert.run_test(
-        alert.Config(ENV), gc, get=get, now=lambda: clock["t"], sleep=sleep, poll_for=90
-    )
+    assert run(FakeGcloud(), get, poll_for=90) == 1
     out = capsys.readouterr().out
-    assert rc == 1 and "the metric never counted the entry" in out
+    assert "the metric never counted the entry" in out
     assert "alerttest-" in out  # the trace id is printed so the entry can be found
+
+
+def test_an_entry_that_is_not_found_on_read_back_stops_the_test(capsys):
+    calls = []
+
+    def get(token, path, params):
+        calls.append(path)
+        return {}
+
+    assert run(FakeGcloud("missing"), get) == 1
+    out = capsys.readouterr().out
+    assert "was not found on read-back" in out
+    assert calls == []  # no polling of the metric or the alerts
+
+
+def test_the_read_back_is_bounded_and_waits_between_tries():
+    gc = FakeGcloud("missing")
+    gc.written = {}
+    sleeps: list[float] = []
+    assert alert.readback(gc, entry(), "proj-x", sleeps.append) is None
+    assert len([c for c in gc.calls if c[:2] == ("logging", "read")]) == alert.READBACK_TRIES
+    assert len(sleeps) == alert.READBACK_TRIES - 1
+
+
+def test_an_entry_whose_payload_differs_on_read_back_stops_the_test(capsys):
+    calls = []
+
+    def get(token, path, params):
+        calls.append(path)
+        return {}
+
+    assert run(FakeGcloud("different"), get) == 1
+    out = capsys.readouterr().out
+    assert "differs from what was written" in out and "jsonPayload.capability" in out
+    assert calls == []
+
+
+def test_the_read_back_filter_is_by_trace_id_and_has_no_cmd_metacharacter():
+    e = entry()
+    argv = alert.readback_argv(e, "proj-x")
+    assert e["jsonPayload"]["trace_id"] in argv[2]
+    assert "--limit=1" in argv and "--freshness=10m" in argv
+    assert not alert.CMD_METACHARACTERS & set("".join(argv))
+
+
+@pytest.mark.parametrize("code", [403, 404])
+def test_an_alerts_endpoint_403_or_404_leaves_the_incident_stage_unverified(capsys, code):
+    def get(token, path, params):
+        if path.endswith("/alerts"):
+            raise alert.ApiHttpError(path, code)
+        return SERIES_1
+
+    assert run(FakeGcloud(), get) == 0  # not a failure
+    out = capsys.readouterr().out
+    assert f"incident stage: unverified (alerts endpoint gave HTTP {code})" in out
+    assert "UNVERIFIED  incident stage" in out and "check the console" in out
+    assert "PASS  the metric counted the entry" in out
+
+
+def test_an_unverified_incident_stage_still_fails_when_the_metric_never_counts(capsys):
+    def get(token, path, params):
+        if path.endswith("/alerts"):
+            raise alert.ApiHttpError(path, 404)
+        return {"timeSeries": []}
+
+    assert run(FakeGcloud(), get, poll_for=60) == 1
+    assert "the metric never counted the entry" in capsys.readouterr().out
+
+
+def test_any_other_alerts_error_is_a_failure():
+    def get(token, path, params):
+        if path.endswith("/alerts"):
+            raise alert.ApiHttpError(path, 500)
+        return SERIES_1
+
+    with pytest.raises(alert.ApiHttpError):
+        run(FakeGcloud(), get)
