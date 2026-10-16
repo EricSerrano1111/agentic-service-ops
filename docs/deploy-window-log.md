@@ -402,3 +402,39 @@ Run 2026-10-15 instead of the planned 2026-10-17 (owner decision). Plan: `docs/s
 - **Stop rules:** none fired. 3.8a: N = 7 and N = 15 (not above 19).
 - **Not verified deployed:** the retry logging (ADR-108): no retry occurred.
 - *Addendum, 2026-10-15 (same day; the entry above is unchanged).* **TS-20-E** was checked by the owner on the landing page at 20:00 CDT: no synthetic-data notice, FAIL, the known fail (`05` §7). It moves from "not run" to run. **TS-18-C's scaling-clause fail** is classed by the owner as a `05` criterion flaw, not a system fault.
+
+## The `orchestrator_degraded_answers` alert, apply and synthetic test, 2026-10-16 (S6-A2, ADR-112)
+
+*2026-10-16 (S6-A2; owner present; assistant-drafted.)*
+
+Live apply and test of the ADR-112 alert. Branch `docs/alert-part-b` (docs only). Project `a2a-agentic-service-ops-gcp`, region `us-central1`. The build trigger `deploy-reporting-slice` read `disabled: True` before and was not touched; `ops-db` was not started; no model call, deploy or IAM change.
+
+**Tooling.** gcloud 531.0.0 (alpha and beta 2025.07.18). Track per call: `gcloud beta monitoring channels describe` (beta, read); `gcloud logging metrics list|create|describe` (GA); `gcloud alpha monitoring policies list|create` (alpha, the only surface for policies, ADR-112); `gcloud logging write` and `gcloud logging read` (GA); Monitoring REST `timeSeries` and `alerts` GETs (read, token not printed). The notification channel is the owner's email channel (an enabled email channel, checked before any write); its ID is in no file.
+
+**Resources created.**
+- Log-based metric `orchestrator_degraded_answers`, created 2026-10-16T22:21:25Z (17:21 CDT).
+- Alert policy "Orchestrator degraded answer", `projects/a2a-agentic-service-ops-gcp/alertPolicies/15610112432723457042`, created in the same `apply` run seconds after the metric (the script prints no per-write time), enabled, one notification channel, `autoClose` 1800 s. Its read-back matched `ops/monitoring/degraded_policy.json`.
+
+**The metric read-back diff (script exit 1; owner-judged a false positive, 2026-10-16).** `scripts/alert_degraded.py apply` printed, verbatim:
+
+```
+FAIL  metric read back differs from its file:
+        metricDescriptor.labels[0].key: expected 'trigger', got 'capability'
+        metricDescriptor.labels[0].valueType: missing
+        metricDescriptor.labels[0].description: expected 'Why the answer was degraded (jsonPayload.trigger).', got 'The unavailable capability, empty when the trigger names none (jsonPayload.capability).'
+        metricDescriptor.labels[1].key: expected 'capability', got 'trigger'
+        metricDescriptor.labels[1].valueType: missing
+        metricDescriptor.labels[1].description: expected 'The unavailable capability, empty when the trigger names none (jsonPayload.capability).', got 'Why the answer was degraded (jsonPayload.trigger).'
+```
+
+Explanation: the server returns the two labels sorted by key (`capability`, `trigger`) while the file lists `trigger` first, and it omits `valueType: STRING` because STRING is the default. The raw `gcloud logging metrics describe` shows both labels with the file's descriptions, the same two label extractors, the same filter, `DELTA`, `INT64` and unit `1`. So the diff is the script's comparison (order-sensitive, field-literal), not a difference in the resource. Nothing was changed on GCP. The comparator fix is a Sprint 6 Planned item (`sprint-log.md`), a separate PR with no GCP.
+
+**Synthetic entry (one write).** `synthetic_alert_test: true`. Written 2026-10-16T22:22:48Z (17:22:48 CDT), log `degraded-alert-test`, resource `cloud_run_revision` `ops-orchestrator` (revision label `ops-orchestrator-alerttest`), `trace_id` `alerttest-70b1b5266e5d4a2a`, payload `msg="ask degraded"`, `trigger=dependency`, `capability=routing`. It is not a real degradation. **It adds one count, labelled `trigger=dependency`, `capability=routing`, to the metric's history**; a later reader of the metric or the orchestrator's logs should discount it.
+
+**Results by stage** (the script prints no per-poll time, so timings are estimates from its 30 s poll spacing; a UTC stamp on each poll line is in the sprint-log item):
+- **Read-back by `trace_id`:** passed, every field as written, found within 3 reads (about 10 s).
+- **Metric count of 1 or more:** passed. Polls 1 and 2 read 0; poll 3 read 1 (about 1 to 1.5 minutes after the write). The production filter was not loosened.
+- **Incident:** passed. The alerts endpoint answered normally (not "unverified"); the incident read open on poll 7, about 3 minutes after the write. The script finished 22:26:36Z, 3 m 47 s after the write.
+- **Email:** the owner reports it arrived at 5:26 PM CDT (22:26Z), from Google Cloud Alerting.
+
+**How the incident closed (owner-reported; one point open).** The owner reports a second email from Google Cloud Alerting at "5:26 PM", taken as the incident closing, and says it closed on its own. Two things do not fit and are not resolved here: that is the same minute as the opening email, while the policy's auto-close is 30 minutes (`alertStrategy.autoClose: 1800s`); and the owner wrote the zone as CST, but 5:26 PM CST (23:26Z) had not yet happened when this was written (about 22:36Z), so it is read as CDT. The incident's real open and close times are on **Monitoring, Alerting, Incidents** in the console; the owner is to read them and a later dated note should correct this one if they differ. Until then, this entry claims only: opened, notified by email, and closed per the owner's second email.
