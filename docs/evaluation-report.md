@@ -1044,3 +1044,27 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** the dictionary has not changed since the freeze and a one-off check shows it; the record is otherwise as ADR-103 states it. Adding the check is code, outside a docs-only reconciliation.
 - **Fix (option):** add a test that recomputes the hash with the same LF normalisation.
 - **Recorded in:** ADR-103 (note 2026-10-14); `tests/unit/test_eval_freeze.py`.
+
+### L-98 — Tool error text reaches the logs (2026-10-15)
+- **What:** in session 1's failure path (trace `2e3dc32a…`), `agent_reporting`'s `task failed` line carries a `reason=` field holding the tool's error text, with the parsed dates and the dataset window, and `mcp_incidents` logs the tool's error message. No question text appears: the orchestrator's and the gateway's lines are clean (code, length, hash). This is narrower than ADR-108's and TS-15-D's "no exception message".
+- **Why accepted:** no question wording is logged, only dates and the window the system itself parsed.
+- **Fix (option):** log the code, length and hash in those two places too. It changes logs only, not answers, but needs a redeploy of two services.
+- **Recorded in:** `evals/results/session1/2026-10-15/summary.md` ("Failure-path log codes seen live", "For the 05 revision"). Owner-decided 2026-10-15; assistant-drafted.
+
+### L-99 — The verification line shows on a clarification (2026-10-15)
+- **What:** a `needs_clarification` page (the "Priya" question, two technicians matched) shows "Figures checked for the request as interpreted", although no figures were produced. The display claims a check with nothing to check.
+- **Why accepted:** the page also explains the clarification and lists both matches, so no wrong figure is shown; the cost is a misleading line.
+- **Fix (option):** do not render the verification line when the outcome has no figures.
+- **Recorded in:** `evals/results/session1/2026-10-15/summary.md` ("For the 05 revision"); `run-notes.md` (step 3.6). Owner-decided 2026-10-15; assistant-drafted.
+
+### L-100 — A backwards date range is silently reordered (2026-10-15)
+- **What:** "August 2026 to January 2026" was parsed as 2026-01-01 to 2026-08-31 and was then refused on the dataset window (422 `invalid_range`). The user is not told their range was backwards.
+- **Why accepted:** this is an interpretation behaviour and any fix changes answers, so it is a 6.5 candidate (ADR-106), not a Sprint 6 change. In this case the request was refused, not answered with figures for a range the user did not write.
+- **Fix (option):** have the parser reject, or ask about, an end before the start, gated like other interpretation changes.
+- **Recorded in:** `evals/results/session1/2026-10-15/summary.md` (failure path); `run-notes.md` (step 4.1). Owner-decided 2026-10-15; assistant-drafted.
+
+### L-101 — Independent scaling is not demonstrated on the deployed system (2026-10-15)
+- **What:** under TS-18-C, six concurrent reporting questions at concurrency 8 per instance were served by one instance (`ops-reporting` 1 instance, `ops-forecast` 1). The design (separate services, max 2 instances each) allows independent scaling, but no deployed run has shown it.
+- **Why accepted:** the owner classes the `05` clause as a criterion flaw, since six requests at concurrency 8 do not require a second instance; a larger test is bounded by the daily cap of 50.
+- **Fix (option):** a load test above 8 concurrent, sized against the daily cap of 50.
+- **Recorded in:** `evals/results/session1/2026-10-15/summary.md` (TS-18-C); `run-notes.md` (step 3.7). Owner-decided 2026-10-15; assistant-drafted.

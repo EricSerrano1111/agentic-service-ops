@@ -121,7 +121,8 @@
 | 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted |
 | 108 | Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing) | Accepted |
 | 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted |
-| 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted |
+| 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
+| 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 
 ---
 
@@ -3680,3 +3681,18 @@ After a start, one question through the gateway confirms the data path before th
 **Consequences:**
 - Each session gets a dated entry in `docs/deploy-window-log.md`.
 - R-21 is unchanged.
+
+### ADR-111 — Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part)
+*Date: 2026-10-16. Owner-decided 2026-10-15; assistant-drafted. Supersedes ADR-110 in part: the "first session falls on a weekend before 10-25" clause only. The rest of ADR-110 stands.*
+
+**Decision:**
+- **The owner ran session 1 on Thursday 2026-10-15**, from `ops-db` start at 17:39 CDT to `STOPPED NEVER` at 19:47 CDT (`run-notes.md`; the first state check was at 17:08).
+- **Future owner sessions may fall on any day**, at the owner's choice. Everything else in ADR-110 stands: one sitting, no grader invite, a test invite revoked at the end, the paid-balance check first.
+
+**Context:**
+- The weekend clause existed to protect owner capacity (the Sprint 6 working agreement), not the system. The owner chose to run early.
+- The session ended well before Pacific midnight, so the gateway's daily-cap counter did not roll over mid-session (TS-18-D's 30 questions and the refused 31st ran on one counter; no gateway restart was seen).
+
+**Consequences:**
+- The planned 10-17 date in `docs/session-plan-2026-10-17.md` is historical. The results are in `evals/results/session1/2026-10-15/`.
+- ADR-110 is not edited; its index Status cell says "superseded in part by ADR-111".

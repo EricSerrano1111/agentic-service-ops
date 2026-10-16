@@ -125,6 +125,8 @@
 
 **Update 2026-10-13 (Sprint 5 close):** The cold-start chain was measured: the cold-start question took 55.87 s in the browser (54.47 s at the gateway) after 15 minutes idle, against the 120 s ceiling (ADR-034): new instances at the gateway, orchestrator, reporting (about 20 s start) and QA (about 14 s start), each model call about 1.5 s (`docs/deploy-window-log.md` (2026-10-12/13)). The second idle wait is a Sprint 6 backlog item. Warm latency in the X runs: golden median 3.93 s, max 5.9 s; routing per-run median 3.5 to 3.8 s, p95 5.1 to 17.6 s; nothing over 120 s. The retry loop's worst case is still not exercised on live traffic: the interpretation check stays advisory (ADR-102). Status stays Mitigating.
 
+**Update 2026-10-15 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.):** owner verification session 1 read the cold start on the sentiment and forecast paths (`evals/results/session1/2026-10-15/summary.md`, ADR-110). Sentiment **61 s** in the browser on the first reading, where the gateway hop was not cold (the owner reloaded the page about 3 minutes earlier), then **30.64 s** on the second idle wait with all four hops cold. Forecast **46 s**, all four hops cold. Reporting **29 s** at TS-20-A (the reporting path was cold). All are under the 120 s ceiling (ADR-034). Status unchanged.
+
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
 **Mitigation:** Sprint 2 is deliberately the proof sprint for this exact risk — if the A2A path is disproportionately slow to stand up, that's the signal to reconsider before three more agents are built on top of it. No fallback plan currently drafted; if this risk is realized, the honest move is a documented scope conversation, not silent workarounds.
@@ -381,6 +383,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 - Paid mode fails closed: `LLM_MODE=paid` refuses to start without its own key and caps (`packages/llm/src/llm/config.py`) and does not take the free key. What a service does on an exhausted balance at call time has not been tested.
 **Review trigger:** before each grading window; any budget alert.
 **Update 2026-10-15 (S6-W1; owner-decided 2026-10-15; assistant-drafted):** the paid balance is **$7.88** after the 2026-10-15 top-up (owner-reported; the console reading at the next session's opening governs, ADR-105). The "about $2.9" in the Description above is the 2026-10-13 estimate and is superseded; it is not edited. The balance is above the $5 minimum ADR-105 sets. Status stays Open: the balance is still not watched programmatically and auto-reload is off.
+
+**Update 2026-10-15 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.):** session 1's opening balance was **$7.88** (owner-read). The session's ledger ceiling was **$0.079 worst case, for 57 requests** (driver ledger, charged at the highest seen cost when unknown). The closing figures the owner read, Google AI Studio $2.12 (2026-09-18 to 10-15) and GCP billing $2.86 (2026-10-01 to 10-15), are cumulative, so the session's own spend cannot be separated from them and no closing balance was recorded. Next check: before Window A (10-31). Status stays Open.
 
 ---
 
