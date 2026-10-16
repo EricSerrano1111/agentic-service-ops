@@ -123,6 +123,7 @@
 | 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted |
 | 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
+| 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
 
 ---
 
@@ -3696,3 +3697,57 @@ After a start, one question through the gateway confirms the data path before th
 **Consequences:**
 - The planned 10-17 date in `docs/session-plan-2026-10-17.md` is historical. The results are in `evals/results/session1/2026-10-15/`.
 - ADR-110 is not edited; its index Status cell says "superseded in part by ADR-111".
+
+### ADR-112 — A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing)
+*Date: 2026-10-16. Owner-decided 2026-10-16; assistant-drafted. Spec written before any code (prompt S6-A1, Part A). Part B, the live apply and test, is a separate owner-present session.*
+
+**Decision:**
+- **A counter log-based metric, `orchestrator_degraded_answers`**, with this filter:
+  - `resource.type="cloud_run_revision"`
+  - `resource.labels.service_name="ops-orchestrator"`
+  - `jsonPayload.msg="ask degraded"`
+- **Two labels**, `trigger` and `capability`, extracted from `jsonPayload.trigger` and `jsonPayload.capability`. Both extractors tolerate a null: a line without the field gets the empty label (`capability` is null for the `deadline`, `cost_cap` and `qa_failed` triggers).
+- **Log-based metrics count from creation onward and are not backfilled.** The two 2026-10-13 entries (below) are not counted.
+- **An alert policy**, a metric-threshold condition on that metric:
+  - count > 0 over a 5-minute alignment window (`ALIGN_SUM` over a delta series, cross-series `REDUCE_SUM`), with `duration` 0s;
+  - one email notification channel, the owner's. **The address never goes in the repo, and neither does the channel ID**: the channel is passed by ID at apply time (`scripts/alert_degraded.py apply --channel <id>`);
+  - auto-close after 30 minutes (`alertStrategy.autoClose: 1800s`);
+  - a short documentation string: find the request's `trace_id` in the orchestrator logs, then read ADR-088's degraded causes (`trigger` and `capability` are on the line).
+- **The test is one synthetic entry**, written with `gcloud logging write --payload-type=json --monitored-resource-type=cloud_run_revision --monitored-resource-labels=...`:
+  - the resource labels match the filter (`service_name=ops-orchestrator`);
+  - the payload is flat, like the real line: `msg="ask degraded"`, `service`, `trigger`, `capability`, `trace_id="alerttest-..."`, and `synthetic_alert_test=true`;
+  - Part B records the entry's timestamp and trace ID in `docs/deploy-window-log.md`, so a later log reader does not mistake it for a real degradation.
+- **Rule: the production filter is never loosened to make the test match.** If no synthetic entry can match the filter as written, Part B stops.
+- **The alert is code**: `ops/monitoring/degraded_metric.json`, `ops/monitoring/degraded_policy.json` and `scripts/alert_degraded.py` (`plan` is the default and writes nothing; `apply`; `test`). `ops/monitoring/` is outside the build trigger's `includedFiles`, and the trigger is disabled anyway.
+
+**Why this replaces the prompt's `outcome == "degraded"`:**
+- The prompt assumed a structured `outcome` field on the orchestrator's degraded line. There is none. `degraded_response()` (`services/orchestrator/src/orchestrator/app.py:477`) logs `log.warning("ask degraded", extra={trigger, capability, failed_checks, cost_usd, duration_ms})`, and `outcome="degraded"` appears only in the HTTP body. `ask()` calls it from one place (`app.py:514`, `except DegradedResult`), so there is exactly one line per degraded request, from the orchestrator only.
+- **Why not the gateway's line** (`"ask answered"` with `outcome="degraded"`, `api_gateway/app.py:310`): it misses degraded results for callers that bypass the gateway (the orchestrator is also invoked by `build-deploy`), and it carries neither `trigger` nor `capability`.
+- **Why the filter is on the message string:** adding an `outcome` field to the line is a logging change, which is a deploy, and no deploy is allowed before `06` is submitted (ADR-109). The cost is coupling to the string `"ask degraded"`. The offline test (`services/orchestrator/tests/test_degraded_alert.py`) produces the real line through the real formatter and evaluates it against the metric file's filter, so a rename fails CI.
+
+**Context:**
+- A degraded answer is HTTP 200 (ADR-088, NFR-4), so Cloud Run's error-rate metrics never count it. Nothing today tells the owner that one happened.
+- **Degraded results were observed live on 2026-10-13, on the previous build.** Two `"ask degraded"` entries exist on revision `ops-orchestrator-00005-pzc`: 14:46:24Z and 14:58:29Z (09:46 and 09:58 CDT), both `trigger=dependency`, `capability=routing`, `duration_ms` about 30 003 (the 30 s routing timeout). They fall in Sitting 2 of the 2026-10-12/13 window, before the paid-key switch (Sitting 3, 10:45 CDT): the free-tier `504 DEADLINE_EXCEEDED` window of ADR-104 (`deploy-window-log.md`, where step 6 failed twice on a 30 s routing timeout).
+- **Not exercised on the current build** (Z2b, deployed commit `9ab7c77`). `git diff 9607fa72 9ab7c77 -- services/orchestrator/src/orchestrator/app.py` does not touch `degraded_response()` or the `except DegradedResult` in `ask()`: it adds the `TraceAccessLog` middleware, `current_trace_id() or new_trace_id()` in `ask()`, and `text_fields("reason", ...)` on a different log line. **Same line shape.**
+- **Tooling, read 2026-10-16 on this machine:** gcloud 531.0.0.
+  - `gcloud logging metrics create` and `update` with `--config-from-file`: GA.
+  - `gcloud monitoring policies` is **not in GA and not in beta** (beta 2025.07.18 is installed and has `monitoring channels`, not `policies`). It exists as **`gcloud alpha monitoring policies create|update|list|describe`** (alpha 2025.07.18, installed 2026-10-16), with `--policy-from-file`. The script uses the alpha track for policies only. That is a pre-GA surface; the Cloud Monitoring REST `alertPolicies` API is the GA route if the alpha command breaks.
+  - `gcloud logging write` **can** set a monitored resource: `gcloud logging write --help` lists `--monitored-resource-type` (default `global`), `--monitored-resource-labels` and `--payload-type=json`. Google's reference, https://docs.cloud.google.com/sdk/gcloud/reference/logging/write, read 2026-10-16, lists the same flags and states: "By default, all log entries written with this command are written with the "global" resource type." This is why the test uses `gcloud logging write` and not the `entries:write` REST call.
+- **A Windows risk, for Part B:** `gcloud` is `gcloud.cmd` and the JSON payload goes on its command line. The script refuses a payload containing a `cmd.exe` metacharacter (`& | < > ^ %`), and Part B reads the entry back to confirm the payload arrived intact before waiting for the alert.
+
+**What the test proves:**
+- The filter, the metric, the policy and the notification path work on GCP.
+- The line's shape is pinned offline by the test above.
+- It does **not** prove that the deployed orchestrator produces a degraded result on the current build. `06` must not claim that it does. The accurate statement is the one in Context: observed on 2026-10-13 on the previous build, same line shape, not exercised on the current build.
+
+**Alternatives considered:**
+- *A log-match alert* (one object, no metric). Not chosen: the metric also gives a count over time.
+- *Filter on the gateway's `"ask answered"` with `outcome="degraded"`.* Rejected, above.
+- *Add an `outcome` field to the orchestrator's degraded line.* Rejected: a logging change is a deploy, not allowed before `06` (ADR-109).
+- **Required at this scale:** someone is told when a degraded answer happens. **The small extra:** the count chart the metric gives for free.
+
+**Consequences:**
+- **Cost: UNCONFIRMED.** The pricing page (https://cloud.google.com/stackdriver/pricing, redirected to https://cloud.google.com/products/observability/pricing) returned only its title when fetched on 2026-10-16, with no figures. No estimate is given.
+- Part A makes no GCP write. Part B (apply, then the synthetic entry) is owner-present, and the alert item in `sprint-log.md` stays unticked until its live test passes.
+- The synthetic entry is a log entry on the real `ops-orchestrator` resource and will be seen by anyone reading its logs. It is marked `synthetic_alert_test`, and its timestamp goes in the window log.
+- The metric starts counting at creation; the two 2026-10-13 entries stay uncounted.
