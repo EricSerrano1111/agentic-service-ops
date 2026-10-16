@@ -104,6 +104,8 @@ unexpected 5xx. The 4-hour limit was not reached (about 2 h 9 min).
 - TS-14-D: evidence is the repo and deployed-configuration check at `9ab7c77`; built images were not scanned.
 - TS-18-C: "the reporting service scales up" did not hold at 6 concurrent requests (1 instance,
   concurrency 8, max 2). The forecast service stayed at 1. Independent scaling is not shown.
+  The owner classes this as a `05` criterion flaw: the clause asks for scale-up that six concurrent
+  requests at concurrency 8 do not require.
 - TS-18-D: the 429 refusal is evidenced by code `session_limit` and HTTP 429, not by its wording.
 - TS-20-B: not run, no trigger on the deployed system.
 - TS-20-E: not observed in this session.
@@ -116,8 +118,14 @@ unexpected 5xx. The 4-hour limit was not reached (about 2 h 9 min).
 
 ## 06 confirmations
 
-1. **Scenarios: not fully confirmed.** TS-14-A, B (five services), C, D (with its limit), TS-18-D,
-   TS-20-A, C, D pass. TS-18-C fails its scaling clause. TS-20-B and TS-20-E were not run. Evidence above.
+1. **Scenarios: run, results recorded.** TS-14-A, B (five services), C, D (with its limit), TS-18-D,
+   TS-20-A, C, D pass. Three items are listed as they stand:
+   - TS-18-C: the scaling clause failed (reporting stayed at one instance). The owner classes this as a
+     flaw in `05`'s criterion, not a system fault; see "For the 05 revision".
+   - TS-20-B: not run. An owner decision (no trigger without a deploy or fault injection).
+   - TS-20-E: not run in this session, as in the results table.
+
+   Evidence above.
 2. **Cold starts: confirmed, with one caveat.** Sentiment (61 s, 30.64 s) and forecast (46 s) are all
    inside 120 s, and the second idle wait was taken. The first sentiment reading's gateway hop was not cold.
    Reporting was not re-measured on a cold chain; its second reading is the 29 s at TS-20-A.
