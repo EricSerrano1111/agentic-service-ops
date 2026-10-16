@@ -188,6 +188,49 @@ def test_parallel_never_passes_the_cap(paths):
     assert state(ledger)["requests"] == 6
 
 
+def _deny_open(monkeypatch, times):
+    """`os.open` raises PermissionError `times` times (None: always), then works. Returns the
+    list of sleeps the lock asked for; none really sleeps."""
+    real_open = sd.os.open
+    calls = {"n": 0}
+    sleeps: list[float] = []
+
+    def fake_open(path, flags, *args, **kwargs):
+        calls["n"] += 1
+        if times is None or calls["n"] <= times:
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(sd.os, "open", fake_open)
+    monkeypatch.setattr(sd.time, "sleep", sleeps.append)
+    return calls, sleeps
+
+
+def test_the_lock_waits_out_a_permission_error_and_then_acquires(paths, monkeypatch):
+    ledger, _ = paths
+    calls, sleeps = _deny_open(monkeypatch, 7)
+    with sd._file_lock(Path(ledger)):
+        assert Path(str(ledger) + ".lock").exists()
+    assert calls["n"] == 8 and sleeps == [sd.LOCK_PERMISSION_WAIT_S] * 7
+    assert not Path(str(ledger) + ".lock").exists()
+
+
+def test_a_permission_error_that_never_clears_is_re_raised_after_the_bound(paths, monkeypatch):
+    ledger, _ = paths
+    calls, sleeps = _deny_open(monkeypatch, None)
+    with pytest.raises(PermissionError), sd._file_lock(Path(ledger)):
+        pytest.fail("the lock must not be acquired")
+    assert calls["n"] == sd.LOCK_PERMISSION_TRIES
+    assert len(sleeps) == sd.LOCK_PERMISSION_TRIES - 1  # about 2.5 s in all, not the 30 s timeout
+
+
+def test_a_held_lock_is_still_waited_for_and_still_times_out(paths):
+    ledger, _ = paths
+    Path(str(ledger) + ".lock").write_text("held")
+    with pytest.raises(sd.LedgerError, match="is held"), sd._file_lock(Path(ledger), timeout=0.05):
+        pytest.fail("the lock must not be acquired")
+
+
 def test_init_never_overwrites_and_status_prints_totals(paths):
     ledger, _ = paths
     init(ledger, requests=7, dollars=0.1)

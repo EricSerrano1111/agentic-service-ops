@@ -68,20 +68,35 @@ class CapReached(LedgerError):
     """A request would pass a cap; nothing was sent."""
 
 
+#: On Windows, `os.open(O_CREAT|O_EXCL)` raises `PermissionError`, not `FileExistsError`, while
+#: another thread is deleting the lock file (S6-L1). That is the same "held" state, so it waits and
+#: retries, a bounded number of times in a row; a real permission problem (a read-only folder)
+#: then surfaces as the error itself instead of hanging until the timeout.
+LOCK_PERMISSION_TRIES = 50
+LOCK_PERMISSION_WAIT_S = 0.05
+
+
 @contextlib.contextmanager
 def _file_lock(path: Path, timeout: float = 30.0) -> Iterator[None]:
     lock = path.with_name(path.name + ".lock")
     deadline = time.monotonic() + timeout
+    denied = 0
     while True:
         try:
             fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             break
         except FileExistsError:
+            denied = 0
             if time.monotonic() > deadline:
                 raise LedgerError(
                     f"ledger lock {lock} is held; if no driver is running, delete it"
                 ) from None
             time.sleep(0.01)
+        except PermissionError:
+            denied += 1
+            if denied >= LOCK_PERMISSION_TRIES:
+                raise
+            time.sleep(LOCK_PERMISSION_WAIT_S)
     try:
         yield
     finally:
