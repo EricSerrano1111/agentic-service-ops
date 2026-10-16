@@ -1047,7 +1047,7 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 
 ### L-98 — Tool error text reaches the logs (2026-10-15)
 - **What:** in session 1's failure path (trace `2e3dc32a…`), `agent_reporting`'s `task failed` line carries a `reason=` field holding the tool's error text, with the parsed dates and the dataset window, and `mcp_incidents` logs the tool's error message. No question text appears: the orchestrator's and the gateway's lines are clean (code, length, hash). This is narrower than ADR-108's and TS-15-D's "no exception message".
-- **Why accepted:** no question wording is logged, only dates and the window the system itself parsed.
+- **Why accepted:** Only one failure path was observed. In it no question wording was logged, though the logged dates were parsed from the question. Other tool errors may carry values taken from the question (for example a name the tool could not match); not checked. The data is synthetic. Accepted pending the owner's decision on stating it in 06 or fixing it (see the sprint log).
 - **Fix (option):** log the code, length and hash in those two places too. It changes logs only, not answers, but needs a redeploy of two services.
 - **Recorded in:** `evals/results/session1/2026-10-15/summary.md` ("Failure-path log codes seen live", "For the 05 revision"). Owner-decided 2026-10-15; assistant-drafted.
 
@@ -1065,6 +1065,6 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 
 ### L-101 — Independent scaling is not demonstrated on the deployed system (2026-10-15)
 - **What:** under TS-18-C, six concurrent reporting questions at concurrency 8 per instance were served by one instance (`ops-reporting` 1 instance, `ops-forecast` 1). The design (separate services, max 2 instances each) allows independent scaling, but no deployed run has shown it.
-- **Why accepted:** the owner classes the `05` clause as a criterion flaw, since six requests at concurrency 8 do not require a second instance; a larger test is bounded by the daily cap of 50.
+- **Why accepted:** Scaling is Cloud Run behaviour set by the services' concurrency and maximum instances, and it does not affect answer correctness. Demonstrating it needs more than 8 concurrent questions to one service, a large share of the daily cap of 50, for portfolio evidence rather than a requirement at this scale. The TS-18-C clause that asked for it is classed by the owner as a 05 criterion flaw.
 - **Fix (option):** a load test above 8 concurrent, sized against the daily cap of 50.
 - **Recorded in:** `evals/results/session1/2026-10-15/summary.md` (TS-18-C); `run-notes.md` (step 3.7). Owner-decided 2026-10-15; assistant-drafted.
