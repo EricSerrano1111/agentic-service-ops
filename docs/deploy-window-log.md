@@ -383,3 +383,22 @@ The previous set (`9607fa72…`) is the rollback target: gateway `00001-8st`, or
 - **Disabled again** the same way, from the repo file; `describe` reads `disabled: True`. The trigger was enabled for about 20 minutes with `ops-db` running.
 - **End state:** six services serving the Z2b revisions; trigger disabled (ADR-107, ADR-083); `ops-db` stopped at the end of the window (below, if the stop is recorded). Window A opens 2026-10-31 from `deploy/RUNBOOK_GRADING.md`.
 - **Not verified in Z2b:** the logging of each failed model-call attempt (no retry occurred); the failure-path `code` and `outcome=degraded` lines live (sprint-log, Sprint 6 items).
+
+
+## Owner verification session 1, 2026-10-15 (ADR-110; owner present; assistant-drafted)
+
+Run 2026-10-15 instead of the planned 2026-10-17 (owner decision). Plan: `docs/session-plan-2026-10-17.md`. Records: `evals/results/session1/2026-10-15/` (`summary.md`, `run-notes.md`, `ledger.json`, `ledger.json.evidence.jsonl`, `verify-output.txt`).
+
+- **`ops-db`:** started by the owner, T0 17:39:04 CDT (`RUNNABLE ALWAYS`); stopped, `STOPPED NEVER`, read at 19:47:55 CDT (about 2 h 9 min; the 4-hour limit was not reached).
+- **Deployed system:** build `0dc5aae1-2a6c-498e-bbca-f709c2c91149`, commit `9ab7c77`; unchanged at open and close. Trigger `deploy-reporting-slice` disabled throughout. No deploy, no configuration change.
+- **Balance:** opening $7.88 (Google AI Studio credit balance, topped up 2026-10-15). No closing balance figure was provided. The owner reported AI Studio total spend $2.12 for 2026-09-18 to 10-15 and GCP billing $4.50 minus $1.64 savings = $2.86 for 2026-10-01 to 10-15, both cumulative. The session's own model spend is not separable from them.
+- **Ledger:** 57 of 75 requests, $0.079 of $0.25.
+- **Invites** (ids and labels only; no link or token is recorded): `owner-laptop` `77782f3db080`, `session1-grader` `764ff0288732`, `session1-cap` `3f1feaa4cb64`, `session1-expired` `7ff2c16a58f3`, `session1-revoked` `a39aa0ca51b1`. All `session1-*` invites were revoked or expired at the close.
+- **`owner-laptop` revoked at the close, by the owner's decision:** its session cookie reached the assistant chat in a screenshot. The owner creates a fresh owner invite afterwards. (Plan step 6.1 said never revoke it.)
+- **Two dead invite links were pasted into the assistant chat** (`session1-expired`, `session1-revoked`); both were already expired or revoked. The tokens were not written to any file.
+- **Steps run:** `verify.py --ipv4` (35 PASS, 0 FAIL); cold-start readings for sentiment (61 s, then 30.64 s on repeat) and forecast (46 s); TS-14-A, B (five services), C, D; TS-16-D; TS-18-C; TS-18-D; TS-20-A, C, D; the failure path (HTTP 422 `invalid_range`); grader-access check and revoke re-test (5b).
+- **Steps not run:** TS-20-B (no trigger), TS-20-E (interface notice not checked), the built-image scan for TS-14-D, the repeat runs (3.9, dropped by decision 3), the reporting-path re-measure after a cold chain.
+- **Findings:** TS-18-C: reporting stayed at one instance under 6 concurrent requests, so the "scales up" clause did not hold. TS-15-D: `agent_reporting` and `mcp_incidents` log the tool's error text (parsed dates, window), not question text. The 429 wording was not seen, only the code. The first sentiment reading's gateway hop was not cold (owner reload about 3 min earlier).
+- **Stop rules:** none fired. 3.8a: N = 7 and N = 15 (not above 19).
+- **Not verified deployed:** the retry logging (ADR-108): no retry occurred.
+- *Addendum, 2026-10-15 (same day; the entry above is unchanged).* **TS-20-E** was checked by the owner on the landing page at 20:00 CDT: no synthetic-data notice, FAIL, the known fail (`05` §7). It moves from "not run" to run. **TS-18-C's scaling-clause fail** is classed by the owner as a `05` criterion flaw, not a system fault.

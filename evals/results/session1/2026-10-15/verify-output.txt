@@ -1,0 +1,56 @@
+﻿INFO  gcloud run services describe ops-orchestrator --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-orchestrator: serving revision is the one just deployed: ops-orchestrator-00007-b8z
+INFO  gcloud run services describe ops-reporting --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-reporting: serving revision is the one just deployed: ops-reporting-00007-8mm
+PASS  orchestrator refuses an unauthenticated POST /ask: HTTP 403
+PASS  orchestrator refuses an unauthenticated GET /: HTTP 403
+PASS  reporting refuses an unauthenticated GET /: HTTP 403
+INFO  gcloud auth print-identity-token --impersonate-service-account=probe-noauth@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com --audiences=https://ops-reporting-vszrpegifq-uc.a.run.app (timeout 600 s)
+PASS  reporting refuses a caller that is not the orchestrator: HTTP 403
+INFO  gcloud run services get-iam-policy ops-reporting --region=us-central1 --format=json (timeout 600 s)
+PASS  reporting: invoker is exactly the orchestrator's service account: serviceAccount:run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-orchestrator: runs as its dedicated service account: run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-reporting: runs as its dedicated service account: run-reporting@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+INFO  gcloud config get-value account (timeout 600 s)
+INFO  gcloud auth print-identity-token (timeout 600 s)
+PASS  orchestrator answers a reporting question end to end: HTTP 200, outcome=answered, error=None
+INFO  gcloud sql instances describe ops-db --format=json (timeout 600 s)
+PASS  cloud sql: authorizedNetworks is empty
+INFO  gcloud run services describe ops-qa --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-qa: serving revision is the one just deployed: ops-qa-00004-t6m
+INFO  gcloud run services get-iam-policy ops-qa --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-qa: invokers are exactly the expected set: serviceAccount:run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-qa: runs as its dedicated service account: run-qa@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-qa: paid mode on the model-calling container only
+INFO  gcloud run services describe ops-sentiment --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-sentiment: serving revision is the one just deployed: ops-sentiment-00003-hx4
+INFO  gcloud run services get-iam-policy ops-sentiment --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-sentiment: invokers are exactly the expected set: serviceAccount:run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-sentiment: runs as its dedicated service account: run-sentiment@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-sentiment: paid mode on the model-calling container only
+INFO  gcloud run services describe ops-forecast --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-forecast: serving revision is the one just deployed: ops-forecast-00003-ndv
+INFO  gcloud run services get-iam-policy ops-forecast --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-forecast: invokers are exactly the expected set: serviceAccount:run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-forecast: runs as its dedicated service account: run-forecast@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-forecast: paid mode on the model-calling container only
+INFO  gcloud run services describe ops-reporting --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-reporting: serving revision is the one just deployed: ops-reporting-00007-8mm
+INFO  gcloud run services get-iam-policy ops-reporting --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-reporting: invokers are exactly the expected set: serviceAccount:run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-reporting: runs as its dedicated service account: run-reporting@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-reporting: paid mode on the model-calling container only
+INFO  gcloud run services describe ops-orchestrator --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-orchestrator: serving revision is the one just deployed: ops-orchestrator-00007-b8z
+INFO  gcloud run services get-iam-policy ops-orchestrator --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-orchestrator: invokers are exactly the expected set: serviceAccount:build-deploy@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com, serviceAccount:run-gateway@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-orchestrator: runs as its dedicated service account: run-orchestrator@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-orchestrator: paid mode on the model-calling container only
+INFO  gcloud run services describe ops-gateway --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-gateway: serving revision is the one just deployed: ops-gateway-00002-w57
+INFO  gcloud run services get-iam-policy ops-gateway --region=us-central1 --format=json (timeout 600 s)
+PASS  ops-gateway: invokers are exactly the expected set: allUsers
+PASS  ops-gateway: runs as its dedicated service account: run-gateway@a2a-agentic-service-ops-gcp.iam.gserviceaccount.com
+PASS  ops-gateway: paid mode on the model-calling container only
+INFO  /healthz without a token answers HTTP 404: Cloud Run's front end reserves that path and answers before IAM, so it is not used as the unauthenticated probe.
+INFO  not tested: that the project Owner's own token is refused by reporting. Owner invokes any service through the basic role, so that check would fail by design; the negative test uses the no-role probe service account above.
