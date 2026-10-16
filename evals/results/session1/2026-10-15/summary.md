@@ -23,7 +23,7 @@ Run 2026-10-15 instead of the planned 2026-10-17 (owner decision); plan otherwis
 | TS-20-B | NOT RUN (no trigger without a deploy or fault injection; decision 4) | plan |
 | TS-20-C | PASS: "2 comments (0.9%) low-confidence and flagged for review" shown with the 212-comment split | trace `2d737c70...` |
 | TS-20-D | PASS: declined, clarify (two Priya matches listed), split each showed a clear message, no blank screen or raw error | owner paste |
-| TS-20-E | NOT RUN: the interface was not opened for the notice check. None of the answer pages quoted in the session showed a synthetic-data notice. `05` §7 records it as known failing | n/a |
+| TS-20-E | FAIL (the known fail, as expected): owner opened the landing page at 20:00 CDT, after the session's steps, and saw no synthetic-data notice. `05` §7 records it as known failing | owner statement |
 | S4 failure path | PASS: HTTP 422 `invalid_range`, not a 5xx | trace `2e3dc32a...` |
 | 5b grader re-test | PASS: after revoke, old cookie got 401 `sign_in_required` | owner paste |
 
@@ -96,7 +96,8 @@ unexpected 5xx. The 4-hour limit was not reached (about 2 h 9 min).
   both were already expired or revoked; tokens were not written to any file.
 - `owner-laptop` (`77782f3db080`) revoked at the close (owner decision: its session cookie reached the
   assistant chat in a screenshot); plan 6.1 said never. A fresh owner invite is the owner's, after 6.2.
-- TS-20-E and the sentiment-repeat's gateway hop (see above) were not as planned.
+- TS-20-E was checked by the owner after the session's steps (20:00 CDT), not as a step in the run.
+  The gateway hop of the first sentiment reading was not cold (see above).
 
 ## For the 05 revision
 
@@ -108,7 +109,8 @@ unexpected 5xx. The 4-hour limit was not reached (about 2 h 9 min).
   requests at concurrency 8 do not require.
 - TS-18-D: the 429 refusal is evidenced by code `session_limit` and HTTP 429, not by its wording.
 - TS-20-B: not run, no trigger on the deployed system.
-- TS-20-E: not observed in this session.
+- TS-20-E: FAIL, the known fail (`05` §7). The owner checked the landing page at 20:00 CDT: no
+  synthetic-data notice.
 - TS-15-D wording: `agent_reporting`'s `task failed` line and `mcp_incidents` log the tool's error text
   (parsed dates, window); no question text. This differs from "no exception message".
 - The clarification answer shows a verification line ("Figures checked for the request as interpreted")
@@ -123,7 +125,8 @@ unexpected 5xx. The 4-hour limit was not reached (about 2 h 9 min).
    - TS-18-C: the scaling clause failed (reporting stayed at one instance). The owner classes this as a
      flaw in `05`'s criterion, not a system fault; see "For the 05 revision".
    - TS-20-B: not run. An owner decision (no trigger without a deploy or fault injection).
-   - TS-20-E: not run in this session, as in the results table.
+   - TS-20-E: FAIL, the known fail, as expected. Checked by the owner on the landing page at 20:00 CDT;
+     no synthetic-data notice.
 
    Evidence above.
 2. **Cold starts: confirmed, with one caveat.** Sentiment (61 s, 30.64 s) and forecast (46 s) are all

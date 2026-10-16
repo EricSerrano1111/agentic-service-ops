@@ -58,3 +58,4 @@
 | TS-18-D refusal wording: not seen in a browser; evidence is code session_limit + HTTP 429 only (owner: record as 'code, not wording', a 05 revision note) | TS-18-D | RECORDED LIMIT | owner statement | 2026-10-15 19:45:39 |
 | 6.1 close: session1-cap (3f1feaa4cb64) and owner-laptop (77782f3db080; owner decision, cookie in a screenshot) revoked; list afterwards shows only the two expired invites (expired, session1-expired); session1-grader and session1-revoked revoked earlier | Close | PASS | invites list | 2026-10-15 19:46:07 |
 | 6.3 trigger disabled=True; latest build 0dc5aae1 SUCCESS 9ab7c77 (same as 1.5) | Close | PASS | gcloud output | 2026-10-15 19:46:07 |
+| TS-20-E checked by owner on the landing page at 20:00 CDT (after the close steps): no synthetic-data notice; known fail per 05 section 7 | TS-20-E | FAIL (known, expected) | owner statement | 2026-10-15 20:00 |

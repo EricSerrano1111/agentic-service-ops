@@ -401,3 +401,4 @@ Run 2026-10-15 instead of the planned 2026-10-17 (owner decision). Plan: `docs/s
 - **Findings:** TS-18-C: reporting stayed at one instance under 6 concurrent requests, so the "scales up" clause did not hold. TS-15-D: `agent_reporting` and `mcp_incidents` log the tool's error text (parsed dates, window), not question text. The 429 wording was not seen, only the code. The first sentiment reading's gateway hop was not cold (owner reload about 3 min earlier).
 - **Stop rules:** none fired. 3.8a: N = 7 and N = 15 (not above 19).
 - **Not verified deployed:** the retry logging (ADR-108): no retry occurred.
+- *Addendum, 2026-10-15 (same day; the entry above is unchanged).* **TS-20-E** was checked by the owner on the landing page at 20:00 CDT: no synthetic-data notice, FAIL, the known fail (`05` §7). It moves from "not run" to run. **TS-18-C's scaling-clause fail** is classed by the owner as a `05` criterion flaw, not a system fault.
