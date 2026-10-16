@@ -250,6 +250,27 @@ So the trace ID is on the gateway, the orchestrator, the A2A agent, its MCP side
 
 *2026-10-16: none. No criterion was changed after the evidence was seen. Any later change is added here as a dated line under the item it changes, with the original kept.*
 
+## 3. Fresh-clone record (item 12)
+
+*Timebox 45 minutes; used about 11 (2026-10-16T22:54Z to 23:05Z). The README is followed literally, in order. A step that needs a model key, a gitignored file or GCP is where the check stops.*
+
+| README step | Result | Detail |
+|---|---|---|
+| Clone | **Ran, passed** | `git clone https://github.com/EricSerrano1111/agentic-service-ops.git` → `fa2c7cd`, twice (see the note on paths below). |
+| 1. `uv sync --locked --all-packages --all-extras --python 3.12` (README, "Local setup") | **Ran, passed** | Exit 0, 152 s the first time (cold cache) and 68 s the second. uv 0.12.19, Python 3.12.10. |
+| 2. `copy .env.example .env`, then fill in `POSTGRES_*`, `DB_ROLE_*_USER`, `DB_ROLE_*_PASSWORD` (`README.md:50`) | **Ran, passed** | I filled exactly the variables the README names (all `POSTGRES_ADMIN_*` and `DB_ROLE_*` entries) with placeholder values and left `GOOGLE_AI_API_KEY` blank, because the README does not mention it here. |
+| 3. `docker compose up -d postgres` (`README.md:59`) | **Ran, failed** | `error while interpolating services.agent_forecast.environment.GOOGLE_AI_API_KEY: required variable GOOGLE_AI_API_KEY is missing a value: set GOOGLE_AI_API_KEY in .env`, then the same for `agent_qa`, `agent_reporting`, `agent_sentiment` and `orchestrator`. Compose interpolates the whole file before starting anything, so the postgres-only command needs the model key. **Stop point under the prompt's rule (needs a model key).** The failure came before any contact with Docker; the Docker daemon was in any case not running on this machine (`failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine`). Starting Docker Desktop was outside this audit's scope. |
+| Beyond the stop, informational (config only, no key value used, no network): `docker compose config -q` with `GOOGLE_AI_API_KEY=dummy` | **Ran, passed** | Exit 0. So the compose file is valid once the variable has any value. |
+| 4. `python -m alembic upgrade head` (`README.md:60`) | **Not run** | Needs the Postgres of step 3. |
+| 5. `data/generator/load.py ...` and `validate.py` | **Not run** | Needs the database. |
+| 6. "Run the system locally": `docker compose up -d --build`, `python -m orchestrator ask ...` | **Not run** | Needs a model key and, for the sentiment MCP server, the gitignored `models/` weights. The README states both, in that section. |
+| 7. "Verifying the database layer": `python -m pytest tests/unit services -q` (README, "Verifying the database layer") | **Ran, passed** | **2722 passed, 2 skipped in 234.67 s**, at `C:\fc-audit`. Run after the stop point because the prompt lists the offline suite as allowed and it needs no key, database or GCP. The 2 skips: an opt-in Docker build and a missing built UI export. Matches CI. |
+| 8. `pytest tests/integration`, `alembic check`, the SQL block | **Not run** | Need Postgres. |
+
+**Note on paths.** My first clone was in a deeply nested scratchpad folder. `uv sync` passed, but the unit suite failed at collection with `FileNotFoundError` for a `transformers\models\...` file; the path to that file was well over Windows' 260-character limit at that location. I deleted that clone, re-cloned to `C:\fc-audit` and the suite passed. I count this as an artifact of where I cloned, not a README defect (F10).
+
+**Cleanup.** The first (deep) clone was emptied and removed. **`C:\fc-audit` was not removed:** `Remove-Item` on it was refused ("This path is protected from removal") and I did not look for another route. Remove it with `Remove-Item -Recurse -Force C:\fc-audit`. `docker volume ls` could not be run (daemon not running), so the "no compose volumes" check is by reasoning, not observation: every compose command stopped at interpolation, before reaching Docker, so none could have created one.
+
 ## 4. Outside the checklist (not part of §7; no new scope)
 
 *Recorded so that `06` does not overclaim. Nothing here is built, scheduled or proposed by this audit. These are not items of §7 and carry no verdict.*
