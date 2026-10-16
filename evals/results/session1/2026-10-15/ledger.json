@@ -1,0 +1,433 @@
+{
+  "max_requests": 75,
+  "max_dollars": 0.25,
+  "requests": 57,
+  "dollars": 0.079,
+  "by_kind": {
+    "answered": {
+      "requests": 12,
+      "dollars": 0.0348
+    },
+    "probe": {
+      "requests": 7,
+      "dollars": 0.0
+    },
+    "declined": {
+      "requests": 33,
+      "dollars": 0.0396
+    },
+    "clarify": {
+      "requests": 1,
+      "dollars": 0.0023
+    },
+    "exchange": {
+      "requests": 3,
+      "dollars": 0.0
+    },
+    "failure": {
+      "requests": 1,
+      "dollars": 0.0023
+    }
+  },
+  "events": [
+    {
+      "at": "2026-10-15T22:51:14Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "S1-open",
+      "note": "tally: verify.py end-to-end question"
+    },
+    {
+      "at": "2026-10-15T23:22:30Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-16-D",
+      "note": "tally: browser cold start: sentiment"
+    },
+    {
+      "at": "2026-10-15T23:41:24Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-16-D",
+      "note": "tally: browser cold start: forecast"
+    },
+    {
+      "at": "2026-10-15T23:51:36Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-16-D",
+      "note": "tally: browser cold start: sentiment repeat"
+    },
+    {
+      "at": "2026-10-15T23:52:29Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-B",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-15T23:52:33Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-B",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-15T23:52:37Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-B",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-15T23:52:41Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-B",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-15T23:52:45Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-B",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-15T23:52:45Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-A",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-15T23:52:46Z",
+      "kind": "probe",
+      "count": 1,
+      "scenario": "TS-14-A",
+      "note": "probe"
+    },
+    {
+      "at": "2026-10-16T00:05:28Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-20-A",
+      "note": "tally: browser grader profile: TS-20-A"
+    },
+    {
+      "at": "2026-10-16T00:11:13Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-20-D",
+      "note": "tally: browser grader: declined"
+    },
+    {
+      "at": "2026-10-16T00:11:14Z",
+      "kind": "clarify",
+      "count": 1,
+      "scenario": "TS-20-D",
+      "note": "tally: browser grader: clarify"
+    },
+    {
+      "at": "2026-10-16T00:11:14Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-20-D",
+      "note": "tally: browser grader: split"
+    },
+    {
+      "at": "2026-10-16T00:16:18Z",
+      "kind": "exchange",
+      "count": 1,
+      "scenario": "S4-failure",
+      "note": "exchange"
+    },
+    {
+      "at": "2026-10-16T00:16:19Z",
+      "kind": "failure",
+      "count": 1,
+      "scenario": "S4-failure",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:44Z",
+      "kind": "exchange",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "exchange"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:27:45Z",
+      "kind": "answered",
+      "count": 1,
+      "scenario": "TS-18-C",
+      "note": "ask"
+    },
+    {
+      "at": "2026-10-16T00:37:54Z",
+      "kind": "exchange",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "exchange"
+    },
+    {
+      "at": "2026-10-16T00:37:54Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:37:55Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:37:56Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:37:57Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:37:58Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:37:59Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:01Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:02Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:03Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:04Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:05Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:06Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:07Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:08Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:09Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:10Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:11Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:12Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:14Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:15Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:16Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:17Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:18Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:19Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:20Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:21Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:22Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:23Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:25Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:26Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    },
+    {
+      "at": "2026-10-16T00:38:28Z",
+      "kind": "declined",
+      "count": 1,
+      "scenario": "TS-18-D",
+      "note": "cap-test"
+    }
+  ]
+}
