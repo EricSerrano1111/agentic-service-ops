@@ -87,6 +87,12 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
    opening, when `ops-db` was started and stopped, and the invite ids opened and revoked (ids and
    labels only; never a link or a token).
 
+4. **Read the logs for a failed model-call attempt** (read-only, no model call; S6-A1, 2026-10-16). Retry logging stays unverified on the deployed system until a natural retry happens (ADR-108), so look at every close. The message is `llm attempt failed`. PowerShell 5.1 needs the inner quotes escaped with a backslash (checked 2026-10-16: a backtick escape splits the filter at its spaces):
+   ```powershell
+   gcloud logging read 'resource.type=cloud_run_revision AND jsonPayload.msg=\"llm attempt failed\"' --project $P --freshness 7d --format json
+   ```
+   No output means no retry happened; record that in the window log. A line shows `attempt`, `http_status`, `kind`, `next_wait_s` and `elapsed_s`; if one appears, copy its trace id and tick the sprint-log item "Still not verified deployed".
+
 ## Reference
 
 - **List the active invites, without hashes:**

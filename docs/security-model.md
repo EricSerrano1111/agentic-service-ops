@@ -314,6 +314,11 @@ root logger, so SDK loggers use it too (`packages/common/src/common/logging.py`)
 - **Staff names:** no longer logged. They are synthetic here; in a real deployment they would be
   personal data, and any logging of them would need review.
 
+*Update 2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted). The text above is unchanged; each line below was checked against the code and the records named.*
+- **Items 1 and 3 above (the router's `reason`; unredacted tracebacks): resolved by ADR-108 and deployed in Z2b** (build `0dc5aae1`, 2026-10-14). The redaction is `text_fields` and `safe_exception` in `packages/common/src/common/logging.py`; the tests are the four L-60 (2026-10-14 update) names in `services/agent_reporting/tests/test_log_redaction.py`: `test_a_typed_technician_name_is_in_no_log_line_from_any_service`, `test_an_exception_is_logged_as_classes_and_frames_not_its_message`, `test_the_routers_reason_is_a_length_and_a_hash`, `test_a_sdk_debug_line_cannot_carry_the_question`. **Remaining gaps** (L-60's update): Google's own error sentence for a rejected request is still logged (capped), and the QA, sentiment and forecast services have no end-to-end name test of their own.
+- **Item 2 (failure texts for other codes):** see L-98. `mcp_incidents` also logs the tool's error message, so a tool error's text, including dates parsed from the question, appears in two services' logs (`agent_reporting`'s `task failed` line and `mcp_incidents`). One failure path was checked live (session 1, 2026-10-15); no question wording was seen.
+- **The trace-ID row of the table above: built by ADR-108 and deployed in Z2b** (2026-10-14). Evidence: `sprint-log.md`, Z2b status note: the trace ID is on the orchestrator, reporting, `mcp_incidents` and QA lines of one request.
+
 ### Earlier to-do list, closed
 
 The list headed "Still to write (Sprint 3, with `04`)" is closed as of 2026-10-04: the MCP and

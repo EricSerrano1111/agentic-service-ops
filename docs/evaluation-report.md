@@ -1051,6 +1051,8 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (option):** log the code, length and hash in those two places too. It changes logs only, not answers, but needs a redeploy of two services.
 - **Recorded in:** `evals/results/session1/2026-10-15/summary.md` ("Failure-path log codes seen live", "For the 05 revision"). Owner-decided 2026-10-15; assistant-drafted.
 
+**Update 2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted):** the owner chose option (a): `06` states the limit, and the fix is decided at the 6.5 brainstorm and deployed only after `06` is submitted (ADR-109). `docs/security-model.md` §5 ("Still logged, derived from the question", item 2) already documented that `invalid_range` failure text carries dates parsed from the question; L-98 widens that to `mcp_incidents`' logged tool error message.
+
 ### L-99 — The verification line shows on a clarification (2026-10-15)
 - **What:** a `needs_clarification` page (the "Priya" question, two technicians matched) shows "Figures checked for the request as interpreted", although no figures were produced. The display claims a check with nothing to check.
 - **Why accepted:** the page also explains the clarification and lists both matches, so no wrong figure is shown; the cost is a misleading line.
