@@ -1,0 +1,29 @@
+{
+  "displayName": "Orchestrator degraded answer",
+  "combiner": "OR",
+  "enabled": true,
+  "conditions": [
+    {
+      "displayName": "orchestrator_degraded_answers > 0 over 5 minutes",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/orchestrator_degraded_answers\" AND resource.type=\"cloud_run_revision\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {"autoClose": "1800s"},
+  "documentation": {
+    "mimeType": "text/markdown",
+    "content": "The orchestrator returned a degraded answer (HTTP 200, so Cloud Run error metrics do not show it). Open the orchestrator logs for the alert window and find the 'ask degraded' line: its trigger and capability say why. Take its trace_id and read the rest of that request's lines. Degraded causes are in ADR-088. A trace_id starting 'alerttest-' is the synthetic test entry (ADR-112)."
+  }
+}
