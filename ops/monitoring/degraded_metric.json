@@ -1,0 +1,18 @@
+{
+  "description": "Degraded answers from ops-orchestrator: one count per 'ask degraded' log line (ADR-112). Counts from creation onward; not backfilled.",
+  "filter": "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"ops-orchestrator\" AND jsonPayload.msg=\"ask degraded\"",
+  "metricDescriptor": {
+    "metricKind": "DELTA",
+    "valueType": "INT64",
+    "unit": "1",
+    "displayName": "Orchestrator degraded answers",
+    "labels": [
+      {"key": "trigger", "valueType": "STRING", "description": "Why the answer was degraded (jsonPayload.trigger)."},
+      {"key": "capability", "valueType": "STRING", "description": "The unavailable capability, empty when the trigger names none (jsonPayload.capability)."}
+    ]
+  },
+  "labelExtractors": {
+    "trigger": "EXTRACT(jsonPayload.trigger)",
+    "capability": "EXTRACT(jsonPayload.capability)"
+  }
+}

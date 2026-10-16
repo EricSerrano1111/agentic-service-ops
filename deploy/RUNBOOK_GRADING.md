@@ -87,6 +87,12 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
    opening, when `ops-db` was started and stopped, and the invite ids opened and revoked (ids and
    labels only; never a link or a token).
 
+4. **Read the logs for a failed model-call attempt** (read-only, no model call; S6-A1, 2026-10-16). Retry logging stays unverified on the deployed system until a natural retry happens (ADR-108), so look at every close. The message is `llm attempt failed`. PowerShell 5.1 needs the inner quotes escaped with a backslash (checked 2026-10-16: a backtick escape splits the filter at its spaces):
+   ```powershell
+   gcloud logging read 'resource.type=cloud_run_revision AND jsonPayload.msg=\"llm attempt failed\"' --project $P --freshness 7d --format json
+   ```
+   No output means no retry happened; record that in the window log. A line shows `attempt`, `http_status`, `kind`, `next_wait_s` and `elapsed_s`; if one appears, copy its trace id and tick the sprint-log item "Still not verified deployed".
+
 ## Reference
 
 - **List the active invites, without hashes:**
@@ -98,6 +104,10 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
   The counters are in process and reset on a cold start (L-88).
 - **Reading one request's logs (confirmed 2026-10-14, Z2b):** take the `X-Trace-Id` response header, then
   `gcloud logging read "resource.type=cloud_run_revision AND jsonPayload.trace_id=`"<id>`"" --project $P --freshness 1h --format json`.
+  *Quoting, 2026-10-16 (S6-A1):* the backtick-quote form works only when the quoted value has no space
+  (a trace id, or `request`): PowerShell 5.1 drops the quotes, and a value with a space splits the filter into
+  several arguments. For a value with a space, such as `llm attempt failed`, use single quotes and a backslash
+  before each inner quote, as in "Close the window", step 4.
   Fields: `jsonPayload.trace_id`, `.service`, `.logger`, `.msg`, `.level`, `.ts`; access lines are
   `.msg=request` with `.path`, `.status`, `.duration_ms`; answers carry `.outcome` and `.route`; a failed
   agent task carries `.code`. Questions and route reasons are logged as `.question_chars`,

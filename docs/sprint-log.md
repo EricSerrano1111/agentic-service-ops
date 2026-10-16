@@ -1065,6 +1065,7 @@ now written; they record the planning decisions above.*
 - [ ] Option: when a sentiment question asks for example comments without a label, quote one comment per leading label, or the trend's label for a trend question, instead of the top three by confidence (which skew to the majority label, usually positive, L-80); change §6 rule 7 and QA's check together. *Added 2026-10-09.*
 - [ ] Option: store the unrounded confidence in `sentiment_predictions` (a new column or a wider type, with its migration and a backfill), so the flag check can be exact instead of banded at 0.00005 (L-77). *Added 2026-10-09.*
 - [ ] A log-based alert on `outcome=degraded`: a degraded answer is HTTP 200, so Cloud Run's error metrics never count it (ADR-088, ADR-089).
+  - *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* The specification is ADR-112, tested with a synthetic entry. Part A is built on branch `feat/degraded-alert`: the metric and policy files (`ops/monitoring/`), `scripts/alert_degraded.py` and its offline tests. **Stays unticked until Part B's live test passes.** The filter is on the orchestrator's `ask degraded` line, not on `outcome` (no such field on that line; ADR-112).
 - [ ] Terraform: buffer-only stretch goal, portfolio value (ADR-061).
 - [ ] A separate `verify-caller` service account holding the orchestrator invoker, so building and calling are separate identities (ADR-085).
 - [ ] Deploy with no traffic, verify the revision's own URL, then move traffic, so a failed verification never serves (L-64).
@@ -1113,10 +1114,14 @@ now written; they record the planning decisions above.*
   - *2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.)* Moved to owner session 1 (ADR-110) and exercised in step 4 (422 `invalid_range`, trace `2e3dc32a…`). The observation about tool error text in the logs is recorded as L-98. Ticked (already `[x]` from the S6-W2 note above; `outcome=degraded` stays unexercised).
 - [ ] **Still not verified deployed:** the logging of each failed model-call attempt (no retry occurred in the Z2b requests). *Added 2026-10-14 (Z2b).*
   - *2026-10-15 (S6-W2; assistant-drafted.)* Left unticked: no retry occurred in session 1 either (a read for `attempt failed` found no lines).
+- [ ] **A standing check for the retry log line.** At each session or window close, read the logs for `llm attempt failed` (the message `packages/llm/src/llm/client.py` logs for each failed model-call attempt, ADR-108). Read-only, no model calls; the PowerShell 5.1 command is in `deploy/RUNBOOK_GRADING.md`, "Close the window". The item above, "Still not verified deployed: the logging of each failed model-call attempt", stays open: no retry happened in Z2b or session 1, and forcing one needs fault injection, which means a deploy. If no natural retry has happened by the Sprint 6 close (2026-10-25), carry the item over with that reason; the unit tests are the evidence. *Added 2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* A read of the last 30 days on 2026-10-16 found no `llm attempt failed` line.
 - [x] **Owner verification session 1 (ADR-110):** on a weekend before 10-25, date set by the owner. Runs `05`'s deployed scenarios, times the sentiment and forecast cold starts including the second idle wait, exercises one failure path to read its log codes live, and confirms grader access with a test invite from a browser profile with no owner session. Paid balance $5 or more first; `ops-db` started and stopped in one sitting; an entry in `docs/deploy-window-log.md`. *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
   - *2026-10-15 (S6-W2; assistant-drafted.)* Run 2026-10-15 instead of the planned 2026-10-17 (owner decision). `ops-db` 17:39 to 19:47 CDT, `STOPPED NEVER`. Summary: `evals/results/session1/2026-10-15/summary.md`; window-log entry dated 2026-10-15. Grader access confirmed; the three `06` confirmations are stated there (scenarios not fully confirmed).
-- [ ] **Owner decision: L-98 (tool error text in the logs).** Either state it in `06` and decide the fix at the 6.5 brainstorm, or fix it in Sprint 6 (logs only; needs a redeploy of two services). *Added 2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted. Source: `evals/results/session1/2026-10-15/summary.md`.)*
+- [x] **Owner decision: L-98 (tool error text in the logs).** Either state it in `06` and decide the fix at the 6.5 brainstorm, or fix it in Sprint 6 (logs only; needs a redeploy of two services). *Added 2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted. Source: `evals/results/session1/2026-10-15/summary.md`.)*
+  - *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* The owner chose option (a) on 2026-10-16: `06` states the limit; the fix is decided at the 6.5 brainstorm and deployed only after `06` is submitted (ADR-109). Option (b), a Sprint 6 fix, is not taken.
 - [ ] **For the 6.5 brainstorm:** L-99 (verification line on a clarification) and L-100 (a backwards date range silently reordered; changes answers, ADR-106). *Added 2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.)*
+  - *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* Add L-98's fix to this list: log the code, length and hash instead of the tool's error text in `agent_reporting`'s `task failed` line and in `mcp_incidents`. Logs only; a redeploy of two services, after `06` is submitted (ADR-109).
+- [ ] **Fix the Windows lock race in `scripts/session_driver.py`** (`_file_lock`, line 77): `os.open` with `O_CREAT|O_EXCL` raises `PermissionError`, not `FileExistsError`, while another thread deletes the lock. Bounded retry on `PermissionError`, then re-raise. Evidence: `test_parallel_never_passes_the_cap` failed 2 of 3 isolated runs on `main` `06ab581`; CI on Linux does not reproduce it. The failure is closed (an exception, never a cap breach). Separate PR, before the driver's next use (Window A or any 6.5 evaluation run). *Added 2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)*
 - [ ] **Renew the owner invite `owner-laptop-2`** before Window A (it expires about 10-27; ADR-107). *Added 2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.)*
 - [ ] **Submit `05`** (due 2026-11-01; owner). *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
 - [ ] **Submit `06`** (due 2026-11-08; owner) after the three confirmations of session 1 (scenarios, cold starts, grader access). *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
@@ -1173,6 +1178,10 @@ now written; they record the planning decisions above.*
 
 **Academic deliverable status:**
 - Final product due 2026-12-05 (end of Module 10) — *(status)*
+- *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* **Notes for `06`** (written by the owner; this records what the evidence supports):
+  - `06` must not claim that retry logging is verified on the deployed system. It is built and unit-tested (ADR-108); no retry has happened on the deployed system, so no line has been read.
+  - `06` must not claim that the degraded outcome is verified on the deployed system by the alert test: that test proves the monitoring path only (ADR-112). What is true: degraded results were observed live on 2026-10-13 on the previous build (two `ask degraded` lines, `trigger=dependency`, `capability=routing`, the free-tier 504 window of ADR-104); the current build has the same line shape (`degraded_response()` is unchanged between `9607fa72` and `9ab7c77`) and has not been exercised.
+  - `06`'s logging section must say all of the following, consistent with L-98 and `security-model.md` §5: (1) tool error text, including dates parsed from the question, can appear in two services' logs (`agent_reporting`'s `task failed` line and `mcp_incidents`); (2) question wording was not seen in the logs; (3) only one failure path was checked.
 
 **Decisions made this sprint:**
 
@@ -1182,6 +1191,7 @@ now written; they record the planning decisions above.*
 
 *Re-baselined 2026-10-10 (ADR-093): this sprint now runs 2026-10-26 to 11-08 and the buffer is 2026-11-09 to 12-05; scope expansion is decided at the Sprint 5 close.*
 *Note (ADR-082, 2026-10-08): this sprint is planned hardening and delivery work. The buffer is 2026-11-23 to 12-05. If Sprints 1–5 ran clean, use the slack for polish and rehearsal — not for starting anything new.*
+*2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* Correction: both lines above are superseded by ADR-109. Sprint 6 runs 2026-10-15 to 10-25 and the buffer runs 2026-10-26 to 12-05.
 
 ---
 
@@ -1193,6 +1203,8 @@ here is committed: scope is decided at a brainstorming session at or near the
 Sprint 6 close, as an ADR-093 buffer-and-scope decision. Each candidate notes
 whether it changes answers (and so needs a fresh blind evaluation or a
 disclosed difference from the evaluated system).
+
+*2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* Under ADR-109, 6.5 work can start 2026-10-26 (the header's "about 2026-11-09 to 11-29" is superseded), and nothing from it deploys before `06` is submitted.
 
 - [ ] Response transparency: live elapsed timer; after-answer timeline (route,
   per-hop durations, QA); estimated cost per answer (list price, L-71). No

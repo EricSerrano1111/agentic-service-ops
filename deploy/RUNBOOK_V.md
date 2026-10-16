@@ -488,7 +488,7 @@ and QA). Wait 15 minutes with no traffic, then:
    id (the `X-Trace-Id` response header, or the `trace_id` the answer's log line carries). Each service
    writes one with `duration_ms`; the first request to a cold instance shows the start-up in that number.
    ```powershell
-   gcloud logging read "resource.type=cloud_run_revision AND jsonPayload.trace_id=`"<trace id>`" AND jsonPayload.msg=`"request`"" --project $P --format="table(jsonPayload.service,jsonPayload.path,jsonPayload.status,jsonPayload.duration_ms)"
+   gcloud logging read "resource.type=cloud_run_revision AND jsonPayload.trace_id=`"<trace_id>`" AND jsonPayload.msg=`"request`"" --project $P --format="table(jsonPayload.service,jsonPayload.path,jsonPayload.status,jsonPayload.duration_ms)"
    ```
    The field names are those of the services' JSON lines (`packages/common/src/common/logging.py`); Cloud
    Run turns stdout JSON into `jsonPayload`. *Confirmed 2026-10-14 (Z2b) against the deployed revisions:*

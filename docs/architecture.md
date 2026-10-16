@@ -427,8 +427,11 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 - Production-grade checklist (§7) audited item by item
 - Evaluation report (`docs/evaluation-report.md`) from the Sprint 5 eval runs, presentation, demo rehearsal (ADR-044)
 - **Academic:** `05-test-scenarios.md` (due 11-01); `06-production-support.md` (due 11-08, Sprint 6's last day); weekly status reports (the last covers the week ending 11-22, the course's date). The final submission (2026-12-05) falls in the buffer.
+- *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* **Dates superseded by ADR-109:** Sprint 6 runs 2026-10-15 to 10-25 (the header above says 10-26 to 11-08), and `05` and `06` are due 11-01 and 11-08, inside the buffer.
 
 **Buffer, 2026-11-09 to 12-05 (re-baselined, ADR-093; ADR-082 set the earlier dates).** Sprint 6 is planned hardening and delivery work, and the buffer is the almost four weeks after it. The buffer stays buffer: using it for scope is decided at the **Sprint 6 close** under the working agreement, never by default (*updated 2026-10-14*: it read "Sprint 5 close" here; ADR-106 moves the decision to the Sprint 6 close, and Sprint 6.5, if any, runs about 2026-11-09 to 11-29). Scope expansion (broader capability within the existing three domains — not new agents, not the research agent) still requires being genuinely ahead at the Sprint 5 boundary.
+
+*2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* **Superseded by ADR-109:** the buffer runs 2026-10-26 to 12-05, and a Sprint 6.5, if any, can start 10-26; nothing from it deploys before `06` is submitted.
 
 ---
 
