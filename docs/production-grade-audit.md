@@ -23,7 +23,7 @@ This audits the 12 items of `docs/architecture.md` §7, "Definition of Productio
 | 9 | CI pipeline | CI required; CD portfolio | **Partly met** | CI is green on `main` and both Z2 conditions are done. But the pipeline's verify step has run in Cloud Build only for the two-service slice (2026-10-08); both full-system deploys ran with `_RUN_VERIFY=false` and a hand-run `verify.py`. |
 | 10 | Least-privilege DB roles | Required | **Met, offline only** | Already ticked; grants asserted in CI; the deployed role per container is read from the services. Not re-run on Cloud SQL. |
 | 11 | Cost guardrails and caps | Required | **Met, deployed** | Caps tested and read from the live services; the owner's console readings (2026-10-16) give budget alerts at $10, $50 and $80, a $7.85 prepaid balance and $3.15 GCP cost to date. The caps are per process, so the balance is the real ceiling. |
-| 12 | README, diagram, setup from clean | Required | **Not met** | Step 3 (`docker compose up -d postgres`) fails on a missing `GOOGLE_AI_API_KEY` the README never mentions at that step; the diagram is a placeholder. |
+| 12 | README, diagram, setup from clean | Required | **Not met** | Step 3 (`docker compose up -d postgres`) fails on a missing `GOOGLE_AI_API_KEY` the README never mentions at that step; the diagram is a placeholder. *2026-10-18 (S6-R1; owner-decided 2026-10-16; assistant-drafted.) Re-run: setup half **met, offline only** (every step before the key-and-weights step passes, and the README warns before it); the diagram is now Mermaid source in the README, not validated (no Node here) and not yet seen rendered. Verdict stays **Not met** until the owner confirms the render; see "Fresh-clone record, re-run 2026-10-18".* |
 
 **Ticks:** items 1, 2, 3, 7, 8, 10 and 11 (10 was already ticked). Items 4, 5, 6, 9 and 12 stay unticked, each with a dated reason in `architecture.md` §7.
 
@@ -283,6 +283,29 @@ So the trace ID is on the gateway, the orchestrator, the A2A agent, its MCP side
 **Note on paths.** My first clone was in a deeply nested scratchpad folder. `uv sync` passed, but the unit suite failed at collection with `FileNotFoundError` for a `transformers\models\...` file; the path to that file was 264 characters at that location, just over Windows' 260-character limit. I deleted that clone, re-cloned to `C:\fc-audit` and the suite passed. I count this as an artifact of where I cloned, not a README defect (F10).
 
 **Cleanup.** The first (deep) clone was emptied and removed. **`C:\fc-audit` was not removed:** `Remove-Item` on it was refused ("This path is protected from removal") and I did not look for another route. Remove it with `Remove-Item -Recurse -Force C:\fc-audit`. `docker volume ls` could not be run (daemon not running), so the "no compose volumes" check is by reasoning, not observation: every compose command stopped at interpolation, before reaching Docker, so none could have created one.
+
+### Fresh-clone record, re-run 2026-10-18 (S6-R1)
+
+*Owner-decided 2026-10-16; assistant-drafted. Run on 2026-10-18 from 16:16Z to about 16:31Z (timebox 45 minutes, about 15 used). The first record above is unchanged. This run cloned the unmerged branch `docs/readme-and-audit-fixes` from the local repository to `C:\fc2` (commit `4e443b7`), so it exercises the new README. Docker Desktop was already running (`docker info` answered; no container, volume or listener on 5432 before the run), so the owner was not asked to start it. The README was followed in order. `.env` was filled exactly as it now says: the `POSTGRES_ADMIN_*` and all seven `DB_ROLE_*` pairs with placeholder values, and `GOOGLE_AI_API_KEY=placeholder`.*
+
+| README step | Result | Detail |
+|---|---|---|
+| Clone | **Ran, passed** | `git clone -b docs/readme-and-audit-fixes` to `C:\fc2` (a short path), `4e443b7`. |
+| 1. `uv sync --locked --all-packages --all-extras --python 3.12` | **Ran, passed** | Exit 0, 114 s. uv 0.12.19. |
+| 2. `copy .env.example .env`, fill the names, give `GOOGLE_AI_API_KEY` a placeholder | **Ran, passed** | As above. |
+| 3. `docker compose up -d postgres` | **Ran, passed** | Container `service_ops_postgres` healthy. This is the step that failed in the first record. |
+| 4. `python -m alembic upgrade head`, then `alembic check` | **Ran, passed** | Exit 0 for both; `alembic check` printed "No new upgrade operations detected." |
+| 5. `data/generator/load.py --corpus ...`, then `validate.py` | **Ran, passed** | Loaded as `app_generator` (for example `service_feedback` 7521 rows, `incidents` 2067); validation **67 pass, 0 fail, 0 report-only**. |
+| 6. "Run the system locally": `docker compose up -d --build`, `python -m orchestrator ask ...` | **Not run** | **Stop point.** Needs a real model key and the gitignored `models/sentiment/bert_v1/` weights. The README says so before this step: in the stage table and the key note under "Local setup", and in the opening of "Run the system locally", which also says what happens without the weights. |
+| 7. `pytest tests/unit services -q` (README, "Verifying the database layer") | **Ran, passed** | **2722 passed, 2 skipped in 221.05 s.** Run after the stop point as an informational step, as in the first record; it needs no key, database or GCP. |
+| 8. `pytest tests/integration -q -rs` | **Ran, passed** | **1096 passed, 31 skipped in 421.99 s**, the CI figures; the 31 skips are the local-only sentiment-agreement tests (L-78). Informational, after the stop point. |
+
+**Cleanup.** `docker compose down -v` from `C:\fc2` removed the container and the network. `docker volume ls` is empty and `docker ps -a` is empty. This is expected either way: Postgres data is the bind mount `./pgdata`, so it sat in `C:\fc2\pgdata` (23 entries), not in a compose volume. **`C:\fc2` was not removed:** `Remove-Item` on it was refused ("This path is protected from removal"), and I looked for no other route. The owner removes it with `Remove-Item -Recurse -Force C:\fc2`. `C:\fc-audit` (finding F12) was already absent when checked.
+
+**Item 12's verdict on this record.** The committed criterion is unchanged.
+- **(a) Setup from clean: met, offline only.** Every step before the first one that needs a model key, the weights or GCP passed, and the README says what that step needs before it. Offline by nature: step 6 and everything after it were not run.
+- **(b) Architecture diagram: present as Mermaid source, not yet seen rendered.** The README now holds a Mermaid `flowchart` in place of the placeholder. It could **not be validated locally**: this machine has no Node (`npx` is not found), so `mermaid-cli` could not run, and its syntax was reviewed by hand only. Nobody has yet seen it render, and a block that fails to parse shows an error on GitHub, not a diagram. The criterion asks for "an image or a rendered diagram".
+- **Verdict: not ticked yet.** Half (a) is met; half (b) waits on the owner's look at the render on the PR page. If it renders, item 12 is `Met, offline only` and its §7 box can be ticked with a dated note.
 
 ## 4. Outside the checklist (not part of §7; no new scope)
 
