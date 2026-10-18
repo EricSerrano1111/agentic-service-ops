@@ -12,7 +12,7 @@ decision is in [decisions-log.md](docs/decisions-log.md).
 
 ## Status
 
-*Updated 2026-10-14 (records reconciliation after the Sprint 5 close).*
+*Updated 2026-10-18 (S6-R1: dates, the trigger sentence, the diagram and the setup steps).*
 
 Sprint 5 closed on 2026-10-13. The system is built end to end and deployed: a gateway with
 invite-link sign-in and a single-screen UI, the orchestrator, the reporting, sentiment and forecast
@@ -21,8 +21,9 @@ runs on Cloud Run over Cloud SQL (`ops-db`, stopped outside announced grading wi
 ADR-105, ADR-107). Model calls use the paid Gemini key with the free key still mounted beside it
 (ADR-104). One MVP functional requirement is unmet: FR-03, handling
 ambiguous questions, which failed two pre-registered gates (ADR-075, ADR-076, ADR-101). The
-interpretation check is advisory (ADR-102). The build trigger is disabled until the deploy YAML is
-synced to the paid key (Z2). Sprint 6 (2026-10-26 to 11-08) is hardening and delivery. Sprint
+interpretation check is advisory (ADR-102). The deploy YAML has been synced to the paid key
+(`381bd3f`); the build trigger stays disabled outside deploy windows (ADR-105). Sprint 6
+(2026-10-15 to 10-25, ADR-109) is hardening and delivery; the buffer runs 10-26 to 12-05. Sprint
 status is in [docs/sprint-log.md](docs/sprint-log.md); requirement-by-requirement evidence is in
 [docs/requirements-traceability.md](docs/requirements-traceability.md).
 
@@ -36,19 +37,94 @@ offline-scored predictions only (ADR-100). Services authenticate to each other w
 ID tokens (ADR-081). Only the gateway is public. Access for graders is by invite link in announced
 windows; the procedure is [deploy/RUNBOOK_GRADING.md](deploy/RUNBOOK_GRADING.md).
 
-*Architecture diagram: placeholder. The owner draws it and adds it here.*
+```mermaid
+flowchart LR
+    U["Browser<br/>invite link, then session cookie"]
+
+    subgraph CR["Cloud Run, us-central1"]
+        GW["ops-gateway<br/>FastAPI + static UI<br/>only allUsers invoker"]
+        ORC["ops-orchestrator<br/>route + QA loop<br/>120 s deadline, breakers, cost cap"]
+        QA["ops-qa<br/>agent_qa, own SQL"]
+        subgraph REP["ops-reporting"]
+            AR["agent_reporting"]
+            MI["mcp_incidents"]
+        end
+        subgraph SEN["ops-sentiment"]
+            AS["agent_sentiment"]
+            MF["mcp_feedback<br/>stored predictions"]
+        end
+        subgraph FCT["ops-forecast"]
+            AF["agent_forecast"]
+            MV["mcp_volume<br/>volume_v2"]
+        end
+    end
+
+    DB[("Cloud SQL ops-db<br/>PostgreSQL 16<br/>stopped outside announced windows")]
+    GEM["Gemini API<br/>gemini-3.5-flash-lite"]
+
+    U -->|HTTPS| GW
+    GW -->|"ID token"| ORC
+    ORC -->|A2A| AR
+    ORC -->|A2A| AS
+    ORC -->|A2A| AF
+    ORC -->|"A2A: draft, then verdict"| QA
+
+    AR -->|"MCP, localhost"| MI
+    AS -->|"MCP, localhost"| MF
+    AF -->|"MCP, localhost"| MV
+
+    MI -->|app_reporting| DB
+    MF -->|app_sentiment| DB
+    MV -->|app_forecast| DB
+    QA -->|app_qa| DB
+
+    ORC -.-> GEM
+    AR -.-> GEM
+    AS -.-> GEM
+    AF -.-> GEM
+    QA -.-> GEM
+```
+
+How to read it:
+
+- Solid edges are requests (HTTPS, A2A, MCP, SQL); dotted edges are model calls. The gateway and the
+  three MCP servers make none.
+- The orchestrator owns the QA loop; specialists return drafts to it and never call QA (ADR-055).
+  Each MCP server is a sidecar of its agent, reached over localhost, and holds only its own role's
+  credential (ADR-079). QA has no sidecar and reads with its own role.
+- Only the gateway has an `allUsers` invoker (people sign in by invite link, ADR-097). Every other
+  service requires an IAM ID token from its caller (ADR-081); ingress is open and IAM is the boundary. No runtime role has a grant on
+  `contacts`, so customer PII never reaches a model.
+- This is the deployed topology. Locally, compose runs each MCP server as its own container
+  (ADR-079).
 
 ## Local setup
 
 Requires Python 3.12, [uv](https://docs.astral.sh/uv/) (CI uses 0.12.19), and (for the
 database) Docker Desktop. `uv.lock` pins every dependency; local, CI and the service
-images all install from it (ADR-047).
+images all install from it (ADR-047). On Windows, clone to a short path (for example `C:\asops`):
+some dependency file paths exceed 260 characters when the clone is nested deeply, and the unit suite
+then fails at collection.
+
+What each stage needs:
+
+| Stage | Needs |
+|---|---|
+| Offline unit tests (`pytest tests/unit services`) | Neither Docker, a key nor the weights |
+| Database layer: Postgres, Alembic, generator and loader, the integration suite | Docker Desktop running. No real key, no weights |
+| Full stack, "Run the system locally" below | A real free-tier Gemini key, and the gitignored sentiment weights under `models/sentiment/bert_v1/`, which are not distributed |
 
 ```
 uv sync --locked --all-packages --all-extras --python 3.12
 
 copy .env.example .env      # then fill in POSTGRES_*, DB_ROLE_*_USER and DB_ROLE_*_PASSWORD
 ```
+
+Also give `GOOGLE_AI_API_KEY` a value in `.env` before the next step. Compose checks the whole file,
+so `docker compose up -d postgres` stops with `required variable GOOGLE_AI_API_KEY is missing a
+value` if it is blank, even though Postgres never uses it. For the database-only steps any
+placeholder works (for example `placeholder`); a real key is needed only for "Run the system
+locally".
 
 `.env` is gitignored and holds every credential. Nothing is hardcoded: Alembic builds
 its connection string from `POSTGRES_ADMIN_USER` / `POSTGRES_ADMIN_PASSWORD` /
@@ -60,7 +136,8 @@ docker compose up -d postgres
 .venv\Scripts\python -m alembic upgrade head
 ```
 
-That applies every migration in `data/migrations/versions/`, beginning with the schema, the five least-privilege agent roles with the
+That applies every migration in `data/migrations/versions/`, beginning with the schema, the first five
+least-privilege roles (ADR-063 later made it seven: four runtime and three offline) with the
 grants from [data-dictionary.md §7](docs/data-dictionary.md), the column-level narrowing
 of the sentiment and forecast grants (ADR-027, ADR-035), two schema changes to the
 ground-truth tables (ADR-037, ADR-038), and the site region on `locations` (ADR-051).
@@ -83,7 +160,13 @@ full system.* `docker compose up -d --build` builds and starts Postgres, the thr
 four agents, the orchestrator and the gateway. A routed, parsed and verified answer needs a model
 key in `.env` (`GOOGLE_AI_API_KEY`; `LLM_MODE` blank means the free key, ADR-104 describes the paid
 mode) and, for the sentiment MCP server, the gitignored model weights under `/models/` (ADR-066).
-The fastest end-to-end check is the orchestrator's CLI:
+Without the weights nothing answers end to end: `mcp_feedback` verifies them against the manifest
+at start-up and refuses to start, `agent_sentiment` waits for it, the orchestrator waits for all four
+agents and the gateway for the orchestrator. Compose does not pass `MCP_FEEDBACK_SCORING` through,
+so `.env` cannot switch the server to the deployed stored-predictions mode. The reporting, forecast
+and QA services do not depend on the sentiment pair and can be started by name
+(`docker compose up -d --build mcp_incidents agent_reporting`), but nothing routes to them without
+the orchestrator. The fastest end-to-end check is the orchestrator's CLI:
 
 ```
 docker compose up -d postgres
