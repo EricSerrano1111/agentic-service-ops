@@ -1091,7 +1091,8 @@ now written; they record the planning decisions above.*
   - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.) Ticked.* The docs-only merge did not build: PR #58 (`82501b0`: `deploy/RUNBOOK_V.md`, `deploy/RUNBOOK_GRADING.md` and three files under `docs/`) merged about 22:26 CDT on 2026-10-14 with the trigger enabled, and read-only `gcloud builds list` at 22:27, 22:30 and 22:33 showed the latest build still `0dc5aae1…`. The ignore list gained `deploy/**/*.md` in PR #57 (`9ab7c77`). Source: `docs/deploy-window-log.md`, Z2b addendum (2026-10-14).
 - [x] Extend `deploy/verify.py` to the four services it does not cover (forecast, QA, sentiment and gateway). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 - [ ] **G21:** a scorer comparison at display precision, as a `golden_v3` scoring change, with disclosure (L-95). The pre-registered 29 of 36 is not changed retroactively. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
-- [ ] The runbook's step 12 second idle wait (the cold-start measurement's second leg, R-05). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+- [x] The runbook's step 12 second idle wait (the cold-start measurement's second leg, R-05). *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
+  - *2026-10-18 (S6-C1, owner rulings; owner-decided 2026-10-18; assistant-drafted.)* Ticked. The second idle wait was measured in owner verification session 1: sentiment 30.64 s with all four hops cold (`evals/results/session1/2026-10-15/summary.md`; R-05).
 - [ ] **The orchestrator response:** consider exposing `cost_usd` and `model_calls` in `AskResponse` (L-94; deviation 1 in `sprint5_x.md`). A redeploy, so after any freeze. *Added 2026-10-13 (Sprint 5 close; Prompt Z). Source: `docs/deploy-window-log.md` (2026-10-12/13) and the Sprint 5 close (Prompt Y brief, section 6).*
 
 - [x] **Z2: the trace ID in web-server access-log lines**, with its own ADR (carried from Sprint 4: the `[ ]` item of 2026-10-08 and the Sprint 5 item above; `security-model.md` §5). Sprint 6 observability and `05`'s TS-15-D depend on it. *Added 2026-10-14 (Z1). Source: audit, section 1; the Sprint 5 close.*
@@ -1228,16 +1229,16 @@ now written; they record the planning decisions above.*
 **Planned vs done:**
 *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* Status as the list stands at the close; no box is changed here.
 - Observability, CI/CD completion, graceful degradation, load/latency: unticked. Observability done (trace ID and redaction deployed in Z2b, the alert); CI/CD completion waits on F13; graceful degradation has the alert but no live path on the current build; load testing was not done (cold starts were timed in session 1).
-- The L-80 and L-77 options: not done, and not in ADR-113's scope. They stay open and **need an owner decision** (see the report).
+- The L-80 and L-77 options: not done; roadmap, portfolio value, not built (owner ruling 2026-10-18, ADR-113).
 - The alert: done (ticked, #67 and #69). The alert script's comparator and timestamp fix: not done; carried as housekeeping (ADR-113).
-- Terraform; the `verify-caller` account; deploy with no traffic (L-64); the default compute account's Editor role; the batch-scoring job: not done, and not in ADR-113's scope. They stay open and **need an owner decision**.
+- Terraform; the `verify-caller` account; deploy with no traffic (L-64); the batch-scoring job: not done; roadmap, portfolio value, not built (owner ruling 2026-10-18, ADR-113). The default compute account's Editor-role review: not done; 6.5 housekeeping (IAM only, no service redeploy; ADR-113).
 - The production-grade audit: done (ticked, #70).
 - The evaluation report, presentation and demo rehearsal: not started; buffer by plan (ADR-109, ADR-113).
 - The deploy-window and runbook items (`plan_full.py`, runbook fixes, the route rename, the YAML sync, the Next.js bump, the build-trigger step, `verify.py` coverage), the Z2 items, the window-day tooling, the test guard, the failure-path log codes: done (ticked).
 - Logging of failed model-call attempts and the standing check: unticked. Built and deployed, never observed (the read below found 0).
 - Runbook step 7 (the L-78 Cloud SQL suites): unticked, carried.
 - G21 (a `golden_v3` scorer change, L-95), the `cost_usd` and `model_calls` response fields (L-94): unticked; roadmap (ADR-113).
-- The runbook's step 12 second idle wait: this line is unticked, but its content was measured in session 1 (sentiment 30.64 s, see the cold-start item). Not re-ticked here.
+- The runbook's step 12 second idle wait: ticked at the owner's ruling later the same day (dated note on the item); it was measured in session 1 (sentiment 30.64 s).
 - Window A's scenarios and the cold-start timing: done in session 1 (ticked).
 - The `05` free-tier wording (R-11): unticked; the owner's, in `05`.
 - L-92 and L-24, "the owner decides at the Sprint 6 close": decided by ADR-113 as roadmap; the box stays unticked because neither is built.
@@ -1330,6 +1331,7 @@ disclosed difference from the evaluated system).
 - The L-95 rulings ("district", "end of next year"): **roadmap**.
 - L-96 (the router and decline-text fix): **roadmap**.
 - Also decided at this close, though not candidate lines: L-92 (the decline-heavy interpretation set) and L-24 (the false-alarm sensitivity check) are **roadmap**; L-99 (verification line on a clarification) and L-98 (tool error text) are **committed** in the hardening bundle; L-100 (backwards date ranges) is **roadmap**; `golden_v3` and the G21 scorer comparison (L-95) are **roadmap**.
+- Also placed by the owner's rulings of 2026-10-18 (not candidate lines): the default compute service account's Editor-role review is **committed** as 6.5 housekeeping (IAM only, no service redeploy); the `verify-caller` account, the no-traffic deploy (L-64), Terraform (ADR-061), the batch-scoring job (ADR-100), and the L-80 and L-77 options are **roadmap**, portfolio value, not built.
 
 - [ ] Response transparency: live elapsed timer; after-answer timeline (route,
   per-hop durations, QA); estimated cost per answer (list price, L-71). No

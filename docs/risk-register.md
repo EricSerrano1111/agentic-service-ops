@@ -8,7 +8,7 @@
 - **Review at every sprint boundary:** re-read the whole table, not just add to it. A risk that's been sitting at "Open" for three sprints with no action is itself worth a retro note.
 - Add new risks as they surface — a register that only shrinks isn't being used honestly.
 
-**Sprint 6 boundary review, 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted):** every risk was re-read. R-01, R-02, R-05, R-09, R-10, R-12, R-16 and R-21 changed in status or evidence this sprint and carry a dated line below (R-05 and R-09 also carry earlier Sprint 6 lines, which the new lines point to). R-04, R-07, R-08, R-11, R-13, R-15, R-17, R-18 and R-20 were reviewed and are unchanged (R-20 had no deploy this sprint, and `uv.lock` did not change since 2026-10-15). R-03, R-06, R-14 and R-19 stay closed. No summary-table status changes.
+**Sprint 6 boundary review, 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted):** every risk was re-read. R-01, R-02, R-05, R-09, R-10, R-11, R-12, R-16 and R-21 changed in status or evidence this sprint and carry a dated line below (R-05 and R-09 also carry earlier Sprint 6 lines, which the new lines point to). R-04, R-07, R-08, R-13, R-15, R-17, R-18 and R-20 were reviewed and are unchanged (R-20 had no deploy this sprint, and `uv.lock` did not change since 2026-10-15). R-03, R-06, R-14 and R-19 stay closed. No summary-table status changes.
 
 ---
 
@@ -244,6 +244,8 @@
 **Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. The official pricing page was read on 2026-10-10: paid Flash-Lite $0.30 input and $2.50 output per 1M tokens, which is what the client's logged costs use, so no change. The free-tier limits (ADR-029) were not re-verified in AI Studio this sprint and must be before any deliverable states them. No budget alert has fired. Status stays Open.
 
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** Reviewed. The deployed system runs on the paid key (ADR-104) after the free tier failed on 2026-10-13 (R-15). The pricing read on 2026-10-10 is unchanged in the records, and the logged cost uses it (L-71). Sprint 5's paid use is about $0.61 in list-price estimates (`sprint-log.md`, Sprint 5 close). **The free-tier limits were still not re-verified**, and `05` states the 500-a-day limit (`05:102`, `05:567`): re-verify them, or reword them as "paid key in deployment (ADR-104)" (owner item for the `05` revision). Status stays Open.
+
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed: the owner revised the free-tier wording in `05` (`05` is complete and held, not submitted), which was the owner item this risk and the sprint log carried. Nothing in `05` was changed here. R-11's other lines stand. Status stays Open.
 
 ### R-12 — MCP/A2A ecosystem churn breaks a dependency
 **Description:** Both protocols are new and moving fast — MCP had its largest spec revision to date in July 2026. An SDK update mid-project could introduce breaking changes.

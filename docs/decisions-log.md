@@ -3767,7 +3767,7 @@ After a start, one question through the gateway confirms the data path before th
 - **The 6.5 scope.** Each item is marked required at this scale or portfolio, and whether it changes answers.
   1. **The hardening bundle.** No answer changes; required-adjacent. All in **one redeploy, after `06` is submitted**:
      - the synthetic-data notice on the landing page (fixes the defect behind `05`'s TS-20-E failure; `05`'s recorded result stands, because ADR-106's rule that 6.5 is not counted in `05` or `06` stands);
-     - the verification line not shown on a clarification (L-99; §6 "Answer display (UI)" rule 3 maps `verified` to its words with no condition on the outcome, so the fix needs a dated condition on rule 3, no verification line when the outcome carries no figures; the words stay unchanged; the owner decides this);
+     - the verification line not shown on a clarification (L-99; §6 "Answer display (UI)" rule 3 maps `verified` to its words with no condition on the outcome, so the fix needs a dated condition on rule 3, no verification line when the outcome carries no figures; the words stay unchanged; the owner agreed on 2026-10-18: the spec is written in the hardening-bundle PR before its code, not in this entry);
      - tool error text logged as code, length and hash (L-98);
      - QA's startup probe on `/readyz` (F1);
      - liveness probes on the containers (F2);
@@ -3792,11 +3792,13 @@ After a start, one question through the gateway confirms the data path before th
      - the false-alarm sensitivity check (L-24);
      - `golden_v3` and the G21 scorer comparison (L-95);
      - **the after-answer timeline and the estimated cost per answer**: both need new fields in the orchestrator's response (per-hop durations; `cost_usd` and `model_calls`, L-94), which is an API contract change and an orchestrator redeploy, not UI polish;
-     - **cost framing**: it needs a measured baseline, and cost figures are list-price estimates only (L-71).
+     - **cost framing**: it needs a measured baseline, and cost figures are list-price estimates only (L-71);
+     - **portfolio value, not built:** the `verify-caller` service account (ADR-085), the no-traffic deploy that verifies a revision's own URL before moving traffic (L-64), Terraform (ADR-061), the batch-scoring job (ADR-100), and the L-80 and L-77 options (sentiment example comments; unrounded confidence).
   5. **Housekeeping, carried; no deploy, no answer change:**
      - the alert script's comparator fix and its per-poll timestamps;
      - the retry-log standing check;
-     - the L-78 Cloud SQL suites.
+     - the L-78 Cloud SQL suites;
+     - the review of the default compute service account's project-level Editor role: IAM only, no service redeploy, the cheapest security fix left.
 - **Calendar inside the buffer:**
   - 6.5 work from 10-19; FR-03's attempt timeboxed to end by 11-08;
   - the evaluation report draft by 11-08, final by 12-01;
@@ -3814,3 +3816,5 @@ After a start, one question through the gateway confirms the data path before th
 - ADR-109 and ADR-106 are not edited; their index Status cells say "superseded in part by ADR-113".
 - **The divergence list gains `03`'s calendar again** (Sprint 6 now closes 10-18, the buffer starts 10-19); `03` is Eric's to edit and nothing was changed.
 - **Tension with a locked rule, named:** the synthetic-data notice fixes what `05`'s TS-20-E records as a known fail. ADR-106 says nothing from 6.5 is counted in `05` or `06`, so `05` keeps its recorded result and the evaluation report states the difference once the notice is deployed.
+
+*2026-10-18 (S6-C1, owner rulings; owner-decided 2026-10-18; assistant-drafted.)* Rulings on the entry above, recorded the same day. Unplaced Planned items are placed (the Editor-role review is housekeeping; the rest are roadmap, portfolio value, not built). L-99's rule 3 condition is written with the bundle PR, before its code. The TS-20-E tension is confirmed as worded: the notice fixes the defect, `05`'s recorded result (FAIL at the time of writing) stands, and 6.5 is not counted in `05` or `06`.
