@@ -368,6 +368,8 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 *Updated 2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.) The calendar table's Sprint 6 and Buffer rows are replaced with the ADR-109 dates (Sprint 6 10-15 to 10-25; buffer 10-26 to 12-05), as ADR-082 replaced its rows. This supersedes the 2026-10-15 note above that says the table still shows the ADR-093 dates. The bold paragraph below ("Sprint 6 runs 10-26 to 11-08") and the Sprint 6 heading are history and are not edited. Owner verification session 1 ran on a weekday (ADR-111, which supersedes ADR-110's weekend clause only).*
 
+*Updated 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.) Sprint 6 closed on 2026-10-18, day 4 of the 10-15 to 10-25 sprint, and the buffer runs 10-19 to 12-05 (ADR-113, which supersedes ADR-109's sprint dates and ADR-106 in part). The calendar table's Sprint 6 and Buffer rows are replaced with these dates, as ADR-109's rows were; the earlier notes, the Sprint 6 heading and the bold paragraph below are history and are not edited. The 6.5 scope is decided in ADR-113: a hardening redeploy and UI polish after `06` is submitted, a third and final FR-03 attempt timeboxed to end by 11-08, and the rest as roadmap. The course dates (`05` 11-01, `06` 11-08, final 12-05) and Windows A and B are unchanged. Buffer targets: evaluation report draft 11-08, final 12-01; presentation draft 11-22, rehearsal 11-29.*
+
 Every sprint ends with a **demoable increment** and a **sprint review + retro entry** in `sprint-log.md`. Academic deliverables are interleaved, not bolted on at the end. Risk register is reviewed and updated every sprint boundary.
 
 **Calendar.** Sprint 1 started Monday 2026-09-14. **Re-baselined 2026-10-08 (ADR-082) and again at the Sprint 4 close on 2026-10-10 (ADR-093): Sprint 4 closed on day 5, Sprint 5 runs 2026-10-12 to 10-25, Sprint 6 runs 10-26 to 11-08, and 2026-11-09 to 12-05 is buffer.** **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.
@@ -379,8 +381,8 @@ Every sprint ends with a **demoable increment** and a **sprint review + retro en
 | 3 | planned 2026-10-12 to 10-25; closed early, 2026-10-04 (final 10-05) | `03-planning-management.md` and `04-design-solution-architecture.md` (both due 10-18, submitted); `05` drafted |
 | 4 | 2026-10-06 to 10-25 (three weeks; re-baselined, ADR-082); **closed 2026-10-10, day 5 (ADR-093)** | Weekly status reports (`05` and `06` fall in Sprint 6) |
 | 5 | 2026-10-12 to 10-25 (re-baselined, ADR-093) | Weekly status reports |
-| 6 | 2026-10-15 to 10-25 (re-baselined, ADR-109) | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports (the last covers the week ending 11-22, the course's date) |
-| Buffer | 2026-10-26 to 12-05 (re-baselined, ADR-109) | Final submission (12-05): presentation plus the completed project (ADR-044) |
+| 6 | 2026-10-15 to 10-25 (re-baselined, ADR-109); **closed 2026-10-18, day 4 (ADR-113)** | `05-test-scenarios.md` (11-01); `06-production-support.md` (11-08); weekly status reports (the last covers the week ending 11-22, the course's date) |
+| Buffer | 2026-10-19 to 12-05 (re-baselined, ADR-113) | Final submission (12-05): presentation plus the completed project (ADR-044) |
 
 ### Sprint 1 (weeks 1–2, 2026-09-14 to 09-27) — Foundation
 **Increment:** Synthetic data generator producing validated, signal-bearing data; queryable locally.

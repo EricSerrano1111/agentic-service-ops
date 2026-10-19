@@ -8,6 +8,8 @@
 - **Review at every sprint boundary:** re-read the whole table, not just add to it. A risk that's been sitting at "Open" for three sprints with no action is itself worth a retro note.
 - Add new risks as they surface — a register that only shrinks isn't being used honestly.
 
+**Sprint 6 boundary review, 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted):** every risk was re-read. R-01, R-02, R-05, R-09, R-10, R-11, R-12, R-16 and R-21 changed in status or evidence this sprint and carry a dated line below (R-05 and R-09 also carry earlier Sprint 6 lines, which the new lines point to). R-04, R-07, R-08, R-13, R-15, R-17, R-18 and R-20 were reviewed and are unchanged (R-20 had no deploy this sprint, and `uv.lock` did not change since 2026-10-15). R-03, R-06, R-14 and R-19 stay closed. No summary-table status changes.
+
 ---
 
 ## Summary Table
@@ -55,6 +57,8 @@
 
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** Reviewed. The reviewer question is answered in the Sprint 5 retro: state checks caught wrong assumptions in prompts five times before damage. A read-only audit on 2026-10-14 then found 11 contradictions and 12 stale statements across the records, which is the kind of finding a second reviewer makes and evidence that the records drift between sprint boundaries. Status stays Mitigating.
 
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Reviewed. The reviewer question is answered in the Sprint 6 retro (`sprint-log.md`): criteria were committed before evidence in the audit, and state checks caught wrong premises in the assistant's own prompts (ADR-112's `outcome` field, recorded) as well as, owner-reported, a stale Project and an overclaiming prompt from another chat. Status stays Mitigating.
+
 ### R-02 — Runtime budget depends on unconfirmed credit coverage
 **Description:** The cost plan assumes Google AI student credits cover Gemini runtime inference for all five agents across 12 weeks. Coverage and expiry haven't been confirmed.
 **Mitigation:** Confirm in Sprint 1 — this is a named open item, not an assumption to defer. `packages/llm/` keeps every agent provider-agnostic, so a swap to another provider is a config change if credits fall short.
@@ -72,6 +76,8 @@
 **Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. No paid model call was made in Sprint 4: the deploy window, the interpretation gate, the end-to-end runs and the loop checks used the free key. GCP billing for 2026-10-01 to 10-09 was $0.29 gross and $0.08 net (owner, Billing), covering the deploy window and storage. The Sprint 4 item that prices a full routing eval run is done: about $0.30 for 150 end-to-end requests at paid Flash-Lite list prices, with the Pro-for-QA test's ~$20-30 as a ceiling (architecture §9; official pricing page read 2026-10-10). Status stays Mitigating.
 
 **Update 2026-10-13 (Sprint 5 close):** Paid spend this sprint, as list-price estimates (L-71): W $0.2719 (ADR-103, `evals/results/sprint5_w_ledger.json`) and X $0.1727 for 186 requests (`sprint5_x_ledger.json`). V3 about $0.0015 (3 paid `verify.py` calls, `docs/deploy-window-log.md` (2026-10-12/13)); the three smoke questions are not itemised. Owner-reported in the Prompt Y brief, not in a file in the repo: Q about $0.16. The prepaid balance is about $2.9 after X (the owner's figure in the brief; it is an estimate from list-price spend, not read from Billing, and ADR-104 recorded the budget as not re-verified). Auto-reload is off. The paid key is now the deployed system's spend path (ADR-104, ADR-105), bounded by the gateway's 50-question daily cap (about $0.35 a day at the cap), not by the per-process caps (L-93). The balance is below the $5 minimum ADR-105 sets before a window, so a top-up is due before the first one (R-21). Status stays Mitigating.
+
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Reviewed. Owner console readings on 2026-10-16 (owner-reported, S6-P1 F8): Google AI Studio prepaid balance $7.85, GCP cost $3.15 for 2026-10-01 to 10-16, budget alerts at $10, $50 and $80 present. This replaces the 2026-10-13 estimate of about $2.9. Sprint 6 made no model call of its own beyond owner verification session 1 (ledger ceiling $0.079 for 57 requests, R-21). Status stays Mitigating.
 
 ### R-03 — Cloud Run build/deploy decoupling
 **Description:** A prior academic project hit successful Cloud Builds that didn't produce active Cloud Run revisions — a decoupled build/deploy pipeline. Same deployment target, same failure mode plausible.
@@ -126,6 +132,8 @@
 **Update 2026-10-13 (Sprint 5 close):** The cold-start chain was measured: the cold-start question took 55.87 s in the browser (54.47 s at the gateway) after 15 minutes idle, against the 120 s ceiling (ADR-034): new instances at the gateway, orchestrator, reporting (about 20 s start) and QA (about 14 s start), each model call about 1.5 s (`docs/deploy-window-log.md` (2026-10-12/13)). The second idle wait is a Sprint 6 backlog item. Warm latency in the X runs: golden median 3.93 s, max 5.9 s; routing per-run median 3.5 to 3.8 s, p95 5.1 to 17.6 s; nothing over 120 s. The retry loop's worst case is still not exercised on live traffic: the interpretation check stays advisory (ADR-102). Status stays Mitigating.
 
 **Update 2026-10-15 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.):** owner verification session 1 read the cold start on the sentiment and forecast paths (`evals/results/session1/2026-10-15/summary.md`, ADR-110). Sentiment **61 s** in the browser on the first reading, where the gateway hop was not cold (the owner reloaded the page about 3 minutes earlier), then **30.64 s** on the second idle wait with all four hops cold. Forecast **46 s**, all four hops cold. Reporting **29 s** at TS-20-A (the reporting path was cold). All are under the 120 s ceiling (ADR-034). Status unchanged.
+
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed this sprint. The 2026-10-15 line above (session 1 cold starts: sentiment 61 s then 30.64 s, forecast 46 s, reporting 29 s, all under the 120 s ceiling) stands. The retry loop's worst case is still not exercised on live traffic (the interpretation check stays advisory), and the retry-log read on 2026-10-19 00:13:34 UTC found 0 failed model-call attempts in 30 days. Status stays Mitigating.
 
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
@@ -197,6 +205,8 @@
 
 **Update 2026-10-18 (S6-D3; owner-decided 2026-10-18; assistant-drafted):** The assignment text has arrived and supersedes the 2026-10-14 line's description of `06` as a stub waiting on it. It has no rubric beyond four required parts, plus a note that it be written professionally: an application description, standard operating procedures, troubleshooting, and disaster recovery and clean restart. `06` is drafted in Word as version 1.3, dated 2026-10-18, about 29 pages; it is not submitted (due 2026-11-08), and the Markdown copy is committed to `docs/academic/` only after submission. Status stays Monitoring.
 
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed this sprint. The 2026-10-18 line above stands: the assignment text for `06` arrived, `06` is drafted in Word as version 1.3 and held, not submitted (due 2026-11-08), and `05` is complete and held (owner). Status stays Monitoring.
+
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
 **Mitigation:** Treat any missed sprint goal as an immediate scope conversation at that sprint's retro, not something to "catch up on later." Scope expansion is only considered if genuinely ahead, per the working agreement.
@@ -218,6 +228,8 @@
 
 **Update 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.):** The calendar moves again (ADR-109). Sprint 6 now runs 2026-10-15 to 10-25 and the buffer is 10-26 to 12-05. The scope decision (ADR-106) stays at the Sprint 6 close, now 10-25, and Sprint 6.5 if any starts 10-26 (was about 11-09) and runs to about 11-29. 6.5 can therefore start before `05` (11-01) and `06` (11-08) are submitted, so no 6.5 change is deployed before `06` is submitted. "Demo rehearsed" in the Sprint 6 goal is not expected inside the sprint; it is a buffer target (11-29). Status stays Monitoring.
 
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Reviewed. The buffer is larger again: Sprint 6 closed on 2026-10-18, day 4 of a sprint planned to 10-25, and the buffer runs 2026-10-19 to 12-05, about seven weeks (ADR-113, which supersedes ADR-109's dates in part). The work is the 6.5 scope with the FR-03 attempt timeboxed to end by 11-08, the evaluation report (draft 11-08, final 12-01) and the presentation (draft 11-22, rehearsal 11-29); slippage lands on 6.5 first. Status stays Monitoring.
+
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).
 **Mitigation:** Provider-agnostic LLM interface (ADR-006) keeps a provider swap mechanically cheap; GCP budget alerts at $50/$80 serve as an early warning regardless of root cause.
@@ -233,6 +245,8 @@
 
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** Reviewed. The deployed system runs on the paid key (ADR-104) after the free tier failed on 2026-10-13 (R-15). The pricing read on 2026-10-10 is unchanged in the records, and the logged cost uses it (L-71). Sprint 5's paid use is about $0.61 in list-price estimates (`sprint-log.md`, Sprint 5 close). **The free-tier limits were still not re-verified**, and `05` states the 500-a-day limit (`05:102`, `05:567`): re-verify them, or reword them as "paid key in deployment (ADR-104)" (owner item for the `05` revision). Status stays Open.
 
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed: the owner revised the free-tier wording in `05` (`05` is complete and held, not submitted), which was the owner item this risk and the sprint log carried. Nothing in `05` was changed here. R-11's other lines stand. Status stays Open.
+
 ### R-12 — MCP/A2A ecosystem churn breaks a dependency
 **Description:** Both protocols are new and moving fast — MCP had its largest spec revision to date in July 2026. An SDK update mid-project could introduce breaking changes.
 **Mitigation:** Pin SDK versions at project start; don't chase spec updates mid-build. The project targets the 2026-07-28 MCP spec and A2A v1.0 as documented in `architecture.md` §3 — treat that as fixed unless a specific reason forces an upgrade.
@@ -247,6 +261,8 @@
 **Update 2026-10-10 (Sprint 4 boundary review):** Reviewed. `mcp==2.2.0` and `a2a-sdk==1.1.5` are unchanged; the SDK's DEBUG logging of a bearer token (L-63) was handled in our code, not by an upgrade. Status stays Mitigating.
 
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** Reviewed. `mcp==2.2.0` and `a2a-sdk==1.1.5` are unchanged (read in the services' `pyproject.toml`, 2026-10-14); `uv.lock` changed in Sprint 5 for the gateway and the stored-only sentiment image, and neither changed those pins. The web pin is Next.js 16.3.8; the bump for the 2026-10-14 release is a Sprint 6 backlog item (gateway-only redeploy). Status stays Mitigating.
+
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Reviewed. The web pin is Next.js 16.4.1 (`web/package.json`, PR #56, merge `ea9fd96`), which supersedes the 2026-10-14 line above that gave 16.3.8 and called the bump a backlog item. `mcp==2.2.0` and `a2a-sdk==1.1.5` are unchanged: `uv.lock` has no commit since 2026-10-15. Status stays Mitigating.
 
 ### R-13 — Generated comments don't match their requested sentiment
 **Description:** `feedback_text` is LLM-generated to a requested label (ADR-030), and `sentiment_labels.true_sentiment` records that request, not a verified reading of the text. Comments that drift from their label would make the sentiment model's accuracy look worse than it is — the model gets marked wrong for reading the text correctly. Hard cases can fail the other way: sarcasm an LLM writes on request is often obvious, so "hard" comments may be easier than labeled and inflate hard-case accuracy.
@@ -321,6 +337,8 @@
 
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** **G04, reconciled.** L-56 describes the question (complaint themes since an app update: a stretch item the system must not invent an answer to). The sprint log and R-16's earlier line describe the deployed answer (a one-region sentiment item whose counts equal the oracle). Both are right, about different things. From `evals/results/sprint5_x/golden_assistant_reading.md`: G04 passes mechanically; the system answered with the region's sentiment counts, shares and range, said the range was assumed, quoted comments verbatim, and invented no theme or app-update date; it did not say the "since the app update" qualifier was ignored, which is the stretch gap (L-56). So G04 is a stretch item whose deployed behaviour is a sentiment answer, not a decline; the 6.5 candidate that treats "complaint themes" as unsupported is right that theme extraction does not exist.
 
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** ADR-113 schedules a third and final FR-03 attempt on a new blind set generated under ADR-094 (one attempt, a pre-registered gate, a written call and cost budget). The new set carries the same exposure as the earlier generated sets: the generator is in the system's model family (L-86). Its result will be reported with that caveat, and the held-out and golden sets stay spent for blind use. Status stays Open.
+
 ### R-17 — Local environment memory exhaustion (WSL/Docker)
 *Added 2026-10-05, from the owner's Sprint 3 final retro review.*
 **Description:** The local environment (Windows 10, Docker Desktop on WSL2, an Intel i7-6700HQ with 4 cores / 8 threads) has repeatedly run out of memory, which forced freeing memory and restarting the machine several times. The logs record no count or dates for these incidents (the only related record is a 29.4 s first container start after a Windows restart, L-36). Sprint 4 adds the QA agent and the deploy tooling to the local footprint.
@@ -387,6 +405,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 **Update 2026-10-15 (S6-W1; owner-decided 2026-10-15; assistant-drafted):** the paid balance is **$7.88** after the 2026-10-15 top-up (owner-reported; the console reading at the next session's opening governs, ADR-105). The "about $2.9" in the Description above is the 2026-10-13 estimate and is superseded; it is not edited. The balance is above the $5 minimum ADR-105 sets. Status stays Open: the balance is still not watched programmatically and auto-reload is off.
 
 **Update 2026-10-15 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.):** session 1's opening balance was **$7.88** (owner-read). The session's ledger ceiling was **$0.079 worst case, for 57 requests** (driver ledger, charged at the highest seen cost when unknown). The closing figures the owner read, Google AI Studio $2.12 (2026-09-18 to 10-15) and GCP billing $2.86 (2026-10-01 to 10-15), are cumulative, so the session's own spend cannot be separated from them and no closing balance was recorded. Next check: before Window A (10-31). Status stays Open.
+
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Owner console reading on 2026-10-16: the prepaid balance is $7.85 (against $7.88 after the 2026-10-15 top-up; the $0.03 difference is not attributed). It is above the $5 minimum (ADR-105). The balance check before Window A (10-31) is carried (`sprint-log.md`, Sprint 6 close). Status stays Open: the balance is not watched programmatically.
 
 ---
 

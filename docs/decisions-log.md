@@ -117,13 +117,14 @@
 | 103 | Evaluation freeze for Sprint 5: the system Prompt X measures | Accepted |
 | 104 | Deployed model calls use the paid key for the evaluation and grading window | Accepted |
 | 105 | Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing) | Accepted — superseded in part by ADR-110 |
-| 106 | Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part) | Accepted — superseded in part by ADR-109 |
+| 106 | Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part) | Accepted — superseded in part by ADR-109 and ADR-113 |
 | 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted |
 | 108 | Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing) | Accepted |
-| 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted |
+| 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted — superseded in part by ADR-113 |
 | 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
+| 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted |
 
 ---
 
@@ -3754,3 +3755,66 @@ After a start, one question through the gateway confirms the data path before th
 
 
 *Result note under ADR-112, 2026-10-16 (S6-A2; owner present; assistant-drafted; the entry above is unchanged).* Part B ran the same day. The metric and policy were applied with the files as written (metric on GA `gcloud logging metrics`, policy on `gcloud alpha monitoring policies`, gcloud 531.0.0; the REST fallback was not needed). The synthetic entry (`trace_id` `alerttest-70b1b5266e5d4a2a`, 22:22:48Z) read back with every field, was counted by the metric within about 1 to 1.5 minutes, opened an incident for the policy within about 3 minutes, and the owner received the alert email at 5:26 PM CDT. The production filter was not loosened. So the filter, the metric, the policy and the email path are verified live; what ADR-112 said the test does not prove still holds (the current build has not produced a real degraded answer). One defect in the tooling: `alert_degraded.py apply`'s metric read-back compares labels by position and treats a missing `valueType` as a difference, so it reported a false FAIL (the server sorts labels by key and omits the default STRING); the owner judged it a false positive, the diff is in `docs/deploy-window-log.md`, and the fix is a Sprint 6 Planned item. The incident's close time is owner-reported and has one unresolved inconsistency (deploy-window log). Cost is still unconfirmed.
+
+### ADR-113 — Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part)
+*Date: 2026-10-18. Owner-decided 2026-10-18; assistant-drafted. Supersedes ADR-109 in part: the Sprint 6 end date (10-25), the buffer start (10-26) and the 6.5 start (10-26). Supersedes ADR-106 in part: the date of the scope decision (the Sprint 6 close, then 10-25), the 6.5 start, and its sentence that a third FR-03 attempt "could only happen in 6.5, after both are due"; ADR-106 sets the scope "at the Sprint 6 close", and this entry makes that decision. Everything else in ADR-106 and ADR-109 stands, including ADR-106's rule that nothing from 6.5 is counted in `05` or `06`, and ADR-109's rule that no 6.5 change is deployed before `06` is submitted.*
+
+**Decision:**
+- **Dates.** Sprint 6 closes 2026-10-18, day 4 of the 10-15 to 10-25 sprint. The buffer is 2026-10-19 to 12-05.
+  - The course dates don't move: `05` is due 11-01, `06` 11-08, the final product 12-05.
+  - Windows A (10-31 to 11-09) and B (12-01 to 12-12) are unchanged (ADR-107).
+- **Submissions.** `05` and `06` are complete and held, not submitted (owner decision). ADR-109's rule stands: no 6.5 change deploys until `06` is submitted.
+- **The 6.5 scope.** Each item is marked required at this scale or portfolio, and whether it changes answers.
+  1. **The hardening bundle.** No answer changes; required-adjacent. All in **one redeploy, after `06` is submitted**:
+     - the synthetic-data notice on the landing page (fixes the defect behind `05`'s TS-20-E failure; `05`'s recorded result stands, because ADR-106's rule that 6.5 is not counted in `05` or `06` stands);
+     - the verification line not shown on a clarification (L-99; §6 "Answer display (UI)" rule 3 maps `verified` to its words with no condition on the outcome, so the fix needs a dated condition on rule 3, no verification line when the outcome carries no figures; the words stay unchanged; the owner agreed on 2026-10-18: the spec is written in the hardening-bundle PR before its code, not in this entry);
+     - tool error text logged as code, length and hash (L-98);
+     - QA's startup probe on `/readyz` (F1);
+     - liveness probes on the containers (F2);
+     - a pipeline run with `_RUN_VERIFY=true` over the six services (F13);
+     - and, if the window allows, one live specialist-unavailable degraded path on the current build (`architecture.md` §7 item 6).
+  2. **Presentation UI polish.** Portfolio value; no answer change. Data dictionary §6's answer wording is kept exactly. It deploys in the same window as item 1.
+     - It includes **the live elapsed timer**, which is client-side only (the browser times the request): no API change and no answer change.
+  3. **FR-03, the third and final attempt.** Required: it is the one unmet MVP requirement. It changes answers. Its rules:
+     - **One attempt.** The method must differ from the three prompt-only revisions that failed (`route_v4`, `v5`, `v6`), for example a higher thinking level for routing, or a separate ambiguity check. The method is decided in its own ADR **before any model call**.
+     - **A new blind set,** generated by the ADR-094 process.
+     - **A pre-registered gate.**
+     - **A written call and cost budget,** with a stop rule.
+     - **If it fails:** FR-03 is recorded as unmet in the evaluation report and the presentation, and there is no further attempt.
+     - **If it passes and deploys:** the evaluation report states the difference from the evaluated system and reports the new set's result.
+  4. **Roadmap only, not built.** Each is recorded as future work with its limitation ID:
+     - the router and decline-text fix (L-96);
+     - the "district" and "end of next year" rulings (L-95);
+     - backwards date ranges (L-100);
+     - the degraded result when the database is stopped (L-89);
+     - executive-style analysis, and expanded agent abilities (L-68, L-67, L-47, G04 and L-56);
+     - the decline-heavy interpretation set (L-92);
+     - the false-alarm sensitivity check (L-24);
+     - `golden_v3` and the G21 scorer comparison (L-95);
+     - **the after-answer timeline and the estimated cost per answer**: both need new fields in the orchestrator's response (per-hop durations; `cost_usd` and `model_calls`, L-94), which is an API contract change and an orchestrator redeploy, not UI polish;
+     - **cost framing**: it needs a measured baseline, and cost figures are list-price estimates only (L-71);
+     - **portfolio value, not built:** the `verify-caller` service account (ADR-085), the no-traffic deploy that verifies a revision's own URL before moving traffic (L-64), Terraform (ADR-061), the batch-scoring job (ADR-100), and the L-80 and L-77 options (sentiment example comments; unrounded confidence).
+  5. **Housekeeping, carried; no deploy, no answer change:**
+     - the alert script's comparator fix and its per-poll timestamps;
+     - the retry-log standing check;
+     - the L-78 Cloud SQL suites;
+     - the review of the default compute service account's project-level Editor role: IAM only, no service redeploy, the cheapest security fix left.
+- **Calendar inside the buffer:**
+  - 6.5 work from 10-19; FR-03's attempt timeboxed to end by 11-08;
+  - the evaluation report draft by 11-08, final by 12-01;
+  - the presentation draft by 11-22, rehearsal by 11-29;
+  - the 6.5 deploy window after `06` is submitted, and not inside Window A unless the owner chooses.
+
+**Context:** Sprints 3, 4 and 5 closed early under the same pattern (ADR-093 and the Sprint 5 close). The working agreement allows scope expansion only when genuinely ahead; seven weeks of buffer is that.
+
+**Alternatives considered:**
+- *Keep the 10-25 close:* rejected, because the work is done.
+- *A fourth FR-03 prompt revision:* rejected. Three prompt-only revisions failed, and the fresh-set results show the prompt learns its examples, not the concept.
+- *Build the after-answer timeline and cost per answer as UI polish:* rejected, above: they change the API contract.
+
+**Consequences:**
+- ADR-109 and ADR-106 are not edited; their index Status cells say "superseded in part by ADR-113".
+- **The divergence list gains `03`'s calendar again** (Sprint 6 now closes 10-18, the buffer starts 10-19); `03` is Eric's to edit and nothing was changed.
+- **Tension with a locked rule, named:** the synthetic-data notice fixes what `05`'s TS-20-E records as a known fail. ADR-106 says nothing from 6.5 is counted in `05` or `06`, so `05` keeps its recorded result and the evaluation report states the difference once the notice is deployed.
+
+*2026-10-18 (S6-C1, owner rulings; owner-decided 2026-10-18; assistant-drafted.)* Rulings on the entry above, recorded the same day. Unplaced Planned items are placed (the Editor-role review is housekeeping; the rest are roadmap, portfolio value, not built). L-99's rule 3 condition is written with the bundle PR, before its code. The TS-20-E tension is confirmed as worded: the notice fixes the defect, `05`'s recorded result (FAIL at the time of writing) stands, and 6.5 is not counted in `05` or `06`.
