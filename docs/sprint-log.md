@@ -1059,6 +1059,10 @@ now written; they record the planning decisions above.*
 ## Sprint 6 (2026-10-15 to 2026-10-25; re-baselined, ADR-109) — Hardening & delivery
 *Planning note, 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Sprint 6 runs 2026-10-15 to 10-25 (11 days) and the buffer is 10-26 to 12-05 (ADR-109, which supersedes ADR-093's Sprint 6 dates and ADR-106 in part). The goal below is unchanged, and its "demo rehearsed" is **not expected inside Sprint 6**: it falls in the buffer. Buffer targets: evaluation report draft (Sprint 5 results plus the divergence list) by 11-08, final by 12-01; presentation draft by 11-22; demo rehearsal by 11-29. `05` (due 11-01) and `06` (due 11-08) keep the course's dates; submitting them is owner work in the buffer if not done by 10-25. No 6.5 change is deployed before `06` is submitted. Owner verification sessions outside the windows are allowed (ADR-110).
 **Goal (increment):** Production-grade checklist closed out; demo rehearsed.
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* **Closed 2026-10-18, day 4 of the 10-15 to 10-25 sprint (ADR-113). Goal verdict: partly met, not met.**
+- **Checklist half: audited item by item, not closed out.** `docs/production-grade-audit.md` gave verdicts; in `architecture.md` §7, 8 of the 12 boxes are ticked (1, 2, 3, 7, 8, 10, 11, 12). By the audit's verdicts, items 5 and 6 are Met, offline only, and stay unticked; items 4 and 9 are Partly met. The four unticked items need a redeploy or a live fault: item 4 (F1, F2: probes), item 9 (F13: a pipeline run), item 5 (retry and breaker behaviour, never run on Cloud Run) and item 6 (a specialist-unavailable path, not run on the current build). Items 4 and 9 are in ADR-113's hardening bundle; items 5 and 6 are covered only by its "if the window allows" live degraded path.
+- **Demo half: not done, by plan.** "Demo rehearsed" was placed in the buffer at planning (ADR-109); the target is 11-29.
+- "8 of 12" counts ticked boxes, not "Met": two unticked items are Met offline only.
 
 **Planned:**
 - [ ] Observability, CI/CD completion, graceful degradation, load/latency testing (latency for a handful of concurrent users; no throughput target)
@@ -1200,22 +1204,85 @@ now written; they record the planning decisions above.*
 **Z2b status, 2026-10-14 (deployed and verified; owner present; assistant-drafted).** Build `0dc5aae1-2a6c-498e-bbca-f709c2c91149` from `9ab7c775964bd0aae491ca72082e95229c994129`, `SUCCESS` in about 7 min; six revisions serving at 100%; `verify.py` all `PASS` (paid mode on the five containers, so the YAML sync held); the gateway revision carries `GATEWAY_ASKS_PER_SESSION_HOUR=30`; the trace ID is on the orchestrator, reporting, `mcp_incidents` and QA lines of one request, with no question or router-reason text. The ticks above are those Z2b verified deployed. Not ticked: the build-trigger item under Planned (its proof is recorded in the next dated window-log entry) and the model-call-attempt logging. Record: `docs/deploy-window-log.md`.
 
 **Shipped:**
-*(fill in at sprint end)*
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* The PRs merged from 2026-10-15 to the close, #60 to #73, from `git log --merges` (PRs #58 and #59 merged 10-14, before the sprint, and are Z2b records).
+- **Sprint set-up and tooling** (not among the close prompt's themes; listed so none is dropped):
+  - #60 `docs/sprint6-calendar`: the Sprint 6 calendar (ADR-109, ADR-110).
+  - #61 `docs/05-revision`: the `05` revision branch.
+  - #62 `chore/window-day-tooling`: `verify.py --ipv4`, timeouts and per-line output; the `CLOUDSDK_CONFIG` test guard.
+  - #63 `docs/session-plan-1`: the plan for owner verification session 1.
+  - #64 `chore/session-driver`: `scripts/session_driver.py`, the ledger-capped session driver.
+- **Session 1 records:**
+  - #65 `docs/session1-results`: results of owner verification session 1 (2026-10-15), window log and sprint log.
+  - #66 `docs/session1-followup`: ADR-111, L-98 to L-101, R-05, R-21 and the calendar table.
+- **The alert:**
+  - #67 `feat/degraded-alert`: Part A, the metric, policy and `scripts/alert_degraded.py` as code (ADR-112).
+  - #69 `docs/alert-part-b`: Part B, the live apply and the synthetic-entry test, which passed.
+- **The lock fix:** #68 `fix/session-driver-lock`: `_file_lock` retries on `PermissionError`, bounded, then re-raises.
+- **The audit:** #70 `docs/production-grade-audit`: `docs/production-grade-audit.md` (criteria before evidence), the §7 ticks and notes, the findings.
+- **README and diagram, and the docs findings:** #71 `docs/readme-and-audit-fixes`: the README setup stages and the Mermaid architecture diagram (validated with mermaid-cli 11.4.2); dated corrections for F2, F3, F7, F9, F12; the fresh-clone re-run.
+- **TS-14-D:** #72 `evals/ts14d-scan`: Trivy over the nine images and gitleaks over the history; Passed.
+- **`06` status records:** #73 `docs/06-production-support-status`: `06` drafting status, rubric and weights backup location (S6-D3).
+- No code in these PRs changed a deployed service: the deployed system is still build `0dc5aae1`, commit `9ab7c77` (session 1 summary), and the trigger is disabled.
+
+**Planned vs done:**
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* Status as the list stands at the close; no box is changed here.
+- Observability, CI/CD completion, graceful degradation, load/latency: unticked. Observability done (trace ID and redaction deployed in Z2b, the alert); CI/CD completion waits on F13; graceful degradation has the alert but no live path on the current build; load testing was not done (cold starts were timed in session 1).
+- The L-80 and L-77 options: not done, and not in ADR-113's scope. They stay open and **need an owner decision** (see the report).
+- The alert: done (ticked, #67 and #69). The alert script's comparator and timestamp fix: not done; carried as housekeeping (ADR-113).
+- Terraform; the `verify-caller` account; deploy with no traffic (L-64); the default compute account's Editor role; the batch-scoring job: not done, and not in ADR-113's scope. They stay open and **need an owner decision**.
+- The production-grade audit: done (ticked, #70).
+- The evaluation report, presentation and demo rehearsal: not started; buffer by plan (ADR-109, ADR-113).
+- The deploy-window and runbook items (`plan_full.py`, runbook fixes, the route rename, the YAML sync, the Next.js bump, the build-trigger step, `verify.py` coverage), the Z2 items, the window-day tooling, the test guard, the failure-path log codes: done (ticked).
+- Logging of failed model-call attempts and the standing check: unticked. Built and deployed, never observed (the read below found 0).
+- Runbook step 7 (the L-78 Cloud SQL suites): unticked, carried.
+- G21 (a `golden_v3` scorer change, L-95), the `cost_usd` and `model_calls` response fields (L-94): unticked; roadmap (ADR-113).
+- The runbook's step 12 second idle wait: this line is unticked, but its content was measured in session 1 (sentiment 30.64 s, see the cold-start item). Not re-ticked here.
+- Window A's scenarios and the cold-start timing: done in session 1 (ticked).
+- The `05` free-tier wording (R-11): unticked; the owner's, in `05`.
+- L-92 and L-24, "the owner decides at the Sprint 6 close": decided by ADR-113 as roadmap; the box stays unticked because neither is built.
+- The 6.5 candidates item (L-89, the L-95 rulings, L-96): decided by ADR-113 as roadmap.
+- The paid-balance check before each window: unticked, carried.
+- The divergence list: unticked; evaluation report writing, buffer.
+- L-99 and L-100: L-99 is in the hardening bundle, L-100 is roadmap (ADR-113).
+- The renewal of `owner-laptop-2`, submitting `05`, submitting `06`: unticked, carried (below).
+- Audit findings: F1, F2 (probes) and F13 unticked, in the hardening bundle (ADR-113). F2 wording, F3, F4 and F5, F6, F7 and F9, F8: done (ticked). TS-14-D: done (ticked).
 
 **Carried over:**
-*(fill in at sprint end)*
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)*
+- **Submitting `05` (due 11-01) and `06` (due 11-08):** owner; both are complete and held, not submitted (owner decision).
+- **The retry-log check.** Read 2026-10-19 00:13:34 UTC (2026-10-18 19:13 CDT): `jsonPayload.msg="llm attempt failed"` on the Cloud Run `stdout` log (`log_id("run.googleapis.com/stdout")`), `--freshness 30d`: **0 entries**. The line is a `log.warning` (`packages/llm/src/llm/client.py:278`) and the JSON handler writes to stdout (`packages/common/src/common/logging.py:166`), so the filter could have matched it. A control read of `ask answered` over the same form returned an entry (2026-10-16T00:38:28Z). Carried with the reason: no natural retry has occurred; forcing one needs fault injection, which means a deploy; the unit tests (`tests/unit/test_llm_client.py`) are the evidence.
+- **The 6.5 scope items (ADR-113):** the hardening bundle and the UI polish, deployed in one window after `06` is submitted; the FR-03 attempt, ending by 11-08, with its own ADR before any model call.
+- **The L-78 Cloud SQL suites:** their fixtures need the superuser's credentials, which was refused (Z2a, step 7 note above); housekeeping.
+- **Renewing the `owner-laptop-2` invite about 10-30,** because a renewal tonight would expire before Window A (it expires about 10-27 and Window A opens 10-31, ADR-107).
+- **The paid-balance check before Window A** (10-31; ADR-105, R-21).
 
 **Blockers encountered:**
-*(fill in at sprint end)*
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* The first and second are owner-reported in S6-C1; the third is in the audit.
+- The Project files ran two days behind the repo (found 2026-10-18, refreshed the same day). Owner-reported in S6-C1; no earlier record in the repo.
+- The permission layer refused to delete temporary folders three times: `C:\fc-audit` (recorded in the audit, F12, and since removed), and `C:\fc2` and `C:\ts14d` (owner-reported in S6-C1; the repo records `C:\fc2` and `C:\ts14d` only as clone locations).
+- No Node on the owner's machine, so the README diagram could not be validated locally on 2026-10-18 (S6-R1). Resolved the same day: it validated with mermaid-cli 11.4.2 in headless Chromium (commit `8b55192`).
 
 **Retro:**
+*2026-10-18 (S6-C1; assistant-drafted for the owner to edit in the PR.)* Where a line rests only on the owner's word, it says so.
 - What went well:
+  - Criteria committed before evidence in the audit (commit `5271dea`, "criteria before evidence", ahead of the evidence commit).
+  - A synthetic log entry proved the alert path (filter, metric, policy, email) without waiting for a real fault (ADR-112).
+  - State checks caught a stale Project (owner-reported), an overclaiming prompt from another chat (owner-reported), and wrong premises in the assistant's own prompts: the `outcome == "degraded"` filter that the orchestrator's line does not carry (ADR-112); the "never exercised live" wording (owner-reported); and a validation claim made before the validation ran, which was caught and then run (the diagram, F6; the catch is owner-reported).
+  - The fresh-clone check found a setup failure the README hid (F4, `docker compose up -d postgres` needs a key the README did not mention).
 - What didn't:
   - *2026-10-14 (Z2b):* A prompt's "no GCP change" rule doesn't bind test code; the guard above does.
-- What changes next sprint: *(n/a — final sprint; note instead what you'd do differently on a future project)*
+  - Project-file drift across chats (owner-reported).
+  - Prompts from dedicated chats bypassing the state checks; now routed through the main chat (owner-reported).
+  - Temporary folders created outside the scratch area (recorded: audit F12).
+  - Assistant-written prompts that asserted facts before checking them (recorded: ADR-112).
+- What changes next sprint: *(n/a — final sprint.)* What I'd do differently on a future project:
+  - Refresh shared context after every merge batch.
+  - One chat owns the repo prompts.
+  - Temporary work goes under a gitignored folder inside the repo.
+  - A claim in a prompt names where it was verified.
 
 **Academic deliverable status:**
-- Final product due 2026-12-05 (end of Module 10) — *(status)*
+- Final product due 2026-12-05 (end of Module 10) — *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* In progress: the evaluation report draft by 11-08 and final by 12-01, the presentation draft by 11-22 and rehearsal by 11-29 (ADR-113). `05` and `06` are complete and held, not submitted (owner decision); due 11-01 and 11-08.
 - *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* **Notes for `06`** (written by the owner; this records what the evidence supports):
   - `06` must not claim that retry logging is verified on the deployed system. It is built and unit-tested (ADR-108); no retry has happened on the deployed system, so no line has been read.
   - `06` must not claim that the degraded outcome is verified on the deployed system by the alert test: that test proves the monitoring path only (ADR-112). What is true: degraded results were observed live on 2026-10-13 on the previous build (two `ask degraded` lines, `trigger=dependency`, `capability=routing`, the free-tier 504 window of ADR-104); the current build has the same line shape (`degraded_response()` is unchanged between `9607fa72` and `9ab7c77`) and has not been exercised.
@@ -1231,6 +1298,8 @@ now written; they record the planning decisions above.*
 - ADR-106 (Sprint 6.5 scope at the Sprint 6 close), ADR-107 (grading windows and grader access) and ADR-108 (trace ID, log redaction, retry error logging): decided 2026-10-14, before this sprint's start.
 - ADR-109 (Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26) and ADR-110 (owner verification sessions outside grading windows): decided 2026-10-15.
 - ADR-111 (owner verification session 1 ran on a weekday; supersedes ADR-110's weekend clause only): owner-decided 2026-10-15, written 2026-10-16.
+- ADR-112 (a log-based alert on degraded answers, tested with a synthetic entry): owner-decided and written 2026-10-16.
+- ADR-113 (Sprint 6 closes 2026-10-18; the buffer starts 10-19; the Sprint 6.5 scope; supersedes ADR-109's sprint dates and ADR-106 in part): owner-decided and written 2026-10-18.
 
 *Re-baselined 2026-10-10 (ADR-093): this sprint now runs 2026-10-26 to 11-08 and the buffer is 2026-11-09 to 12-05; scope expansion is decided at the Sprint 5 close.*
 *Note (ADR-082, 2026-10-08): this sprint is planned hardening and delivery work. The buffer is 2026-11-23 to 12-05. If Sprints 1–5 ran clean, use the slack for polish and rehearsal — not for starting anything new.*
@@ -1248,6 +1317,18 @@ whether it changes answers (and so needs a fresh blind evaluation or a
 disclosed difference from the evaluated system).
 
 *2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted.)* Under ADR-109, 6.5 work can start 2026-10-26 (the header's "about 2026-11-09 to 11-29" is superseded), and nothing from it deploys before `06` is submitted.
+
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* **Scope decided by ADR-113** (the Sprint 6 close; 6.5 work starts 10-19, and the 6.5 deploy waits for `06` to be submitted). No line below is deleted; each candidate is marked here, and nothing is dropped:
+- Response transparency, split in three: **committed**, the live elapsed timer, in the UI polish item (client-side only: the browser times the request; no API change, no answer change); **roadmap**, the after-answer timeline (needs per-hop durations in the orchestrator's response, an API contract change and an orchestrator redeploy); **roadmap**, the estimated cost per answer (needs `cost_usd` and `model_calls`, L-94, the same contract change).
+- Cost framing: **roadmap**; it needs a measured baseline, and cost figures are list-price estimates only (L-71).
+- UI appearance upgrade scoped to the presentation: **committed** (ADR-113 item 2; §6 answer wording kept exactly).
+- Executive-style analysis: **roadmap**.
+- Expanded agent abilities (L-68, L-67, G04 and L-56, L-47): **roadmap**.
+- FR-03 third attempt on a freshly generated blind set: **committed**, one attempt, its method decided in its own ADR before any model call (ADR-113 item 3).
+- L-89 (a stopped database gives the degraded result): **roadmap**.
+- The L-95 rulings ("district", "end of next year"): **roadmap**.
+- L-96 (the router and decline-text fix): **roadmap**.
+- Also decided at this close, though not candidate lines: L-92 (the decline-heavy interpretation set) and L-24 (the false-alarm sensitivity check) are **roadmap**; L-99 (verification line on a clarification) and L-98 (tool error text) are **committed** in the hardening bundle; L-100 (backwards date ranges) is **roadmap**; `golden_v3` and the G21 scorer comparison (L-95) are **roadmap**.
 
 - [ ] Response transparency: live elapsed timer; after-answer timeline (route,
   per-hop durations, QA); estimated cost per answer (list price, L-71). No
@@ -1284,4 +1365,4 @@ disclosed difference from the evaluated system).
 | 3 | Yes, 2026-10-02, pulled forward; closed 2026-10-04 (final 2026-10-05) | Pre-registered gates on unseen data caught failures that development data hid; requirements drifted from code unnoticed until a document pass | Yes: stored predictions replaced per-request scoring; the forecast gate was corrected and disclosed; the reporting additions arrived from Sprint 2; FR-03 was attempted, failed, and carried to Sprint 5 |
 | 4 | Yes, with stated limits, 2026-10-10 (day 5 of a sprint planned to 10-25) | Pre-registration held and fault injection found what the checks' author did not think of (a false alarm on a correct answer, missing small-sample checks); a check that accepts every reading where the spec is silent checks nothing (L-72); 219 of 223 caught (98.2%, an upper bound), consistent misparses 0 of 71, and 223 of 223 after fixes designed from the misses | Yes: the deploy pulled forward and finished in one day (ADR-084); the interpretation check ships advisory (L-74); QA fixes and a second measurement added (ADR-092); Sprints 5 and 6 pulled forward and the buffer kept whole (ADR-093) |
 | 5 | Yes, with stated limits, 2026-10-13 (day 2 of a sprint planned to 10-25) | Both pre-registered gates failed and the frozen system shipped as it stood; the held-out run (38, 38, 38 of 50) and the golden run (29 of 36 mechanical, 31 of 36 owner) put numbers on FR-03 and the owner/drafted gap; state checks caught wrong prompt assumptions five times; budget caps per process are not a ceiling (L-93) | Yes: IAP replaced by invite links (ADR-097); sentiment served from stored predictions (ADR-100); the paid key for the deployed services (ADR-104); `ops-db` stopped between announced windows (ADR-105) |
-| 6 | | | |
+| 6 | Partly met, closed 2026-10-18 (day 4 of a sprint planned to 10-25): the checklist is audited, 8 of 12 boxes ticked, the other four need a redeploy or a live fault; the demo rehearsal is in the buffer by plan (ADR-109) | Criteria committed before evidence and a synthetic entry to prove the alert path worked; what failed was shared context, with stale Project files and prompts that asserted facts before checking them | Yes: the 6.5 scope (ADR-113): one hardening redeploy and UI polish after `06` is submitted, and a third and final FR-03 attempt; the rest is roadmap |
