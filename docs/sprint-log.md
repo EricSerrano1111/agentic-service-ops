@@ -1129,6 +1129,19 @@ now written; they record the planning decisions above.*
 - [ ] **Renew the owner invite `owner-laptop-2`** before Window A (it expires about 10-27; ADR-107). *Added 2026-10-16 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.)*
 - [ ] **Submit `05`** (due 2026-11-01; owner). *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
 - [ ] **Submit `06`** (due 2026-11-08; owner) after the three confirmations of session 1 (scenarios, cold starts, grader access). *Added 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)*
+  - *2026-10-18 (S6-D3; owner-decided 2026-10-18; assistant-drafted.)* `06` is drafted in Word as version 1.3, dated 2026-10-18, about 29 pages; not submitted (due 2026-11-08). The Markdown copy is committed to `docs/academic/` only after submission. Its claims were checked against the deployed system before submission (Sprint 3 retro, rule 2), using owner verification session 1 (2026-10-15) and `docs/production-grade-audit.md`. `06` states these as limits:
+    - tool error text in two services' logs (L-98), and the model provider's error sentence, logged shortened (the L-60 remainder);
+    - logging of failed model-call attempts is deployed but not yet observed;
+    - the forced restart is not yet rehearsed;
+    - no backups and no point-in-time recovery, with a single-zone database;
+    - the QA startup probe is on `/healthz` (F1);
+    - no liveness probes (F2);
+    - the pipeline's verify step has not yet run on all six services (F13);
+    - scaling across services is not demonstrated;
+    - there is no automated dependency scanning;
+    - a degraded result has not occurred on the current build;
+    - the degraded-answer alert is the only alert on system behaviour.
+    - Stays unticked until the owner submits.
 
 *Findings from the production-grade audit (S6-P1), added 2026-10-16 (owner-decided 2026-10-16; assistant-drafted). Source for each: `docs/production-grade-audit.md`, Findings. The label on each is a suggestion from whether the fix touches a deployed service (ADR-109: no deploy before `06` is submitted); the owner decides which are fixed.*
 - [ ] **F1: point the `ops-qa` startup probe at `/readyz`** (`deploy/cloudrun/qa.yaml:79-82`; the endpoint checks the database). A config change that needs a redeploy. *Carry to 6.5 / close.*
@@ -1211,6 +1224,7 @@ now written; they record the planning decisions above.*
   - `06` may say the alert path (filter, metric, policy, email) is verified live on 2026-10-16, with a synthetic entry (`trace_id` `alerttest-...`, `synthetic_alert_test: true`, which adds one `trigger=dependency`, `capability=routing` count to the metric's history).
   - `06` may say the degraded log line was observed live on 2026-10-13, on the previous build (`ops-orchestrator-00005-pzc`, routing dependency), with the same line shape in the current build.
   - `06` must not say the current build has produced a real degraded answer: it has not.
+- *2026-10-18 (S6-D3; owner-decided 2026-10-18; assistant-drafted.)* **Notes for `06`, status:** the original line "**Notes for `06` (due 2026-11-08).** Stub; outline waits on the assignment text" is superseded. The assignment text is the four required parts (application description, standard operating procedures, troubleshooting, disaster recovery and clean restart), and `06` is drafted (Word version 1.3, 2026-10-18). The original line is unchanged.
 
 **Decisions made this sprint:**
 
