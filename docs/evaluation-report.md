@@ -1,8 +1,322 @@
 # Evaluation Report — Agentic Service Operations Intelligence Platform
 
-*Stub. Written in Sprint 6 from the Sprint 5 runs; results in `evals/results/sprint5_summary.md` (ADR-044).
-Until then, only the limitations log below is maintained.*
+*2026-10-18 (B-E1; owner-decided 2026-10-18; assistant-drafted.)* **This report is now a skeleton.** Each section below says what goes in it and lists the figures it will cite, each copied from its dated source file with the path. Prose is written in the buffer, with the draft by 11-08 and the final by 12-01 (ADR-113). No figure here is typed from memory or taken from another summary; where a summary and its source file disagree, both are given under "Conflicts" and the skeleton does not choose between them. The Limitations log below is untouched.
 *Updated 2026-10-14.*
+
+**Dates in this skeleton** are the dates in the source files' folder names and headings, not file timestamps. "Sprint 5 system" means the frozen system of ADR-103; "current build" means the commit `9ab7c77`.
+
+## 1. Summary
+
+**What goes here:** the report's summary, written last.
+**Figures to cite:** none yet.
+**Status:** skeleton (left empty on purpose).
+
+## 2. The system evaluated
+
+**What goes here:** the frozen Sprint 5 system, the current build, what changed between them and the proof that no answer changed, and the paid key.
+
+**Figures to cite:**
+- Frozen system: images tagged `9607fa722c4d1b2dc12478dbe4bb42f6c8d95bfb`; "tree equals `eval-freeze-s5`"; mode `LLM_MODE=paid` on the five model-calling services (ADR-104); default router `route_v3`; interpretation check advisory with `qa_interp_v2`; revisions `ops-forecast-00002-m79`, `ops-gateway-00001-8st`, `ops-orchestrator-00006-bvj`, `ops-qa-00003-hwq`, `ops-reporting-00006-md5`, `ops-sentiment-00002-cxz`, identical at the start and end of the run. Source: `evals/results/sprint5_x.md`, "System under test".
+- Freeze record: `evals/freeze_s5.json` (ADR-103): `default_router` `route_v3`; `shipped_interpretation_prompt` `qa_interp_v2`; parse prompts in service `reporting` `parse_v4`, `sentiment` `parse_v1`, `forecast` `parse_v1`; models for orchestrator, specialist and QA all `gemini-3.5-flash-lite` at thinking level minimal; flags `QA_INTERP_MODE` `advisory`, `QA_FORECAST_RECOMPUTE` `on`, `MCP_FEEDBACK_SCORING_deploy` `stored_only`; `as_of_date` `2026-08-30`.
+- Tree check run for this skeleton (`git rev-parse <ref>^{tree}`, 2026-10-18): `eval-freeze-s5` and `9607fa722c4d1b2dc12478dbe4bb42f6c8d95bfb` both give tree `117198ea86fca83118d9e1cd22ac43601708f458`; `9ab7c77` gives `a399ae2e69837bfce44e4099dd394cd81ae7de27`. `git diff --name-only eval-freeze-s5 9ab7c77 | grep '/prompts/'` printed nothing (no prompt file differs between the freeze and the current build). `eval-freeze-s5` is a lightweight tag at commit `133b6fd`; the images were built from `9607fa72`, whose tree is the same.
+- Current build: build `0dc5aae1-2a6c-498e-bbca-f709c2c91149` from `9ab7c775964bd0aae491ca72082e95229c994129`, six revisions serving at 100% (`docs/sprint-log.md`, "Z2b status, 2026-10-14"); "Deployed system: build `0dc5aae1`, commit `9ab7c77`, unchanged at open and close" (`evals/results/session1/2026-10-15/summary.md`); nine images at tag `9ab7c775964bd0aae491ca72082e95229c994129`, digests equal to the serving revisions' (9 of 9) (`evals/results/ts14d/2026-10-18/summary.md`).
+- What changed between them (`docs/sprint-log.md` lines 1175 to 1184): "Each is one of the changes ADR-103 allows after the freeze (logging, the trace ID, deploy config and tooling); none changes an answer, a route, a parse, a QA verdict or §6's answer wording, and no prompt file changed." Items: the trace ID end to end (ADR-108); the L-60 redaction (ADR-108); the YAML sync to paid mode for the five model-calling containers; the hourly cap of 30 (ADR-107) and daily cap 50; logging of each failed model-call attempt; the public `GET /health`; `plan_full.py` and `verify.py` tooling. Also the Next.js bump to 16.4.1 (`docs/sprint-log.md` line 1197).
+- Proof of no answer change (`docs/sprint-log.md` line 1189, local stack, paid mode, 2026-10-14): 12 requests (3 before, 9 after), $0.0042 on the 9 after-run calls; Q1 "What was SLA compliance in the Northeast last month?" main against `fix/z2-post-freeze`: route `reporting`, `prompt_version` `route_v3`, outcome `answered`, `qa_status` `verified`, figures (141 of 160, rate 0.8813) and answer text identical. **Limit, copied:** "*Q2, sentiment trend by month, after only:*", "*Q3, weekly volume for the next 8 weeks, after only:*", and "*Not covered live:* sentiment and forecast before/after (the cap)." Only Q1 was compared before and after. **Conflict recorded there:** "the prompt asks for the three questions before and after (18 calls) under a 12-request cap, so the before run asked only question 1 (3 calls) and the after run asked all three (9 calls); the cap was kept."
+- The paid key: ADR-104 (`docs/decisions-log.md`, "Deployed model calls use the paid key for the evaluation and grading window"); `evals/results/sprint5_x.md`: "`LLM_MODE=paid` on the five model-calling services (ADR-104)".
+
+**Conflicts:**
+- `evals/freeze_s5.json` records `llm_mode_in_services` `free`. `evals/results/sprint5_x.md` records `LLM_MODE=paid` on the five model-calling services (ADR-104). Both are given; the skeleton does not choose.
+
+**Status:** skeleton.
+
+## 3. Methods
+
+**What goes here:** how the sets were made, pre-registration, k=3 reporting, the golden set's scoring (mechanical and owner judgement side by side) and the spent sets.
+
+**Figures to cite:**
+- Sets generated, not owner-written: ADR-094's sentence, "In a real deployment, evaluation sets would come from real user questions and subject-matter experts. Here they were generated by an independent model under a written brief; the owner reviewed the brief and spot-checked the ambiguous labels." and "The sets were generated, not owner-written." (`evals/results/sprint5_x.md`, "Disclosure lines"; L-86). The golden set is the exception: 10 of its 36 items are owner-written (ADR-074; `evals/results/golden_v2/2026-10-13/score.json`, `by_author` owner `[6, 10]`).
+- Persona-drop selection effect: five of the 31 skimmed rows were dropped, all `ambiguous` (L-86 update 2026-10-11; `evals/results/sprint5_failure_data.md`, section 3).
+- Pre-registration: `evals/sprint5_gates.md` ("committed in one commit before any Part C call"; pre-registration commit 16:24:33 CDT, first Part C call 16:34 CDT, 2026-10-12); golden method fixed in `evals/results/sprint5_x/golden_scoring.md` (commit `05a1708`, 2026-10-13 12:34:49 -05:00) before the first golden call (`evals/results/sprint5_x.md`, "Scoring"); QA fault catalogue frozen at `b5ad1f4` (2026-10-10 12:32:45 CDT) (`evals/results/qa_faults/2026-10-10/README.md`).
+- k=3 reporting: held-out routing k=3, range 38 to 38, `flipping_items` empty (`evals/results/routing_heldout_v1/2026-10-13/score.json`); golden one run (`evals/results/sprint5_x.md`, "What ran"); L-17 and L-18.
+- Golden scoring, two scores side by side: mechanical `passed` 29 of `n_scored` 36 (`evals/results/golden_v2/2026-10-13/score.json`); owner judgement 31 `Y` of 36 (count of `owner_pass` in `evals/results/sprint5_x/golden_owner_review.csv`, run for this skeleton); by author, owner-written 6 of 10 mechanical and 7 of 10 owner (drafted 23 of 26 and 24 of 26); agreement 32 of 36, disagreeing on G08, G21, G27, G28 (counted from the two files for this skeleton).
+- Spent sets: "`routing_heldout_v1` and `golden_v2` were run on 2026-10-13 [...] They are **spent for blind use**" (`evals/results/sprint5_x.md`, "The sets are spent"). The sets not touched in that run: `fr03_fresh_v2`, `interp_fresh_v1`, `interp_pairs_v1`, `parse_filters_v1`, `reserve` (same file). `fr03_fresh_v2` and the interpretation pairs were used in the Prompt W gates (`evals/sprint5_gates.md`, "Results").
+
+**Conflicts:** none found for this section.
+
+**Status:** skeleton.
+
+## 4. Results
+
+**What goes here:** the results, one subsection each. Numbers come from the files named; interpretation is written in the buffer.
+
+### 4.1 Routing (held-out)
+
+**What goes here:** the held-out routing result, with the without-ambiguous diagnostic and the taxonomy.
+
+**Figures to cite** (`evals/results/routing_heldout_v1/2026-10-13/score.json`, `routing_heldout_v1`, 50 items, k=3, frozen system):
+- Per run `correct` 38, 38, 38 of 50; `range` [38, 38]; `flipping_items` none; `complete_runs` 3.
+- Without the 7 ambiguous items: `correct_without_ambiguous` 38, 38, 38 of `n_without_ambiguous` 43.
+- Taxonomy (`taxonomy`, item-runs): ambiguous not flagged 21; out-of-scope accepted 15; wrong area 0; false ambiguous 0; multi-domain missed 0; in-scope declined 0; error or timeout 0.
+- `per_category` (of 3 runs): ambiguous 0/21; clear_forecast 15/15; clear_reporting 15/15; clear_sentiment 15/15; filtered 6/6; multi_domain 18/18; near_miss 9/15; out_of_scope 6/15; technician 6/6; underspecified 18/18; unsupported_in_area 6/6.
+- Per-run `median_s` 3.7, 3.5, 3.81 and `p95_s` 17.62, 5.36, 5.06; `over_deadline` empty.
+
+**Conflicts:** none on the counts. Rounding only: `evals/results/sprint5_summary.md` gives "per-run median 3.5 to 3.8 s (about 3.7 s); p95 at most 17.6 s" where `score.json` gives 3.7, 3.5, 3.81 and 17.62, 5.36, 5.06.
+
+**Status:** skeleton.
+
+### 4.2 Golden
+
+**What goes here:** the golden result as two scores, with the seven mechanical failures.
+
+**Figures to cite:**
+- Mechanical: `passed` 29, `n_scored` 36; `stretch` G02 true, G04 true, G05 false, G10 true; `median_s` 3.93, `max_s` 5.9, `over_120s` empty (`evals/results/golden_v2/2026-10-13/score.json`).
+- Owner judgement: 31 `Y` of 36; owner-written 7 of 10; drafted 24 of 26 (`evals/results/sprint5_x/golden_owner_review.csv`, counted for this skeleton).
+- Agreement 32 of 36 (both files; disagreements G08, G21, G27, G28).
+- The seven mechanical failures, with the owner's mark and classification: `evals/results/sprint5_failure_analysis.md`, section 2 (G03, G05, G07, G08, G21, G28, G35).
+- G21: "30/36 if compared at display precision. A correction made after seeing results; not the pre-registered score" (L-95; `evals/results/sprint5_summary.md`).
+- Assistant's reading, kept apart from the owner's marks: `evals/results/sprint5_x/golden_assistant_reading.md`.
+
+**Conflicts:** none found. `evals/results/sprint5_summary.md` (31 of 36; 7 of 10; 24 of 26; 32 of 36 agree) matches the counts from `golden_owner_review.csv` and `score.json`.
+
+**Status:** skeleton.
+
+### 4.3 QA fault catch rate
+
+**What goes here:** measurements 1 to 3 side by side, and the misparse result. The catch rate is an upper bound on faults the author thought of (L-85), not an estimate for unseen faults.
+
+**Figures to cite:**
+- Measurement 1, `evals/results/qa_faults/2026-10-10/report.md`, section 2: total 219/223 = 98.2% (95% Wilson 95.5-99.3%); forecast 39/43; reporting 104/104; sentiment 76/76; section 1: one false alarm on reporting controls (`reporting:f09`; README, "Why the misses did not fire"). Misses: F08 4 of 9 cases passed; O2 6 of 6 passed; O4a, O4b 1 case each passed (README).
+- Measurement 2, `evals/results/qa_faults/2026-10-10-m2/report.md`: total 223/223 = 100.0% (95% Wilson 98.3-100.0%); 0 false alarms; fixes designed after measurement 1's misses (README).
+- Measurement 3, `evals/results/qa_faults/2026-10-11-m3/report.md`: total 223/223 = 100.0% (95% Wilson 98.3-100.0%); owner fault 2 caught 6 of 6 (passed 0 of 6 in measurement 2); "Compared with measurement 2, 19 case outcomes differ, all of them a newly fired `forecast_numbers_recomputed`" (README); "It is evidence the fix works, not a catch rate for faults nobody has thought of" (README).
+- Clean forecasts checked, 0 mismatches: 171 forecasts, 2320 numbers, `mismatches` empty (`evals/results/qa_forecast_recompute/2026-10-11/clean_check.json`, `2026-10-12/clean_check.json` and `2026-10-12-baked/clean_check.json`; the three files give the same counts, and `2026-10-12` and `2026-10-12-baked` are byte-identical).
+- Misparse: caught 0/30 reporting, 0/19 forecast, 0/22 sentiment (71 cases), and owner fault O5 0 of 10 (`evals/results/qa_faults/2026-10-11-m3/report.md`, sections 7 and 8); the interpretation client in that harness is a fake that always says `faithful`.
+- Advisory interpretation check on the used pairs: `qa_interp_v2` run 1 (ADR-089) 7 false rejects of 42 against `qa_interp_v3` 3 of 42 (`docs/decisions-log.md`, ADR-102 table; see section 6 for the gate).
+
+**Conflicts:**
+- `evals/results/qa_faults/2026-10-10/README.md` says "Misparse (M*, O5), 0 of 71". `evals/results/qa_faults/2026-10-10/report.md` section 7 gives 71 cases for the consistent misparses (30, 19 and 22, the same three rows as measurement 3) and lists O5 (10 cases) separately in section 8 of `evals/results/qa_faults/2026-10-11-m3/report.md`. Both are given; the skeleton does not choose.
+- Note for the writer, not a conflict: L-85 and `evals/results/qa_faults/2026-10-10/README.md` say 47 assistant-drafted faults; the reports' section 2 scores 34 faults (223 cases) because it excludes the rating contradictions and consistent misparses, which are reported in their own sections.
+
+**Status:** skeleton.
+
+### 4.4 Forecast
+
+**What goes here:** the forecast model `volume_v2` against seasonal naive on the two folds and the headline holdout, and the serving table. L-19 (the holdout excludes the Q4 peak) and L-43 apply.
+
+**Figures to cite:**
+- Seasonal naive is the baseline: "Baseline: seasonal naive (the same week 52 weeks earlier)" (`docs/decisions-log.md`, ADR-069). The `baseline` key in `holdout.json` and `fold_A.json` is not labelled in the file; ADR-069 is the basis.
+- The table below, copied by script from `evals/results/forecast/2026-10-02_folds_v2/fold_A.json` (`model.overall.mape`, `baseline.overall.mape`), `evals/results/forecast/2026-10-02_folds_v2/gates.json` (`v2_corrected`: `model_mape_26`, `naive_mape_26`) and `evals/results/forecast/2026-10-02_holdout/holdout.json` (`models.loglinear_robust_v2`):
+
+| Slice | Fold A (26 wk, not gated) model / naive MAPE % | Fold B (26 wk) model / naive MAPE % | Holdout (26 wk) model / baseline MAPE % |
+|---|---|---|---|
+| total | 9.91 / 11.80 | 9.46 / 10.61 | 8.81 / 14.80 |
+| inspection | 20.36 / 31.38 | 24.40 / 23.76 | 27.82 / 43.14 |
+| install | 26.47 / 25.01 | 19.48 / 25.62 | 26.40 / 30.51 |
+| maintenance | 24.28 / 23.76 | 23.50 / 24.79 | 14.27 / 20.20 |
+| repair | 17.92 / 17.35 | 15.20 / 18.66 | 13.37 / 16.17 |
+| upgrade | 35.25 / 29.88 | 24.11 / 35.59 | 27.10 / 32.24 |
+
+- Serving table, copied by script from `ml/forecast/artifacts/volume_v2.manifest.json` (`serving.slices`); rule: "served only if the slice-band passes ADR-070's gate on fold B and its volume_v2 holdout MAPE is at most 20%; shown_error is the larger of the two (ADR-071)" (5 of 18 slice-bands served):
+
+| Slice | Band | Fold B MAPE % | Holdout MAPE % | ADR-070 gate | Served | Shown error % |
+|---|---|---|---|---|---|---|
+| total | 1-4 | 11.77 | 13.58 | pass | yes | 13.58 |
+| total | 5-13 | 5.49 | 5.41 | pass | yes | 5.49 |
+| total | 14-26 | 11.49 | 9.70 | pass | yes | 11.49 |
+| inspection | 1-4 | 25.71 | 28.91 | fail | no | 28.91 |
+| inspection | 5-13 | 23.85 | 17.86 | fail | no | 23.85 |
+| inspection | 14-26 | 24.38 | 34.38 | fail | no | 34.38 |
+| install | 1-4 | 26.02 | 43.69 | fail | no | 43.69 |
+| install | 5-13 | 17.96 | 14.33 | pass | yes | 17.96 |
+| install | 14-26 | 18.52 | 29.42 | pass | no | 29.42 |
+| maintenance | 1-4 | 27.41 | 14.42 | fail | no | 27.41 |
+| maintenance | 5-13 | 22.92 | 11.32 | fail | no | 22.92 |
+| maintenance | 14-26 | 22.70 | 16.26 | fail | no | 22.70 |
+| repair | 1-4 | 7.70 | 27.94 | pass | no | 27.94 |
+| repair | 5-13 | 10.84 | 9.23 | pass | yes | 10.84 |
+| repair | 14-26 | 20.51 | 11.75 | fail | no | 20.51 |
+| upgrade | 1-4 | 70.24 | 46.62 | fail | no | 70.24 |
+| upgrade | 5-13 | 17.29 | 26.95 | pass | no | 26.95 |
+| upgrade | 14-26 | 14.65 | 21.20 | pass | no | 21.20 |
+
+- End to end: `evals/results/forecast_agent/2026-10-02/summary.md` (parse evaluation 14/14 in each of 3 runs; 7 end-to-end questions); `evals/results/forecast_agent/2026-10-02/e2e.json`.
+
+**Conflicts:** none found. Note for the writer: `holdout.json` holds `loglinear_robust_v1` (total holdout MAPE 9.26 against baseline 14.80) as well as `loglinear_robust_v2` (the table); ADR-070 chose `volume_v2` after the fold results and before the holdout.
+
+**Status:** skeleton.
+
+### 4.5 Sentiment
+
+**What goes here:** the BERT model against TF-IDF on macro-F1, the hard cases and calibration.
+
+**Figures to cite:**
+- Macro-F1 on the test split (n=1128, split `v1`): `bert_v1` 0.9713 (accuracy 0.9796) (`evals/results/sentiment/2026-10-01_bert_v1/bert_v1.test.metrics.json`); `tfidf_logreg` 0.9431 (accuracy 0.9566) (`evals/results/sentiment/2026-10-01_baselines/tfidf_logreg.test.metrics.json`); `diagnostic_majority` 0.1673 (accuracy 0.5027) (`diagnostic_majority.test.metrics.json`, same folder). Paired bootstrap difference 0.0282, 95% CI [0.0116, 0.0456], verdict "BERT better" (`evals/results/sentiment/2026-10-01_bert_v1/comparison.json`).
+- McNemar (`comparison.json`): full p = 0.000156 (b_only_a_right 36, c_only_b_right 10); sarcastic p = 1.0, implicit p = 0.266845703125, mixed p = 0.1796875, each "not distinguishable".
+- Hard cases, BERT (`bert_v1.test.metrics.json`, `hard_cases`): sarcastic n=42 accuracy 0.8333; implicit n=126 accuracy 0.9286; mixed n=88 recall 0.9545, f1 0.9333.
+- Calibration on the test split (`bert_v1.test.metrics.json`, `calibration`): ECE 0.0106 raw, 0.0094 calibrated, 15 bins; 16 flagged (rate 0.0142); accuracy flagged 0.5, unflagged 0.9865; flagged share of errors 8 of 23 overall.
+- Calibration on the validation split (`evals/results/sentiment/2026-10-01_bert_v1/calibration.json`): temperature 1.032156, tau 0.840840745682907, 21 flagged of 1129. **Note, copied from that file:** "T and τ were fitted on the split used to select the run and epoch, so these validation figures are optimistic (ADR-066); only test figures are results."
+- Parse evaluation 13/14 in each of 3 runs; end to end (`evals/results/sentiment_agent/2026-10-01/summary.md`).
+
+**Conflicts:** none found. The validation and test calibration blocks differ because they are different splits, not because either is wrong; the test block is the result (see the note above).
+
+**Status:** skeleton.
+
+### 4.6 Latency and cold starts
+
+**What goes here:** latency on the deployed system in Sprint 5 and in owner verification session 1, and the cold-start readings against the 120 s ceiling (R-05).
+
+**Figures to cite:**
+- Sprint 5 held-out routing, per-run `median_s` 3.7, 3.5, 3.81; `p95_s` 17.62, 5.36, 5.06 (`evals/results/routing_heldout_v1/2026-10-13/score.json`). Golden `median_s` 3.93, `max_s` 5.9, none over 120 s (`evals/results/golden_v2/2026-10-13/score.json`).
+- Cold start, reporting path, 2026-10-12/13: "55.87 s in the browser, 54.47 s at the gateway, against 120 s" (`docs/deploy-window-log.md`, line 324).
+- Session 1 (2026-10-15) cold-start readings (`evals/results/session1/2026-10-15/summary.md`, "Cold-start readings (TS-16-D, R-05)"): sentiment 61 s stopwatch (gateway 61,488 ms; the gateway hop was not cold), repeat 30.64 s; forecast 46 s; reporting 29 s at TS-20-A (gateway 29,937 ms). "Every reading was inside the 120 s ceiling."
+- Session 1 scaling: TS-18-C scaling clause FAIL (`ops-reporting` stayed at 1 instance, `ops-forecast` 1); L-101.
+- BERT latency proxy (local CPU-limited container, not Cloud Run; L-28): cold start median 13.12 s at 1 CPU and 13.02 s at 2 CPU against a 20 s budget; largest account x quarter (107 comments) 9.8 s median at 1 CPU against the 30 s budget (`evals/results/sentiment/2026-10-01_latency_proxy/summary.md`).
+
+**Conflicts:** none on the cited figures. Rounding only, as in 4.1.
+
+**Status:** skeleton.
+
+### 4.7 Cost
+
+**What goes here:** list-price estimates from the logs and ledgers, and the owner's console readings, each kept apart and dated.
+
+**Figures to cite:**
+- X run (2026-10-13): `requests` 186, `cost_usd_known` 0.172689, `unknown_cost_requests` 0, `max_request_cost_usd` 0.001737, caps 186 requests and $1.50 (`evals/results/sprint5_x_ledger.json`; `evals/results/sprint5_x.md` gives $0.1727 for 186 requests). List-price estimate from logs (L-71, L-94).
+- Prompt W gates (2026-10-12): "418 of 561 requests, $0.2719 of $3.00" (`evals/sprint5_gates.md`, "Results", citing `evals/results/sprint5_w_ledger.json`).
+- Session 1 (2026-10-15): `requests` 57 of `max_requests` 75, `dollars` 0.079 of `max_dollars` 0.25 (`evals/results/session1/2026-10-15/ledger.json`; "charged at the highest seen cost when unknown", `summary.md`).
+- Owner's console readings, as recorded and dated, not merged: 2026-10-15, before session 1, balance "$7.88, owner-read (Google AI Studio credit balance, topped up 2026-10-15)"; at close, AI Studio total spend "$2.12 for 2026-09-18 to 2026-10-15" and GCP billing "$4.50 cost minus $1.64 savings = $2.86 total for 2026-10-01 to 2026-10-15" (`evals/results/session1/2026-10-15/summary.md`, "Balance before and after"). 2026-10-16: budget alerts at $10, $50 and $80, "a $7.85 prepaid balance and $3.15 GCP cost to date" (`docs/production-grade-audit.md`, item 11).
+- Per-request cap default $0.02; per-process caps `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00`, per process and not global (L-88, L-93) (`docs/production-grade-audit.md`, item 11).
+
+**Conflicts:** none found. The console readings are of different dates and windows (2026-10-15 and 2026-10-16; 10-01 to 10-15 against "to date"), so they are listed separately and not reconciled: $7.88 against $7.85 for the prepaid balance, and $2.86 against $3.15 for GCP cost.
+
+**Status:** skeleton.
+
+## 5. Failure analysis
+
+**What goes here:** pointers to the Sprint 5 analysis and its five patterns, one line each. No figures are restated here.
+
+**Figures to cite:** (all in `evals/results/sprint5_failure_analysis.md`, 2026-10-13, section 3)
+- Pattern 1: ambiguity is answered, not flagged (21 held-out item-runs and G35; L-58).
+- Pattern 2: a future-tense question on an out-of-scope subject is routed to forecast (NM-14, NM-20, G08; L-96).
+- Pattern 3: a qualifier the system cannot honour is dropped or not named (G05, G10, G04; L-56, L-95 (4); R-18).
+- Pattern 4: a term or period the data does not define is resolved by the system's own reading (G03, G07; L-95 (1) and (2); R-18).
+- Pattern 5: the mechanical score and the owner's judgement disagree on 4 of 36, in both directions (R-16, L-95).
+- The 12 items behind the 36 wrong held-out item-runs: section 1 of the same file; data in `evals/results/sprint5_failure_data.md`.
+
+**Conflicts:** none found.
+
+**Status:** skeleton.
+
+## 6. Gates that failed
+
+**What goes here:** for each failed gate, what was pre-registered, what failed and what shipped. Sources are `evals/sprint5_gates.md` and the ADRs.
+
+**Figures to cite:**
+- **FR-03 (ADR-075, ADR-076, ADR-101).** Pre-registered, `evals/sprint5_gates.md` B1: (a) at most 1 non-ambiguous item-run routed `ambiguous`; (b1) development mean at least 42.00; (b2) fresh-set non-ambiguous mean at least `route_v3`'s minus 1; (c) at least 6 of 8 ambiguous items return `ambiguous` in at least 2 of 3 runs. Result (`evals/sprint5_gates.md`, "Results"): FAIL on (c): (a) 0 of 24; (b1) 43, 43, 43, mean 43.00; (b2) `route_v6` 7, 7, 7 against `route_v3` 8, 8, 8 (floor 7.00); (c) 4 of 8 (needed 6; misses AMB-08, AMB-11, AMB-17, AMB-18). Shipped: `route_v3` stays the default; FR-03 stays open (L-58). ADR-075 accepted, not in effect; ADR-076 also failed (`docs/sprint-log.md`, Sprint 3 decisions list).
+- **Interpretation (ADR-089, ADR-102).** Pre-registered, `evals/sprint5_gates.md` B2: at most 1 false reject of the 23 correct pairs and at least 19 of the 23 wrong pairs caught, in all 3 runs, early stop on a failed run. Result (run file `evals/results/qa_interp/2026-10-12/interp_qa_interp_v3_k1_163702.json`, path `C2`, 46 calls; `evals/sprint5_gates.md`, "Results"): FAIL on (a) in run 1: 3 false rejects of 23 (reporting 1 of 10, forecast 1 of 7, sentiment 1 of 6); 19 of 23 caught (floor 19; reporting 10 of 10, forecast 5 of 7, sentiment 4 of 6); runs 2 and 3 not made. Shipped: the check stays advisory with `qa_interp_v2`; `qa_interp_v3` not shipped; L-74 stands. L-92: the gate holds 1 decline pair, so it does not test declines.
+- **FR-03, the two earlier attempts (ADR-075, ADR-076).** Pre-registered, ADR-075 gate: (a) at most 1 non-ambiguous item-run routed `ambiguous` across all `route_v4` runs; (b) non-ambiguous accuracy in every run no lower than the `route_v3` run on the same items, minus 1; (c) at least 4 of 5 ambiguous items return `ambiguous` in at least 2 of 3 runs (`docs/decisions-log.md`, ADR-075, "Gate"). Result: `route_v4` (a) FAIL (r05 routed `ambiguous` in 2 of 3 runs); `route_v5` (a) PASS, (c) PASS, (b) FAIL (run 2 scored 41 against a floor of 42) (ADR-075, "Results"). ADR-076 corrected the comparison (3 `route_v3` runs) and tested `route_v5` on `fr03_fresh_v1`: (a) PASS 0 item-runs; (b1) 44, 41, 43 (mean 42.67) against `route_v3` 43, 43, 43; (b2) 10, 10, 10 against 10, 10, 9; (c) FAIL 3 of 5 (needed 4) (ADR-076, "Results"; L-58 and "L-58 update"). Shipped: `route_v3` stays the default; ADR-075 "Accepted; not in effect". Per-item runs: `evals/results/routing_*_route_v4_*.json`, `routing_*_route_v5_*.json`. ADR-113 counts these with `route_v6` as the three prompt-only FR-03 revisions that failed (`route_v4`, `v5`, `v6`).
+- **Interpretation, the two earlier prompts (ADR-089).** Pre-registered (`evals/qa_interp/README.md`, committed `6c79e50`, 2026-10-09 09:29:14 CDT): 84 pairs, k=3, in every run at most 2 false rejects of the 42 correct pairs and at least 34 of the 42 wrong pairs caught (ADR-089). Result (ADR-089, "Results"): `qa_interp_v1` run 1: 6 of 42 false rejects, 37 of 42 caught, gate failed, stopped in run 2; `qa_interp_v2` run 1: 7 of 42 false rejects, 39 of 42 caught, gate failed again. "The early stop was not pre-registered and is disclosed." Shipped: advisory mode with `qa_interp_v2` (L-74). Runs: `evals/results/qa_interp/2026-10-09/interp_qa_interp_v1_k3_092924.json` and `interp_qa_interp_v2_k3_094124.json`.
+- Ledger for both gates: 418 of 561 requests, $0.2719 of $3.00 (`evals/sprint5_gates.md`, "Results").
+
+**Conflicts:** none found. Note for the writer: ADR-101 says "`route_v6` is better than `route_v3` on this set (11 of 16 in every run against 8 of 16)", and `evals/results/sprint5_summary.md` says "`route_v6` is better than `route_v3` on the fresh set (11 of 16 against 8 of 16)". The six run files `evals/results/routing_fr03_fresh_v2_gemini-3.5-flash-lite_route_v{3,6}_20261012T*.json` give `correct` 11 of 16 in each `route_v6` run and 8 of 16 in each `route_v3` run, and `accuracy_by_tag` `ambiguous` 4/8 against 0/8. The (b2) figures in `evals/sprint5_gates.md` ("Results") are `route_v6` 7, 7, 7 against `route_v3` 8, 8, 8 of the 8 non-ambiguous items. The totals reconcile (7 + 4 = 11; 8 + 0 = 8): `route_v6` is better in total because it recognises ambiguous items, and one non-ambiguous item worse.
+
+**Status:** skeleton.
+
+## 7. Divergences from the submitted documents
+
+**What goes here:** every post-submission divergence line recorded in `docs/sprint-log.md`, grouped by document, each with its date and source line, copied and not rephrased. "Nothing in a submitted document was edited" (`docs/sprint-log.md` line 1001).
+
+**Figures to cite:** none; the lines below are copied from `docs/sprint-log.md` by script, with its line numbers.
+
+**Document `02`**
+- 2026-10-04 (`docs/sprint-log.md` lines 562 to 564):
+  - *`02`, FR-10 says a model that fails the threshold on held-out weeks is not deployed. The built system deploys `volume_v2` and withholds each failing slice-band, with its error shown (ADR-071).*
+
+**Document `03`**
+- 2026-10-08 (`docs/sprint-log.md` lines 578 to 581):
+  - *`03` quotes the original sprint calendar (sprint dates, the critical path, the schedule rows and the stop rules' dates). ADR-082 re-baselines it: Sprint 4 is 2026-10-06 to 10-25, Sprint 5 10-26 to 11-08, Sprint 6 11-09 to 11-22, buffer 11-23 to 12-05. The final date is unchanged.*
+- 2026-10-08 (`docs/sprint-log.md` lines 582 to 583):
+  - *`03`, the critical path, the task-16 schedule row and the stop rules quote the deploy window 11-02 to 11-04. ADR-078 moves it. `03` is Eric's to edit; nothing was changed.*
+- 2026-10-10 (`docs/sprint-log.md` line 829):
+  - *`03` quotes the original calendar and, after ADR-082, the 2026-10-08 re-baseline. ADR-093 moves Sprint 5 to 2026-10-12 to 10-25 and Sprint 6 to 10-26 to 11-08, with the buffer 11-09 to 12-05; the final date is unchanged. `03` is Eric's to edit; nothing was changed.*
+- 2026-10-13 (`docs/sprint-log.md` line 1003):
+  - *The ADR-093 calendar: Sprint 5 closed on 2026-10-13, 12 days before 2026-10-25, so the Sprint 5 window and the buffer start differ from `03` and ADR-093 again.*
+- 2026-10-18 (ADR-113, `docs/decisions-log.md`, "Consequences"):
+  - **The divergence list gains `03`'s calendar again** (Sprint 6 now closes 10-18, the buffer starts 10-19); `03` is Eric's to edit and nothing was changed.
+
+**Document `04`**
+- 2026-10-05 (`docs/sprint-log.md` lines 567 to 568):
+  - *`04`, TA-16 quotes the stop date 2026-11-04. ADR-078 moves the deploy window to 2026-10-12 to 10-14, with the stop rule at the end of 10-14.*
+- 2026-10-05 (`docs/sprint-log.md` lines 569 to 571):
+  - *`04`, "each component deploys as its own Cloud Run service". ADR-079 runs each MCP server as a sidecar of its agent, so the deploy is two services at first and six in the target topology, not one per component.*
+- 2026-10-05 (`docs/sprint-log.md` lines 572 to 573):
+  - *`04`, the interface "on Node.js LTS". ADR-080 serves a static export from the gateway, so no Node.js runs in production (Node is a build tool only).*
+- 2026-10-05 (`docs/sprint-log.md` lines 574 to 575):
+  - *`04`, Table 3 says the orchestrator routes on Agent Card skills. In fact `route_v3` hard-codes the domain descriptions, and the card supplies only the agent's URL.*
+- 2026-10-05 (`docs/sprint-log.md` lines 615 to 616; it repeats the first `04` line above, kept as recorded):
+  - *Post-submission divergence (carry to the evaluation report): the submitted `04` quotes the 2026-11-04 stop date (TA-16); ADR-078 moves it.*
+- 2026-10-13 (`docs/sprint-log.md` line 1002):
+  - *`04`'s three sentiment lines differ from the built system (ADR-100: deployed sentiment reads stored predictions only).*
+
+**Document not named in the source**
+- 2026-10-13 (`docs/sprint-log.md` line 1004):
+  - *Identity-Aware Proxy was replaced by invite-link access (ADR-097).*
+  - `docs/sprint-log.md` line 1112 lists it as "Identity-Aware Proxy replaced by invite links, ADR-097" and names no document. A search of `docs/academic/02*`, `03*` and `04*` for "Identity-Aware" and "IAP" found no match, so the document is not identified here.
+
+**Conflicts (gaps between records, listed and not resolved):**
+- ADR-109 (`docs/decisions-log.md` line 3654) records "**Post-submission divergence (carry to the evaluation report):** `03` quotes the calendar, which this entry moves again; `03` is Eric's to edit and nothing was changed." No matching line was found in `docs/sprint-log.md` by searching "divergence". It is a `03` calendar divergence, outside the sprint-log collection this section was asked to copy.
+- ADR-084 (`docs/decisions-log.md` line 2576) says "Post-submission divergence: `03` and `04` quote older windows (already listed in the sprint log); the 10-08 start is added there." No sprint-log line for a 10-08 start was found by the same search. Not added here.
+- The sprint-log item "The divergence list goes into the evaluation report" (line 1112) stays unticked; this PR changes only `docs/evaluation-report.md`.
+
+**Status:** skeleton.
+
+## 8. Production-grade status
+
+**What goes here:** the production-grade checklist verdicts and what the evidence does and does not show. The audit itself is `docs/production-grade-audit.md` (dated 2026-10-16, S6-P1).
+
+**Figures to cite:** the summary table of `docs/production-grade-audit.md`, copied as it stands (lines 13 to 26, including item 12's dated notes). Its "Ticks:" line (line 28) is not copied: it predates item 12's later verdict, which the table row records.
+
+| # | Item | Required or portfolio | Verdict | Basis |
+|---|---|---|---|---|
+| 1 | Containerized, reproducible builds | Required | **Met, deployed** | Nine Dockerfiles install `--locked` from `uv.lock`; all six services serve the commit-tagged image from build `0dc5aae1`. Base images are floating tags (a limit). |
+| 2 | Config and secrets | Required | **Met, deployed** | Per-container mounts read from the live services; guard tests in CI; 0 secret patterns in 14 days of logs. Pattern-based. |
+| 3 | Structured logging, trace IDs | Required | **Met, deployed** | One trace on 22 entries across gateway, orchestrator, reporting plus sidecar and QA, with access lines (read from Cloud Logging). L-98 limit stands. |
+| 4 | Health checks and readiness | Required | **Partly met** | Endpoints and startup probes exist; **the QA container's startup probe is `/healthz`, not `/readyz`**; no Cloud Run liveness probe anywhere. |
+| 5 | Retries, timeouts, breakers (120 s) | Required | **Met, offline only** | Tested offline; the 30 s routing timeout acted live on the previous build; cold starts held 120 s. Retry logging unverified deployed (0 lines in 30 days). |
+| 6 | Graceful degradation | Required | **Met, offline only** | ADR-088 behaviour tested; alert verified live with a synthetic entry; real degradation seen on the previous build only. **No specialist-unavailable path has run on the current build.** |
+| 7 | Test suite | Required | **Met, offline only** | CI green on `fa2c7cd`: 2722 unit and 1096 integration passed; 2722 passed again in a fresh clone. 31 integration skips are the local-only sentiment tests (L-78). |
+| 8 | Eval harness | Required | **Met, offline only** | Harness plus dated results: held-out routing 38/50, golden 29/36, QA faults 223/223 (upper bound). The evaluation report is not written. |
+| 9 | CI pipeline | CI required; CD portfolio | **Partly met** | CI is green on `main` and both Z2 conditions are done. But the pipeline's verify step has run in Cloud Build only for the two-service slice (2026-10-08); both full-system deploys ran with `_RUN_VERIFY=false` and a hand-run `verify.py`. |
+| 10 | Least-privilege DB roles | Required | **Met, offline only** | Already ticked; grants asserted in CI; the deployed role per container is read from the services. Not re-run on Cloud SQL. |
+| 11 | Cost guardrails and caps | Required | **Met, deployed** | Caps tested and read from the live services; the owner's console readings (2026-10-16) give budget alerts at $10, $50 and $80, a $7.85 prepaid balance and $3.15 GCP cost to date. The caps are per process, so the balance is the real ceiling. |
+| 12 | README, diagram, setup from clean | Required | **Not met** | Step 3 (`docker compose up -d postgres`) fails on a missing `GOOGLE_AI_API_KEY` the README never mentions at that step; the diagram is a placeholder. *2026-10-18 (S6-R1; owner-decided 2026-10-16; assistant-drafted.) Re-run: setup half **met, offline only** (every step before the key-and-weights step passes, and the README warns before it); the diagram is now Mermaid source in the README, not validated (no Node here) and not yet seen rendered. Verdict stays **Not met** until the owner confirms the render; see "Fresh-clone record, re-run 2026-10-18".* *2026-10-18 (S6-R1 follow-up; owner-decided 2026-10-18; assistant-drafted.) The owner saw the diagram render on GitHub, and it validated with mermaid-cli 11.4.2 in headless Chromium with no errors (branch commit `8b55192`). Verdict now **Met, offline only**; ticked in `architecture.md` §7.* |
+
+**Conflicts:** none found in the copied table. The table's item 8 basis, "held-out routing 38/50, golden 29/36, QA faults 223/223 (upper bound)", matches sections 4.1 to 4.3.
+
+**Status:** skeleton.
+
+## 9. Threats to validity
+
+**What goes here:** one line each, with its limitation ID. Wording is written in the buffer.
+
+**Figures to cite:**
+- Synthetic data: the dataset is generated (`docs/data-dictionary.md`); L-01 records one consequence, first-time fix of about 98% (0.9798). No limitation entry states synthetic data as a whole; flagged for the writer.
+- Generated sets from the same model family as the system: L-86.
+- QA's faults drafted by its author: L-85 (and `evals/results/qa_faults/2026-10-10/README.md`, "Not blind").
+- Owner-written items scoring lower than drafted ones: L-54; 6 of 10 against 23 of 26 mechanical (`evals/results/golden_v2/2026-10-13/score.json`); "the gap is four items and carries no significance claim" (`evals/results/sprint5_summary.md`).
+- Single runs against k=3: routing k=3 (L-17, L-18: "Each recorded result is a single run, kept as run"); the golden set one run (`evals/results/sprint5_x.md`); the BERT proxy's full-window and 12-month figures single runs (L-28); owner verification session 1 applied no three-run rule, "single run, decision 3" (`evals/results/session1/2026-10-15/summary.md`, "For the 05 revision"). No limitation entry covers the golden set or session 1 being single runs; flagged for the writer.
+- Both blind sets spent after 2026-10-13: `evals/results/sprint5_x.md`.
+
+**Conflicts:** none found.
+
+**Status:** skeleton.
+
+## 10. After the evaluation (Sprint 6.5)
+
+**What goes here:** a placeholder.
+
+To be written if 6.5 changes answers (ADR-113).
+
+**Status:** skeleton.
 
 ---
 
