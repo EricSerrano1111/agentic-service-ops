@@ -25,7 +25,7 @@
 - The paid key: ADR-104 (`docs/decisions-log.md`, "Deployed model calls use the paid key for the evaluation and grading window"); `evals/results/sprint5_x.md`: "`LLM_MODE=paid` on the five model-calling services (ADR-104)".
 
 **Conflicts:**
-- `evals/freeze_s5.json` records `llm_mode_in_services` `free`. `evals/results/sprint5_x.md` records `LLM_MODE=paid` on the five model-calling services (ADR-104). Both are given; the skeleton does not choose.
+- **Resolved.** `evals/freeze_s5.json` records `llm_mode_in_services` `free`; `evals/results/sprint5_x.md` records `LLM_MODE=paid` on the five model-calling services. The dated note under ADR-103 (`docs/decisions-log.md` line 3460, 2026-10-14) says: "For deployed serving that is superseded by ADR-104". Both paths kept. Owner ruling 2026-10-18.
 
 **Status:** skeleton.
 
@@ -93,7 +93,7 @@
 - Advisory interpretation check on the used pairs: `qa_interp_v2` run 1 (ADR-089) 7 false rejects of 42 against `qa_interp_v3` 3 of 42 (`docs/decisions-log.md`, ADR-102 table; see section 6 for the gate).
 
 **Conflicts:**
-- `evals/results/qa_faults/2026-10-10/README.md` says "Misparse (M*, O5), 0 of 71". `evals/results/qa_faults/2026-10-10/report.md` section 7 gives 71 cases for the consistent misparses (30, 19 and 22, the same three rows as measurement 3) and lists O5 (10 cases) separately in section 8 of `evals/results/qa_faults/2026-10-11-m3/report.md`. Both are given; the skeleton does not choose.
+- **Resolved: the README's "M*, O5" heading is loose wording.** `evals/results/qa_faults/2026-10-10/README.md` says "Misparse (M*, O5), 0 of 71". The consistent-misparse count is 71 (M*: 30, 19 and 22), 0 of 71 caught (`evals/results/qa_faults/2026-10-10/report.md` section 7); the owner's trailing-quarter case O5 is reported apart, 0 of 10 caught (`evals/results/qa_faults/2026-10-11-m3/report.md` section 8; L-74 update 2026-10-10). Owner ruling 2026-10-18.
 - Note for the writer, not a conflict: L-85 and `evals/results/qa_faults/2026-10-10/README.md` say 47 assistant-drafted faults; the reports' section 2 scores 34 faults (223 cases) because it excludes the rating contradictions and consistent misparses, which are reported in their own sections.
 
 **Status:** skeleton.
@@ -257,15 +257,20 @@
 - 2026-10-13 (`docs/sprint-log.md` line 1002):
   - *`04`'s three sentiment lines differ from the built system (ADR-100: deployed sentiment reads stored predictions only).*
 
+**Document `03`, added from the sprint-log item's sub-bullets**
+- 2026-10-15 (`docs/sprint-log.md` line 1113):
+  - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Add `03`'s calendar, which ADR-109 moves again (Sprint 6 now 10-15 to 10-25; buffer 10-26 to 12-05).
+- 2026-10-18 (`docs/sprint-log.md` line 1114):
+  - *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* `03`'s calendar again: ADR-113 moves it a second time (Sprint 6 closed 10-18, day 4; buffer 10-19 to 12-05). `03` is Eric's to edit and nothing was changed.
+
 **Document not named in the source**
 - 2026-10-13 (`docs/sprint-log.md` line 1004):
   - *Identity-Aware Proxy was replaced by invite-link access (ADR-097).*
   - `docs/sprint-log.md` line 1112 lists it as "Identity-Aware Proxy replaced by invite links, ADR-097" and names no document. A search of `docs/academic/02*`, `03*` and `04*` for "Identity-Aware" and "IAP" found no match, so the document is not identified here.
 
-**Conflicts (gaps between records, listed and not resolved):**
-- ADR-109 (`docs/decisions-log.md` line 3654) records "**Post-submission divergence (carry to the evaluation report):** `03` quotes the calendar, which this entry moves again; `03` is Eric's to edit and nothing was changed." No matching line was found in `docs/sprint-log.md` by searching "divergence". It is a `03` calendar divergence, outside the sprint-log collection this section was asked to copy.
-- ADR-084 (`docs/decisions-log.md` line 2576) says "Post-submission divergence: `03` and `04` quote older windows (already listed in the sprint log); the 10-08 start is added there." No sprint-log line for a 10-08 start was found by the same search. Not added here.
-- The sprint-log item "The divergence list goes into the evaluation report" (line 1112) stays unticked; this PR changes only `docs/evaluation-report.md`.
+**Conflicts (gaps between records):** none left open.
+- Resolved, owner ruling 2026-10-18. ADR-109's `03` calendar divergence (`docs/decisions-log.md` line 3654) is in `docs/sprint-log.md` line 1113, a sub-bullet of the "divergence list" item, copied above. ADR-113's second move is line 1114, also copied above.
+- Resolved. ADR-084's line (`docs/decisions-log.md` line 2576, `03` and `04` quote older windows) is covered by `docs/sprint-log.md` lines 582 to 583 (`03`'s deploy window, ADR-078), copied above.
 
 **Status:** skeleton.
 
@@ -299,11 +304,11 @@
 **What goes here:** one line each, with its limitation ID. Wording is written in the buffer.
 
 **Figures to cite:**
-- Synthetic data: the dataset is generated (`docs/data-dictionary.md`); L-01 records one consequence, first-time fix of about 98% (0.9798). No limitation entry states synthetic data as a whole; flagged for the writer.
+- Synthetic data: L-102 (the whole evaluation runs on synthetic, generated data); L-01 records one consequence, first-time fix of about 98% (0.9798).
 - Generated sets from the same model family as the system: L-86.
 - QA's faults drafted by its author: L-85 (and `evals/results/qa_faults/2026-10-10/README.md`, "Not blind").
 - Owner-written items scoring lower than drafted ones: L-54; 6 of 10 against 23 of 26 mechanical (`evals/results/golden_v2/2026-10-13/score.json`); "the gap is four items and carries no significance claim" (`evals/results/sprint5_summary.md`).
-- Single runs against k=3: routing k=3 (L-17, L-18: "Each recorded result is a single run, kept as run"); the golden set one run (`evals/results/sprint5_x.md`); the BERT proxy's full-window and 12-month figures single runs (L-28); owner verification session 1 applied no three-run rule, "single run, decision 3" (`evals/results/session1/2026-10-15/summary.md`, "For the 05 revision"). No limitation entry covers the golden set or session 1 being single runs; flagged for the writer.
+- Single runs against k=3: L-103 (the golden run and owner session 1 are single runs; the routing evals are k=3). Detail: routing k=3 (L-17, L-18: "Each recorded result is a single run, kept as run"); the golden set one run (`evals/results/sprint5_x.md`); the BERT proxy's full-window and 12-month figures single runs (L-28); owner session 1 "single run, decision 3" (`evals/results/session1/2026-10-15/summary.md`, "For the 05 revision").
 - Both blind sets spent after 2026-10-13: `evals/results/sprint5_x.md`.
 
 **Conflicts:** none found.
@@ -1384,3 +1389,15 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** Scaling is Cloud Run behaviour set by the services' concurrency and maximum instances, and it does not affect answer correctness. Demonstrating it needs more than 8 concurrent questions to one service, a large share of the daily cap of 50, for portfolio evidence rather than a requirement at this scale. The TS-18-C clause that asked for it is classed by the owner as a 05 criterion flaw.
 - **Fix (option):** a load test above 8 concurrent, sized against the daily cap of 50.
 - **Recorded in:** `evals/results/session1/2026-10-15/summary.md` (TS-18-C); `run-notes.md` (step 3.7). Owner-decided 2026-10-15; assistant-drafted.
+
+### L-102 — The evaluation runs on synthetic, generated data (2026-10-18)
+- **What:** The database, the feedback corpus and the evaluation sets are all generated. Every figure in the report measures behaviour on that data, not on real field-service operations. L-12, L-13 and L-23 cover parts of it: sentiment labels are defined by a written specification, the SLA-incident relationship is planted, and sentiment accuracy is agreement with that specification.
+- **Why accepted:** There is no real dispatch data at this scale, and the project is a synthetic-data capstone by design.
+- **Fix (option):** none inside the project. A real deployment would be evaluated on real data and real user questions.
+- **Recorded in:** `docs/data-dictionary.md`; L-01, L-12, L-13, L-23, L-86. Owner-decided 2026-10-18; assistant-drafted.
+
+### L-103 — The golden run and owner session 1 are single runs, not k=3 (2026-10-18)
+- **What:** The golden run (36 items, `evals/results/golden_v2/2026-10-13/`) and owner verification session 1 (`evals/results/session1/2026-10-15/`, "single run, decision 3") ran once each. The routing evaluations are k=3 (held-out routing, range 38 to 38). A single run carries no estimate of run-to-run variance (L-17), so a one-item difference on the golden set is within noise.
+- **Why accepted:** The golden run's cost and the session's cap and time limit. The spent sets cannot be rerun blind.
+- **Fix (option):** report the golden set at k=3 on a new owner-written set.
+- **Recorded in:** `evals/results/sprint5_x.md`; `evals/results/session1/2026-10-15/summary.md`. Owner-decided 2026-10-18; assistant-drafted.
