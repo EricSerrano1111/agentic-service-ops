@@ -8,7 +8,7 @@
 - **Review at every sprint boundary:** re-read the whole table, not just add to it. A risk that's been sitting at "Open" for three sprints with no action is itself worth a retro note.
 - Add new risks as they surface — a register that only shrinks isn't being used honestly.
 
-**Sprint 6 boundary review, 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted):** every risk was re-read. R-01, R-02, R-10, R-12, R-16 and R-21 changed in status or evidence this sprint and carry a dated line below. R-04, R-05, R-07, R-08, R-09, R-11, R-13, R-15, R-17, R-18 and R-20 were reviewed and are unchanged (R-05 and R-09 already carry dated Sprint 6 lines; R-20 had no deploy this sprint, and `uv.lock` did not change since 2026-10-15). R-03, R-06, R-14 and R-19 stay closed. No summary-table status changes.
+**Sprint 6 boundary review, 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted):** every risk was re-read. R-01, R-02, R-05, R-09, R-10, R-12, R-16 and R-21 changed in status or evidence this sprint and carry a dated line below (R-05 and R-09 also carry earlier Sprint 6 lines, which the new lines point to). R-04, R-07, R-08, R-11, R-13, R-15, R-17, R-18 and R-20 were reviewed and are unchanged (R-20 had no deploy this sprint, and `uv.lock` did not change since 2026-10-15). R-03, R-06, R-14 and R-19 stay closed. No summary-table status changes.
 
 ---
 
@@ -133,6 +133,8 @@
 
 **Update 2026-10-15 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.):** owner verification session 1 read the cold start on the sentiment and forecast paths (`evals/results/session1/2026-10-15/summary.md`, ADR-110). Sentiment **61 s** in the browser on the first reading, where the gateway hop was not cold (the owner reloaded the page about 3 minutes earlier), then **30.64 s** on the second idle wait with all four hops cold. Forecast **46 s**, all four hops cold. Reporting **29 s** at TS-20-A (the reporting path was cold). All are under the 120 s ceiling (ADR-034). Status unchanged.
 
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed this sprint. The 2026-10-15 line above (session 1 cold starts: sentiment 61 s then 30.64 s, forecast 46 s, reporting 29 s, all under the 120 s ceiling) stands. The retry loop's worst case is still not exercised on live traffic (the interpretation check stays advisory), and the retry-log read on 2026-10-19 00:13:34 UTC found 0 failed model-call attempts in 30 days. Status stays Mitigating.
+
 ### R-06 — A2A overhead consumes disproportionate solo dev time
 **Description:** A2A's Agent Cards and task-lifecycle machinery are more plumbing than a single-codebase system strictly needs. Solo, on a fixed timeline, that overhead is a real opportunity cost.
 **Mitigation:** Sprint 2 is deliberately the proof sprint for this exact risk — if the A2A path is disproportionately slow to stand up, that's the signal to reconsider before three more agents are built on top of it. No fallback plan currently drafted; if this risk is realized, the honest move is a documented scope conversation, not silent workarounds.
@@ -202,6 +204,8 @@
 **Update 2026-10-14 (Sprint 5 boundary review, Z1; owner-decided 2026-10-14; assistant-drafted):** Reviewed. `05` is marked "(Assignment complete)" (`05:9`, dating from 2026-10-05) but is held, not submitted, and will be revised with Sprint 5 evidence before 11-01 (owner, D1). `06` is an 8-line stub marked "Assignment incomplete" (`06:9`): no outline, and the repo holds no definition of "production support" beyond the file name; its outline waits on the assignment text (owner to supply). The 2026-09-30 line said the rubrics for `05` and `06` would be checked when their drafting starts; the repo has no record that the `05` rubric was checked, and `06` drafting has not started. Owner to confirm the `05` check, and to make `06`'s when the text arrives. Status stays Monitoring.
 
 **Update 2026-10-18 (S6-D3; owner-decided 2026-10-18; assistant-drafted):** The assignment text has arrived and supersedes the 2026-10-14 line's description of `06` as a stub waiting on it. It has no rubric beyond four required parts, plus a note that it be written professionally: an application description, standard operating procedures, troubleshooting, and disaster recovery and clean restart. `06` is drafted in Word as version 1.3, dated 2026-10-18, about 29 pages; it is not submitted (due 2026-11-08), and the Markdown copy is committed to `docs/academic/` only after submission. Status stays Monitoring.
+
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed this sprint. The 2026-10-18 line above stands: the assignment text for `06` arrived, `06` is drafted in Word as version 1.3 and held, not submitted (due 2026-11-08), and `05` is complete and held (owner). Status stays Monitoring.
 
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
@@ -400,7 +404,7 @@ The same steps are in the README's "Local environment recovery". Check the memor
 
 **Update 2026-10-15 (S6-D2; Owner-decided 2026-10-15; assistant-drafted.):** session 1's opening balance was **$7.88** (owner-read). The session's ledger ceiling was **$0.079 worst case, for 57 requests** (driver ledger, charged at the highest seen cost when unknown). The closing figures the owner read, Google AI Studio $2.12 (2026-09-18 to 10-15) and GCP billing $2.86 (2026-10-01 to 10-15), are cumulative, so the session's own spend cannot be separated from them and no closing balance was recorded. Next check: before Window A (10-31). Status stays Open.
 
-**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Owner console reading on 2026-10-16: the prepaid balance is $7.85 (against $7.88 after the 2026-10-15 top-up; the difference is not attributed, since the console figures are cumulative). It is above the $5 minimum (ADR-105). The balance check before Window A (10-31) is carried (`sprint-log.md`, Sprint 6 close). Status stays Open: the balance is not watched programmatically.
+**Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Owner console reading on 2026-10-16: the prepaid balance is $7.85 (against $7.88 after the 2026-10-15 top-up; the $0.03 difference is not attributed). It is above the $5 minimum (ADR-105). The balance check before Window A (10-31) is carried (`sprint-log.md`, Sprint 6 close). Status stays Open: the balance is not watched programmatically.
 
 ---
 

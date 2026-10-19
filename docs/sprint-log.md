@@ -1059,7 +1059,7 @@ now written; they record the planning decisions above.*
 ## Sprint 6 (2026-10-15 to 2026-10-25; re-baselined, ADR-109) — Hardening & delivery
 *Planning note, 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Sprint 6 runs 2026-10-15 to 10-25 (11 days) and the buffer is 10-26 to 12-05 (ADR-109, which supersedes ADR-093's Sprint 6 dates and ADR-106 in part). The goal below is unchanged, and its "demo rehearsed" is **not expected inside Sprint 6**: it falls in the buffer. Buffer targets: evaluation report draft (Sprint 5 results plus the divergence list) by 11-08, final by 12-01; presentation draft by 11-22; demo rehearsal by 11-29. `05` (due 11-01) and `06` (due 11-08) keep the course's dates; submitting them is owner work in the buffer if not done by 10-25. No 6.5 change is deployed before `06` is submitted. Owner verification sessions outside the windows are allowed (ADR-110).
 **Goal (increment):** Production-grade checklist closed out; demo rehearsed.
-*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* **Closed 2026-10-18, day 4 of the 10-15 to 10-25 sprint (ADR-113). Goal verdict: partly met, not met.**
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* **Closed 2026-10-18, day 4 of the 10-15 to 10-25 sprint (ADR-113). Goal verdict: partly met.**
 - **Checklist half: audited item by item, not closed out.** `docs/production-grade-audit.md` gave verdicts; in `architecture.md` §7, 8 of the 12 boxes are ticked (1, 2, 3, 7, 8, 10, 11, 12). By the audit's verdicts, items 5 and 6 are Met, offline only, and stay unticked; items 4 and 9 are Partly met. The four unticked items need a redeploy or a live fault: item 4 (F1, F2: probes), item 9 (F13: a pipeline run), item 5 (retry and breaker behaviour, never run on Cloud Run) and item 6 (a specialist-unavailable path, not run on the current build). Items 4 and 9 are in ADR-113's hardening bundle; items 5 and 6 are covered only by its "if the window allows" live degraded path.
 - **Demo half: not done, by plan.** "Demo rehearsed" was placed in the buffer at planning (ADR-109); the target is 11-29.
 - "8 of 12" counts ticked boxes, not "Met": two unticked items are Met offline only.
@@ -1110,6 +1110,7 @@ now written; they record the planning decisions above.*
 - [ ] **L-92 and L-24: the owner decides at the Sprint 6 close** whether the decline-heavy interpretation set (L-92) and the false-alarm sensitivity work (L-24) are built or dropped (6.5 brainstorm). *Added 2026-10-14 (Z1). Source: the Sprint 4 close ("the owner decides") and audit, section 1.*
 - [ ] **The divergence list goes into the evaluation report** (Sprint 6 writing): the post-submission list at the Sprint 5 close (`04`'s three sentiment lines against ADR-100; the ADR-093 calendar; Identity-Aware Proxy replaced by invite links, ADR-097). *Added 2026-10-14 (Z1). Source: the Sprint 5 close; ADR-094's note.*
   - *2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.)* Add `03`'s calendar, which ADR-109 moves again (Sprint 6 now 10-15 to 10-25; buffer 10-26 to 12-05).
+  - *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* `03`'s calendar again: ADR-113 moves it a second time (Sprint 6 closed 10-18, day 4; buffer 10-19 to 12-05). `03` is Eric's to edit and nothing was changed.
 - [ ] **6.5 candidates (see that section):** L-89's degraded result, the L-95 rulings ("district", "end of next year") and L-96's router and decline-text fix. They change answers, so they are decided at the Sprint 6 close (ADR-106), not in Sprint 6. *Added 2026-10-14 (Z1). Source: audit, section 1.*
 - [ ] **A paid-balance check and top-up before each window** (ADR-105, ADR-107, R-21): in `deploy/RUNBOOK_GRADING.md`; the dates are Window A and Window B. L-93's programmatic budget stop stays an option, not scheduled. *Added 2026-10-14 (Z1). Source: audit, section 1.*
 - [x] **A repo-wide test guard:** point `CLOUDSDK_CONFIG` at an empty temp folder in the root `conftest.py`, so no test can reach GCP (a Z2a test touched IAM, 2026-10-14). *Added 2026-10-14 (Z2b). Source: the Z2a incident above.*
@@ -1206,23 +1207,23 @@ now written; they record the planning decisions above.*
 **Shipped:**
 *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* The PRs merged from 2026-10-15 to the close, #60 to #73, from `git log --merges` (PRs #58 and #59 merged 10-14, before the sprint, and are Z2b records).
 - **Sprint set-up and tooling** (not among the close prompt's themes; listed so none is dropped):
-  - #60 `docs/sprint6-calendar`: the Sprint 6 calendar (ADR-109, ADR-110).
-  - #61 `docs/05-revision`: the `05` revision branch.
-  - #62 `chore/window-day-tooling`: `verify.py --ipv4`, timeouts and per-line output; the `CLOUDSDK_CONFIG` test guard.
-  - #63 `docs/session-plan-1`: the plan for owner verification session 1.
-  - #64 `chore/session-driver`: `scripts/session_driver.py`, the ledger-capped session driver.
+  - #60 `docs/sprint6-calendar` (merge `89f9140`): the Sprint 6 calendar (ADR-109, ADR-110).
+  - #61 `docs/05-revision` (merge `e1baec3`): `05` latest revision in `docs/academic/` (the owner's).
+  - #62 `chore/window-day-tooling` (merge `6dd8ba8`): `verify.py --ipv4`, timeouts and per-line output; the `CLOUDSDK_CONFIG` test guard.
+  - #63 `docs/session-plan-1` (merge `60027c1`): the plan for owner verification session 1.
+  - #64 `chore/session-driver` (merge `ad6e556`): `scripts/session_driver.py`, the ledger-capped session driver.
 - **Session 1 records:**
-  - #65 `docs/session1-results`: results of owner verification session 1 (2026-10-15), window log and sprint log.
-  - #66 `docs/session1-followup`: ADR-111, L-98 to L-101, R-05, R-21 and the calendar table.
+  - #65 `docs/session1-results` (merge `379ec6c`): results of owner verification session 1 (2026-10-15), window log and sprint log.
+  - #66 `docs/session1-followup` (merge `06ab581`): ADR-111, L-98 to L-101, R-05, R-21 and the calendar table.
 - **The alert:**
-  - #67 `feat/degraded-alert`: Part A, the metric, policy and `scripts/alert_degraded.py` as code (ADR-112).
-  - #69 `docs/alert-part-b`: Part B, the live apply and the synthetic-entry test, which passed.
-- **The lock fix:** #68 `fix/session-driver-lock`: `_file_lock` retries on `PermissionError`, bounded, then re-raises.
-- **The audit:** #70 `docs/production-grade-audit`: `docs/production-grade-audit.md` (criteria before evidence), the §7 ticks and notes, the findings.
-- **README and diagram, and the docs findings:** #71 `docs/readme-and-audit-fixes`: the README setup stages and the Mermaid architecture diagram (validated with mermaid-cli 11.4.2); dated corrections for F2, F3, F7, F9, F12; the fresh-clone re-run.
-- **TS-14-D:** #72 `evals/ts14d-scan`: Trivy over the nine images and gitleaks over the history; Passed.
-- **`06` status records:** #73 `docs/06-production-support-status`: `06` drafting status, rubric and weights backup location (S6-D3).
-- No code in these PRs changed a deployed service: the deployed system is still build `0dc5aae1`, commit `9ab7c77` (session 1 summary), and the trigger is disabled.
+  - #67 `feat/degraded-alert` (merge `fdcd470`): Part A, the metric, policy and `scripts/alert_degraded.py` as code (ADR-112).
+  - #69 `docs/alert-part-b` (merge `fa2c7cd`): Part B, the live apply and the synthetic-entry test, which passed.
+- **The lock fix:** #68 `fix/session-driver-lock` (merge `36932d5`): `_file_lock` retries on `PermissionError`, bounded, then re-raises.
+- **The audit:** #70 `docs/production-grade-audit` (merge `1da8374`): `docs/production-grade-audit.md` (criteria before evidence), the §7 ticks and notes, the findings.
+- **README and diagram, and the docs findings:** #71 `docs/readme-and-audit-fixes` (merge `3f342c3`): the README setup stages and the Mermaid architecture diagram (validated with mermaid-cli 11.4.2); dated corrections for F2, F3, F7, F9, F12; the fresh-clone re-run.
+- **TS-14-D:** #72 `evals/ts14d-scan` (merge `030bf81`): Trivy over the nine images and gitleaks over the history; Passed.
+- **`06` status records:** #73 `docs/06-production-support-status` (merge `e1537c1`): `06` drafting status, rubric and weights backup location (S6-D3).
+- No code in these PRs changed a deployed service: the nine deployed images were read on 2026-10-18 at the digests the serving revisions are pinned to, tag `9ab7c77…` (`evals/results/ts14d/2026-10-18/summary.md`), and the trigger is disabled.
 
 **Planned vs done:**
 *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* Status as the list stands at the close; no box is changed here.
@@ -1257,13 +1258,13 @@ now written; they record the planning decisions above.*
 - **The paid-balance check before Window A** (10-31; ADR-105, R-21).
 
 **Blockers encountered:**
-*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* The first and second are owner-reported in S6-C1; the third is in the audit.
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* The first is owner-reported in S6-C1; the second is recorded in part (the audit, F12); the third is recorded in the S6-R1 note on F6 and in `architecture.md` §7 item 12.
 - The Project files ran two days behind the repo (found 2026-10-18, refreshed the same day). Owner-reported in S6-C1; no earlier record in the repo.
 - The permission layer refused to delete temporary folders three times: `C:\fc-audit` (recorded in the audit, F12, and since removed), and `C:\fc2` and `C:\ts14d` (owner-reported in S6-C1; the repo records `C:\fc2` and `C:\ts14d` only as clone locations).
 - No Node on the owner's machine, so the README diagram could not be validated locally on 2026-10-18 (S6-R1). Resolved the same day: it validated with mermaid-cli 11.4.2 in headless Chromium (commit `8b55192`).
 
 **Retro:**
-*2026-10-18 (S6-C1; assistant-drafted for the owner to edit in the PR.)* Where a line rests only on the owner's word, it says so.
+*2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* A draft for the owner to edit in the PR. Where a line rests only on the owner's word, it says so.
 - What went well:
   - Criteria committed before evidence in the audit (commit `5271dea`, "criteria before evidence", ahead of the evidence commit).
   - A synthetic log entry proved the alert path (filter, metric, policy, email) without waiting for a real fault (ADR-112).
