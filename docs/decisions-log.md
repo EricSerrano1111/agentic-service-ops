@@ -105,7 +105,7 @@
 | 091 | The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate (extends ADR-055 and ADR-087) | Accepted |
 | 092 | QA fixes from the fault injection: answer text by position, zero denominators, small samples, `qa_status: failed`, and measurement 2 (extends ADR-091) | Accepted |
 | 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted — superseded in part by ADR-109 |
-| 094 | Evaluation sets are written by an independent model (supersedes "owner-written" for the Sprint 5 sets only) | Accepted |
+| 094 | Evaluation sets are written by an independent model (supersedes "owner-written" for the Sprint 5 sets only) | Accepted — superseded in part by ADR-114 |
 | 095 | QA recomputes served forecast numbers independently (L-83(a)) | Accepted |
 | 096 | QA also checks the 95% interval ends (supersedes ADR-095 in part) | Accepted |
 | 097 | Invite-link access to the gateway (builds on ADR-079, ADR-080 and ADR-081; supersedes nothing) | Accepted |
@@ -125,6 +125,7 @@
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
 | 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted |
+| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted |
 
 ---
 
@@ -3818,3 +3819,113 @@ After a start, one question through the gateway confirms the data path before th
 - **Tension with a locked rule, named:** the synthetic-data notice fixes what `05`'s TS-20-E records as a known fail. ADR-106 says nothing from 6.5 is counted in `05` or `06`, so `05` keeps its recorded result and the evaluation report states the difference once the notice is deployed.
 
 *2026-10-18 (S6-C1, owner rulings; owner-decided 2026-10-18; assistant-drafted.)* Rulings on the entry above, recorded the same day. Unplaced Planned items are placed (the Editor-role review is housekeeping; the rest are roadmap, portfolio value, not built). L-99's rule 3 condition is written with the bundle PR, before its code. The TS-20-E tension is confirmed as worded: the notice fixes the defect, `05`'s recorded result (FAIL at the time of writing) stands, and 6.5 is not counted in `05` or `06`.
+
+### ADR-114 — FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for the routing call (pre-registered)
+*Date: 2026-10-22. Owner-decided 2026-10-22 (approved as drafted on 2026-10-18); assistant-drafted. Applies ADR-113 item 3. Supersedes ADR-094 in part: its rule that later sessions do not read `evals/generated/`, for the spent sets `fr03_fresh_v2` and `routing_heldout_v1` only, which become development data for the level selection below; the new set is sealed as before. Uses ADR-052's per-role override and supersedes nothing in ADR-049, ADR-052, ADR-075, ADR-076 or ADR-101. Every rule below is fixed before the first model call of this attempt.*
+
+**Decision:**
+- **Method.** `route_v6` (commit `031426b`, prompt sha `a160b528247b`) is used **unchanged**. The model stays `gemini-3.5-flash-lite` (ADR-049). The one variable is the orchestrator's thinking level (`LLM_THINKING_LEVEL_ORCHESTRATOR`), chosen from `low`, `medium` and `high`, which Flash-Lite supports (`prices.toml`, ADR-052). No prompt is written or edited, and no example is added.
+- **Phases, in order.** P0 preconditions and probe → P1 development selection → P2 go or no-go → P3 the new blind set (only on go) → P4 the gate → P5 records. A later phase never starts before the earlier one is recorded in the ledger.
+
+**P0 — preconditions (no model call), then the probe.**
+- `route_v6.md` hashes to `a160b528247b`; otherwise stop.
+- **The meter counts thinking.** A unit test with a recorded response fixture shows that `packages/llm` reads the thinking-token count from the response's usage fields and adds it to output tokens and to list-price cost (ADR-048; L-71's caveat). If the SDK does not report it, stop: the ledger could not be trusted.
+- The owner reads the prepaid balance and records it in the ledger; it must be at least $7.50.
+- **Probe (30 calls).** The first 10 items of `seed_v2`, in file order, once at each of `low`, `medium` and `high`. Recorded per level: mean thinking tokens, mean list-price cost per call, and median and p95 latency.
+  - A level whose mean cost per call is above **$0.003**, or whose p95 latency is above **10 s**, is dropped.
+  - If every call at a level above `minimal` reports zero thinking tokens, stop (the meter or the setting is not working).
+
+**P1 — development selection (k=3, paid key, as-of 2026-08-30).**
+- **Sets:** `seed_v2` (31), `routing_v2` (18), `fr03_fresh_v2` (16) and `routing_heldout_v1` (50). That is 115 items: 20 ambiguous and 95 not. `fr03_fresh_v1` is excluded: `route_v6` was written from it and recognises all 5 of its ambiguous items already.
+- **The discriminating ambiguous items** are the 15 in `fr03_fresh_v2` (8) and `routing_heldout_v1` (7). The 5 ambiguous items in the v2 sets are reported, not counted: `route_v6` was written from them.
+- **Baseline:** `route_v6` at `minimal` on `routing_heldout_v1`, k=3 (150 calls). The existing `route_v6` `minimal` runs supply the other three sets (ADR-101: A1 and C1).
+- **Levels run in ascending order** (`low`, then `medium`, then `high`, skipping any the probe dropped). The **selected level** is the first one that meets every go criterion. Later levels are not run.
+- **Go criteria, at one level:**
+  - **G1:** at least **11 of the 15** discriminating ambiguous items return `ambiguous` in at least 2 of 3 runs.
+  - **G2:** that count is at least **3 more** than `route_v6` at `minimal` on the same 15 items.
+  - **G3:** at most **11 of the 285** non-ambiguous item-runs are routed `ambiguous` (ADR-101's rate, at most 1 in 24).
+  - **G4:** the mean non-ambiguous correct count on the v2 sets is at least **42.00** of 44 (`route_v3`'s 43.00, minus 1; ADR-076).
+  - **G5:** at that level, routing median latency is at most 5 s, p95 latency at most 10 s, and the mean list-price cost at most $0.003 per call.
+
+**P2 — go or no-go.** If no level meets every go criterion, the attempt has **failed**:
+- no blind set is generated and no gate runs;
+- FR-03 is recorded as unmet, with no further attempt (ADR-113).
+
+**P3 — the new blind set `fr03_fresh_v3` (only on go).** It follows the ADR-094 process and the brief below. It is frozen, hashed and committed before P4. Generation is not repeated.
+
+**P4 — the gate.** One run, with no revision.
+- **Runs:** `route_v6` at the selected level, and `route_v3` at `minimal` (as deployed), on `fr03_fresh_v3`. That is 40 items (16 ambiguous, 24 not), k=3 each, so 240 calls. A call that fails is scored as wrong (ADR-076). Candidate domains are reported, not gated.
+- **(a)** At most **3 of 72** non-ambiguous item-runs are routed `ambiguous` (ADR-101's rate).
+- **(b1)** The mean non-ambiguous correct count on the v2 sets is at least **42.00**. This comes from the P1 runs at the selected level, so it is in-sample: a regression guard, disclosed as such.
+- **(b2)** On the fresh set's 24 non-ambiguous items, the candidate's mean correct count is at least `route_v3`'s 3-run mean minus 1.
+- **(c)** At least **12 of 16** ambiguous items return `ambiguous` in at least 2 of 3 runs (75%, ADR-101's ratio).
+- **(d)** On the candidate's gate runs: routing median latency at most 5 s, p95 at most 10 s, and mean list-price cost at most $0.003 per call.
+- **Pass, every criterion:**
+  - ADR-075 takes effect: `route_v6` is the default, at the selected thinking level, and L-58 closes with a reference to this ADR.
+  - The switch deploys only in the hardening window, after `06` is submitted (ADR-109, kept by ADR-113).
+  - The evaluation report states how this differs from the ADR-103 freeze, and reports the new set's result.
+- **Fail, any criterion:** `route_v3` stays the default. FR-03 is recorded as unmet in the evaluation report and the presentation. There is no further attempt.
+
+**Budget, kept in the harness ledger** (`evals/fr03_v3/ledger.jsonl`, append-only; per-process caps are a backstop, not the control):
+
+| Phase | Requests (retries counted) |
+|---|---|
+| P0 probe | 30 |
+| P1 baseline and levels | at most 1,185 (150 + up to 3 x 345) |
+| P3 generation | at most 60 |
+| P4 gate | 240 |
+| **Total request cap** | **1,550** |
+
+- **Spend cap: $2.50 list-price, in total, across every phase.** It leaves the prepaid balance at $5 or more for Window A (ADR-105).
+- Before every run, the harness projects the run's cost as the probe's measured mean cost for that level, times the items, times k, times 1.25. It refuses to start a run that would cross the spend cap or the request cap.
+- Expected spend: about $0.50 to $1.50, if thinking stays near the probe ceiling's lower half. This is an estimate, not a measurement.
+
+**Stop rule:**
+- If a cap is reached, or a run is refused on projection, stop there. Before P4 that is a no-go: the attempt fails.
+- A daily-quota 429, an `LLMAuthError`, or a thinking meter reading zero stops the session. The owner may restart it within the timebox, with every rule unchanged.
+- From the first P0 call on, no criterion, threshold, set, prompt, level list or brief changes.
+- **Timebox:** no model call after 2026-11-07 23:59 CT. Anything not finished by then counts as failed, and the result is recorded by 11-08.
+
+**Generation brief for `fr03_fresh_v3`** (applied as `evals/generated/brief_v3.md`):
+- **Base.** `brief_v3.md` is `brief_v2.md` verbatim, apart from the changes listed here. That includes the label rules, the asker persona (a senior operations leader with an overview of the business unit) and the owner's 2026-10-11 out-of-scope clarification. The build session commits the diff, and the owner reads it before any generation call.
+- **Generator:** `gemini-3.8-flash` on the paid key, by script through `packages/llm`, with a new seed recorded in the manifest (ADR-094).
+- **Final set, 40 items:**
+  - **16 ambiguous.** At least 4 each for reporting/sentiment, reporting/forecast and sentiment/forecast; at least 2 for all three domains; the remaining 2 in any pair.
+  - **24 not ambiguous.** 10 underspecified (one domain, period or region left out), 6 clear, 4 multi-domain, and 4 out of scope (at least 2 of them future questions about an out-of-scope subject).
+  - The weighting toward underspecified items is deliberate. They are the hard negatives that criterion (a) depends on.
+- **Pool:** twice each category's target, so skim drops can be replaced from the reserve in seed order.
+- **Post-filters, which only remove items.** These are near-duplicates (character 5-gram Jaccard above 0.6, or containment) against every existing routing, golden and interpretation set; within-set duplicates; and malformed rows.
+- **Skim:** the owner skims all 40 items, drop-only, never fixing one, without seeing any system output. Drops and their reasons are recorded (L-86's selection-effect disclosure).
+- **Authorship disclosure:** the brief's author is the assistant that built the system (as in ADR-094). It was drafted without reading the item text of any spent set; only item IDs and counts were seen.
+
+**Context:**
+- **What failed.** Three prompt-only revisions failed. `route_v4` over-flagged a clear question. `route_v5` passed on its development sets, then recognised 3 of 5 fresh ambiguous questions. `route_v6` recognised 4 of 8. Every fresh miss was the same in all 3 runs (f03, f05; AMB-08, -11, -17, -18). The misses are systematic: at `minimal` the model commits to one surface-cued reading, so `route_v6`'s rule ("the measure decides") is never applied before it decides.
+- **Why this method.**
+  - Thinking gives the model room to apply the stated rule to the question in front of it, before committing to a route.
+  - Keeping the prompt fixed makes this a single-variable test of the failed attempt, and adds no new examples to learn.
+  - ADR-113 names a higher thinking level as an acceptable method, and ADR-102 lists the same lever for the interpretation check.
+  - The infrastructure exists (ADR-052), so the build is the harness, the ledger and the meter check.
+- **Why the spent sets.** `fr03_fresh_v2` is the only set on which `route_v6` failed, and `routing_heldout_v1` has never been run on `route_v6`. Without them the levels can't be told apart: on the other development sets `route_v6` is already near its ceiling. Three candidate levels and a frozen prompt keep the room to overfit small. Level selection is still tuning, so this is a supersession, not a reading of ADR-094's wording.
+- **Prior, stated before any result.** `route_v6` recognised about half of the fresh ambiguous questions, and the floor is 75%. The assistant's judgement, not a measurement, is that a pass is less likely than not.
+
+**Alternatives considered:**
+- *A stronger routing model (`gemini-3.7-flash`).* Rejected. It costs about 2.7x per call (ADR-049), can't run `minimal`, and has a history of 503s (R-15). It would supersede ADR-049 for routing, and it moves the router closer to the blind set's generator family (ADR-094). `gemini-3.8-flash`, the generator itself, is ruled out.
+- *A separate ambiguity check before routing.* Rejected for this attempt. It adds a call to every request and needs a new prompt, schema, code path and tests inside the timebox. Its own prompt would have to define ambiguity, which is the concept that hasn't generalised.
+- *Per-domain fit scores, with a code margin.* Rejected. They are self-reported confidence by another name, which ADR-075 rejected as uncalibrated. A margin fitted on about 20 ambiguous development items would overfit, and on the missed items the model is confidently one-sided.
+- *Self-consistency, routing ambiguous when sampled runs disagree.* Rejected. The misses were consistent across runs, so disagreement would not appear on exactly the items that matter.
+- *A fourth prompt revision.* Rejected by ADR-113.
+
+**Consequences:**
+- **On a pass:** the orchestrator's default becomes `route_v6` with `LLM_THINKING_LEVEL_ORCHESTRATOR` set to the selected level, in the hardening redeploy. Every request's routing call costs and takes more; the per-request cap ($0.02, ADR-088) and the deadline are unchanged. `05` and `06` are unaffected (ADR-106).
+- **On a fail or a no-go:** nothing deploys. The evaluation report's FR-03 entry records the attempt and its numbers.
+- **Disclosures for the evaluation report:**
+  - the level was selected on two spent generated sets;
+  - (b1) is in-sample;
+  - the blind set and the router are the same model family;
+  - `route_v6` was written from development material;
+  - the brief's author built the system.
+- **Records on a result:**
+  - an L-58 update in `docs/evaluation-report.md`;
+  - the FR-03 row in `docs/requirements-traceability.md`;
+  - the 6.5 item in `docs/sprint-log.md`;
+  - a dated result note under this entry.

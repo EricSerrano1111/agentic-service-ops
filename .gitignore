@@ -68,3 +68,6 @@ data/generator/corpus/work/
 
 # Local gateway state: the invite store (ADR-097). Holds token hashes.
 .local/
+
+# Claude Code working instructions: kept locally, not published (owner preference, 2026-10-22)
+/CLAUDE.md
