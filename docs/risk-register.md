@@ -322,6 +322,13 @@
 
 **Update 2026-10-14 (Z2a, ADR-108; owner-decided 2026-10-14; assistant-drafted):** the diagnosis gap this risk exposed on 2026-10-13 is closed in the repo: each failed model-call attempt now logs its attempt number, error class, HTTP status, failure kind, the wait before the next attempt and the elapsed time (never the key, the prompt or the error text). Tests: `tests/unit/test_llm_client.py` (a 504, a 503, a connection error and a 429). Not deployed until Z2b; status stays Realized.
 
+**Update 2026-10-22 (vendor notices; owner-reported 2026-10-22; assistant-drafted):**
+- **New exposure: vendor deprecation**, beyond capacity. Google is removing sampling parameters on upcoming models, and `gemini-3.7-flash` was retired by redirecting it to 3.8 Flash.
+- The runtime model, `gemini-3.5-flash-lite`, had no announced shutdown date on 2026-10-22 (deprecations page).
+- A retirement or redirect of Flash-Lite before 12-05 would change the deployed system's behaviour without a code change. That's the risk for the live demonstration.
+- **Mitigation:** check the deprecations page before the 6.5 deploy window and again before the demonstration. The SDK and model are pinned. Limitation L-104.
+- **Review trigger:** the 6.5 hardening redeploy, and the demonstration rehearsal (11-29).
+
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
 **Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.
