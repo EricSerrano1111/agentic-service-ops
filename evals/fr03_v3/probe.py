@@ -168,14 +168,16 @@ def preconditions() -> None:
         raise SystemExit(f"stop: {SET}.jsonl has fewer than {N_ITEMS} items")
 
 
-def configure_env(level: str) -> None:
+def configure_env(
+    level: str, max_requests: str = BACKSTOP_REQUESTS, max_spend: str = BACKSTOP_SPEND_USD
+) -> None:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", override=False)
     os.environ.update(
         LLM_MODE="paid",  # the paid key (GOOGLE_AI_API_KEY_PAID, from .env), as the Sprint 5 runs
-        LLM_MAX_REQUESTS=BACKSTOP_REQUESTS,
-        LLM_MAX_SPEND_USD=BACKSTOP_SPEND_USD,
+        LLM_MAX_REQUESTS=max_requests,
+        LLM_MAX_SPEND_USD=max_spend,
         GEMINI_MODEL_ORCHESTRATOR=MODEL,
         REPORTING_AS_OF_DATE=AS_OF,
         LLM_THINKING_LEVEL_ORCHESTRATOR=level,
