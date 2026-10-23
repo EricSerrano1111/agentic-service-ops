@@ -71,3 +71,12 @@ async def test_a_completed_task_reports_its_list_price_cost(mcp_calls):
     task = await send(create_app(SETTINGS, CostLLM(REQUEST)))
     assert task.status.state == TaskState.TASK_STATE_COMPLETED
     assert MessageToDict(task.artifacts[0].metadata)["cost_usd"] == pytest.approx(0.0004)
+
+
+@pytest.mark.anyio
+async def test_a_completed_task_reports_its_model_calls_and_timed_steps(mcp_calls):
+    task = await send(create_app(SETTINGS, CostLLM(REQUEST)))
+    metadata = MessageToDict(task.artifacts[0].metadata)
+    assert metadata["model_calls"] == 1
+    assert [s["step"] for s in metadata["steps"]] == ["parse", "tool"]
+    assert all(s["status"] == "ok" and s["duration_ms"] >= 0 for s in metadata["steps"])

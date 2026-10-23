@@ -1,0 +1,13 @@
+{"caps":{"calls":40,"questions":8,"usd":0.1},"event":"start","key":"free (LLM_MODE free)","route_prompt":"route_v6"}
+{"event": "sending", "name": "reporting_sla", "question": "What was SLA compliance in the Northeast last month?"}
+{"cost_usd": 0.001802, "event": "answered", "model_calls": 3, "name": "reporting_sla", "outcome": "answered", "qa_status": "verified", "seconds": 24.2}
+{"event": "sending", "name": "reporting_types", "question": "Which incident types were most common in July 2026?"}
+{"cost_usd": 0.00182, "event": "answered", "model_calls": 3, "name": "reporting_types", "outcome": "answered", "qa_status": "verified", "seconds": 7.4}
+{"event": "sending", "name": "sentiment_trend", "question": "Is negative feedback trending up in the West?"}
+{"error": "agent_task_failed", "event": "error", "http_status": 502, "name": "sentiment_trend"}
+{"event": "sending", "name": "sentiment_examples", "question": "Show examples of negative comments from last month"}
+{"cost_usd": 0.001624, "event": "answered", "model_calls": 3, "name": "sentiment_examples", "outcome": "answered", "qa_status": "verified", "seconds": 42.1}
+{"event": "sending", "name": "forecast", "question": "What weekly request volume should we expect for the next 8 weeks?"}
+{"cost_usd": 0.001534, "event": "answered", "model_calls": 3, "name": "forecast", "outcome": "answered", "qa_status": "verified", "seconds": 20.9}
+{"event": "sending", "name": "clarification", "question": "How did Lina do on first-time fixes last quarter?"}
+{"cost_usd": 0.00184, "event": "answered", "model_calls": 3, "name": "clarification", "outcome": "needs_clarification", "qa_status": "verified", "seconds": 16.2}

@@ -32,7 +32,9 @@ from common import (
     bind_trace_id,
     clamp_to_deadline,
     current_cost_usd,
+    telemetry_metadata,
     text_fields,
+    timed_step,
     track_request_cost,
     with_reviewer_note,
 )
@@ -222,7 +224,7 @@ def deadline_of(context: RequestContext) -> Deadline:
 
 def cost_metadata(extra: dict | None = None) -> dict:
     """Response metadata carrying this service's list-price cost for the request (ADR-088)."""
-    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)}
+    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)} | telemetry_metadata()
 
 
 def trace_id_of(context: RequestContext) -> str | None:
@@ -276,7 +278,10 @@ class ReportingExecutor(AgentExecutor):
             log.info("task received", extra={"task_id": task.id, "question_chars": len(question)})
 
             try:
-                async with asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)):
+                async with (
+                    asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)),
+                    timed_step("parse"),
+                ):
                     # After QA's interpretation check failed, the question comes back with
                     # a reviewer note (untrusted, capped, never logged; ADR-089).
                     resolved = await self.parser.parse(
@@ -408,14 +413,15 @@ class ReportingExecutor(AgentExecutor):
         """One MCP call; on failure, fail the task and return None. `parsed` is how the question
         was read; a name lookup that fails reports it, so QA can check the decline."""
         try:
-            return await call_tool(
-                self.settings.mcp_incidents_url,
-                tool,
-                arguments,
-                result_model,
-                trace_id=trace_id,
-                timeout_s=self.settings.mcp_timeout_s,
-            )
+            async with timed_step("tool"):
+                return await call_tool(
+                    self.settings.mcp_incidents_url,
+                    tool,
+                    arguments,
+                    result_model,
+                    trace_id=trace_id,
+                    timeout_s=self.settings.mcp_timeout_s,
+                )
         except DeadlineExceeded:
             await self._fail(updater, task_id, "deadline_exceeded", TIME_LIMIT)
         except TimeoutError:

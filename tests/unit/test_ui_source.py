@@ -165,16 +165,82 @@ def test_the_nav_has_three_links_and_no_evaluation_results_yet():
     assert "Evaluation results" not in re.sub(r"//.*", "", header)
 
 
-def test_the_journey_button_and_line_are_left_for_the_next_change():
+def test_the_recomputed_line_of_the_first_mockup_is_not_in_the_source():
     everything = "".join(p.read_text(encoding="utf-8") for p in WEB.rglob("*.jsx"))
-    assert "Show the answer journey" not in everything and "QA recomputed" not in everything
+    assert "QA recomputed" not in everything
+
+
+# ---------------------------------------------------------------- rule 10 (the answer journey)
+
+
+def _code(*parts: str) -> str:
+    """A source file without its comments."""
+    return re.sub(r"/\*.*?\*/|//[^\n]*", "", source(*parts), flags=re.S)
+
+
+def test_rule_10_button_and_panel_words_are_in_the_source():
+    page, panel = source("page.jsx"), source("components", "JourneyPanel.jsx")
+    assert "Show the answer journey" in page and "Hide the answer journey" in page
+    assert "aria-expanded={showJourney}" in page and 'aria-controls="journey-panel"' in page
+    assert 'id="journey-panel"' in panel and "Answer journey" in panel
+    where = source("lib", "journey.mjs") + source("components", "ArchitectureDiagram.jsx")
+    for words in (
+        "Server time",
+        "in your browser",
+        "Model calls:",
+        "Estimated cost:",
+        "(list price)",
+        "QA figures check:",
+        "Interpretation check:",
+        "not called",
+    ):
+        assert words in where, words
+
+
+def test_the_button_is_shown_only_when_the_response_carries_a_journey():
+    page = source("page.jsx")
+    assert page.count("hasJourney(run.result)") == 2  # the button and the panel
+    assert 'run.status === "done" && hasJourney(run.result)' in page
+    assert "export function hasJourney" in source("lib", "journey.mjs")
+
+
+def test_the_journey_is_drawn_from_journey_fields_only():
+    code = _code("components", "JourneyPanel.jsx")
+    assert not re.search(r"result\.(answer|headline|interpreted_as|qa_text)", code)
+    assert "journey.hops" in code
+    # the routed line takes the journey, never the answer text
+    assert "routedLine(run.result.journey)" in _code("page.jsx")
+
+
+def test_bar_positions_come_from_start_and_duration_only():
+    lib = _code("lib", "journey.mjs")
+    layout = lib.split("export function barLayout", 1)[1].split("\n}\n", 1)[0]
+    assert "h.start_ms" in layout and "h.duration_ms" in layout
+    for forbidden in ("h.service", "h.step", "h.status", "answer", "question"):
+        assert forbidden not in layout, forbidden
+
+
+def test_the_replay_respects_reduced_motion_and_the_panel_is_not_a_live_region():
+    panel = source("components", "JourneyPanel.jsx")
+    assert "prefersReducedMotion()" in panel
+    assert "if (reduced || replays === 0) return undefined;" in panel
+    assert "{!reduced && (" in panel  # no Replay button without motion
+    assert "aria-live" not in panel
+    assert "prefers-reduced-motion: reduce" in source("lib", "journey.mjs")
+    assert ".dg-box { transition: none; }" in source("globals.css")
+
+
+def test_the_replay_takes_about_a_second_and_a_half():
+    assert "REPLAY_TOTAL_MS = 1500" in source("lib", "journey.mjs")
 
 
 def test_the_faq_has_8_to_10_entries_and_how_it_works_has_its_diagram():
     faq = source("faq", "page.jsx")
     assert 8 <= faq.count("    q: ") <= 10
     how = source("how-it-works", "page.jsx")
-    assert 'role="img"' in how and "aria-label=" in how and "<ol" in how
+    diagram = source("components", "ArchitectureDiagram.jsx")
+    assert "<ArchitectureDiagram />" in how and "<ol" in how
+    assert 'role="img"' in diagram and "aria-label=" in diagram
 
 
 def test_no_inline_styles_and_no_new_packages():

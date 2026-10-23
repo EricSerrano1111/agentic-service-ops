@@ -191,6 +191,7 @@ def test_the_view_carries_only_the_displayed_fields(kit):
         "escalate",
         "warning",
         "trace_id",
+        "journey",
     }
     assert body["question"] == "How is SLA?"
     assert body["interpreted_as"].startswith("Area: incident reporting · Measure: SLA compliance")

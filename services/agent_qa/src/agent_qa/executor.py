@@ -32,12 +32,13 @@ from common import (
     bind_trace_id,
     clamp_to_deadline,
     current_cost_usd,
+    telemetry_metadata,
     track_request_cost,
 )
 from google.protobuf.json_format import MessageToDict
 from llm import LLMError
 from pydantic import ValidationError
-from schemas import Verdict, VerificationRequest
+from schemas import Verdict, VerificationRequest, interpretation_of
 
 from .config import Settings
 from .verify import Verifier
@@ -72,7 +73,7 @@ def deadline_of(context: RequestContext) -> Deadline:
 
 
 def cost_metadata(extra: dict | None = None) -> dict:
-    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)}
+    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)} | telemetry_metadata()
 
 
 def trace_id_of(context: RequestContext) -> str | None:
@@ -165,7 +166,14 @@ class QAExecutor(AgentExecutor):
                     new_data_part(verdict.model_dump(mode="json"), media_type="application/json"),
                 ],
                 name=ARTIFACT_NAME,
-                metadata=cost_metadata({"schema": DATA_SCHEMA}),
+                metadata=cost_metadata(
+                    {
+                        "schema": DATA_SCHEMA,
+                        # For the answer journey (rule 10): how the interpretation check went.
+                        "qa_interpretation": interpretation_of(verdict, self.settings.interp_mode),
+                        "qa_mode": self.settings.interp_mode,
+                    }
+                ),
             )
             await updater.complete()
             log.info(

@@ -226,7 +226,28 @@ def headline(body: dict, answer: str) -> dict[str, str] | None:
     return {"figure": figure, "caption": caption}
 
 
-def view(question: str, body: dict) -> dict[str, Any]:
+def journey_view(body: dict, forward_ms: float | None) -> dict[str, Any] | None:
+    """The orchestrator's `journey` (§6, rule 10), passed through unchanged except that the
+    gateway's own `forward` hop leads the hops. None when the response has none (an older
+    orchestrator) or it is not the expected shape."""
+    journey = body.get("journey")
+    hops = journey.get("hops") if isinstance(journey, dict) else None
+    if not isinstance(hops, list):
+        return None
+    if forward_ms is None:
+        return journey
+    forward = {
+        "service": "gateway",
+        "step": "forward",
+        "attempt": 1,
+        "start_ms": 0.0,
+        "duration_ms": round(max(forward_ms, 0.0), 1),
+        "status": "ok",
+    }
+    return {**journey, "hops": [forward, *hops]}
+
+
+def view(question: str, body: dict, forward_ms: float | None = None) -> dict[str, Any]:
     """The UI's view of one orchestrator response: only the fields the display rules name."""
     warning = body.get("warning")
     answer = answer_without_warning(str(body.get("answer", "")), warning)
@@ -241,4 +262,5 @@ def view(question: str, body: dict) -> dict[str, Any]:
         "escalate": bool(body.get("escalate")),
         "warning": warning,
         "trace_id": body.get("trace_id"),
+        "journey": journey_view(body, forward_ms),
     }

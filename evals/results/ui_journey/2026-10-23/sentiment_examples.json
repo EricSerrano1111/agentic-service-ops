@@ -1,0 +1,213 @@
+{
+ "question": "Show examples of negative comments from last month",
+ "http_status": 200,
+ "seconds": 42.1,
+ "response": {
+  "answer": "Customer feedback sentiment from 2026-07-01 to 2026-07-31 (inclusive, UTC), as of 2026-08-30.\n212 comments: positive 111 (52.4%), neutral 51 (24.1%), negative 33 (15.6%), mixed 17 (8.0%).\n2 comments (0.9%) are low-confidence and flagged for review.\nExample negative comments, quoted as written:\n- [negative, confidence 0.9950] \"Technician showed up over two hours late without any heads-up call or update sent to our office desk.\" (feedback 7065, 2026-07-12, the Northeast)\n- [negative, confidence 0.9949] \"How did a routine security camera replacement end up with a cracked mounting bracket and a severed power line that nobody bothered to fix before leaving?\" (feedback 7182, 2026-07-31, the Central region)\n- [negative, confidence 0.9948] \"did anyone read the arrival window we confirmed last week? someone finally showed up ninety minutes late to check the security cameras without leaving any paperwork behind.\" (feedback 7030, 2026-07-07, the West)",
+  "outcome": "answered",
+  "reason": null,
+  "route": {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "candidates": [],
+   "reason": "The question specifically asks for examples of negative customer comments."
+  },
+  "prompt_version": "route_v6",
+  "reporting": null,
+  "sentiment": {
+   "request": {
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "region": null,
+    "bucket": "month",
+    "want_trend": false,
+    "want_examples": true,
+    "example_label": "negative",
+    "unsupported": null
+   },
+   "start": "2026-07-01",
+   "end": "2026-07-31",
+   "range_assumed": false,
+   "as_of": "2026-08-30",
+   "summary": {
+    "model_version": "0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad",
+    "n_comments": 212,
+    "n_scored": 212,
+    "complete": true,
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "region": null,
+    "bucket": "month",
+    "counts": {
+     "positive": 111,
+     "neutral": 51,
+     "negative": 33,
+     "mixed": 17
+    },
+    "shares": {
+     "positive": "0.5236",
+     "neutral": "0.2406",
+     "negative": "0.1557",
+     "mixed": "0.0802"
+    },
+    "flagged_count": 2,
+    "buckets": [
+     {
+      "bucket": "2026-07",
+      "n_scored": 212,
+      "counts": {
+       "positive": 111,
+       "neutral": 51,
+       "negative": 33,
+       "mixed": 17
+      },
+      "flagged_count": 2
+     }
+    ]
+   },
+   "trend": null,
+   "examples": [
+    {
+     "feedback_id": 7065,
+     "submitted_at": "2026-07-12T04:08:00Z",
+     "region": "northeast",
+     "label": "negative",
+     "confidence": "0.9950",
+     "flagged": false,
+     "feedback_text": "Technician showed up over two hours late without any heads-up call or update sent to our office desk."
+    },
+    {
+     "feedback_id": 7182,
+     "submitted_at": "2026-07-31T03:38:00Z",
+     "region": "central",
+     "label": "negative",
+     "confidence": "0.9949",
+     "flagged": false,
+     "feedback_text": "How did a routine security camera replacement end up with a cracked mounting bracket and a severed power line that nobody bothered to fix before leaving?"
+    },
+    {
+     "feedback_id": 7030,
+     "submitted_at": "2026-07-07T17:04:00Z",
+     "region": "west",
+     "label": "negative",
+     "confidence": "0.9948",
+     "flagged": false,
+     "feedback_text": "did anyone read the arrival window we confirmed last week? someone finally showed up ninety minutes late to check the security cameras without leaving any paperwork behind."
+    }
+   ],
+   "quoted_feedback_ids": [
+    7065,
+    7182,
+    7030
+   ]
+  },
+  "forecast": null,
+  "task_id": "41a09ea8-2d6c-4dda-8a0c-ba335799ecd1",
+  "trace_id": "97bd1cececf14ebfb8baf0de24841199",
+  "escalate": false,
+  "warning": null,
+  "unavailable_capability": null,
+  "qa_status": "verified",
+  "parsed_request": null,
+  "journey": {
+   "hops": [
+    {
+     "service": "orchestrator",
+     "step": "route",
+     "attempt": 1,
+     "start_ms": 0.2,
+     "duration_ms": 895.6,
+     "status": "ok"
+    },
+    {
+     "service": "sentiment",
+     "step": "parse",
+     "attempt": 1,
+     "start_ms": 896.1,
+     "duration_ms": 12887.3,
+     "status": "ok"
+    },
+    {
+     "service": "sentiment",
+     "step": "tool",
+     "attempt": 1,
+     "start_ms": 13783.5,
+     "duration_ms": 22747.0,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "figures_check",
+     "attempt": 1,
+     "start_ms": 36556.6,
+     "duration_ms": 51.9,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "interpretation_check",
+     "attempt": 1,
+     "start_ms": 36608.6,
+     "duration_ms": 5501.7,
+     "status": "ok"
+    }
+   ],
+   "qa": {
+    "verdict": "pass",
+    "checks": [
+     {
+      "code": "range_matches_request",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "coverage_matches_database",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "figures_match_database",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "flags_consistent",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "trend_matches",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "quotes_valid",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "rating_contradiction",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "text_matches_data",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "interpretation_matches_question",
+      "class": "interpretation",
+      "passed": true
+     }
+    ],
+    "interpretation": "faithful",
+    "mode": "advisory"
+   },
+   "model_calls": 3,
+   "cost_usd": 0.001624
+  }
+ }
+}

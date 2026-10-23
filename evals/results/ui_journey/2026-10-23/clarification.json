@@ -1,0 +1,105 @@
+{
+ "question": "How did Lina do on first-time fixes last quarter?",
+ "http_status": 200,
+ "seconds": 16.2,
+ "response": {
+  "answer": "2 technicians match Lina: Lina Adams and Lina Olsen. Please ask again with the full name.",
+  "outcome": "needs_clarification",
+  "reason": "technician_ambiguous",
+  "route": {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "candidates": [],
+   "reason": "Lina's first-time fix rate for last quarter asks for operational records."
+  },
+  "prompt_version": "route_v6",
+  "reporting": null,
+  "sentiment": null,
+  "forecast": null,
+  "task_id": "cea28c2b-3b62-4f43-ac3a-e06fcf324cb4",
+  "trace_id": "478fd77738e2494caa1b0ffb919c10d8",
+  "escalate": false,
+  "warning": null,
+  "unavailable_capability": null,
+  "qa_status": "verified",
+  "parsed_request": {
+   "metric": "first_time_fix_rate",
+   "group_by": null,
+   "technician_name": "Lina",
+   "region": null,
+   "account_name": null,
+   "start": "2026-04-01",
+   "end": "2026-06-30"
+  },
+  "journey": {
+   "hops": [
+    {
+     "service": "orchestrator",
+     "step": "route",
+     "attempt": 1,
+     "start_ms": 0.2,
+     "duration_ms": 6161.0,
+     "status": "ok"
+    },
+    {
+     "service": "reporting",
+     "step": "parse",
+     "attempt": 1,
+     "start_ms": 6161.6,
+     "duration_ms": 8881.9,
+     "status": "ok"
+    },
+    {
+     "service": "reporting",
+     "step": "tool",
+     "attempt": 1,
+     "start_ms": 15043.6,
+     "duration_ms": 27.7,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "figures_check",
+     "attempt": 1,
+     "start_ms": 15090.9,
+     "duration_ms": 6.3,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "interpretation_check",
+     "attempt": 1,
+     "start_ms": 15097.3,
+     "duration_ms": 1083.0,
+     "status": "ok"
+    }
+   ],
+   "qa": {
+    "verdict": "pass",
+    "checks": [
+     {
+      "code": "decline_matches_reason",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "decline_no_figures",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "interpretation_matches_question",
+      "class": "interpretation",
+      "passed": true
+     }
+    ],
+    "interpretation": "faithful",
+    "mode": "advisory"
+   },
+   "model_calls": 3,
+   "cost_usd": 0.00184
+  }
+ }
+}

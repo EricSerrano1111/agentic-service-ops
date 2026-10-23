@@ -27,7 +27,9 @@ from common import (
     bind_trace_id,
     clamp_to_deadline,
     current_cost_usd,
+    telemetry_metadata,
     text_fields,
+    timed_step,
     track_request_cost,
     with_reviewer_note,
 )
@@ -86,7 +88,7 @@ def deadline_of(context: RequestContext) -> Deadline:
 
 def cost_metadata(extra: dict | None = None) -> dict:
     """Response metadata carrying this service's list-price cost for the request (ADR-088)."""
-    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)}
+    return (extra or {}) | {COST_KEY: round(current_cost_usd(), 6)} | telemetry_metadata()
 
 
 def trace_id_of(context: RequestContext) -> str | None:
@@ -145,7 +147,10 @@ class SentimentExecutor(AgentExecutor):
 
     async def _query(self, resolved: Resolved, trace_id: str | None):
         """Summary always; examples only when asked. Both inside one deadline."""
-        async with asyncio.timeout(clamp_to_deadline(self.settings.mcp_timeout_s)):
+        async with (
+            asyncio.timeout(clamp_to_deadline(self.settings.mcp_timeout_s)),
+            timed_step("tool"),
+        ):
             summary = await call_tool(
                 self.settings.mcp_feedback_url,
                 SUMMARY_TOOL,
@@ -182,7 +187,10 @@ class SentimentExecutor(AgentExecutor):
             log.info("task received", extra={"task_id": task.id, "question_chars": len(question)})
 
             try:
-                async with asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)):
+                async with (
+                    asyncio.timeout(clamp_to_deadline(self.settings.parse_timeout_s)),
+                    timed_step("parse"),
+                ):
                     # After QA's interpretation check failed, the question comes back with
                     # a reviewer note (untrusted, capped, never logged; ADR-089).
                     resolved = await self.parser.parse(

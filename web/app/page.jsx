@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Icon from "./components/Icons";
+import JourneyPanel from "./components/JourneyPanel";
 import { EXAMPLES } from "./lib/examples.mjs";
+import { hasJourney, routedLine } from "./lib/journey.mjs";
 import { finishedLabel, workingLabel } from "./lib/timer.mjs";
 
 const MAX_QUESTION = 500;
@@ -85,6 +87,7 @@ export default function Page() {
   // null before the first question; then { status: "working" | "done" | "failed", asked, ... }
   const [run, setRun] = useState(null);
   const [elapsed, setElapsed] = useState(0);
+  const [showJourney, setShowJourney] = useState(false);
   const started = useRef(false);
   const inputRef = useRef(null);
   const sentAt = useRef(0);
@@ -136,6 +139,7 @@ export default function Page() {
     if (!text || busy) return;
     sentAt.current = performance.now();
     setElapsed(0);
+    setShowJourney(false);
     setRun({ status: "working", asked: text });
     let next;
     try {
@@ -283,7 +287,26 @@ export default function Page() {
             )}
             {run.status === "done" && <Answer result={run.result} />}
           </div>
+          {run.status === "done" && hasJourney(run.result) && (
+            <div className="card-foot">
+              <span className="muted small" data-testid="routed-line">
+                {routedLine(run.result.journey)}
+              </span>
+              <button
+                type="button"
+                className="link"
+                aria-expanded={showJourney}
+                aria-controls="journey-panel"
+                onClick={() => setShowJourney((open) => !open)}
+              >
+                {showJourney ? "Hide the answer journey" : "Show the answer journey →"}
+              </button>
+            </div>
+          )}
         </section>
+      )}
+      {run?.status === "done" && hasJourney(run.result) && showJourney && (
+        <JourneyPanel journey={run.result.journey} browserMs={run.ms} question={run.asked} />
       )}
     </main>
   );

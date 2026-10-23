@@ -1,0 +1,241 @@
+{
+ "question": "What weekly request volume should we expect for the next 8 weeks?",
+ "http_status": 200,
+ "seconds": 20.9,
+ "response": {
+  "answer": "Forecast of total request volume, 8 weeks from 2026-08-31 to 2026-10-25 (weeks start on Monday, UTC), as of 2026-08-30; the model is trained on data through 2026-08-30.\n- Week of 2026-08-31: about 151 requests (80% range 131-173)\n- Week of 2026-09-07: about 156 requests (80% range 135-179)\n- Week of 2026-09-14: about 160 requests (80% range 139-184)\n- Week of 2026-09-21: about 165 requests (80% range 143-189)\n- Week of 2026-09-28: about 169 requests (80% range 147-194)\n- Week of 2026-10-05: about 172 requests (80% range 149-198)\n- Week of 2026-10-12: about 174 requests (80% range 152-201)\n- Week of 2026-10-19: about 176 requests (80% range 153-202)\nTotal over these 8 weeks: about 1,322 requests, the sum of the weekly forecasts; no range is given for a total.\nOn held-out weeks at 1-4 weeks ahead, forecasts were off by 13.6% on average.\nOn held-out weeks at 5-13 weeks ahead, forecasts were off by 5.5% on average.",
+  "outcome": "answered",
+  "reason": null,
+  "route": {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "candidates": [],
+   "reason": "The question asks for a projection of future request volumes over the next 8 weeks."
+  },
+  "prompt_version": "route_v6",
+  "reporting": null,
+  "sentiment": null,
+  "forecast": {
+   "request": {
+    "slice": "total",
+    "horizon_weeks": 8,
+    "period_start": null,
+    "period_end": null,
+    "want_history": false,
+    "unsupported": null
+   },
+   "as_of": "2026-08-30",
+   "trained_through": "2026-08-30",
+   "model_version": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+   "range_assumed": false,
+   "requested_first_week": "2026-08-31",
+   "requested_last_week": "2026-10-19",
+   "beyond_horizon_weeks": 0,
+   "weeks": [
+    {
+     "week_start": "2026-08-31",
+     "horizon": 1,
+     "band": "1-4",
+     "served": true,
+     "point": 150.86834642212153,
+     "lo80": 131.27271881218553,
+     "hi80": 173.38909529793656,
+     "lo95": 121.95177667779414,
+     "hi95": 186.64146248793276
+    },
+    {
+     "week_start": "2026-09-07",
+     "horizon": 2,
+     "band": "1-4",
+     "served": true,
+     "point": 155.50225491843807,
+     "lo80": 135.27665550477684,
+     "hi80": 178.75184150945415,
+     "lo95": 125.65760243110228,
+     "hi95": 192.43524320764635
+    },
+    {
+     "week_start": "2026-09-14",
+     "horizon": 3,
+     "band": "1-4",
+     "served": true,
+     "point": 160.177810048846,
+     "lo80": 139.31614241039813,
+     "hi80": 184.1633739503344,
+     "lo95": 129.39612060314806,
+     "hi95": 198.28207145972183
+    },
+    {
+     "week_start": "2026-09-21",
+     "horizon": 4,
+     "band": "1-4",
+     "served": true,
+     "point": 164.6502757650155,
+     "lo80": 143.1795109320367,
+     "hi80": 189.3407313170937,
+     "lo95": 132.97132075238622,
+     "hi95": 203.87639346666526
+    },
+    {
+     "week_start": "2026-09-28",
+     "horizon": 5,
+     "band": "5-13",
+     "served": true,
+     "point": 168.66202084016217,
+     "lo80": 146.64381552937115,
+     "hi80": 193.9862050860897,
+     "lo95": 136.17668778213553,
+     "hi95": 208.89682174821655
+    },
+    {
+     "week_start": "2026-10-05",
+     "horizon": 6,
+     "band": "5-13",
+     "served": true,
+     "point": 171.96256540810066,
+     "lo80": 149.4920974395783,
+     "hi80": 197.81061613432342,
+     "lo95": 138.81115212722267,
+     "hi95": 213.03132672389953
+    },
+    {
+     "week_start": "2026-10-12",
+     "horizon": 7,
+     "band": "5-13",
+     "served": true,
+     "point": 174.33172414255722,
+     "lo80": 151.53339500488605,
+     "hi80": 200.56008143641685,
+     "lo95": 140.69761721372998,
+     "hi95": 216.0061459772249
+    },
+    {
+     "week_start": "2026-10-19",
+     "horizon": 8,
+     "band": "5-13",
+     "served": true,
+     "point": 175.60261920463884,
+     "lo80": 152.6227314247156,
+     "hi80": 202.0425108611036,
+     "lo95": 141.7015104642084,
+     "hi95": 217.61433431803928
+    }
+   ],
+   "bands": {
+    "5-13": {
+     "served": true,
+     "shown_error": 5.488484131615858
+    },
+    "1-4": {
+     "served": true,
+     "shown_error": 13.575509695123564
+    }
+   },
+   "period_total": 1321.75761674988,
+   "year_end_weeks": [],
+   "history": []
+  },
+  "task_id": "fc593026-0ca0-41db-b800-4430cd872011",
+  "trace_id": "77d36634bd7849918e82476115acdff7",
+  "escalate": false,
+  "warning": null,
+  "unavailable_capability": null,
+  "qa_status": "verified",
+  "parsed_request": null,
+  "journey": {
+   "hops": [
+    {
+     "service": "orchestrator",
+     "step": "route",
+     "attempt": 1,
+     "start_ms": 0.3,
+     "duration_ms": 7478.1,
+     "status": "ok"
+    },
+    {
+     "service": "forecast",
+     "step": "parse",
+     "attempt": 1,
+     "start_ms": 7479.3,
+     "duration_ms": 1143.0,
+     "status": "ok"
+    },
+    {
+     "service": "forecast",
+     "step": "tool",
+     "attempt": 1,
+     "start_ms": 8622.3,
+     "duration_ms": 598.0,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "figures_check",
+     "attempt": 1,
+     "start_ms": 9248.1,
+     "duration_ms": 3.2,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "interpretation_check",
+     "attempt": 1,
+     "start_ms": 9251.3,
+     "duration_ms": 11572.2,
+     "status": "ok"
+    }
+   ],
+   "qa": {
+    "verdict": "pass",
+    "checks": [
+     {
+      "code": "weeks_match_request",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "forecast_arithmetic",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "serving_matches_manifest",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "year_end_caveat",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "history_matches_database",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "forecast_numbers_recomputed",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "text_matches_data",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "interpretation_matches_question",
+      "class": "interpretation",
+      "passed": true
+     }
+    ],
+    "interpretation": "faithful",
+    "mode": "advisory"
+   },
+   "model_calls": 3,
+   "cost_usd": 0.001534
+  }
+ }
+}
