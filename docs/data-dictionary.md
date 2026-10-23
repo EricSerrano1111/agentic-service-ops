@@ -516,6 +516,33 @@ The gateway's own refusals, each fixed: "Daily limit reached: this demo answers 
 
 *2026-10-22 (TS-20-E; owner-decided 2026-10-22; assistant-drafted.)* **Notice text revised.** The rule-6 notice sentence above is replaced by: "Demonstration system: all data here is synthetic, generated for this project, and describes no real company, customer, technician or operation. The sentiment model was trained on synthetically written customer feedback, so its results may not reflect how real customers write." Reason: `05`'s TS-20-E requires the notice to cover the sentiment model's synthetic training data as well as the synthetic data, and the PR #82 text covered only the data. The rest of rule 6 is unchanged.
 
+**7. Elapsed timer (2026-10-22; ADR-117; owner-decided 2026-10-18; assistant-drafted).** The browser times each question itself, from the moment the question is sent until the response (or error) arrives. No server value is used, and no response field changes.
+- While waiting, the screen shows "Working… N s", updated at least once a second and rounded down to whole seconds.
+- When the response arrives, it shows "Answered in N.N s" (one decimal) in the answer card's header.
+- After an error or a refusal, it shows "Ended after N.N s" instead.
+
+The time includes the network and any cold start: it is the user's wait, not the system's processing time. It is not shown before the first question, and it sits outside the answer's live region.
+
+**8. Headline figure (2026-10-22; ADR-117; owner-decided 2026-10-22; assistant-drafted).** A reporting answer with a single figure may show that figure large, above the answer text. The gateway builds it; the UI computes nothing. It is shown only when **all** of these hold:
+- `outcome` is `answered`;
+- `qa_status` is `verified`;
+- the route is reporting;
+- the parsed request has no breakdown (`group_by` null) and its metric is one of incident count, SLA compliance or first-time fix rate.
+
+The headline is two strings:
+- the figure, **exactly as it appears in the answer text** (the gateway takes it from the specialist's data part and checks it is a substring of the answer text; if not, no headline);
+- a caption made of the "Interpreted as" Measure and Region values and, for SLA compliance and first-time fix rate, "N of M <denominator words exactly as the answer text phrases them>". A count's caption is the Measure and Region values only.
+
+Incident rate gets no headline: its printed value is a rate per completed request, which reads ambiguously without the sentence around it. No other answer gets a headline. The answer text below it is unchanged.
+
+**9. Example questions (2026-10-22; ADR-117 item 1; owner-decided 2026-10-22; assistant-drafted).** The landing page lists fixed example questions, grouped as in the approved mockup:
+- **Incident reporting:** "What was SLA compliance in the Northeast last month?" and "Which incident types were most common in July 2026?"
+- **Customer sentiment:** "Is negative feedback trending up in the West?" and "Show examples of negative comments from last month"
+- **Volume forecast:** "What weekly request volume should we expect for the next 8 weeks?"
+- **Edge cases:** "How's the Southeast doing?" (captioned "too open: it asks you to choose") and "What will revenue be next quarter?" (captioned "out of scope: it declines")
+
+Clicking an example fills the input and does not submit it. Each example is checked live in the deploy window before release (ADR-117). One that doesn't behave as captioned is replaced or removed, and that is recorded here as a dated note.
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
