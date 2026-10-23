@@ -514,6 +514,8 @@ The gateway's own refusals, each fixed: "Daily limit reached: this demo answers 
 
 **6. Synthetic-data notice (2026-10-22; TS-20-E; ADR-113 item 1; owner-decided 2026-10-18; assistant-drafted).** The single screen always shows this notice, near the top, before any question is asked and on every answer. It is plain text, not dismissible, and identical every time: "Demonstration system: all data here is synthetic, generated for this project. It describes no real company, customer, technician or operation." It is static page content. The gateway does not build it, and it changes no response.
 
+*2026-10-22 (TS-20-E; owner-decided 2026-10-22; assistant-drafted.)* **Notice text revised.** The rule-6 notice sentence above is replaced by: "Demonstration system: all data here is synthetic, generated for this project, and describes no real company, customer, technician or operation. The sentiment model was trained on synthetically written customer feedback, so its results may not reflect how real customers write." Reason: `05`'s TS-20-E requires the notice to cover the sentiment model's synthetic training data as well as the synthetic data, and the PR #82 text covered only the data. The rest of rule 6 is unchanged.
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`

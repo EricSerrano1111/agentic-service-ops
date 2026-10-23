@@ -122,8 +122,10 @@ def test_the_page_source_carries_the_synthetic_data_notice_on_every_screen():
     tests, so this checks the source file; the built `index.html` carries the same string."""
     source = (REPO / "web" / "app" / "page.jsx").read_text(encoding="utf-8")
     text = (
-        "Demonstration system: all data here is synthetic, generated for this project. "
-        "It describes no real company, customer, technician or operation."
+        "Demonstration system: all data here is synthetic, generated for this project, and "
+        "describes no real company, customer, technician or operation. The sentiment model was "
+        "trained on synthetically written customer feedback, so its results may not reflect how "
+        "real customers write."
     )
     joined = "".join(re.findall(r'"([^"\n]*)"', source.split("function Notice")[0]))
     assert text in joined
