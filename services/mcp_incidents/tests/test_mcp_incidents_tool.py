@@ -665,6 +665,31 @@ async def test_rejected_arguments_are_logged_by_name_and_kind_never_by_value():
     assert marker not in json.dumps(logged)
 
 
+async def test_the_sdks_tool_error_line_is_a_code_a_length_and_a_hash():
+    """L-98: the MCP SDK logs a tool's error message verbatim at INFO. With the services'
+    logging configuration the line holds the code, the message's length and a hash instead."""
+    from common import configure_logging
+
+    root = logging.getLogger()
+    saved = (list(root.handlers), root.level)
+    configure_logging("mcp_incidents")  # installs the filter on the SDK's logger
+    for h in list(root.handlers):
+        root.removeHandler(h)
+    for h in saved[0]:
+        root.addHandler(h)
+    root.setLevel(saved[1])
+    marker = "2019-03-07"  # a date the caller asked for; the tool's refusal repeats it
+    with captured_logs("mcp_incidents") as lines:
+        async with Client(create_server(SETTINGS, backend())) as client:
+            result = await client.call_tool(TOOL_NAME, {"start": marker, "end": "2019-03-31"})
+        logged = lines()
+    assert result.is_error and marker in result.content[0].text  # the client still gets it
+    [line] = [x for x in logged if x["msg"] == "tool failed"]
+    assert line["code"] == "tool_error" and line["tool"] == TOOL_NAME
+    assert line["error_chars"] > 0 and len(line["error_sha"]) == 12
+    assert marker not in json.dumps(logged)
+
+
 # --------------------------------------------------------------------------- readiness
 
 

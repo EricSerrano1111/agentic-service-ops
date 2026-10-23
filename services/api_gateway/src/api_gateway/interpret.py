@@ -22,6 +22,11 @@ QA_WORDS = {
     "not_checked": "Not checked: the request ended before verification ran.",
 }
 
+#: Outcomes whose response carries no figures: a clarification of any `reason` and a specialist's
+#: decline (`not_available`). A "figures checked" line on these claims a check with nothing to
+#: check (L-99, data dictionary section 6, rule 3).
+NO_FIGURES_OUTCOMES = ("needs_clarification", "not_available")
+
 METRICS = {
     "incident_count": "incident count",
     "incident_rate": "incident rate",
@@ -33,8 +38,11 @@ METRICS = {
 DOMAINS = ("reporting", "sentiment", "forecast")
 
 
-def qa_text(qa_status: str) -> str | None:
-    """The user-facing words for a `qa_status`; None (no line) for `not_applicable`."""
+def qa_text(qa_status: str, outcome: str | None = None) -> str | None:
+    """The user-facing words for a `qa_status`; None (no line) for `not_applicable` and for an
+    outcome that carries no figures."""
+    if outcome in NO_FIGURES_OUTCOMES:
+        return None
     return QA_WORDS.get(qa_status)
 
 
@@ -156,7 +164,7 @@ def view(question: str, body: dict) -> dict[str, Any]:
         "outcome": body.get("outcome"),
         "interpreted_as": interpreted_as(body),
         "qa_status": body.get("qa_status"),
-        "qa_text": qa_text(str(body.get("qa_status"))),
+        "qa_text": qa_text(str(body.get("qa_status")), body.get("outcome")),
         "escalate": bool(body.get("escalate")),
         "warning": warning,
         "trace_id": body.get("trace_id"),

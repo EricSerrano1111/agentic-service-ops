@@ -117,6 +117,20 @@ def test_the_real_export_if_built_matches_its_hashes():
     assert scan["script_hashes"], "a Next.js export has inline scripts"
 
 
+def test_the_page_source_carries_the_synthetic_data_notice_on_every_screen():
+    """Data dictionary section 6, rule 6 (TS-20-E). The built export is not available in unit
+    tests, so this checks the source file; the built `index.html` carries the same string."""
+    source = (REPO / "web" / "app" / "page.jsx").read_text(encoding="utf-8")
+    text = (
+        "Demonstration system: all data here is synthetic, generated for this project. "
+        "It describes no real company, customer, technician or operation."
+    )
+    joined = "".join(re.findall(r'"([^"\n]*)"', source.split("function Notice")[0]))
+    assert text in joined
+    assert source.count("<Notice />") == 3  # loading, signed-out and signed-in screens
+    assert 'id="synthetic-notice"' in source and 'data-testid="synthetic-notice"' in source
+
+
 def test_static_files_are_public_and_never_shadow_the_api(tmp_path, export):
     kit = static_kit(tmp_path, export)
     assert kit.client.get("/").status_code == 200

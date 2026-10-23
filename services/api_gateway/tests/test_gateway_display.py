@@ -137,6 +137,41 @@ def test_every_qa_status_has_the_documented_words_and_not_applicable_has_none():
     assert qa_text("not_applicable") is None
 
 
+@pytest.mark.parametrize(
+    ("outcome", "reason"),
+    [
+        ("needs_clarification", "technician_ambiguous"),
+        ("needs_clarification", "intent_ambiguous"),
+        ("not_available", None),  # a specialist's decline (`not_supported`)
+    ],
+)
+def test_no_verification_line_when_the_response_carries_no_figures(kit, outcome, reason):
+    kit.upstream.body = answered(outcome=outcome, reason=reason, qa_status="verified")
+    kit.sign_in()
+    body = kit.ask().json()
+    assert body["qa_status"] == "verified" and body["qa_text"] is None
+    assert body["interpreted_as"] == (
+        "Area: incident reporting · Measure: SLA compliance · "
+        "Period: 2026-08-01 to 2026-08-30 · Region: Northeast"
+    )  # the "Interpreted as:" line is unchanged
+
+
+def test_an_answered_response_with_figures_still_shows_the_verified_words(kit):
+    kit.sign_in()
+    assert kit.ask().json()["qa_text"] == (
+        "Figures checked for the request as interpreted. "
+        "Check that the “Interpreted as” line matches your question."
+    )
+
+
+def test_the_other_statuses_are_unchanged_by_the_outcome_condition():
+    for status, start in (("failed", "Not verified"), ("unavailable", "Not verified")):
+        assert qa_text(status, "degraded").startswith(start)
+    assert qa_text("not_checked", "degraded").startswith("Not checked")
+    assert qa_text("not_checked", "answered").startswith("Not checked")
+    assert qa_text("not_applicable", "declined") is None
+
+
 # ---------------------------------------------------------------- response mapping
 
 

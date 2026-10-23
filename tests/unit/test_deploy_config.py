@@ -576,3 +576,57 @@ def test_the_six_services_table_agrees_with_the_deploy_plan_and_the_definitions(
     assert dict(verify.MODEL_CALLING) == {
         service: container for service, container in MODEL_CALLING.items()
     }
+
+
+ALL_SERVICES = ("gateway", "orchestrator", "reporting", "sentiment", "forecast", "qa")
+#: container -> its own port: the nine containers of the six services
+LIVENESS_PORTS = {
+    "gateway": 8080,
+    "orchestrator": 8080,
+    "agent-reporting": 8080,
+    "mcp-incidents": 8101,
+    "agent-sentiment": 8080,
+    "mcp-feedback": 8102,
+    "agent-forecast": 8080,
+    "mcp-volume": 8103,
+    "agent-qa": 8080,
+}
+
+
+def test_every_container_has_a_liveness_probe_on_healthz_at_its_own_port():
+    """F2: /healthz checks no database, so a stopped database never causes a restart loop."""
+    seen = {}
+    for service in ALL_SERVICES:
+        for name, c in _raw_containers(service).items():
+            seen[name] = c["livenessProbe"]
+    assert {n: p["httpGet"]["port"] for n, p in seen.items()} == LIVENESS_PORTS
+    for name, probe in seen.items():
+        assert probe["httpGet"]["path"] == "/healthz", name
+        assert (probe["periodSeconds"], probe["timeoutSeconds"], probe["failureThreshold"]) == (
+            30,
+            5,
+            3,
+        ), name
+
+
+def test_qas_startup_probe_is_its_readiness_endpoint():
+    """F1: QA starts only when the database answers as app_qa."""
+    qa = _raw_containers("qa")["agent-qa"]
+    assert qa["startupProbe"]["httpGet"] == {"path": "/readyz", "port": 8080}
+    assert qa["startupProbe"]["failureThreshold"] * qa["startupProbe"]["periodSeconds"] >= 60
+
+
+def test_the_deploy_scripts_pass_probes_through_unchanged():
+    ds = _load("deploy_service")
+    doc = rendered("reporting")
+    body = ds.create_body(doc)  # an update sends `doc` as it is
+    for source, sent in zip(
+        doc["template"]["containers"], body["template"]["containers"], strict=True
+    ):
+        assert source["livenessProbe"]["httpGet"]["path"] == "/healthz"
+        assert sent["livenessProbe"] == source["livenessProbe"]
+        assert sent["startupProbe"] == source["startupProbe"]
+    for service in ALL_SERVICES:  # render.py leaves every container's probes as written
+        for name, c in _raw_containers(service).items():
+            probes = {k: c[k] for k in ("startupProbe", "livenessProbe")}
+            assert render.render_value(probes, ENV) == probes, (service, name)

@@ -1135,6 +1135,27 @@ async def test_a_name_the_lookup_rejects_is_logged_without_the_name(monkeypatch)
     assert "ZedMARKER" not in json.dumps(logged)
 
 
+@pytest.mark.anyio
+async def test_a_failed_tool_range_is_logged_as_a_code_a_length_and_a_hash(monkeypatch):
+    """L-98: the `invalid_range` reason carries the tool's error text, with dates parsed from the
+    question. The log gets the code, the reason's length and a hash, never the text."""
+    marker = "MARKER-L98-window"
+
+    async def rejects(*args, **kwargs):
+        raise McpToolError(f"start 2019-03-07 is before {marker}")
+
+    monkeypatch.setattr(executor_mod, "call_tool", rejects)
+    with captured_logs("agent_reporting") as lines:
+        task = await _send(create_app(SETTINGS, FakeLLM(req("incident_count"))))
+        logged = lines()
+    code, answer = _failure(task)
+    assert code == "invalid_range" and marker in answer  # the returned text is unchanged
+    [failed] = [x for x in logged if x["msg"] == "task failed"]
+    assert failed["code"] == "invalid_range" and "reason" not in failed
+    assert failed["reason_chars"] == len(answer) and len(failed["reason_sha"]) == 12
+    assert marker not in json.dumps(logged) and "2019-03-07" not in json.dumps(logged)
+
+
 # --------------------------------------------------------------------------- readiness
 
 

@@ -75,6 +75,26 @@ def text_fields(prefix: str, text: str) -> dict[str, object]:
     return {f"{prefix}_chars": len(text), f"{prefix}_sha": digest}
 
 
+class ToolErrorTextFilter(logging.Filter):
+    """The MCP SDK logs a tool's error message verbatim at INFO (`Tool %r failed: %r`). That
+    message can carry values parsed from the question (L-98), so the line is rewritten to a
+    code, the message's length and a short hash (ADR-108). The client still gets the message."""
+
+    SDK_MESSAGE = "Tool %r failed: %r"
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if (
+            record.msg == self.SDK_MESSAGE
+            and isinstance(record.args, tuple)
+            and len(record.args) == 2
+        ):
+            tool, message = record.args
+            record.msg, record.args = "tool failed", None
+            record.__dict__.update({"tool": tool, "code": "tool_error"})
+            record.__dict__.update(text_fields("error", str(message)))
+        return True
+
+
 def safe_exception(exc_info: tuple) -> str:
     """An exception as class names and `file:line in function` frames, never its message.
 
@@ -180,3 +200,6 @@ def configure_logging(service: str, level: str = "INFO") -> None:
     logging.getLogger("a2a").setLevel(max(logging.INFO, root.level))
     # The MCP SDK can log request payloads (tool arguments, so what the user typed) at DEBUG.
     logging.getLogger("mcp").setLevel(max(logging.INFO, root.level))
+    sdk = logging.getLogger("mcp.server.mcpserver.server")
+    if not any(isinstance(f, ToolErrorTextFilter) for f in sdk.filters):
+        sdk.addFilter(ToolErrorTextFilter())

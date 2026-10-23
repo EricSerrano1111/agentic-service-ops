@@ -61,3 +61,10 @@ template:
         periodSeconds: 3
         timeoutSeconds: 3
         failureThreshold: 20
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3
