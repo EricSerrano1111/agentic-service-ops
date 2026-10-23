@@ -208,6 +208,7 @@ def test_dirty_tree_sees_code_but_not_the_run_outputs_or_ignored_files(tmp_path)
     (tmp_path / "evals" / "fr03_v3" / "ledger.jsonl").write_text("{}\n{}\n")  # the run's own
     (tmp_path / "evals" / "results" / "fr03_v3" / "r.json").write_text("{}")
     assert mod.dirty_tree(tmp_path) == []
+    assert mod.dirty_tree(tmp_path / "evals" / "fr03_v3") == []  # from the subfolder, as run
     (tmp_path / "evals" / "fr03_v3" / "probe.py").write_text("changed")
     assert len(mod.dirty_tree(tmp_path)) == 1
 

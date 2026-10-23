@@ -70,7 +70,10 @@ def latency_summary(latencies: list[float]) -> dict:
 
 
 #: The run's own outputs change the tree while a session runs; they are not code.
-RUN_OUTPUTS = (":!evals/fr03_v3/ledger.jsonl", ":!evals/results/fr03_v3")
+RUN_OUTPUTS = (
+    ":(top,exclude)evals/fr03_v3/ledger.jsonl",
+    ":(top,exclude)evals/results/fr03_v3",
+)
 
 
 def dirty_tree(repo: Path = HERE) -> list[str]:
