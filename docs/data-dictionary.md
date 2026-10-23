@@ -561,6 +561,8 @@ Clicking an example fills the input and does not submit it. Each example is chec
   - When `journey` is absent (an older response), the button is not shown.
 - **Every outcome has a journey.** A clarification or a decline shows the route step and any specialist step that ran. A degraded answer shows the hop where it stopped, with that hop's status.
 
+*2026-10-23 (ADR-117 item 5; assistant-drafted.)* **Clarifications from the build.** (1) The journey is carried by every AskResponse. An HTTP error from the orchestrator (rule 5’s fixed messages) is not an AskResponse and has no journey; the button is not shown. (2) The interpretation chip can also read “Interpretation check: advisory · unavailable”, when the interpretation call could not run. (3) The gateway’s forward hop spans its whole wait on the orchestrator, network included. (4) model_calls counts the calls of completed hops; a hop that timed out adds none, so the count is a lower bound for degraded answers.
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
