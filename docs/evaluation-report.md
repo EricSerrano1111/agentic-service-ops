@@ -1426,3 +1426,13 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** The golden run's cost and the session's cap and time limit. The spent sets cannot be rerun blind.
 - **Fix (option):** report the golden set at k=3 on a new owner-written set.
 - **Recorded in:** `evals/results/sprint5_x.md`; `evals/results/session1/2026-10-15/summary.md`. Owner-decided 2026-10-18; assistant-drafted.
+
+### L-104 — The runtime sends a deprecated sampling parameter; one evaluated model has been retired (2026-10-22)
+- **What:** The runtime model client sends `temperature=0.0` on every call (`packages/llm/src/llm/transport.py`; default in `config.py`). Google's notice of 2026-10-22 says sampling parameters (`temperature`, `top_p`, `top_k`) have had no effect since Gemini 3.6 Flash and will return an error on upcoming models. The system is pinned to `gemini-3.5-flash-lite` and `google-genai==2.25.0` (ADR-048, ADR-049), where the parameter is honoured. Separately, `gemini-3.7-flash`, used only in ADR-049's seed-set comparison, is deprecated and its endpoint now routes to `gemini-3.8-flash`, so the two result files from that comparison are records that can't be re-run as measured.
+- **Why accepted:**
+  - The evaluated system (ADR-103) includes temperature 0.0 on Flash-Lite, so changing it would change what the report describes.
+  - No runtime role uses 3.7 Flash.
+  - `thinking_budget`, `top_p` and `top_k` are never sent (the project uses `thinking_level`, ADR-052).
+  - Google's deprecations page, read 2026-10-22, lists no shutdown date for `gemini-3.5-flash-lite` or `gemini-3.8-flash`.
+- **Fix (option):** send `temperature` only when it is explicitly configured, or refuse it at startup for models that ignore it (like ADR-052's thinking-level check), as a new decision. **This must be done before any role moves to a model newer than 3.5 Flash-Lite.**
+- **Recorded in:** ADR-048 (item 5), ADR-049, ADR-052, ADR-103; Google notices of 2026-10-22; https://ai.google.dev/gemini-api/docs/deprecations (read 2026-10-22).
