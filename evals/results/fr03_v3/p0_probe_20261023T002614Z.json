@@ -1,0 +1,234 @@
+{
+  "phase": "P0",
+  "adr": "ADR-114",
+  "written_at": "2026-10-23T00:26:14Z",
+  "set": "seed_v2",
+  "items": 10,
+  "prompt": "route_v6",
+  "prompt_sha": "a160b528247b",
+  "model": "gemini-3.5-flash-lite",
+  "as_of": "2026-08-30",
+  "k": 1,
+  "git_commit": "b004a587afe68af5bcc47ca5eba400dc02f5a78d",
+  "git_dirty": true,
+  "levels": [
+    {
+      "level": "high",
+      "summary": {
+        "calls": 10,
+        "requests": 10,
+        "input_tokens": 14055,
+        "output_tokens": 6789,
+        "thinking_tokens": 6431,
+        "cost_usd": 0.021189,
+        "mean_cost_per_call_usd": 0.0021189,
+        "mean_input_tokens": 1405.5,
+        "mean_output_tokens": 678.9,
+        "mean_thinking_tokens": 643.1,
+        "latency": {
+          "median_s": 2.254,
+          "p95_s": 3.147
+        },
+        "errors": {}
+      },
+      "calls": [
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1399,
+          "output_tokens": 573,
+          "thinking_tokens": 546,
+          "answer_tokens": 27,
+          "cost_usd": 0.0018522,
+          "latency_s": 2.059,
+          "responded": true,
+          "id": "s01",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1409,
+          "output_tokens": 727,
+          "thinking_tokens": 693,
+          "answer_tokens": 34,
+          "cost_usd": 0.0022402,
+          "latency_s": 2.277,
+          "responded": true,
+          "id": "s02",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1410,
+          "output_tokens": 282,
+          "thinking_tokens": 249,
+          "answer_tokens": 33,
+          "cost_usd": 0.001128,
+          "latency_s": 1.213,
+          "responded": true,
+          "id": "s03",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1406,
+          "output_tokens": 953,
+          "thinking_tokens": 917,
+          "answer_tokens": 36,
+          "cost_usd": 0.0028043,
+          "latency_s": 2.768,
+          "responded": true,
+          "id": "s04",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1415,
+          "output_tokens": 622,
+          "thinking_tokens": 582,
+          "answer_tokens": 40,
+          "cost_usd": 0.0019795,
+          "latency_s": 2.231,
+          "responded": true,
+          "id": "s05",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1402,
+          "output_tokens": 827,
+          "thinking_tokens": 798,
+          "answer_tokens": 29,
+          "cost_usd": 0.0024881,
+          "latency_s": 2.73,
+          "responded": true,
+          "id": "s06",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1402,
+          "output_tokens": 832,
+          "thinking_tokens": 800,
+          "answer_tokens": 32,
+          "cost_usd": 0.0025006,
+          "latency_s": 2.659,
+          "responded": true,
+          "id": "s07",
+          "tag": "clear",
+          "expected": "sentiment"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1405,
+          "output_tokens": 484,
+          "thinking_tokens": 436,
+          "answer_tokens": 48,
+          "cost_usd": 0.0016315,
+          "latency_s": 1.763,
+          "responded": true,
+          "id": "s08",
+          "tag": "clear",
+          "expected": "sentiment"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1405,
+          "output_tokens": 918,
+          "thinking_tokens": 867,
+          "answer_tokens": 51,
+          "cost_usd": 0.0027165,
+          "latency_s": 3.147,
+          "responded": true,
+          "id": "s09",
+          "tag": "clear",
+          "expected": "sentiment"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1402,
+          "output_tokens": 571,
+          "thinking_tokens": 543,
+          "answer_tokens": 28,
+          "cost_usd": 0.0018481,
+          "latency_s": 2.007,
+          "responded": true,
+          "id": "s10",
+          "tag": "clear",
+          "expected": "sentiment"
+        }
+      ],
+      "stopped": null,
+      "verdict": {
+        "status": "kept",
+        "reason": "within the cost and latency ceilings"
+      },
+      "info_only_accuracy_not_a_selection_input": "10/10"
+    }
+  ],
+  "ledger_totals_after": {
+    "requests": 30,
+    "calls": 30,
+    "cost_usd": 0.041004,
+    "probe_mean_cost_per_call": {
+      "low": 0.0005364,
+      "medium": 0.00144515,
+      "high": 0.0021189
+    }
+  }
+}

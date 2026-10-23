@@ -1,0 +1,233 @@
+{
+  "phase": "P0",
+  "adr": "ADR-114",
+  "written_at": "2026-10-23T00:25:04Z",
+  "set": "seed_v2",
+  "items": 10,
+  "prompt": "route_v6",
+  "prompt_sha": "a160b528247b",
+  "model": "gemini-3.5-flash-lite",
+  "as_of": "2026-08-30",
+  "k": 1,
+  "git_commit": "a0503dbfc1459993bed33c297ffcee521bae8a33",
+  "git_dirty": true,
+  "levels": [
+    {
+      "level": "medium",
+      "summary": {
+        "calls": 10,
+        "requests": 10,
+        "input_tokens": 14055,
+        "output_tokens": 4094,
+        "thinking_tokens": 3626,
+        "cost_usd": 0.0144515,
+        "mean_cost_per_call_usd": 0.00144515,
+        "mean_input_tokens": 1405.5,
+        "mean_output_tokens": 409.4,
+        "mean_thinking_tokens": 362.6,
+        "latency": {
+          "median_s": 1.528,
+          "p95_s": 2.677
+        },
+        "errors": {}
+      },
+      "calls": [
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1399,
+          "output_tokens": 265,
+          "thinking_tokens": 213,
+          "answer_tokens": 52,
+          "cost_usd": 0.0010822,
+          "latency_s": 1.508,
+          "responded": true,
+          "id": "s01",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1409,
+          "output_tokens": 175,
+          "thinking_tokens": 127,
+          "answer_tokens": 48,
+          "cost_usd": 0.0008602,
+          "latency_s": 1.226,
+          "responded": true,
+          "id": "s02",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1410,
+          "output_tokens": 213,
+          "thinking_tokens": 166,
+          "answer_tokens": 47,
+          "cost_usd": 0.0009555,
+          "latency_s": 1.118,
+          "responded": true,
+          "id": "s03",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1406,
+          "output_tokens": 674,
+          "thinking_tokens": 632,
+          "answer_tokens": 42,
+          "cost_usd": 0.0021068,
+          "latency_s": 2.326,
+          "responded": true,
+          "id": "s04",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1415,
+          "output_tokens": 228,
+          "thinking_tokens": 175,
+          "answer_tokens": 53,
+          "cost_usd": 0.0009945,
+          "latency_s": 1.234,
+          "responded": true,
+          "id": "s05",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "reporting",
+          "domains": [
+            "reporting"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1402,
+          "output_tokens": 593,
+          "thinking_tokens": 558,
+          "answer_tokens": 35,
+          "cost_usd": 0.0019031,
+          "latency_s": 1.895,
+          "responded": true,
+          "id": "s06",
+          "tag": "clear",
+          "expected": "reporting"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1402,
+          "output_tokens": 710,
+          "thinking_tokens": 658,
+          "answer_tokens": 52,
+          "cost_usd": 0.0021956,
+          "latency_s": 2.677,
+          "responded": true,
+          "id": "s07",
+          "tag": "clear",
+          "expected": "sentiment"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1405,
+          "output_tokens": 198,
+          "thinking_tokens": 145,
+          "answer_tokens": 53,
+          "cost_usd": 0.0009165,
+          "latency_s": 1.146,
+          "responded": true,
+          "id": "s08",
+          "tag": "clear",
+          "expected": "sentiment"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1405,
+          "output_tokens": 655,
+          "thinking_tokens": 604,
+          "answer_tokens": 51,
+          "cost_usd": 0.002059,
+          "latency_s": 2.279,
+          "responded": true,
+          "id": "s09",
+          "tag": "clear",
+          "expected": "sentiment"
+        },
+        {
+          "route": "sentiment",
+          "domains": [
+            "sentiment"
+          ],
+          "error": null,
+          "requests": 1,
+          "input_tokens": 1402,
+          "output_tokens": 383,
+          "thinking_tokens": 348,
+          "answer_tokens": 35,
+          "cost_usd": 0.0013781,
+          "latency_s": 1.548,
+          "responded": true,
+          "id": "s10",
+          "tag": "clear",
+          "expected": "sentiment"
+        }
+      ],
+      "stopped": null,
+      "verdict": {
+        "status": "kept",
+        "reason": "within the cost and latency ceilings"
+      },
+      "info_only_accuracy_not_a_selection_input": "10/10"
+    }
+  ],
+  "ledger_totals_after": {
+    "requests": 20,
+    "calls": 20,
+    "cost_usd": 0.019815,
+    "probe_mean_cost_per_call": {
+      "low": 0.0005364,
+      "medium": 0.00144515
+    }
+  }
+}
