@@ -32,6 +32,7 @@ from common import (
     bind_trace_id,
     clamp_to_deadline,
     current_cost_usd,
+    text_fields,
     track_request_cost,
     with_reviewer_note,
 )
@@ -476,13 +477,15 @@ class ReportingExecutor(AgentExecutor):
         log_extra: dict | None = None,
         parsed_request: dict | None = None,
     ) -> None:
-        """End the task failed. `reason` is the user-facing text; it is logged only when it
-        holds nothing from the question (`log_reason`), with `log_extra` standing in. A decline
+        """End the task failed. `reason` is the user-facing text; the log gets its length and a
+        hash (ADR-108, L-98), never the text, since a tool's error text carries dates parsed
+        from the question. With `log_reason` false (the text names what the user typed) it gets
+        neither, and `log_extra` stands in. A decline
         also carries `parsed_request`, how the question was read, for QA (ADR-089); it is not
         logged."""
         fields = {"task_id": task_id, "code": code} | (log_extra or {})
         if log_reason:
-            fields["reason"] = reason
+            fields |= text_fields("reason", reason)
         log.warning("task failed", extra=fields)
         await updater.failed(
             updater.new_agent_message(

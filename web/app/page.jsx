@@ -4,6 +4,20 @@ import { useEffect, useRef, useState } from "react";
 
 const MAX_QUESTION = 500;
 
+// Data dictionary section 6, "Answer display (UI)", rule 6 (TS-20-E): shown on every screen,
+// before any question and on every answer; plain text, not dismissible, identical every time.
+const SYNTHETIC_NOTICE =
+  "Demonstration system: all data here is synthetic, generated for this project. " +
+  "It describes no real company, customer, technician or operation.";
+
+function Notice() {
+  return (
+    <p id="synthetic-notice" data-testid="synthetic-notice" className="hint">
+      {SYNTHETIC_NOTICE}
+    </p>
+  );
+}
+
 // One screen (ADR-080). Everything shown comes from the gateway's view of the answer; the
 // display rules are data dictionary section 6, "Answer display (UI)". Text only: nothing from
 // a response is ever rendered as HTML.
@@ -93,6 +107,7 @@ export default function Page() {
   if (phase === "loading") {
     return (
       <main>
+        <Notice />
         <h1>Service Ops Intelligence</h1>
         <p className="hint" role="status">Loading</p>
       </main>
@@ -102,6 +117,7 @@ export default function Page() {
   if (phase === "signed-out") {
     return (
       <main>
+        <Notice />
         <h1>Service Ops Intelligence</h1>
         <div className="panel" role="status">
           <p>An invite link is required. Open the link you were sent to sign in.</p>
@@ -112,6 +128,7 @@ export default function Page() {
 
   return (
     <main>
+      <Notice />
       <div className="row">
         <h1>Service Ops Intelligence</h1>
         <button type="button" className="link" onClick={signOut}>Sign out</button>

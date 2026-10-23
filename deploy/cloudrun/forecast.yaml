@@ -68,6 +68,13 @@ template:
         periodSeconds: 3
         timeoutSeconds: 3
         failureThreshold: 20
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3
     - name: mcp-volume
       image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/mcp-volume:${IMAGE_TAG}
       env:
@@ -103,3 +110,10 @@ template:
         periodSeconds: 3
         timeoutSeconds: 3
         failureThreshold: 20
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8103
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3

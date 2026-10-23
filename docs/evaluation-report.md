@@ -1393,11 +1393,15 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 
 **Update 2026-10-16 (S6-A1; owner-decided 2026-10-16; assistant-drafted):** the owner chose option (a): `06` states the limit, and the fix is decided at the 6.5 brainstorm and deployed only after `06` is submitted (ADR-109). `docs/security-model.md` §5 ("Still logged, derived from the question", item 2) already documented that `invalid_range` failure text carries dates parsed from the question; L-98 widens that to `mcp_incidents`' logged tool error message.
 
+*2026-10-22 (ADR-113 item 1; assistant-drafted.)* Fixed in the repo (PR: this branch); not yet deployed. It deploys in the hardening window after `06` is submitted.
+
 ### L-99 — The verification line shows on a clarification (2026-10-15)
 - **What:** a `needs_clarification` page (the "Priya" question, two technicians matched) shows "Figures checked for the request as interpreted", although no figures were produced. The display claims a check with nothing to check.
 - **Why accepted:** the page also explains the clarification and lists both matches, so no wrong figure is shown; the cost is a misleading line.
 - **Fix (option):** do not render the verification line when the outcome has no figures.
 - **Recorded in:** `evals/results/session1/2026-10-15/summary.md` ("For the 05 revision"); `run-notes.md` (step 3.6). Owner-decided 2026-10-15; assistant-drafted.
+
+*2026-10-22 (ADR-113 item 1; assistant-drafted.)* Fixed in the repo (PR: this branch); not yet deployed. It deploys in the hardening window after `06` is submitted.
 
 ### L-100 — A backwards date range is silently reordered (2026-10-15)
 - **What:** "August 2026 to January 2026" was parsed as 2026-01-01 to 2026-08-31 and was then refused on the dataset window (422 `invalid_range`). The user is not told their range was backwards.

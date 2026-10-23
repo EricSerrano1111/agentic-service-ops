@@ -493,6 +493,8 @@ Example: `Area: incident reporting · Measure: SLA compliance · Period: 2026-07
 | `not_checked` | "Not checked: the request ended before verification ran." |
 | `not_applicable` | no verification line |
 
+*2026-10-22 (L-99; ADR-113 item 1; owner-decided 2026-10-18; assistant-drafted.)* **Condition on the verification line.** The verification line is shown only when the response carries figures. It is omitted (as for `not_applicable`) when `outcome` is `needs_clarification`, whatever the `reason`, and when the specialist declined (`outcome` is `not_available`, the orchestrator's pass-through of a specialist's `not_supported` decline). Out-of-scope and multi-domain replies already carry `not_applicable`. The words in the table above are unchanged. Reason: a line saying figures were checked, on a reply with no figures, claims a check with nothing to check (L-99).
+
 **4. Follow-up flag and degraded warning.** When `escalate` is true the UI shows "Sent for follow-up" and the orchestrator's `warning` verbatim. The warning's wording is `degraded.py` `warning_for` (ADR-088): time limit (120 seconds), a dependency unavailable, cost limit, verification unavailable, or "failed verification (checks: …) and is not shown". A response that failed verification never shows its answer figures (ADR-092, rule 3).
 
 **5. Errors (revised 2026-10-12 for L-89: fixed messages; upstream text is never shown).** The orchestrator's error `detail` is *not* shown. The gateway maps the error's `error` code, and only that, to one fixed sentence it owns; the status goes on as it was. Anything it does not recognise gets the generic sentence. The upstream `detail` (which can be an agent's own task text, such as "The incidents query failed.") is written to the log with the trace ID and goes no further. The user-facing `error` value is the mapped code, or `upstream_error` for an unrecognised one, never an upstream string.
@@ -509,6 +511,8 @@ Example: `Area: incident reporting · Measure: SLA compliance · Period: 2026-07
 | any other `error`, or any other status | "The service could not answer. Please try again." (502, `upstream_error`) |
 
 The gateway's own refusals, each fixed: "Daily limit reached: this demo answers a fixed number of questions a day. It resets at midnight Pacific time." (the global daily question cap, ADR-097; unchanged), "Too many questions this hour (limit N). Please try again later." (per invite), "The service is temporarily unavailable. Try again." (orchestrator unreachable, 503), "The question took too long to answer. Please try again, or ask for a shorter period." (the gateway's wait for the orchestrator ran out, 504, `deadline_exceeded`), "sign-in required" (401). A deadline the orchestrator itself reached is not an error: it returns the degraded result of rule 4, whose warning is a fixed template (ADR-088).
+
+**6. Synthetic-data notice (2026-10-22; TS-20-E; ADR-113 item 1; owner-decided 2026-10-18; assistant-drafted).** The single screen always shows this notice, near the top, before any question is asked and on every answer. It is plain text, not dismissible, and identical every time: "Demonstration system: all data here is synthetic, generated for this project. It describes no real company, customer, technician or operation." It is static page content. The gateway does not build it, and it changes no response.
 
 ### Forecast target — **locked**
 

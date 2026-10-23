@@ -71,6 +71,13 @@ template:
         periodSeconds: 3
         timeoutSeconds: 3
         failureThreshold: 40
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3
     - name: mcp-feedback
       image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/mcp-feedback:${IMAGE_TAG}
       env:
@@ -108,3 +115,10 @@ template:
         periodSeconds: 3
         timeoutSeconds: 3
         failureThreshold: 20 # same as mcp-incidents: start-up is a manifest read (ADR-100)
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8102
+        periodSeconds: 30
+        timeoutSeconds: 5
+        failureThreshold: 3
