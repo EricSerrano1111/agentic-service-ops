@@ -10,8 +10,9 @@ as-of 2026-08-30. Each level is authorized through the ledger before it runs. Th
 
 Per-process backstops (the ledger is the control): LLM_MAX_REQUESTS=40, LLM_MAX_SPEND_USD=0.20,
 one client per level. The session stops, with a `stop` ledger line, on a daily-quota 429, an
-`LLMAuthError`, a backstop cap firing, or every call at a level above `minimal` reporting zero
-thinking tokens. The routes are recorded for information; they are not a selection input.
+`LLMAuthError`, a backstop cap firing, or when every level above `minimal` probed shows zero
+thinking tokens (ADR-115: one such level is only dropped). The routes are recorded for
+information; they are not a selection input.
 """
 
 from __future__ import annotations
@@ -53,6 +54,7 @@ AS_OF = "2026-08-30"
 SET = "seed_v2"
 N_ITEMS = 10
 LEVELS = ("low", "medium", "high")
+DEFAULT_LEVELS = "medium,high"  # `low` was probed 2026-10-22 and dropped (ADR-115)
 BACKSTOP_REQUESTS, BACKSTOP_SPEND_USD = "40", "0.20"
 RESULTS_DIR = ROOT / "evals" / "results" / "fr03_v3"
 SEED_FILE = ROOT / "evals" / "routing" / f"{SET}.jsonl"
@@ -228,23 +230,27 @@ async def run_level(ledger, level: str) -> dict:
     if stop:
         ledger.stop(f"{stop} (level {level})")
         return level_result
-    thinking = [c["thinking_tokens"] for c in meter.calls if c["responded"]]
-    if fr03_ledger.all_zero_thinking(level, thinking):
-        reason = f"every call at {level} reported zero thinking tokens: meter or setting broken"
+    responded = [c for c in meter.calls if c["responded"]]
+    if not responded:
+        reason = f"no call at {level} got a response: nothing to measure"
         ledger.stop(reason)
         level_result["stopped"] = reason
         return level_result
-    kept, why = fr03_ledger.probe_verdict(
-        summary["mean_cost_per_call_usd"] or 0.0, summary["latency"]["p95_s"]
-    )
-    ledger.verdict(
-        level,
-        kept,
-        why,
-        mean_cost_per_call_usd=summary["mean_cost_per_call_usd"],
-        p95_latency_s=summary["latency"]["p95_s"],
-    )
-    level_result["verdict"] = {"kept": kept, "reason": why}
+    numbers = {
+        "mean_cost_per_call_usd": summary["mean_cost_per_call_usd"],
+        "p95_latency_s": summary["latency"]["p95_s"],
+        "mean_thinking_tokens": summary["mean_thinking_tokens"],
+    }
+    if fr03_ledger.all_zero_thinking(level, [c["thinking_tokens"] for c in responded]):
+        # ADR-115: the level behaved like `minimal`; it is dropped, and the session goes on.
+        status, why = "dropped", "zero_thinking"
+    else:
+        kept, why = fr03_ledger.probe_verdict(
+            summary["mean_cost_per_call_usd"] or 0.0, summary["latency"]["p95_s"]
+        )
+        status = "kept" if kept else "dropped"
+    ledger.level_verdict(level, status, why, **numbers)
+    level_result["verdict"] = {"status": status, "reason": why}
     return level_result
 
 
@@ -284,6 +290,12 @@ def write_results(ledger, results: list[dict]) -> Path:
 
 async def main_async(args: argparse.Namespace) -> int:
     ledger = fr03_ledger.Ledger()
+    levels = [x.strip() for x in args.levels.split(",") if x.strip()]
+    done = [x for x in levels if x in ledger.verdicts()]
+    if done or not set(levels) <= set(LEVELS):
+        raise SystemExit(
+            f"refused: levels {levels}: already have a level_verdict {done} or unknown"
+        )
     if args.balance is not None:
         line = ledger.record_balance(args.balance)
         ok = args.balance >= fr03_ledger.MIN_BALANCE_USD
@@ -293,7 +305,7 @@ async def main_async(args: argparse.Namespace) -> int:
     preconditions()
     if args.dry_run:
         refused = False
-        for level in LEVELS:
+        for level in levels:
             try:
                 p = ledger.authorize(run_spec(level), dry_run=True)
                 print(f"{level}: would authorize {p.requests} requests, ${p.usd:.4f} ({p.basis})")
@@ -306,13 +318,18 @@ async def main_async(args: argparse.Namespace) -> int:
     results: list[dict] = []
     code = 0
     try:
-        for level in LEVELS:
+        for n, level in enumerate(levels):
             result = await run_level(ledger, level)
             results.append(result)
             print(f"{level}: {result.get('verdict') or result['stopped']}")
             if result["stopped"]:
                 code = 1
                 break
+            if ledger.every_probed_level_is_zero_thinking(levels[n + 1 :]):
+                reason = "every level above minimal probed shows zero thinking: no-go (ADR-115)"
+                ledger.stop(reason)
+                print(reason)
+                code = 1
     except fr03_ledger.Refused as exc:
         print(f"refused: {exc}")
         code = 2
@@ -324,6 +341,9 @@ async def main_async(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "--levels", default=DEFAULT_LEVELS, help="comma-separated levels to probe, in order"
+    )
     parser.add_argument("--dry-run", action="store_true", help="project and authorize; no call")
     parser.add_argument("--balance", type=float, help="record the owner's prepaid balance, USD")
     args = parser.parse_args(argv)

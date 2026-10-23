@@ -4,7 +4,8 @@ An append-only JSONL file, `evals/fr03_v3/ledger.jsonl`. It is the only source o
 request and spend caps; the per-process `LLM_MAX_*` caps are a backstop. The file is only ever
 opened in append mode for writing: nothing rewrites, truncates or edits an earlier line.
 
-Events, one line each: `balance_reading`, `run_start`, `run_end`, `verdict`, `refused`, `stop`.
+Events, one line each: `balance_reading`, `run_start`, `run_end`, `level_verdict`, `refused`,
+`stop`.
 Every constant below is copied from ADR-114 and does not change once the first model call is made.
 
 Not named `evals/ledger.py` (the Sprint 5 ledger, imported by `run_seed.py` as `ledger`): load this
@@ -68,6 +69,23 @@ def latency_summary(latencies: list[float]) -> dict:
     return {"median_s": round(statistics.median(latencies), 3), "p95_s": percentile_95(latencies)}
 
 
+#: The run's own outputs change the tree while a session runs; they are not code.
+RUN_OUTPUTS = (":!evals/fr03_v3/ledger.jsonl", ":!evals/results/fr03_v3")
+
+
+def dirty_tree(repo: Path = HERE) -> list[str]:
+    """`git status --porcelain` lines for uncommitted changes, other than the ledger and the
+    results folder. Files ignored by .gitignore do not appear (ADR-115)."""
+    out = subprocess.run(
+        ["git", "status", "--porcelain", "--", ".", *RUN_OUTPUTS],
+        capture_output=True,
+        text=True,
+        cwd=repo,
+        check=False,
+    )
+    return [row for row in out.stdout.splitlines() if row.strip()]
+
+
 def git_state() -> dict:
     def git(*args: str) -> str:
         out = subprocess.run(["git", *args], capture_output=True, text=True, cwd=HERE, check=False)
@@ -77,8 +95,9 @@ def git_state() -> dict:
 
 
 class Ledger:
-    def __init__(self, path: Path | str = LEDGER_PATH) -> None:
+    def __init__(self, path: Path | str = LEDGER_PATH, *, dirty=dirty_tree) -> None:
         self.path = Path(path)
+        self._dirty = dirty  # a callable returning the uncommitted paths; tests pass a stub
 
     # ------------------------------------------------------------------ file
 
@@ -150,9 +169,12 @@ class Ledger:
         totals = self.totals()
         projection = self.project(level, n_items, k) if level in LEVELS else None
         balance = self.latest_balance()
-        reason = None
+        reason, extra = None, {}
         if level not in LEVELS:
             reason = f"unknown thinking level {level!r}"
+        elif dirty := self._dirty():
+            reason = "dirty_tree"
+            extra = {"dirty_paths": dirty[:20]}
         elif now > TIMEBOX_END_UTC:
             reason = f"the timebox ended {stamp(TIMEBOX_END_UTC)} (2026-11-07 23:59 CT)"
         elif balance is None:
@@ -175,6 +197,7 @@ class Ledger:
                     "refused",
                     **{k_: v for k_, v in run.items() if k_ != "dry_run"},
                     reason=reason,
+                    **extra,
                     counted_requests=totals["requests"],
                     counted_usd=totals["cost_usd"],
                 )
@@ -191,8 +214,25 @@ class Ledger:
         median and p95, and errors by type."""
         return self.append("run_end", **run, **summary)
 
-    def verdict(self, level: str, kept: bool, reason: str, **numbers) -> dict:
-        return self.append("verdict", phase="P0", level=level, kept=kept, reason=reason, **numbers)
+    def level_verdict(self, level: str, status: str, reason: str, **fields) -> dict:
+        """`status` is "kept" or "dropped" for P1 (ADR-114's drop rule, ADR-115's zero-thinking)."""
+        return self.append(
+            "level_verdict", phase="P0", level=level, status=status, reason=reason, **fields
+        )
+
+    def verdicts(self) -> dict[str, dict]:
+        """The latest `level_verdict` line per level."""
+        return {e["level"]: e for e in self.events() if e["event"] == "level_verdict"}
+
+    def every_probed_level_is_zero_thinking(self, still_to_run: list[str]) -> bool:
+        """ADR-115's session stop: every level above `minimal` probed so far, across sessions, is
+        `zero_thinking`, at least one was probed, and none is left to run."""
+        probed = {k: v for k, v in self.verdicts().items() if k != "minimal"}
+        return (
+            bool(probed)
+            and not still_to_run
+            and all(v["reason"] == "zero_thinking" for v in probed.values())
+        )
 
     def stop(self, reason: str, **fields) -> dict:
         return self.append("stop", reason=reason, **fields)
