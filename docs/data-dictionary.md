@@ -543,6 +543,8 @@ Incident rate gets no headline: its printed value is a rate per completed reques
 
 Clicking an example fills the input and does not submit it. Each example is checked live in the deploy window before release (ADR-117). One that doesn't behave as captioned is replaced or removed, and that is recorded here as a dated note.
 
+*2026-10-22 (ADR-117; assistant-drafted; for the owner's review.)* **Rule 8, a further condition.** An answer whose parsed request names a technician or an account gets no headline, because the caption carries only the Measure and Region values and the figure would read as the whole region's. A region filter is shown in the caption and is unaffected. The substring and denominator-phrase checks are as written above. The rule-8 text above is unchanged.
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
