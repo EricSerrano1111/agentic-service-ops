@@ -1,27 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Icon from "./components/Icons";
+import { EXAMPLES } from "./lib/examples.mjs";
+import { finishedLabel, workingLabel } from "./lib/timer.mjs";
 
 const MAX_QUESTION = 500;
-
-// Data dictionary section 6, "Answer display (UI)", rule 6 (TS-20-E): shown on every screen,
-// before any question and on every answer; plain text, not dismissible, identical every time.
-const SYNTHETIC_NOTICE =
-  "Demonstration system: all data here is synthetic, generated for this project, and describes " +
-  "no real company, customer, technician or operation. The sentiment model was trained on " +
-  "synthetically written customer feedback, so its results may not reflect how real customers write.";
-
-function Notice() {
-  return (
-    <p id="synthetic-notice" data-testid="synthetic-notice" className="hint">
-      {SYNTHETIC_NOTICE}
-    </p>
-  );
-}
+const REFUSAL_CODES = ["session_limit", "daily_limit"];
+const QA_ICONS = { verified: "check", failed: "cross", unavailable: "warn", not_checked: "clock" };
 
 // One screen (ADR-080). Everything shown comes from the gateway's view of the answer; the
 // display rules are data dictionary section 6, "Answer display (UI)". Text only: nothing from
-// a response is ever rendered as HTML.
+// a response is ever rendered as HTML, and nothing here computes a figure.
 
 async function postJson(path, body) {
   return fetch(path, {
@@ -32,13 +22,74 @@ async function postJson(path, body) {
   });
 }
 
+function Callout({ kind, icon, children }) {
+  return (
+    <div className={`callout callout-${kind}`}>
+      <Icon name={icon} />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function Answer({ result }) {
+  if (result.outcome === "needs_clarification") {
+    return (
+      <>
+        <div className="clarify-title">
+          <Icon name="help" />
+          <span>Clarification needed</span>
+        </div>
+        <p className="answer-text">{result.answer}</p>
+      </>
+    );
+  }
+  const plain = ["answered", "degraded"].includes(result.outcome);
+  return (
+    <>
+      {result.headline && (
+        <div className="headline" data-testid="headline">
+          <span className="headline-figure">{result.headline.figure}</span>
+          <span className="headline-caption">{result.headline.caption}</span>
+        </div>
+      )}
+      {plain ? (
+        <p className="answer-text">{result.answer}</p>
+      ) : (
+        <Callout kind="note" icon="info">{result.answer}</Callout>
+      )}
+
+      {result.interpreted_as && (
+        <div className="interpreted">
+          <span className="label">Interpreted as:</span>
+          <span>{result.interpreted_as}</span>
+        </div>
+      )}
+
+      {result.qa_text && (
+        <div className={`callout callout-qa-${result.qa_status}`}>
+          <Icon name={QA_ICONS[result.qa_status] || "info"} />
+          <span>{result.qa_text}</span>
+        </div>
+      )}
+
+      {result.escalate && (
+        <Callout kind="warn" icon="warn">Sent for follow-up. {result.warning}</Callout>
+      )}
+    </>
+  );
+}
+
 export default function Page() {
   const [phase, setPhase] = useState("loading"); // loading | signed-out | ready
   const [question, setQuestion] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+  // null before the first question; then { status: "working" | "done" | "failed", asked, ... }
+  const [run, setRun] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
   const started = useRef(false);
+  const inputRef = useRef(null);
+  const sentAt = useRef(0);
+
+  const busy = run?.status === "working";
 
   useEffect(() => {
     // Read an invite from the fragment, exchange it, then ask the gateway whether we are
@@ -72,121 +123,168 @@ export default function Page() {
     return () => window.removeEventListener("hashchange", enter);
   }, []);
 
+  // The timer (rule 7) counts the browser's own wait; it reads no response field.
+  useEffect(() => {
+    if (!busy) return undefined;
+    const tick = setInterval(() => setElapsed(performance.now() - sentAt.current), 250);
+    return () => clearInterval(tick);
+  }, [busy]);
+
   async function submit(event) {
     event.preventDefault();
     const text = question.trim();
     if (!text || busy) return;
-    setBusy(true);
-    setError(null);
-    setResult(null);
+    sentAt.current = performance.now();
+    setElapsed(0);
+    setRun({ status: "working", asked: text });
+    let next;
     try {
       const res = await postJson("/api/ask", { question: text });
       const body = await res.json().catch(() => ({}));
+      const ms = performance.now() - sentAt.current;
       if (res.status === 401) {
         setPhase("signed-out");
-      } else if (res.ok) {
-        setResult(body);
+        setRun(null);
+        return;
+      }
+      if (res.ok) {
+        next = { status: "done", asked: text, result: body, ms };
       } else {
-        setError(body.detail || "The request could not be completed. Please try again.");
+        next = {
+          status: "failed",
+          asked: text,
+          ms,
+          refusal: REFUSAL_CODES.includes(body.error),
+          message: body.detail || "The request could not be completed. Please try again.",
+        };
       }
     } catch {
-      setError("The service could not be reached. Please try again.");
-    } finally {
-      setBusy(false);
+      next = {
+        status: "failed",
+        asked: text,
+        ms: performance.now() - sentAt.current,
+        refusal: false,
+        message: "The service could not be reached. Please try again.",
+      };
     }
+    setRun(next);
+  }
+
+  function fillExample(text) {
+    setQuestion(text);
+    inputRef.current?.focus();
   }
 
   async function signOut() {
     try {
       await postJson("/auth/logout", {});
     } finally {
-      setResult(null);
+      setRun(null);
       setPhase("signed-out");
     }
   }
 
   if (phase === "loading") {
     return (
-      <main>
-        <Notice />
+      <main id="main">
         <h1>Service Ops Intelligence</h1>
-        <p className="hint" role="status">Loading</p>
+        <p className="muted" role="status">Loading</p>
       </main>
     );
   }
 
   if (phase === "signed-out") {
     return (
-      <main>
-        <Notice />
+      <main id="main">
         <h1>Service Ops Intelligence</h1>
-        <div className="panel" role="status">
+        <div className="card card-pad" role="status">
           <p>An invite link is required. Open the link you were sent to sign in.</p>
         </div>
       </main>
     );
   }
 
+  const timer =
+    run && (run.status === "working" ? workingLabel(elapsed) : finishedLabel(run.ms, run.status === "done"));
+  let cardClass = "card";
+  if (run?.status === "failed") cardClass = run.refusal ? "card card-refusal" : "card card-error";
+  if (run?.status === "done" && run.result.outcome === "degraded") cardClass = "card card-degraded";
+
   return (
-    <main>
-      <Notice />
-      <div className="row">
-        <h1>Service Ops Intelligence</h1>
-        <button type="button" className="link" onClick={signOut}>Sign out</button>
-      </div>
+    <main id="main">
+      <section id="ask" className="stack">
+        <h1>Ask about field-service operations</h1>
+        <p className="lede">
+          Incident reporting, customer sentiment and volume forecasts from one question. A router
+          picks the specialist agent, and an independent QA agent checks the figures before you
+          see them.
+        </p>
+        <form className="ask-form" onSubmit={submit}>
+          <label htmlFor="question" className="sr-only">Your question</label>
+          <input
+            id="question"
+            name="question"
+            type="text"
+            ref={inputRef}
+            value={question}
+            maxLength={MAX_QUESTION}
+            autoComplete="off"
+            onChange={(e) => setQuestion(e.target.value)}
+            aria-describedby="question-hint"
+          />
+          <button type="submit" className="primary" disabled={busy || !question.trim()}>
+            {busy ? "Asking" : "Ask"}
+          </button>
+          <div className="form-foot">
+            <span id="question-hint" className="muted small">
+              {question.length} of {MAX_QUESTION} characters. Answers can take up to two minutes.
+            </span>
+            <button type="button" className="link" onClick={signOut}>Sign out</button>
+          </div>
+        </form>
+      </section>
 
-      <form onSubmit={submit}>
-        <label htmlFor="question">Your question</label>
-        <textarea
-          id="question"
-          name="question"
-          value={question}
-          maxLength={MAX_QUESTION}
-          onChange={(e) => setQuestion(e.target.value)}
-          aria-describedby="question-hint"
-        />
-        <div id="question-hint" className="hint">
-          {question.length} of {MAX_QUESTION} characters. Answers can take up to two minutes.
+      <section aria-labelledby="examples-heading" className="stack">
+        <h2 id="examples-heading" className="eyebrow">Try a question</h2>
+        <div className="examples">
+          {EXAMPLES.map((group) => (
+            <div key={group.area} className={group.edge ? "example-group example-edge" : "example-group"}>
+              <span className="example-area">{group.area}</span>
+              {group.items.map((item) => (
+                <button
+                  key={item.q}
+                  type="button"
+                  className="example"
+                  onClick={() => fillExample(item.q)}
+                >
+                  {item.q}
+                  {item.note && <span className="muted"> · {item.note}</span>}
+                </button>
+              ))}
+            </div>
+          ))}
         </div>
-        <button type="submit" disabled={busy || !question.trim()}>
-          {busy ? "Asking" : "Ask"}
-        </button>
-      </form>
+      </section>
 
-      <div aria-live="polite">
-        {error && <div className="error" role="alert">{error}</div>}
-
-        {result && (
-          <section className="panel" aria-label="Answer">
-            <h2>Question</h2>
-            <p>{result.question}</p>
-
-            {result.escalate && (
-              <>
-                <h2>Follow-up</h2>
-                <p className="flag">Sent for follow-up. {result.warning}</p>
-              </>
+      {run && (
+        <section className={cardClass} aria-label="Answer">
+          <div className="card-head">
+            <span className="muted">
+              You asked: <b>{run.asked}</b>
+            </span>
+            <span className="timer" data-testid="timer">{timer}</span>
+          </div>
+          <div className="card-body" aria-live="polite" aria-busy={busy}>
+            {run.status === "working" && <div className="pending" aria-hidden="true" />}
+            {run.status === "failed" && (
+              <Callout kind={run.refusal ? "refusal" : "error"} icon={run.refusal ? "pause" : "cross"}>
+                {run.message}
+              </Callout>
             )}
-
-            <h2>Answer</h2>
-            <p>{result.answer}</p>
-
-            {result.interpreted_as && (
-              <>
-                <h2>Interpreted as:</h2>
-                <p className="interpreted">{result.interpreted_as}</p>
-              </>
-            )}
-
-            {result.qa_text && (
-              <>
-                <h2>Verification</h2>
-                <p>{result.qa_text}</p>
-              </>
-            )}
-          </section>
-        )}
-      </div>
+            {run.status === "done" && <Answer result={run.result} />}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

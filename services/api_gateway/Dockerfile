@@ -2,7 +2,8 @@
 #
 # Three stages. `ui` builds the Next.js static export (ADR-080): it fails if the installed
 # `next` is below the patched minimum (scripts/check-next-version.mjs) or `npm audit` reports a
-# high or critical finding in a runtime dependency. `build` installs exactly what uv.lock pins
+# high or critical finding in a runtime dependency, or if the browser-side helper tests
+# (`web/tests`, run by `node --test`) fail. `build` installs exactly what uv.lock pins
 # (ADR-047). The final image holds the virtualenv and the export, with the export's inline
 # script hashes written next to it (ADR-097); there is no Node runtime in it.
 # No db-models, no database driver, no model SDK: the gateway holds only its own session key
@@ -13,7 +14,7 @@ WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
-RUN npm run build && npm audit --omit=dev --audit-level=high
+RUN npm test && npm run build && npm audit --omit=dev --audit-level=high
 
 FROM python:3.12-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.12.19 /uv /bin/uv

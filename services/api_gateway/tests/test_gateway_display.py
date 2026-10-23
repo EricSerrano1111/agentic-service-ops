@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import httpx
 import pytest
-from api_gateway.interpret import answer_without_warning, interpreted_as, qa_text
+from api_gateway.interpret import answer_without_warning, headline, interpreted_as, qa_text
 from gateway_testkit import Kit, answered
 
 
@@ -184,6 +184,7 @@ def test_the_view_carries_only_the_displayed_fields(kit):
         "question",
         "answer",
         "outcome",
+        "headline",
         "interpreted_as",
         "qa_status",
         "qa_text",
@@ -371,3 +372,167 @@ def test_one_post_and_no_retry_per_question(kit):
     kit.ask()
     assert len(kit.upstream.requests) == 1
     assert kit.upstream.requests[0].url.path == "/ask"
+
+
+# ---------------------------------------------------------------- the headline figure (rule 8)
+
+SLA_TEXT = (
+    "As of 2026-08-30: For the northeast region, SLA compliance was 88.13% from 2026-08-01 to "
+    "2026-08-30 (inclusive, UTC), based on 160 dispatched requests: 141 completed within their "
+    "SLA window."
+)
+SHARE_FIGURES = {
+    "metric": "sla_compliance",
+    "group_by": None,
+    "numerator": 141,
+    "denominator": 160,
+    "rate": "0.8813",
+}
+
+
+def sla_body(**top) -> dict:
+    body = answered(answer=SLA_TEXT)
+    body["reporting"]["figures"] = dict(SHARE_FIGURES)
+    return body | top
+
+
+def count_body() -> dict:
+    text = "As of 2026-08-30: 1,204 incidents reported from 2026-08-01 to 2026-08-30."
+    body = answered(answer=text)
+    body["reporting"]["request"] |= {"metric": "incident_count", "region": None}
+    body["reporting"]["figures"] = {
+        "metric": "incident_count",
+        "group_by": None,
+        "incident_count": 1204,
+    }
+    return body
+
+
+def test_an_sla_answer_gets_the_figure_as_printed_and_a_caption():
+    body = sla_body()
+    assert headline(body, SLA_TEXT) == {
+        "figure": "88.13%",
+        "caption": "SLA compliance, Northeast · 141 of 160 dispatched requests",
+    }
+
+
+def test_a_count_gets_its_figure_and_a_caption_with_no_denominator():
+    body = count_body()
+    assert headline(body, body["answer"]) == {
+        "figure": "1,204",
+        "caption": "incident count, all regions",
+    }
+
+
+def test_a_first_time_fix_rate_uses_completed_requests_and_the_singular_for_one():
+    body = sla_body()
+    body["reporting"]["request"]["metric"] = "first_time_fix_rate"
+    body["reporting"]["figures"] |= {
+        "metric": "first_time_fix_rate",
+        "numerator": 1,
+        "denominator": 1,
+        "rate": "1.0000",
+    }
+    text = "The first-time fix rate was 100.00% based on 1 completed request: 1 needed no return."
+    assert headline(body, text) == {
+        "figure": "100.00%",
+        "caption": "first-time fix rate, Northeast · 1 of 1 completed request",
+    }
+
+
+def test_an_incident_rate_gets_no_headline():
+    body = sla_body()
+    body["reporting"]["request"]["metric"] = "incident_rate"
+    body["reporting"]["figures"] = {
+        "metric": "incident_rate",
+        "group_by": None,
+        "numerator": 12,
+        "denominator": 300,
+        "rate": "4.0000",
+    }
+    text = "4.0000 incidents per 100 completed requests: 12 incidents over 300 completed requests."
+    assert headline(body, text) is None
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"outcome": "degraded"},
+        {"outcome": "needs_clarification"},
+        {"qa_status": "failed"},
+        {"qa_status": "unavailable"},
+        {"qa_status": "not_checked"},
+        {"qa_status": "not_applicable"},
+        {"route": {"route": "sentiment"}},
+        {"route": None},
+    ],
+)
+def test_each_condition_on_its_own_removes_the_headline(change):
+    assert headline(sla_body(**change), SLA_TEXT) is None
+
+
+def test_a_breakdown_removes_the_headline():
+    body = sla_body()
+    body["reporting"]["request"]["group_by"] = "region"
+    assert headline(body, SLA_TEXT) is None
+    body = sla_body()
+    body["reporting"]["figures"]["group_by"] = "region"
+    assert headline(body, SLA_TEXT) is None
+
+
+def test_a_metric_outside_the_list_has_no_headline():
+    body = sla_body()
+    body["reporting"]["request"]["metric"] = "repeat_visit_drivers"
+    body["reporting"]["figures"]["metric"] = "repeat_visit_drivers"
+    assert headline(body, SLA_TEXT) is None
+
+
+@pytest.mark.parametrize("field", ["technician_name", "account_name"])
+def test_a_technician_or_account_filter_removes_the_headline(field):
+    body = sla_body()
+    body["reporting"]["request"][field] = "Someone"
+    assert headline(body, SLA_TEXT) is None
+
+
+def test_a_figure_that_is_not_in_the_answer_text_gives_no_headline():
+    body = sla_body()
+    assert headline(body, SLA_TEXT.replace("88.13%", "88.1%")) is None
+    assert headline(body, SLA_TEXT.replace("160 dispatched", "161 dispatched")) is None
+    assert headline(count_body(), "No incidents are shown here.") is None
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"rate": None},
+        {"denominator": 0},
+        {"numerator": "x"},
+        {"rate": "oops"},
+        {"numerator": True},
+    ],
+)
+def test_missing_or_malformed_figures_give_none_never_an_error(change):
+    body = sla_body()
+    body["reporting"]["figures"] |= change
+    assert headline(body, SLA_TEXT) is None
+
+
+@pytest.mark.parametrize("figures", [None, {}, "x"])
+def test_absent_figures_give_none(figures):
+    body = sla_body()
+    body["reporting"]["figures"] = figures
+    assert headline(body, SLA_TEXT) is None
+    assert headline({"outcome": "answered", "qa_status": "verified", "reporting": "x"}, "t") is None
+
+
+def test_the_ask_response_carries_the_headline(kit):
+    kit.upstream.body = sla_body()
+    kit.sign_in()
+    body = kit.ask().json()
+    assert body["headline"]["figure"] == "88.13%"
+    assert body["answer"] == SLA_TEXT
+
+
+def test_an_answer_without_a_single_figure_carries_headline_null(kit):
+    kit.sign_in()
+    assert kit.ask().json()["headline"] is None  # the stock answer's figures hold no numbers
