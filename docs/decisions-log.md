@@ -125,7 +125,8 @@
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
 | 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted |
-| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted |
+| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115 |
+| 115 | FR-03 attempt: the zero-thinking stop drops a level, and stops the session only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part) | Accepted |
 
 ---
 
@@ -3929,3 +3930,30 @@ After a start, one question through the gateway confirms the data path before th
   - the FR-03 row in `docs/requirements-traceability.md`;
   - the 6.5 item in `docs/sprint-log.md`;
   - a dated result note under this entry.
+
+### ADR-115 — FR-03 attempt: the zero-thinking stop drops a level; the session stops only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part)
+*Date: 2026-10-22. Owner-decided 2026-10-22; assistant-drafted. Supersedes ADR-114 in part: the probe sentence "If every call at a level above `minimal` reports zero thinking tokens, stop (the meter or the setting is not working)", and "a thinking meter reading zero" in its stop rule. Every other part of ADR-114 stands, including every gate and go criterion, the threshold values, the sets, the prompt, the level list, the budget, the caps and the timebox.*
+
+**Decision:**
+- **A level whose probe calls all report zero thinking tokens is dropped for P1.** It is recorded with the reason "zero thinking". Such a level behaved like `minimal`, at which `route_v6` has already been measured and failed, so it cannot test the method.
+- **The session stops only if every level above `minimal` that was probed reports zero thinking tokens on every call.** That pattern is the evidence that the setting is not honoured, which is what ADR-114's stop was for.
+- **Recorded results stand.** The `low` probe (10 calls, 0 thinking tokens on every call, 2026-10-22) is kept as recorded, and `low` is dropped under this rule. P0 resumes with `medium` and `high` only, k=1 on the same 10 items. `low` is not re-run.
+- **Fixed now, before any further call:**
+  - If `medium` and `high` both report zero thinking, the method cannot be applied to this model. P0 ends, the attempt is a no-go under ADR-114's P2, and FR-03 is recorded as unmet with no further attempt.
+  - If no level survives both this rule and ADR-114's cost and latency drop rule, that is also a no-go.
+  - If at least one level survives, P1 proceeds under ADR-114 unchanged.
+- **Provenance.** From this entry on, the harness refuses to start a run from a working tree with uncommitted changes. Every `run_start` line then names the exact code that ran.
+
+**Context:**
+- On 2026-10-22 the P0 probe stopped after `low`. All 10 calls reported zero thinking tokens. The request carried `thinking_level="low"`, and a unit test showed the meter reads `thoughts_token_count` and prices it as output. So neither the meter nor the request was at fault: at `low`, on these 10 easy items, the model chose not to think. Thinking levels are ceilings, not quotas.
+- As worded, ADR-114's stop treats that model behaviour as a broken setting. A restart re-runs `low` first, so the attempt would be blocked by the wording of a guard, with no evidence that the method fails.
+
+**Disclosure.** This rule was changed after one P0 result, on development items. The result it rests on is the zero thinking-token count at `low`. No accuracy, latency or cost figure was used. No gate or go criterion changes.
+
+**Alternatives considered:**
+- *Apply ADR-114 literally and treat P0 as a no-go* (rejected by the owner). It would fail the attempt on a guard's wording rather than on the method.
+- *Re-run `low` until it thinks* (rejected). There is no reason to expect a different result, and repeated tries until a guard passes is the pattern the pre-registration exists to prevent.
+
+**Consequences:**
+- The P0 probe is complete once `medium` and `high` are measured. P1 uses only the levels that survive.
+- The evaluation report's FR-03 entry carries the disclosure above.

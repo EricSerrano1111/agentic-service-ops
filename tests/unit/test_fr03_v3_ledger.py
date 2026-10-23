@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 
@@ -33,7 +34,7 @@ def end(ledger, level="low", *, requests=10, calls=10, cost=0.02, phase="P0"):
 
 @pytest.fixture
 def ledger(tmp_path):
-    led = mod.Ledger(tmp_path / "ledger.jsonl")
+    led = mod.Ledger(tmp_path / "ledger.jsonl", dirty=lambda: [])
     led.record_balance(10.0)
     return led
 
@@ -86,7 +87,7 @@ def test_dry_run_refusal_writes_nothing(ledger):
 
 
 def test_a_balance_below_the_minimum_is_refused(tmp_path):
-    led = mod.Ledger(tmp_path / "l.jsonl")
+    led = mod.Ledger(tmp_path / "l.jsonl", dirty=lambda: [])
     with pytest.raises(mod.Refused, match="no balance_reading"):
         led.authorize(run(), now=NOW)
     led.record_balance(7.49)
@@ -106,7 +107,7 @@ def test_refuses_an_unknown_level_and_a_run_after_the_timebox(ledger):
 
 def test_the_ledger_is_append_only(tmp_path, monkeypatch):
     path = tmp_path / "ledger.jsonl"
-    led = mod.Ledger(path)
+    led = mod.Ledger(path, dirty=lambda: [])
     led.record_balance(10.0)
     first = path.read_bytes()
     opened = []
@@ -119,11 +120,11 @@ def test_the_ledger_is_append_only(tmp_path, monkeypatch):
 
     monkeypatch.setattr(Path, "open", spy)
     led.stop("a reason")
-    led.verdict("low", True, "fine")
+    led.level_verdict("low", "kept", "fine")
     assert opened == ["a", "a"]
     data = path.read_bytes()
     assert data.startswith(first) and data.count(b"\n") == 3
-    assert [e["event"] for e in led.events()] == ["balance_reading", "stop", "verdict"]
+    assert [e["event"] for e in led.events()] == ["balance_reading", "stop", "level_verdict"]
 
 
 def test_totals_read_back_and_sum_only_run_ends(ledger):
@@ -177,3 +178,63 @@ def test_probe_summary_separates_thinking_and_keeps_errors():
     assert (s["calls"], s["requests"], s["thinking_tokens"], s["output_tokens"]) == (2, 2, 500, 600)
     assert s["mean_cost_per_call_usd"] == 0.001 and s["errors"] == {"LLMOutputInvalid": 1}
     assert s["latency"] == {"median_s": 3.0, "p95_s": 4.0}
+
+
+def test_a_dirty_tree_is_refused_and_recorded(ledger):
+    ledger._dirty = lambda: [" M evals/fr03_v3/probe.py"]
+    with pytest.raises(mod.Refused, match="dirty_tree"):
+        ledger.authorize(run(), now=NOW)
+    last = ledger.events()[-1]
+    assert last["event"] == "refused" and last["reason"] == "dirty_tree"
+    assert last["dirty_paths"] == [" M evals/fr03_v3/probe.py"]
+
+
+def git(repo, *args):
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+
+def test_dirty_tree_sees_code_but_not_the_run_outputs_or_ignored_files(tmp_path):
+    git(tmp_path, "init", "-q")
+    git(tmp_path, "config", "user.email", "t@example.com")
+    git(tmp_path, "config", "user.name", "t")
+    (tmp_path / ".gitignore").write_text("ignored.txt\n")
+    (tmp_path / "evals" / "fr03_v3").mkdir(parents=True)
+    (tmp_path / "evals" / "results" / "fr03_v3").mkdir(parents=True)
+    (tmp_path / "evals" / "fr03_v3" / "ledger.jsonl").write_text("{}\n")
+    git(tmp_path, "add", ".")
+    git(tmp_path, "commit", "-qm", "base")
+    assert mod.dirty_tree(tmp_path) == []
+    (tmp_path / "ignored.txt").write_text("x")
+    (tmp_path / "evals" / "fr03_v3" / "ledger.jsonl").write_text("{}\n{}\n")  # the run's own
+    (tmp_path / "evals" / "results" / "fr03_v3" / "r.json").write_text("{}")
+    assert mod.dirty_tree(tmp_path) == []
+    assert mod.dirty_tree(tmp_path / "evals" / "fr03_v3") == []  # from the subfolder, as run
+    (tmp_path / "evals" / "fr03_v3" / "probe.py").write_text("changed")
+    assert len(mod.dirty_tree(tmp_path)) == 1
+
+
+def test_a_zero_thinking_level_is_dropped_without_stopping_while_another_remains(ledger):
+    ledger.level_verdict("low", "dropped", "zero_thinking")
+    ledger.level_verdict("medium", "dropped", "zero_thinking")
+    assert not ledger.every_probed_level_is_zero_thinking(["high"])
+
+
+def test_the_session_stops_when_every_probed_level_is_zero_thinking(ledger):
+    ledger.level_verdict("low", "dropped", "zero_thinking")
+    assert not ledger.every_probed_level_is_zero_thinking(["medium", "high"])  # still to run
+    ledger.level_verdict("medium", "dropped", "zero_thinking")
+    ledger.level_verdict("high", "dropped", "zero_thinking")
+    assert ledger.every_probed_level_is_zero_thinking([])
+
+
+def test_a_level_that_thinks_or_was_dropped_for_cost_prevents_the_stop(ledger):
+    ledger.level_verdict("low", "dropped", "zero_thinking")
+    ledger.level_verdict("medium", "dropped", "mean cost $0.004 per call is above $0.003")
+    assert not ledger.every_probed_level_is_zero_thinking([])
+    empty = mod.Ledger(ledger.path.with_name("empty.jsonl"))
+    assert not empty.every_probed_level_is_zero_thinking([])
+
+
+def test_verdicts_are_read_back_per_level(ledger):
+    ledger.level_verdict("low", "dropped", "zero_thinking", source="run_end")
+    assert set(ledger.verdicts()) == {"low"} and ledger.verdicts()["low"]["source"] == "run_end"

@@ -1,0 +1,184 @@
+{
+  "seed_set": "seed_v2.jsonl",
+  "model": "gemini-3.5-flash-lite",
+  "mode": "paid",
+  "thinking_level": "medium",
+  "prompt_version": "route_v6",
+  "prompt_sha": "a160b528247b",
+  "as_of": "2026-08-30",
+  "run_at": "20261023T002504Z",
+  "ledger_path": null,
+  "answered": 10,
+  "correct": 10,
+  "accuracy_by_tag": {
+    "clear": "10/10 (100%)"
+  },
+  "stopped_early": null,
+  "calls": 10,
+  "requests": 10,
+  "input_tokens": 14055,
+  "output_tokens": 4094,
+  "list_price_cost_usd": 0.014452,
+  "rows": [
+    {
+      "id": "s01",
+      "question": "How many incidents were reported last month?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "It asks for the count of incidents over a past period from operational records.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s02",
+      "question": "What was our SLA compliance rate for urgent requests in Q2 2026?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a past operational metric from records.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s03",
+      "question": "How many high-severity incidents did we log between March and May 2026?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "It asks for a count of past operational incidents.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s04",
+      "question": "What's the first-time fix rate for repair visits this year?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "It asks for the first-time fix rate over the current year, which is an operational reporting metric.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s05",
+      "question": "Which incident type was most common in July 2026: missed SLA, wrong dispatch info or repeat visits?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "It asks for incident counts in a past month to find the most common type.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s06",
+      "question": "How much did we issue in incident credits last quarter?",
+      "expected": "reporting",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "It asks for historical figures on incident credits issued over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s07",
+      "question": "What share of customer feedback comments were negative last month?",
+      "expected": "sentiment",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "It asks for the proportion of negative comments within customer feedback from last month.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s08",
+      "question": "What do customers complain about most in their survey comments after install visits?",
+      "expected": "sentiment",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about customer complaints in survey comments, which maps directly to sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s09",
+      "question": "Is the tone of post-visit feedback getting more positive this summer?",
+      "expected": "sentiment",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about the changing tone of customer feedback over the summer.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "s10",
+      "question": "Find feedback where the customer sounds sarcastic about the technician.",
+      "expected": "sentiment",
+      "tag": "clear",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks to retrieve feedback based on the customer's tone.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    }
+  ]
+}
