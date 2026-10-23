@@ -1336,6 +1336,12 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **For a real deployment (roadmap):** sets drawn from real user questions; a decline-safe clarification path; and the alternatives ADR-114 set aside (a separate ambiguity check, or a stronger model judged on a blind set from a different model family).
 - **Recorded in:** ADR-114 (result note), ADR-115; `evals/fr03_v3/ledger.jsonl`; `evals/results/fr03_v3/`.
 
+### L-58 update — `route_v6` becomes the default; FR-03 partly addressed, still not met (2026-10-22)
+- **Status: standing; partly addressed.** ADR-116 makes `route_v6` the default router on held-out evidence. Over 15 fresh ambiguous questions it recognised 10, against 0 for `route_v3`. On the clear questions of the same two sets it was correct on 49 of 51 per run, against 46. The 75% floor (ADR-101) is not met, so FR-03 stays not met. About one ambiguous question in three is still best-fit routed.
+- **Disclosure:** the comparison was decided after the results, not pre-registered (ADR-116).
+- **Takes effect in the hardening redeploy, after `06` is submitted.** Until then the deployed system is the evaluated one, `route_v3`.
+- **Recorded in:** ADR-116.
+
 ### L-74 update — the Sprint 5 interpretation gate also failed; the check stays advisory (2026-10-12)
 - **Status: standing.** `qa_interp_v3` met the catch criterion in run 1 (19 of 23 caught, the floor) and failed the false-reject criterion (3 of 23 against at most 1: reporting 1 of 10, forecast 1 of 7, sentiment 1 of 6). Runs 2 and 3 were not made, as pre-registered. `QA_INTERP_MODE` stays `advisory`, `qa_interp_v2` stays the shipped prompt, and `qa_interp_v3` is not shipped.
 - **What v3 fixed on the used pairs (development, not held out):** false rejects 7 of 42 (v2) to 3 of 42; the two quarter-range pairs are now accepted. The three remaining false rejects are decline pairs (3 of 7), the known failure kind (L-92).

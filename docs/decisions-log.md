@@ -112,7 +112,7 @@
 | 098 | The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087) | Accepted |
 | 099 | Deploy configuration for the full system (extends ADR-081 to six services) | Accepted |
 | 100 | Deployed sentiment reads stored predictions only; scoring is an offline batch (supersedes ADR-062 in part; builds on ADR-099; resolves R-19's blocker) | Accepted |
-| 101 | The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default | Accepted |
+| 101 | The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default | Accepted— superseded in part by ADR-116 |
 | 102 | The Sprint 5 interpretation gate: `qa_interp_v3` failed (a) in run 1; the check stays advisory with `qa_interp_v2` | Accepted |
 | 103 | Evaluation freeze for Sprint 5: the system Prompt X measures | Accepted |
 | 104 | Deployed model calls use the paid key for the evaluation and grading window | Accepted |
@@ -125,8 +125,9 @@
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
 | 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted |
-| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115; result 2026-10-22: no-go, FR-03 unmet |
+| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115; result 2026-10-22: no-go, FR-03 unmet; superseded in part by ADR-116 |
 | 115 | FR-03 attempt: the zero-thinking stop drops a level, and stops the session only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part) | Accepted |
+| 116 | `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met) | Accepted |
 
 ---
 
@@ -3981,3 +3982,49 @@ After a start, one question through the gateway confirms the data path before th
 **Consequences:**
 - The P0 probe is complete once `medium` and `high` are measured. P1 uses only the levels that survive.
 - The evaluation report's FR-03 entry carries the disclosure above.
+
+### ADR-116 — `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met)
+*Date: 2026-10-22. Owner-decided 2026-10-22; assistant-drafted. Supersedes ADR-101 in part (its decision that `route_v3` stays the default) and ADR-114's result note in part (its line "`route_v3` stays the default"). Everything else in ADR-101, ADR-113, ADR-114 and ADR-115 stands. **ADR-101's gate result stands: FR-03 is not met.** ADR-075's definition and orchestrator behaviour take effect through `route_v6`. ADR-103's evaluation freeze is unchanged and records the evaluated system, `route_v3`.*
+
+**Decision:**
+- **`route_v6`** (commit `031426b`, sha `a160b528247b`) **becomes the orchestrator's default routing prompt.** It runs on `gemini-3.5-flash-lite` at thinking level `minimal`, with no other change.
+- **It deploys in the 6.5 hardening redeploy, after `06` is submitted.** It is merged now with the trigger disabled.
+- **FR-03 stays "not met"**, recorded as partly addressed. About two in three ambiguous questions now get the clarification reply (ADR-075); the rest are still best-fit routed, as before.
+- **This is not a fourth FR-03 attempt** (ADR-113). No new method, prompt, threshold or set is introduced: an existing prompt is chosen on evidence gathered since ADR-101.
+
+**The two questions, kept apart.** The FR-03 gates (ADR-075, ADR-076, ADR-101) answered "is FR-03 met?" Each also carried a promotion rule: a failing candidate leaves `route_v3` as the default. That rule tied a second question, "which router is the better default?", to the FR-03 bar. No pre-registered test of that second question was ever set. This entry answers it, after the fact, from held-out data that `route_v6` was not written or tuned on.
+
+**Evidence** (all at `minimal`, k=3; `route_v6` was committed 2026-10-12, before `routing_heldout_v1` was first run on 2026-10-13):
+
+| Set | Measure | `route_v6` | `route_v3` (deployed) |
+|---|---|---|---|
+| `fr03_fresh_v2` (ADR-101) | ambiguous recognised, of 8 | 4 | 0 |
+| `fr03_fresh_v2` (ADR-101) | non-ambiguous correct, per run, of 8 | 7, 7, 7 | 8, 8, 8 |
+| `routing_heldout_v1` (ADR-114 baseline; Prompt X) | ambiguous recognised, of 7 | 6 | 0 |
+| `routing_heldout_v1` (ADR-114 baseline; Prompt X) | non-ambiguous correct, per run, of 43 | 42, 42, 42 | 38, 38, 38 |
+| **Both** | **ambiguous recognised** | **10 of 15** | **0 of 15** |
+| **Both** | **non-ambiguous correct, per run** | **49 of 51** | **46 of 51** |
+
+- **On an ambiguous question, `route_v6` is never worse than `route_v3`.** When it misses one it best-fits it, which is what `route_v3` does with every ambiguous question.
+- `route_v3`'s 5 held-out non-ambiguous misses were out-of-scope questions accepted by a specialist (L-96). `route_v6` states the out-of-scope rule for future questions.
+- **Known costs:**
+  - one clear sentiment question on `fr03_fresh_v2` (CS-10) is routed `multi_domain` in 3 of 3 runs;
+  - one development question (r06) is over-flagged as ambiguous;
+  - on development data, s20 is no longer recognised.
+- **Per-request cost and latency:** `route_v6`'s routing call reads about 1,400 input tokens against about 600 for `route_v3`, about $0.0005 against $0.0003 at list price (L-71). Its latency at `minimal` was under 1.3 s p95 in the ADR-114 probe.
+
+**Disclosure:**
+- The comparison was not pre-registered. It is decided after the results of ADR-101 and ADR-114 were seen.
+- No threshold was set, and none is claimed. The decision rests on `route_v6` being better on both ambiguous and non-ambiguous questions on data it was not tuned on.
+- Both sets were generated by the same model family as the router (ADR-094), and the held-out set's item text was first read in Prompt X. Both are now spent.
+
+**Alternatives considered:**
+- *Keep `route_v3` until grading and list `route_v6` as roadmap* (rejected by the owner): it leaves a measured improvement undeployed only because of how the earlier promotion rule was written.
+- *Claim FR-03 as met* (rejected): 10 of 15 is below ADR-101's 75% floor, which stands.
+- *Use `route_v6` at `medium`* (rejected): ADR-114's P1 showed no gain over `minimal`, at higher cost.
+
+**Consequences:**
+- **The evaluation report** states that the deployed router differs from the evaluated one (ADR-103), with this table, once the hardening redeploy lands. `05` and `06` are unaffected (ADR-106).
+- **The hardening window's verification** includes one live ambiguous question returning `needs_clarification` with reason `intent_ambiguous`, and one clear question routing normally.
+- **The freeze test** (`tests/unit/test_eval_freeze.py`) allows this one recorded divergence of the live default from the evaluated `route_v3`; any other change to the default, or to `route_v6.md`, still fails it. The freeze record is unchanged.
+- **Records:** L-58 (update); FR-03's traceability row; the 6.5 hardening bundle in the sprint log.

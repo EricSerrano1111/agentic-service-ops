@@ -5,6 +5,8 @@ If this fails, the frozen evaluation state changed. Only changes that alter no a
 `qa_status` are allowed after the freeze (the Next.js pin, the trace ID, logging, UI copy
 outside section 6's answer rules; ADR-103). Any other change invalidates Prompt X's runs and
 needs a new ADR; then the runs are repeated and `evals/freeze_s5.json` is re-recorded.
+The live default may differ from the evaluated one only as recorded here (ADR-116); the freeze
+record stays the evaluated system.
 """
 
 from __future__ import annotations
@@ -20,6 +22,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 FROZEN = json.loads((ROOT / "evals" / "freeze_s5.json").read_text("utf-8"))
+#: Routers that may be the live default although the freeze recorded another: router -> (the ADR
+#: that authorises it, its prompt sha by `llm.prompts`).
+POST_FREEZE_DEFAULT_ROUTERS = {"route_v6": ("ADR-116", "a160b528247b")}
 HOW = (
     "The frozen evaluation state changed (ADR-103, evals/freeze_s5.json). Only changes that alter "
     "no answer and no qa_status may follow the freeze; anything else invalidates Prompt X's runs "
@@ -42,13 +47,26 @@ def test_every_prompt_file_hash_is_the_frozen_one():
         assert current[name] == digest, f"{HOW} Changed: {name}"
 
 
+def check_default_router(routing):
+    """The freeze records `route_v3`, and that file is unchanged. The live default is that, or a
+    router in POST_FREEZE_DEFAULT_ROUTERS whose prompt matches its pinned sha."""
+    assert FROZEN["default_router"] == "route_v3", HOW
+    frozen_file = "services/orchestrator/prompts/route_v3.md"
+    assert sha256(ROOT / frozen_file) == FROZEN["prompts_sha256"][frozen_file], HOW
+    name = routing.PROMPT_NAME
+    assert name == FROZEN["default_router"] or name in POST_FREEZE_DEFAULT_ROUTERS, HOW
+    if name in POST_FREEZE_DEFAULT_ROUTERS:
+        adr, pinned = POST_FREEZE_DEFAULT_ROUTERS[name]
+        assert routing.load_route_prompt().sha == pinned, f"{HOW} ({name}, {adr})"
+
+
 def test_the_default_router_and_interpretation_prompt_are_the_frozen_ones():
     sys.path.insert(0, str(ROOT / "services" / "orchestrator" / "src"))
     sys.path.insert(0, str(ROOT / "services" / "agent_qa" / "src"))
     from agent_qa import interpretation
     from orchestrator import routing
 
-    assert FROZEN["default_router"] == routing.PROMPT_NAME, HOW
+    check_default_router(routing)
     assert FROZEN["shipped_interpretation_prompt"] == interpretation.PROMPT_NAME, HOW
 
 
@@ -63,6 +81,15 @@ def test_the_mode_flags_are_the_frozen_ones():
     sentiment = (ROOT / "deploy" / "cloudrun" / "sentiment.yaml").read_text("utf-8")
     scoring = FROZEN["flags"]["MCP_FEEDBACK_SCORING_deploy"]
     assert re.search(rf"MCP_FEEDBACK_SCORING\s*\n\s*value: {scoring}", sentiment), HOW
+
+
+def test_a_default_router_outside_the_recorded_divergence_fails_the_check(monkeypatch):
+    sys.path.insert(0, str(ROOT / "services" / "orchestrator" / "src"))
+    from orchestrator import routing
+
+    monkeypatch.setattr(routing, "PROMPT_NAME", "route_v5")
+    with pytest.raises(AssertionError):
+        check_default_router(routing)
 
 
 @pytest.mark.parametrize("role", ["orchestrator", "specialist", "qa"])
