@@ -125,7 +125,7 @@
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
 | 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted |
-| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115 |
+| 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115; result 2026-10-22: no-go, FR-03 unmet |
 | 115 | FR-03 attempt: the zero-thinking stop drops a level, and stops the session only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part) | Accepted |
 
 ---
@@ -3930,6 +3930,30 @@ After a start, one question through the gateway confirms the data path before th
   - the FR-03 row in `docs/requirements-traceability.md`;
   - the 6.5 item in `docs/sprint-log.md`;
   - a dated result note under this entry.
+
+*Result note under ADR-114, 2026-10-22 (rule outcome under ADR-114 and ADR-115; owner-accepted 2026-10-22; assistant-drafted; the entry above is unchanged).* **P2: no-go. The attempt has failed and FR-03 is unmet, with no further attempt (ADR-113).** P3 and P4 were not run, and no blind set was generated.
+- **P0 probe** (10 `seed_v2` items, k=1):
+  - `low` reported 0 thinking tokens on every call and was dropped (ADR-115).
+  - `medium` (mean 362.6 thinking tokens, $0.00145 per call, p95 2.68 s) and `high` (643.1, $0.00212, 3.15 s) were kept.
+- **P1 baseline:** `route_v6` at `minimal` on `routing_heldout_v1`, k=3, gave 42, 42, 42 of 43 non-ambiguous items correct and recognised 6 of 7 ambiguous items. Combined with ADR-101's runs, it recognised **10 of the 15** discriminating items.
+- **P1 results** (k=3, commit `2dc5713`, `code_dirty: false` on all 27 runs):
+
+  | Level | G1 (≥11 of 15) | G2 (≥+3) | G3 (≤11 of 285) | G4 (≥42.00) | G5 median / p95 / cost | Result |
+  |---|---|---|---|---|---|---|
+  | `medium` | 11 | +1 | 4 | 43.00 | 1.67 s / 3.31 s / $0.00166 | fail: G2 |
+  | `high` | 9 | −1 | 3 | 42.67 | 2.66 s / 5.23 s / $0.00274 | fail: G1, G2 |
+
+  Missed in 3 of 3 runs: at `medium`, AMB-11, AMB-17 and AMB-23; at `high`, AMB-11, AMB-16, AMB-17, AMB-23 and AMB-29. r06 was flagged in 2 or more runs at both levels.
+- **Reading:**
+  - A higher thinking level did not add a measurable gain: `medium` recognised one more item than `minimal`, and `high` one fewer. G2 did its job and separated a real gain from a one-item difference.
+  - Two fresh misses (AMB-11, AMB-17) persisted at every level.
+- **Spend:** 870 of 1,550 requests and $1.641 of $2.50 (list price, L-71). That is above the $0.50 to $1.50 estimate, because `high` cost about $0.0027 per call on these sets. No cap was crossed.
+- **Disclosures:**
+  - `low`'s probe run started from uncommitted code (`git_dirty: true`, ADR-115).
+  - The `high` probe run's `git_dirty: true` came from the run's own outputs. A ledger `provenance_note` records the evidence: `authorize()` passed the anchored dirty-tree check at `b004a58`, and the diff to `8a66f09` touches outputs only.
+  - The harness fix in `b004a58` was made between the P0 pre-registration commit and the `high` call. It changed no criterion.
+  - P1 ran with request pacing `--rpm 60`, which the ADR doesn't specify. Latency is measured per call.
+- **Records:** the ledger is `evals/fr03_v3/ledger.jsonl`; results are under `evals/results/fr03_v3/`. `route_v3` stays the default. ADR-075 stays accepted and not in effect.
 
 ### ADR-115 — FR-03 attempt: the zero-thinking stop drops a level; the session stops only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part)
 *Date: 2026-10-22. Owner-decided 2026-10-22; assistant-drafted. Supersedes ADR-114 in part: the probe sentence "If every call at a level above `minimal` reports zero thinking tokens, stop (the meter or the setting is not working)", and "a thinking meter reading zero" in its stop rule. Every other part of ADR-114 stands, including every gate and go criterion, the threshold values, the sets, the prompt, the level list, the budget, the caps and the timebox.*
