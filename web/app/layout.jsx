@@ -1,4 +1,7 @@
 import "./globals.css";
+import Notice from "./components/Notice";
+import SiteFooter from "./components/SiteFooter";
+import SiteHeader from "./components/SiteHeader";
 
 export const metadata = {
   title: "Service Ops Intelligence",
@@ -8,7 +11,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        <div className="shell">
+          <Notice />
+          {children}
+          <SiteFooter />
+        </div>
+      </body>
     </html>
   );
 }

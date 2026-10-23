@@ -5,6 +5,7 @@
   "description": "Single-screen UI: a Next.js static export served by the gateway (ADR-080, ADR-097). No server runtime.",
   "scripts": {
     "check-next": "node scripts/check-next-version.mjs",
+    "test": "node --test \"tests/*.test.mjs\"",
     "build": "npm run check-next && next build"
   },
   "engines": {

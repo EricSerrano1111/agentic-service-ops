@@ -119,18 +119,20 @@ def test_the_real_export_if_built_matches_its_hashes():
 
 def test_the_page_source_carries_the_synthetic_data_notice_on_every_screen():
     """Data dictionary section 6, rule 6 (TS-20-E). The built export is not available in unit
-    tests, so this checks the source file; the built `index.html` carries the same string."""
-    source = (REPO / "web" / "app" / "page.jsx").read_text(encoding="utf-8")
+    tests, so this checks the source files; the built `index.html` carries the same string. The
+    notice is one component, placed once by the root layout, so every page and state shows it."""
+    notice = (REPO / "web" / "app" / "components" / "Notice.jsx").read_text(encoding="utf-8")
+    layout = (REPO / "web" / "app" / "layout.jsx").read_text(encoding="utf-8")
     text = (
         "Demonstration system: all data here is synthetic, generated for this project, and "
         "describes no real company, customer, technician or operation. The sentiment model was "
         "trained on synthetically written customer feedback, so its results may not reflect how "
         "real customers write."
     )
-    joined = "".join(re.findall(r'"([^"\n]*)"', source.split("function Notice")[0]))
+    joined = "".join(re.findall(r'"([^"\n]*)"', notice.split("export default")[0]))
     assert text in joined
-    assert source.count("<Notice />") == 3  # loading, signed-out and signed-in screens
-    assert 'id="synthetic-notice"' in source and 'data-testid="synthetic-notice"' in source
+    assert layout.count("<Notice />") == 1 and "{children}" in layout
+    assert 'id="synthetic-notice"' in notice and 'data-testid="synthetic-notice"' in notice
 
 
 def test_static_files_are_public_and_never_shadow_the_api(tmp_path, export):

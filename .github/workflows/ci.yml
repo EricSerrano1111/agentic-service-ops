@@ -131,3 +131,14 @@ jobs:
           echo "generate + load took $(( $(date +%s) - start ))s"
       - name: Integration tests (live database, skips fail)
         run: python -m pytest tests/integration -q -rs
+
+  # Builds the UI the way the gateway image does (ADR-117): `npm ci`, the helper tests, the
+  # Next.js export, `npm audit`. Until this job nothing built web/ before deploy time (found in
+  # PR #82). Same Docker context as the gateway image; the target stops after the `ui` stage.
+  ui-build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the UI stage of the gateway image
+        run: docker build --target ui -f services/api_gateway/Dockerfile .

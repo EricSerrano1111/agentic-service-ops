@@ -1,4 +1,5 @@
-"""What the UI shows for one answer: the "Interpreted as:" line and the `qa_status` wording.
+"""What the UI shows for one answer: the "Interpreted as:" line, the `qa_status` wording and the
+headline figure.
 
 The rules are data dictionary §6, "Answer display (UI)". The gateway builds these strings so the
 UI computes nothing and the rules are tested in CI. Free text from the question (an account or
@@ -7,6 +8,7 @@ technician name) is passed as typed; the UI renders it as text.
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 SEP = " · "
@@ -36,6 +38,15 @@ METRICS = {
     "unsupported": "measure not recognised",
 }
 DOMAINS = ("reporting", "sentiment", "forecast")
+
+#: Metrics that get a headline figure (data dictionary §6, rule 8), each with the denominator
+#: noun the reporting renderer prints; None for a count, which has no denominator. Incident rate
+#: is left out on purpose: its printed value reads ambiguously without the sentence around it.
+HEADLINE_NOUNS: dict[str, str | None] = {
+    "incident_count": None,
+    "sla_compliance": "dispatched request",
+    "first_time_fix_rate": "completed request",
+}
 
 
 def qa_text(qa_status: str, outcome: str | None = None) -> str | None:
@@ -155,13 +166,75 @@ def answer_without_warning(answer: str, warning: str | None) -> str:
     return answer
 
 
+def _int(value: Any) -> int | None:
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
+def _share_figure(rate: Any) -> str | None:
+    """A 4-place rate as the percentage the answer text prints ("0.8881" -> "88.81%")."""
+    try:
+        return f"{Decimal(rate) * 100:.2f}%"
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+
+
+def headline(body: dict, answer: str) -> dict[str, str] | None:
+    """The single figure of a reporting answer, large above the text (§6, rule 8), or None.
+
+    Shown only for an answered, verified reporting question with no breakdown, whose metric is an
+    incident count, SLA compliance or a first-time fix rate. The figure comes from the specialist's
+    data part, formatted as the answer text formats it, and must appear in `answer`; so must the
+    "<M> <denominator words>" the caption quotes. Anything missing or off gives None, never an
+    error. An answer filtered to a technician or an account gets none either: the caption names
+    only the measure and the region, so the figure would read as the whole region's.
+    """
+    if body.get("outcome") != "answered" or body.get("qa_status") != "verified":
+        return None
+    if (body.get("route") or {}).get("route") != "reporting":
+        return None
+    payload = body.get("reporting")
+    request = payload.get("request") if isinstance(payload, dict) else None
+    figures = payload.get("figures") if isinstance(payload, dict) else None
+    if not isinstance(request, dict) or not isinstance(figures, dict):
+        return None
+    metric = request.get("metric")
+    if metric not in HEADLINE_NOUNS or request.get("group_by") is not None:
+        return None
+    if request.get("technician_name") or request.get("account_name"):
+        return None
+    if figures.get("metric") != metric or figures.get("group_by") is not None:
+        return None
+
+    caption = f"{METRICS[metric]}, {_region(request.get('region')).removeprefix('Region: ')}"
+    noun = HEADLINE_NOUNS[metric]
+    if noun is None:
+        count = _int(figures.get("incident_count"))
+        if count is None:
+            return None
+        figure = f"{count:,}"
+        if f"{figure} incident" not in answer:
+            return None
+    else:
+        figure = _share_figure(figures.get("rate")) if figures.get("rate") else None
+        numerator, denominator = _int(figures.get("numerator")), _int(figures.get("denominator"))
+        if figure is None or numerator is None or not denominator:
+            return None
+        base = f"{denominator:,} {noun}" + ("" if denominator == 1 else "s")
+        if figure not in answer or base not in answer:
+            return None
+        caption += f" · {numerator:,} of {base}"
+    return {"figure": figure, "caption": caption}
+
+
 def view(question: str, body: dict) -> dict[str, Any]:
     """The UI's view of one orchestrator response: only the fields the display rules name."""
     warning = body.get("warning")
+    answer = answer_without_warning(str(body.get("answer", "")), warning)
     return {
         "question": question,
-        "answer": answer_without_warning(str(body.get("answer", "")), warning),
+        "answer": answer,
         "outcome": body.get("outcome"),
+        "headline": headline(body, answer),
         "interpreted_as": interpreted_as(body),
         "qa_status": body.get("qa_status"),
         "qa_text": qa_text(str(body.get("qa_status")), body.get("outcome")),
