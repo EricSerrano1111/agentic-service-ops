@@ -298,7 +298,9 @@ def create_app(
                 "It resets at midnight Pacific time.",
             )
         try:
+            forwarded = time.perf_counter()
             status, body = await orchestrator.ask(question, trace_id=current_trace_id())
+            forward_ms = (time.perf_counter() - forwarded) * 1000
         except OrchestratorTimeout:
             raise Reject(504, "deadline_exceeded", DEADLINE_MESSAGE) from None
         except OrchestratorUnavailable:
@@ -317,7 +319,9 @@ def create_app(
                     "question_chars": len(question),
                 },
             )
-            return JSONResponse(view(question, body), headers={"Cache-Control": "no-store"})
+            return JSONResponse(
+                view(question, body, forward_ms), headers={"Cache-Control": "no-store"}
+            )
         code, detail = body.get("error"), body.get("detail")
         log.info(
             "ask refused upstream",

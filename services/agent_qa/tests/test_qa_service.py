@@ -647,3 +647,22 @@ def test_only_the_interpretation_check_can_be_advisory():
         Verdict(verdict="pass", checks=[ok], advisories=[ok])
     advice = CheckResult(code="i", check_class="interpretation", passed=False)
     assert Verdict(verdict="pass", checks=[ok], advisories=[advice]).failed == []
+
+
+@pytest.mark.anyio
+async def test_the_task_reports_its_steps_calls_and_interpretation_state():
+    app, _ = app_for(FakeLLM())
+    metadata = MessageToDict((await send(app)).artifacts[0].metadata)
+    assert [s["step"] for s in metadata["steps"]] == ["figures_check", "interpretation_check"]
+    assert metadata["model_calls"] == 1
+    assert metadata["qa_mode"] in ("advisory", "enforce")
+    assert metadata["qa_interpretation"] == "faithful"
+
+
+@pytest.mark.anyio
+async def test_a_figures_failure_reports_no_interpretation_step():
+    llm = FakeLLM()
+    app, _ = app_for(llm, FakeSource(severity_counts={"low": 1, "medium": 1, "high": 1}))
+    metadata = MessageToDict((await send(app)).artifacts[0].metadata)
+    assert [s["step"] for s in metadata["steps"]] == ["figures_check"]
+    assert metadata["model_calls"] == 0 and metadata["qa_interpretation"] == "not_run"

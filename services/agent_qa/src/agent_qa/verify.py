@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from common import timed_step
 from llm import LLMError
 from pydantic import ValidationError
 from schemas import (
@@ -67,20 +68,23 @@ class Verifier:
             parsed = self._parse_answer(req)
             if parsed is None:
                 return _malformed("answer_malformed")
-            checks = await asyncio.to_thread(self._answer_checks, req, parsed)
+            async with timed_step("figures_check"):
+                checks = await asyncio.to_thread(self._answer_checks, req, parsed)
         else:
             request = self._parse_request(req)
             if request is None:
                 return _malformed("parsed_request_malformed")
-            checks = await asyncio.to_thread(self._decline_checks, req, request)
+            async with timed_step("figures_check"):
+                checks = await asyncio.to_thread(self._decline_checks, req, request)
         if any(not c.passed for c in checks):
             return Verdict(verdict="fail", checks=checks)
 
         advisory = self.settings.interp_mode == "advisory"
         try:
-            judgement = await self.interpreter.judge(
-                req.domain, req.question, self._reading_of(req), trace_id=trace_id
-            )
+            async with timed_step("interpretation_check"):
+                judgement = await self.interpreter.judge(
+                    req.domain, req.question, self._reading_of(req), trace_id=trace_id
+                )
         except (LLMError, TimeoutError) as exc:
             if not advisory:
                 raise

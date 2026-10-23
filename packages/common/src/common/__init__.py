@@ -9,13 +9,19 @@ from __future__ import annotations
 from .access import PROBE_PATHS, TraceAccessLog
 from .breaker import COOLDOWN_S, FAILURE_THRESHOLD, BreakerOpen, CircuitBreaker
 from .cost import (
+    CALLS_KEY,
     COST_KEY,
     DEFAULT_MAX_COST_PER_RUN_USD,
+    MAX_STEPS,
+    STEPS_KEY,
     RequestCost,
     add_cost,
+    current_calls,
     current_cost_usd,
     max_cost_per_run_usd,
     parse_cost_usd,
+    telemetry_metadata,
+    timed_step,
     track_request_cost,
 )
 from .db import (
@@ -59,7 +65,13 @@ __all__ = [
     "BreakerOpen",
     "CircuitBreaker",
     "COOLDOWN_S",
+    "CALLS_KEY",
     "COST_KEY",
+    "MAX_STEPS",
+    "STEPS_KEY",
+    "current_calls",
+    "telemetry_metadata",
+    "timed_step",
     "DEADLINE_KEY",
     "DEFAULT_MAX_COST_PER_RUN_USD",
     "Deadline",

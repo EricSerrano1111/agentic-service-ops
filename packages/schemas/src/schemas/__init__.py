@@ -32,6 +32,23 @@ from .incidents import (
     IncidentSummary,
     SeverityCounts,
 )
+from .journey import (
+    MAX_HOPS,
+    MAX_MS,
+    REPORTED_STATUSES,
+    REPORTED_STEPS,
+    Hop,
+    HopStatus,
+    Interpretation,
+    Journey,
+    JourneyService,
+    JourneyStep,
+    QaCheck,
+    QaMode,
+    QaSummary,
+    interpretation_of,
+    qa_summary,
+)
 from .metrics import (
     MAX_GROUPS,
     FirstTimeFixResult,
@@ -96,6 +113,21 @@ from .verification import (
 )
 
 __all__ = [
+    "MAX_HOPS",
+    "MAX_MS",
+    "REPORTED_STATUSES",
+    "REPORTED_STEPS",
+    "Hop",
+    "HopStatus",
+    "Interpretation",
+    "Journey",
+    "JourneyService",
+    "JourneyStep",
+    "QaCheck",
+    "QaMode",
+    "QaSummary",
+    "interpretation_of",
+    "qa_summary",
     "MAX_COUNT_GROUPS",
     "UNATTRIBUTED",
     "GroupCount",

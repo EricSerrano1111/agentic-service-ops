@@ -1,0 +1,143 @@
+{
+ "question": "What was SLA compliance in the Northeast last month?",
+ "http_status": 200,
+ "seconds": 24.2,
+ "response": {
+  "answer": "As of 2026-08-30: For the northeast region, SLA compliance was 88.13% from 2026-07-01 to 2026-07-31 (inclusive, UTC), based on 160 dispatched requests: 141 completed within their SLA window.",
+  "outcome": "answered",
+  "reason": null,
+  "route": {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "candidates": [],
+   "reason": "The question asks for a specific past operational metric, which falls under reporting."
+  },
+  "prompt_version": "route_v6",
+  "reporting": {
+   "request": {
+    "metric": "sla_compliance",
+    "group_by": null,
+    "technician_name": null,
+    "region": "northeast",
+    "account_name": null,
+    "start": "2026-07-01",
+    "end": "2026-07-31"
+   },
+   "start": "2026-07-01",
+   "end": "2026-07-31",
+   "range_assumed": false,
+   "as_of": "2026-08-30",
+   "figures": {
+    "start": "2026-07-01",
+    "end": "2026-07-31",
+    "group_by": null,
+    "numerator": 141,
+    "denominator": 160,
+    "rate": "0.8813",
+    "groups": null,
+    "group_count": null,
+    "truncated": false,
+    "technician_id": null,
+    "technician_name": null,
+    "region": "northeast",
+    "account_id": null,
+    "account_name": null,
+    "metric": "sla_compliance"
+   }
+  },
+  "sentiment": null,
+  "forecast": null,
+  "task_id": "8b984f44-585c-4da5-a70b-9b8c77cf9c2f",
+  "trace_id": "ca634855dafa4469beed779f6cfcd7ed",
+  "escalate": false,
+  "warning": null,
+  "unavailable_capability": null,
+  "qa_status": "verified",
+  "parsed_request": null,
+  "journey": {
+   "hops": [
+    {
+     "service": "orchestrator",
+     "step": "route",
+     "attempt": 1,
+     "start_ms": 0.3,
+     "duration_ms": 1204.7,
+     "status": "ok"
+    },
+    {
+     "service": "reporting",
+     "step": "parse",
+     "attempt": 1,
+     "start_ms": 1205.5,
+     "duration_ms": 1506.9,
+     "status": "ok"
+    },
+    {
+     "service": "reporting",
+     "step": "tool",
+     "attempt": 1,
+     "start_ms": 2712.5,
+     "duration_ms": 509.5,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "figures_check",
+     "attempt": 1,
+     "start_ms": 3273.7,
+     "duration_ms": 83.7,
+     "status": "ok"
+    },
+    {
+     "service": "qa",
+     "step": "interpretation_check",
+     "attempt": 1,
+     "start_ms": 3357.4,
+     "duration_ms": 20808.0,
+     "status": "ok"
+    }
+   ],
+   "qa": {
+    "verdict": "pass",
+    "checks": [
+     {
+      "code": "request_supported",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "range_matches_request",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "filters_match_request",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "figures_match_database",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "text_matches_data",
+      "class": "figures",
+      "passed": true
+     },
+     {
+      "code": "interpretation_matches_question",
+      "class": "interpretation",
+      "passed": true
+     }
+    ],
+    "interpretation": "faithful",
+    "mode": "advisory"
+   },
+   "model_calls": 3,
+   "cost_usd": 0.001802
+  }
+ }
+}

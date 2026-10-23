@@ -1,0 +1,19 @@
+{
+ "question": "Is negative feedback trending up in the West?",
+ "http_status": 502,
+ "seconds": 54.7,
+ "response": {
+  "error": "agent_task_failed",
+  "detail": "The feedback query timed out after 45s.",
+  "trace_id": "98c03818954f4f1eaad5b6648e8311e0",
+  "task_id": "ae61294b-bd84-4607-9e6b-bd9dad5d4796",
+  "route": {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "candidates": [],
+   "reason": "The question specifically asks about customer feedback trends, which belongs to sentiment."
+  }
+ }
+}

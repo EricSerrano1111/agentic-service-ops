@@ -201,3 +201,29 @@ def test_metadata_protobuf_cannot_serialise_is_ignored_not_a_crash():
     assert message_metadata(context) == {}
     assert deadline_of(context).origin == "missing"  # the agent's own default
     assert trace_id_of(context) == "from-request"  # falls back to the request metadata
+
+
+# --------------------------------------------------------------------------- the journey report
+
+
+def _steps(metadata: dict) -> list[str]:
+    return [s["step"] for s in metadata["steps"]]
+
+
+@pytest.mark.anyio
+async def test_a_completed_task_reports_its_model_calls_and_timed_steps(mcp_calls):
+    task = await send(create_app(SETTINGS, CostLLM(req("incident_count", **_JULY))))
+    metadata = MessageToDict(task.artifacts[0].metadata)
+    assert metadata["model_calls"] == 1
+    assert _steps(metadata) == ["parse", "tool"]
+    assert all(s["status"] == "ok" and s["duration_ms"] >= 0 for s in metadata["steps"])
+    assert metadata["steps"][1]["start_ms"] >= metadata["steps"][0]["start_ms"]
+    assert set(metadata["steps"][0]) == {"step", "start_ms", "duration_ms", "status"}
+
+
+@pytest.mark.anyio
+async def test_a_failed_task_reports_the_steps_that_ran(mcp_calls):
+    task = await send(create_app(SETTINGS, CostLLM(req("sla_compliance", technician_name="Dave"))))
+    metadata = MessageToDict(task.status.message.metadata)
+    assert metadata["error_code"] == "technician_not_found"
+    assert metadata["model_calls"] == 1 and _steps(metadata) == ["parse", "tool"]

@@ -1366,6 +1366,7 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** the response contract is provisional and the evaluation needed a cap, not an audit trail. The paid key's prepaid balance (auto-reload off) was the hard backstop. Total logged cost was $0.1727 for 186 requests.
 - **Fix (option):** return `cost_usd` and `model_calls` in `AskResponse` (or response headers) when the gateway contract is decided; a redeploy, so after the evaluation freeze.
 - **Recorded in:** `evals/results/sprint5_x.md`, deviation 1.
+- *2026-10-23:* fixed in the repo (`journey.model_calls`, `journey.cost_usd`); not yet deployed.
 
 ### L-95 — Golden findings the routing taxonomy does not hold (2026-10-13)
 - **What:** the first `golden_v2` run (29 of 36 mechanical) shows five behaviours outside the routing taxonomy. (1) "district" is read as an unsupported breakdown (G03), where the item expects regions. (2) "through the end of next year" is read as calendar 2027, so the weeks from September to December 2026 are not shown and 8 weeks are returned (G07). (3) A forecast request wholly beyond the horizon returns outcome `answered` with an empty week list and a sentence saying so, not `not_available` (G28). (4) A qualifier the system cannot honour (fiber, G10) is not named in the answer; the text says "install requests" and nothing about fiber. (5) The sentiment trend's p-value is carried and shown to four places, so an oracle comparison at full precision fails it (G21).

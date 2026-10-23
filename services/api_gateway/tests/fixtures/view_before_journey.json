@@ -1,0 +1,29 @@
+{
+ "G11": {
+  "answer": "As of 2026-08-30: SLA compliance was 88.94% from 2026-04-01 to 2026-06-30 (inclusive, UTC): 1,487 of 1,672 dispatched requests were completed within their SLA window.",
+  "escalate": false,
+  "headline": {
+   "caption": "SLA compliance, all regions \u00b7 1,487 of 1,672 dispatched requests",
+   "figure": "88.94%"
+  },
+  "interpreted_as": "Area: incident reporting \u00b7 Measure: SLA compliance \u00b7 Period: 2026-04-01 to 2026-06-30 \u00b7 Region: all regions",
+  "outcome": "answered",
+  "qa_status": "verified",
+  "qa_text": "Figures checked for the request as interpreted. Check that the \u201cInterpreted as\u201d line matches your question.",
+  "question": "What was our SLA compliance last quarter?",
+  "trace_id": "5e2cf88510554406b504b1ac903aac9b",
+  "warning": null
+ },
+ "G16": {
+  "answer": "2 technicians match Lina: Lina Adams and Lina Olsen. Please ask again with the full name.",
+  "escalate": false,
+  "headline": null,
+  "interpreted_as": "Area: incident reporting \u00b7 Measure: first-time fix rate \u00b7 Period: 2026-04-01 to 2026-06-30 \u00b7 Region: all regions \u00b7 Technician: Lina",
+  "outcome": "needs_clarification",
+  "qa_status": "verified",
+  "qa_text": null,
+  "question": "How did Lina do on first-time fixes last quarter?",
+  "trace_id": "d4c962d3f70d4b3ab127d71bf0a318d0",
+  "warning": null
+ }
+}

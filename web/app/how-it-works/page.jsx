@@ -1,3 +1,5 @@
+import ArchitectureDiagram from "../components/ArchitectureDiagram";
+
 // A static page (ADR-117 item 2): no data, no timings. Every claim here is traced to a document
 // in the repository's docs/ folder in the pull request that added it.
 
@@ -16,67 +18,6 @@ const HOPS = [
   "The orchestrator returns the checked answer through the gateway to your browser.",
 ];
 
-function Box({ x, y, w = 128, h = 44, lines, tone }) {
-  return (
-    <g className={tone ? `dg-box dg-${tone}` : "dg-box"}>
-      <rect x={x} y={y} width={w} height={h} rx="10" />
-      {lines.map((line, i) => (
-        <text
-          key={line}
-          x={x + w / 2}
-          y={y + h / 2 + (i - (lines.length - 1) / 2) * 17 + 5}
-          textAnchor="middle"
-        >
-          {line}
-        </text>
-      ))}
-    </g>
-  );
-}
-
-function Diagram() {
-  const cols = [64, 208, 352, 496];
-  return (
-    <svg
-      className="diagram"
-      viewBox="0 0 560 470"
-      role="img"
-      aria-label="Architecture diagram. The browser calls the gateway, which calls the orchestrator. The orchestrator calls three specialist agents, reporting, sentiment and forecast, each through its own MCP tool server to Cloud SQL, and the QA agent, which has its own SQL connection to Cloud SQL."
-    >
-      <defs>
-        <marker id="dg-head" orient="auto" markerWidth="8" markerHeight="8" refX="6" refY="4">
-          <path d="M0 0 L8 4 L0 8 Z" className="dg-head" />
-        </marker>
-      </defs>
-      <g className="dg-line" markerEnd="url(#dg-head)">
-        <path d="M280 44 L280 66" />
-        <path d="M280 110 L280 132" />
-        {cols.map((c) => (
-          <path key={c} d={`M280 176 L280 206 L${c} 206 L${c} 230`} fill="none" />
-        ))}
-        {cols.map((c) => (
-          <path key={`m${c}`} d={`M${c} 278 L${c} 310`} />
-        ))}
-        {cols.map((c) => (
-          <path key={`s${c}`} d={`M${c} 358 L${c} 410`} />
-        ))}
-      </g>
-      <Box x={216} y={0} lines={["Browser"]} />
-      <Box x={216} y={68} lines={["Gateway"]} />
-      <Box x={200} y={136} w={160} lines={["Orchestrator", "(router)"]} tone="accent" />
-      <Box x={cols[0] - 64} y={232} lines={["Reporting", "agent"]} tone="agent" />
-      <Box x={cols[1] - 64} y={232} lines={["Sentiment", "agent"]} tone="agent" />
-      <Box x={cols[2] - 64} y={232} lines={["Forecast", "agent"]} tone="agent" />
-      <Box x={cols[3] - 64} y={232} lines={["QA", "agent"]} tone="qa" />
-      <Box x={cols[0] - 64} y={312} lines={["Incidents", "MCP server"]} />
-      <Box x={cols[1] - 64} y={312} lines={["Feedback", "MCP server"]} />
-      <Box x={cols[2] - 64} y={312} lines={["Volume", "MCP server"]} />
-      <Box x={cols[3] - 64} y={312} lines={["Own SQL,", "read-only"]} tone="qa" />
-      <Box x={0} y={412} w={560} lines={["Cloud SQL (PostgreSQL)"]} />
-    </svg>
-  );
-}
-
 export default function HowItWorks() {
   return (
     <main id="main" className="prose">
@@ -87,7 +28,7 @@ export default function HowItWorks() {
       </p>
 
       <figure className="figure">
-        <Diagram />
+        <ArchitectureDiagram />
         <figcaption className="muted small">
           Arrows show the direction of each call. The QA agent is called by the orchestrator and
           reads the database itself.

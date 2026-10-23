@@ -19,7 +19,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 import httpx
@@ -55,6 +55,7 @@ from llm import (
 from pydantic import BaseModel, Field, ValidationError, model_validator
 from schemas import (
     ForecastRequest,
+    Journey,
     QaStatus,
     ReportingRequest,
     SentimentRequest,
@@ -76,6 +77,7 @@ from .degraded import (
     qa_status_for,
     warning_for,
 )
+from .journey import Recorder, extract_telemetry, qa_summary_of, task_status
 from .result import (
     TaskFailed,
     extract_answer,
@@ -168,6 +170,12 @@ class AskResponse(BaseModel):
     #: answer (the payload's own `request` holds it) and when absent or invalid. A passthrough
     #: for the UI's "Interpreted as:" line; it changes no answer.
     parsed_request: dict[str, Any] | None = None
+    #: How the request was handled: hops with timings, a QA summary, model calls and cost
+    #: (data dictionary section 6 rule 10, ADR-117 item 5). Read-only telemetry: it changes no
+    #: answer, figure, route or `qa_status`, and carries no figure, question text, typed name,
+    #: model output, error message or internal address. Optional so an older response still
+    #: validates; the orchestrator sets it on every response it builds.
+    journey: Journey | None = None
 
     @model_validator(mode="after")
     def _reason_only_for_clarification(self) -> AskResponse:
@@ -329,6 +337,13 @@ class RequestState:
     decision: Any = None  # the routing decision, once made
     prompt_version: str = ""
     qa_failed: bool = False  # QA ran and failed an answer of this request (ADR-092)
+    journey: Recorder = field(default_factory=Recorder)  # read-only telemetry (rule 10)
+    downstream_calls: int = 0  # model calls the specialists and QA report back
+    attempt: int = 1  # the revision-loop attempt in progress
+
+    @property
+    def model_calls(self) -> int:
+        return self.spend.calls + self.downstream_calls
 
     @property
     def total_usd(self) -> float:
@@ -424,15 +439,24 @@ def create_app(
         """One hop to a specialist, under the cost cap, the request deadline and the
         specialist's breaker. Raises `DegradedResult` for any of those three, or for a counted
         failure of the specialist; other errors (4xx, a protocol error) propagate."""
+        rec = state.journey
+        rec.attempt = state.attempt
+        started_ms = rec.now_ms()
+
+        def skipped() -> None:
+            rec.call(spec.key, started_ms, 0.0, "skipped", None)
+
         if state.total_usd >= state.max_cost_usd:
             log.warning(
                 "cost cap reached",
                 extra={"cost_usd": round(state.total_usd, 6), "cap_usd": state.max_cost_usd},
             )
+            skipped()
             raise DegradedResult("cost_cap")
         try:
             timeout_s = state.deadline.hop_timeout(spec.cap_s)
         except DeadlineExceeded:
+            skipped()
             raise DegradedResult("deadline") from None
 
         async def hop() -> Task:
@@ -448,30 +472,57 @@ def create_app(
                 **({} if not metadata else {"metadata": metadata}),
             )
 
+        reached: list[Task] = []  # the task, once the hop returned one (for what it reported)
+
         async def guarded_hop() -> Task:
             task = await hop()
+            reached.append(task)
             if spec is qa_spec and failure_code(task) in QA_OUTAGE_CODES:
                 raise TaskOutage(spec.key)  # QA could not decide: count it, fail closed
             return task
+
+        began_hop = time.perf_counter()
+
+        def finish(status: str) -> None:
+            rec.call(
+                spec.key,
+                started_ms,
+                (time.perf_counter() - began_hop) * 1000,
+                status,
+                extract_telemetry(reached[-1] if reached else None, spec.key),
+            )
 
         try:
             task = await spec.breaker.call(guarded_hop, is_dependency_failure)
         except BreakerOpen:
             log.warning("breaker open", extra={"dependency": spec.key})
+            skipped()
             raise DegradedResult("dependency", spec.capability) from None
         except Exception as exc:
             if not is_dependency_failure(exc):
+                finish("failed")
                 raise
             log.warning(
                 "dependency failed",
                 extra={"dependency": spec.key, "error": type(exc).__name__},
             )
-            if isinstance(exc, TimeoutError | A2AClientTimeoutError | httpx.TimeoutException) and (
+            transport_timeout = isinstance(
+                exc, TimeoutError | A2AClientTimeoutError | httpx.TimeoutException
+            )
+            qa_timeout = (
+                isinstance(exc, TaskOutage)
+                and bool(reached)
+                and failure_code(reached[-1]) == "qa_timeout"
+            )
+            finish("timeout" if transport_timeout or qa_timeout else "failed")
+            if transport_timeout and (
                 timeout_s < spec.cap_s
             ):  # the request deadline, not the hop's own cap, cut this hop short
                 raise DegradedResult("deadline") from None
             raise DegradedResult("dependency", spec.capability) from None
         state.downstream_usd += extract_cost(task) or 0.0
+        state.downstream_calls += extract_telemetry(task, spec.key).calls
+        finish(task_status(task))
         return task
 
     def degraded_response(d: DegradedResult, state: RequestState, began: float) -> JSONResponse:
@@ -482,6 +533,7 @@ def create_app(
                 "capability": d.capability,
                 "failed_checks": list(d.failed_checks),
                 "cost_usd": round(state.total_usd, 6),
+                "model_calls": state.model_calls,
                 "duration_ms": round((time.perf_counter() - began) * 1000, 1),
             },
         )
@@ -497,8 +549,11 @@ def create_app(
             route={} if state.decision is None else state.decision.model_dump(mode="json"),
             prompt_version=state.prompt_version,
             trace_id=state.trace_id,
+            journey=state.journey.build(state.model_calls, state.total_usd),
         )
-        return JSONResponse(payload.model_dump(), headers={"X-Trace-Id": state.trace_id})
+        return JSONResponse(
+            payload.model_dump(by_alias=True), headers={"X-Trace-Id": state.trace_id}
+        )
 
     @app.post("/ask", response_model=AskResponse)
     async def ask(body: AskRequest) -> Any:
@@ -506,7 +561,9 @@ def create_app(
         trace_id = current_trace_id() or new_trace_id()
         with bind_trace_id(trace_id), track_request_cost() as spend:
             began = time.perf_counter()
-            state = RequestState(trace_id, Deadline.start(), spend, max_cost)
+            state = RequestState(
+                trace_id, Deadline.start(), spend, max_cost, journey=Recorder(began)
+            )
             state.prompt_version = router.prompt.version
             log.info("ask received", extra={"question_chars": len(body.question)})
             try:
@@ -519,9 +576,13 @@ def create_app(
         try:
             route_timeout_s = state.deadline.hop_timeout(settings.route_timeout_s)
         except DeadlineExceeded:
+            state.journey.add("orchestrator", "route", 1, state.journey.now_ms(), 0.0, "skipped")
             raise DegradedResult("deadline") from None
         try:
-            async with asyncio.timeout(route_timeout_s):
+            async with (
+                asyncio.timeout(route_timeout_s),
+                state.journey.step("orchestrator", "route"),
+            ):
                 decision = await router.classify(body.question, trace_id=trace_id)
         except TimeoutError:
             if route_timeout_s < settings.route_timeout_s:
@@ -555,11 +616,18 @@ def create_app(
                     "outcome": outcome,
                     "route": decision.route,
                     "cost_usd": round(state.total_usd, 6),
+                    "model_calls": state.model_calls,
                     "duration_ms": round((time.perf_counter() - began) * 1000, 1),
                 },
             )
-            payload = AskResponse(answer=answer, outcome=outcome, **base, **more)
-            return JSONResponse(payload.model_dump(), headers={"X-Trace-Id": trace_id})
+            payload = AskResponse(
+                answer=answer,
+                outcome=outcome,
+                **base,
+                **more,
+                journey=state.journey.build(state.model_calls, state.total_usd),
+            )
+            return JSONResponse(payload.model_dump(by_alias=True), headers={"X-Trace-Id": trace_id})
 
         if decision.route in ("reporting", "sentiment", "forecast"):
             return await ask_specialist(
@@ -666,7 +734,9 @@ def create_app(
                 state,
                 data=request.model_dump(mode="json", exclude_none=True),
             )
-            return extract_verdict(task)
+            verdict = extract_verdict(task)
+            state.journey.qa = qa_summary_of(verdict, extract_telemetry(task, qa_spec.key))
+            return verdict
         except DegradedResult as d:
             if d.trigger == "dependency":  # QA's breaker, a timeout or a transport failure
                 raise DegradedResult("qa_unavailable", QA) from None
@@ -719,6 +789,7 @@ def create_app(
         guidance: str | None = None
         retries = 0
         while True:
+            state.attempt = retries + 1
             attempt = await run_specialist(spec, question, state, base, guidance)
             if isinstance(attempt, JSONResponse):
                 return attempt

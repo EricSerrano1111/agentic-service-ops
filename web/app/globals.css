@@ -366,15 +366,77 @@ button.example:hover { border-color: var(--accent); background: var(--accent-tin
 
 .hops, .plain-list { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 6px; }
 
+/* ---- the answer journey (rule 10) ---------------------------------------------------- */
+
+.card-foot {
+  padding: 12px 24px;
+  border-top: 1px solid var(--divider);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 16px;
+}
+
+.journey { margin-top: 0; }
+.journey .card-head h2 { font-size: 1.125rem; }
+.journey-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.journey h3 { margin: 0; font-size: 1.125rem; font-weight: 650; }
+
+.dg-on rect { stroke: var(--accent); stroke-width: 2.5; }
+.dg-on.dg-qa rect { stroke: var(--ok-icon); }
+.dg-off rect { fill: var(--ground); stroke: var(--border-strong); stroke-dasharray: 4 3; stroke-width: 1.2; }
+.dg-off text { fill: var(--muted); }
+.dg-pending { opacity: 0.35; }
+.dg-box { transition: opacity 0.2s; }
+
+.timeline-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+.timeline-total { font-variant-numeric: tabular-nums; }
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+  gap: 10px 24px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+.timeline-row { display: contents; }
+.timeline-label { font-size: 0.9375rem; overflow-wrap: anywhere; }
+.timeline-bar { width: 100%; height: 20px; display: block; }
+.bar-track { fill: var(--ground); }
+.bar { fill: var(--accent); }
+.bar-qa { fill: var(--ok-icon); }
+.bar-failed, .bar-timeout { fill: var(--error-border); }
+.bar-skipped, .bar-not_called { fill: var(--border-strong); }
+
+.chips { margin: 0; padding: 6px 0 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--ground);
+  font-size: 0.8125rem;
+}
+.chip-ok { background: var(--ok-ground); border-color: var(--ok-border); color: var(--ok-ink); }
+.chip-bad { background: var(--error-ground); border-color: var(--error-border); color: var(--error-ink); }
+
+@media (max-width: 760px) {
+  .timeline { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .timeline-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+}
+
 /* ---- small screens and preferences --------------------------------------------------- */
 
 @media (max-width: 600px) {
   h1 { font-size: 1.75rem; }
   .site-header-inner, .shell { padding-left: 16px; padding-right: 16px; }
-  .card-head, .card-body { padding: 16px; }
+  .card-head, .card-body, .card-foot, .journey-body { padding: 16px; }
   .headline-figure { font-size: 2.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pending { animation: none; }
+  .dg-box { transition: none; }
 }
