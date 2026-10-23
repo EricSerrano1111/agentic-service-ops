@@ -679,7 +679,7 @@ async def test_the_sdks_tool_error_line_is_a_code_a_length_and_a_hash():
         root.addHandler(h)
     root.setLevel(saved[1])
     marker = "2019-03-07"  # a date the caller asked for; the tool's refusal repeats it
-    with captured_logs("mcp_incidents") as lines:
+    with captured_logs("mcp_incidents", "mcp.server.mcpserver.server") as lines:
         async with Client(create_server(SETTINGS, backend())) as client:
             result = await client.call_tool(TOOL_NAME, {"start": marker, "end": "2019-03-31"})
         logged = lines()
