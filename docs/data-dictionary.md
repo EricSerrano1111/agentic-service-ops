@@ -545,6 +545,22 @@ Clicking an example fills the input and does not submit it. Each example is chec
 
 *2026-10-22 (ADR-117; assistant-drafted; for the owner's review.)* **Rule 8, a further condition.** An answer whose parsed request names a technician or an account gets no headline, because the caption carries only the Measure and Region values and the figure would read as the whole region's. A region filter is shown in the caption and is unaffected. The substring and denominator-phrase checks are as written above. The rule-8 text above is unchanged.
 
+**10. Answer journey (2026-10-23; ADR-117 item 5; owner-decided 2026-10-22; assistant-drafted).** Every response from the orchestrator carries a `journey` object, and the UI can show it under the answer ("Show the answer journey"). It describes how the request was handled. It never changes the answer, and it never carries a figure, any question text, a name typed by the user, model output text, an error message or an internal address.
+- **Hops,** in order. Each hop is `{service, step, attempt, start_ms, duration_ms, status}`:
+  - `service` is one of `gateway`, `orchestrator`, `reporting`, `sentiment`, `forecast` or `qa`;
+  - `step` is one of `route`, `parse`, `tool`, `figures_check`, `interpretation_check` or `forward`;
+  - `start_ms` is relative to the orchestrator receiving the request;
+  - `status` is one of `ok`, `failed`, `timeout`, `skipped` or `not_called`.
+
+  Timings are measured by the service that ran the step. The orchestrator measures `route` and the wall time of each A2A call. The specialists and QA report their own sub-steps in A2A response metadata, as they already report `cost_usd`. The gateway adds its own `forward` hop.
+- **`qa`:** `{verdict, checks: [{code, class, passed}], interpretation: "faithful" | "not_faithful" | "not_run" | "unavailable", mode: "advisory" | "enforce"}`, or null when QA wasn't called. Check codes are QA's fixed codes. Details are not included.
+- **`model_calls`** (an integer) and **`cost_usd`** (a list-price estimate, L-71): the sums over every service for this request. They equal the totals the orchestrator already logs.
+- **Display.** A diagram of the services: those called are highlighted in hop order, and those not called are dimmed with "not called". A timeline shows one row per hop, as bars, with "Server time N.N s". Chips read "Model calls: N", "Estimated cost: $N.NNNN (list price)", "QA figures check: pass/fail/not run" and "Interpretation check: advisory · faithful/not faithful/not run".
+  - The browser timer (rule 7) is shown separately, labelled "in your browser", because it includes the network and cold starts.
+  - With `prefers-reduced-motion`, there's no replay animation.
+  - When `journey` is absent (an older response), the button is not shown.
+- **Every outcome has a journey.** A clarification or a decline shows the route step and any specialist step that ran. A degraded answer shows the hop where it stopped, with that hop's status.
+
 ### Forecast target — **locked**
 
 - **Target:** count of `service_requests` by `scheduled_datetime`
