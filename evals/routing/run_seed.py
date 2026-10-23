@@ -23,6 +23,7 @@ import argparse
 import asyncio
 import datetime as dt
 import json
+import os
 import sys
 import time
 from collections import Counter, defaultdict
@@ -59,7 +60,9 @@ def map_generated(row: dict) -> dict:
     }
 
 
-async def run(args: argparse.Namespace) -> int:
+async def run(args: argparse.Namespace, client=None) -> int:
+    """`client` is for a harness that meters the run itself (ADR-114's ledger): a client passed
+    in is used as it is and skips the Sprint 5 paid-mode ledger."""
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env", override=False)
@@ -83,12 +86,21 @@ async def run(args: argparse.Namespace) -> int:
     if args.limit:
         items = items[: args.limit]
 
-    client = LLMClient.from_env("orchestrator")
+    injected = client is not None
+    if not injected:
+        if args.thinking_level:  # the existing per-role override (ADR-052), for this run only
+            os.environ["LLM_THINKING_LEVEL_ORCHESTRATOR"] = args.thinking_level
+        client = LLMClient.from_env("orchestrator")  # refuses a level the model's prices.toml omits
     # Paid mode is explicit (Prompt W): --paid with LLM_MODE=paid, every call through the ledger.
     import ledger as ledger_mod
 
-    ledger_mod.require_paid(args.paid, client.settings.mode, args.path)
-    ledger = ledger_mod.Ledger(args.ledger or ledger_mod.DEFAULT_PATH) if args.paid else None
+    if not injected:
+        ledger_mod.require_paid(args.paid, client.settings.mode, args.path)
+    ledger = (
+        ledger_mod.Ledger(args.ledger or ledger_mod.DEFAULT_PATH)
+        if args.paid and not injected
+        else None
+    )
     model = args.model or client.settings.default_model
     as_of = Settings.from_env().as_of  # REPORTING_AS_OF_DATE, as the service reads it
     prompt = load_prompt("orchestrator", args.prompt, routing_mod.__file__) if args.prompt else None
@@ -159,12 +171,22 @@ async def run(args: argparse.Namespace) -> int:
         client.settings.mode,
         source,
         args.path if args.paid else None,
+        Path(args.results_dir) if args.results_dir else RESULTS,
     )
     return 0
 
 
 def report(
-    rows, totals, model, thinking, router, stopped, mode, source: Path, ledger_path=None
+    rows,
+    totals,
+    model,
+    thinking,
+    router,
+    stopped,
+    mode,
+    source: Path,
+    ledger_path=None,
+    results_dir: Path = RESULTS,
 ) -> None:
     prompt = router.prompt
     correct = [r for r in rows if r["predicted"] == r["expected"]]
@@ -209,9 +231,9 @@ def report(
     if stopped:
         print(f"stopped early: {stopped}")
 
-    RESULTS.mkdir(parents=True, exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     stamp = dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%SZ")
-    path = RESULTS / f"routing_{source.stem}_{model}_{prompt.version}_{stamp}.json"
+    path = results_dir / f"routing_{source.stem}_{model}_{prompt.version}_{stamp}.json"
     path.write_text(
         json.dumps(
             {
@@ -243,7 +265,7 @@ def report(
     print(f"wrote {path}")
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--model", help="override GEMINI_MODEL_ORCHESTRATOR for this run")
     parser.add_argument(
@@ -260,7 +282,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rpm", type=float, help="requests per minute (default: per model)")
     parser.add_argument("--skip", type=int, default=0, help="skip the first N questions")
     parser.add_argument("--limit", type=int, default=0, help="run at most N questions")
-    return asyncio.run(run(parser.parse_args(argv)))
+    parser.add_argument(
+        "--thinking-level",
+        choices=("minimal", "low", "medium", "high"),
+        help="orchestrator thinking level for this run (LLM_THINKING_LEVEL_ORCHESTRATOR); "
+        "refused if the model's prices.toml entry does not list it (ADR-052)",
+    )
+    parser.add_argument(
+        "--results-dir", help="where to write the result file (default evals/results)"
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    return asyncio.run(run(build_parser().parse_args(argv)))
 
 
 if __name__ == "__main__":
