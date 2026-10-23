@@ -370,6 +370,14 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 
 *Updated 2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.) Sprint 6 closed on 2026-10-18, day 4 of the 10-15 to 10-25 sprint, and the buffer runs 10-19 to 12-05 (ADR-113, which supersedes ADR-109's sprint dates and ADR-106 in part). The calendar table's Sprint 6 and Buffer rows are replaced with these dates, as ADR-109's rows were; the earlier notes, the Sprint 6 heading and the bold paragraph below are history and are not edited. The 6.5 scope is decided in ADR-113: a hardening redeploy and UI polish after `06` is submitted, a third and final FR-03 attempt timeboxed to end by 11-08, and the rest as roadmap. The course dates (`05` 11-01, `06` 11-08, final 12-05) and Windows A and B are unchanged. Buffer targets: evaluation report draft 11-08, final 12-01; presentation draft 11-22, rehearsal 11-29.*
 
+*Updated 2026-10-22 (ADR-117; owner-decided 2026-10-22; assistant-drafted.)* The buffer targets "presentation draft 11-22, rehearsal 11-29" are replaced:
+- the demonstration script and backup recording by 11-22;
+- rehearsal by 11-29;
+- the evaluation report draft by 11-08 and final by 12-01;
+- the documentation packet with revisions by 12-05.
+
+The 6.5 deploy window is after Window A (about 11-10 onward), unless the owner chooses otherwise. The final package is code, a documentation packet and a live demonstration, with no slide file (ADR-117).
+
 Every sprint ends with a **demoable increment** and a **sprint review + retro entry** in `sprint-log.md`. Academic deliverables are interleaved, not bolted on at the end. Risk register is reviewed and updated every sprint boundary.
 
 **Calendar.** Sprint 1 started Monday 2026-09-14. **Re-baselined 2026-10-08 (ADR-082) and again at the Sprint 4 close on 2026-10-10 (ADR-093): Sprint 4 closed on day 5, Sprint 5 runs 2026-10-12 to 10-25, Sprint 6 runs 10-26 to 11-08, and 2026-11-09 to 12-05 is buffer.** **The final product is due 2026-12-05, the end of Module 10.** Academic deliverables are the numbered files in `docs/academic/`, with due dates taken from each file; a weekly status report (`00-Weekly-Status-Reports.md`) is also due every week through 2026-11-22.

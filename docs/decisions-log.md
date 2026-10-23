@@ -55,7 +55,7 @@
 | 041 | Remaining corpus generation on a separate paid, spend-capped project | Accepted — supersedes ADR-029 in part |
 | 042 | Generator: explicit deterministic IDs, per-state timezones, committed name lists, loads as app_generator | Accepted |
 | 043 | Generator world rules: SLA-conditioned incidents, snapshot semantics, age-dependent statuses, templated incident notes | Accepted |
-| 044 | No final paper: limitations and results go in the evaluation report | Accepted |
+| 044 | No final paper: limitations and results go in the evaluation report | Accepted— superseded in part by ADR-117 |
 | 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part; superseded in part by ADR-078 and ADR-079 |
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
@@ -124,10 +124,11 @@
 | 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
-| 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted |
+| 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted— superseded in part by ADR-117 |
 | 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115; result 2026-10-22: no-go, FR-03 unmet; superseded in part by ADR-116 |
 | 115 | FR-03 attempt: the zero-thinking stop drops a level, and stops the session only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part) | Accepted |
 | 116 | `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met) | Accepted |
+| 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted |
 
 ---
 
@@ -4028,3 +4029,73 @@ After a start, one question through the gateway confirms the data path before th
 - **The hardening window's verification** includes one live ambiguous question returning `needs_clarification` with reason `intent_ambiguous`, and one clear question routing normally.
 - **The freeze test** (`tests/unit/test_eval_freeze.py`) allows this one recorded divergence of the live default from the evaluated `route_v3`; any other change to the default, or to `route_v6.md`, still fails it. The freeze record is unchanged.
 - **Records:** L-58 (update); FR-03's traceability row; the 6.5 hardening bundle in the sprint log.
+
+### ADR-117 — The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part)
+*Date: 2026-10-22. Owner-decided 2026-10-22; assistant-drafted. Supersedes ADR-044 in part (its "presentation" is a live demonstration in the deployed UI, with no slide file required). Supersedes ADR-113 in part: item 2's scope; item 4's placement of the after-answer timeline and the estimated cost per answer, which move from roadmap to scope; and the buffer targets "presentation draft 11-22, rehearsal 11-29", replaced below. Everything else in ADR-113 stands, including its rule that 6.5 changes no answer outside FR-03 (since closed, ADR-114, ADR-116), and ADR-109's rule that no 6.5 change deploys before `06` is submitted.*
+
+**Decision:**
+- **The final package, due 2026-12-05, has three parts, delivered together:**
+  1. the code: the repository and the deployed system;
+  2. a final documentation packet, which may revise any previously submitted academic document;
+  3. a live demonstration.
+
+  **No slide file is required** (owner, from the course requirements). The deployed UI carries the demonstration's visuals.
+- **The 6.5 presentation scope, replacing ADR-113 item 2.** None of these items changes an answer, a figure, a route or a `qa_status`. Each is labelled required or portfolio value:
+  1. **Example questions** on the landing page, grouped by area, with one ambiguous and one out-of-scope example. Clicking one fills the input and doesn't submit it. Each example is checked live in the deploy window before it is kept. *Portfolio value, serving the graded demonstration.*
+  2. **A "How it works" page:** an architecture diagram (inline SVG, in the repo), one question's journey through the router, specialist, MCP tool and QA, what "Interpreted as" and the verification line mean, the security boundaries, and the limitations stated plainly (synthetic data, FR-03 partly addressed). *Portfolio value.*
+  3. **An FAQ page for graders:** why a question is declined or clarified, what the data is, and the as-of date. *Portfolio value.*
+  4. **An "Evaluation results" page** generated at build time from committed result files. Every figure traces to a named file, under a data dictionary §6 rule and a test, and agrees with the evaluation report. It is built **after** the evaluation report draft. *Portfolio value.*
+  5. **The answer journey,** moved from roadmap to scope. The orchestrator's response gains:
+     - per-hop timings;
+     - a QA verdict summary (the check codes and their result, never a figure);
+     - the estimated cost (list price, labelled an estimate, L-71);
+     - the model-call count (L-94).
+
+     The gateway passes these through, and the UI draws them as a timeline over the item-2 diagram. This is **an API contract change**, so its §6 and schema rules are written before its code, and it deploys with the hardening bundle. It changes no answer. *Portfolio value.*
+  6. **A demonstration runbook:**
+     - a warm-up (one question per area, 5 to 10 minutes before);
+     - a demonstration script drawn from item 1;
+     - a recorded backup of the full demonstration, in case the live system or network fails.
+
+     *Required for a live demonstration: cold starts run 30 to 60 s (R-05).*
+- **Kept from ADR-113 item 2:**
+  - the visual polish;
+  - the client-side elapsed timer (§6 rule 7);
+  - every §6 user-facing string unchanged;
+  - no new npm package without an owner ruling.
+- **A CI job builds the UI** (the gateway image's `ui` stage) on every pull request. Until now nothing built `web/` before deploy time (found in PR #82). *Required-adjacent:* items 1 to 5 change `web/` heavily.
+- **The look is designed before it is built.** An optional visual mockup of the landing page and the journey view, made as a design artifact and approved by the owner, is the brief for the UI build. It is a design aid only. Nothing from an external page builder, plugin or hosted widget ships in the product.
+- **The calendar to 12-05:**
+
+  | Dates | Work |
+  |---|---|
+  | 10-23 to 10-26 | UI polish with items 1 to 3, and the CI UI build (Prompt H) |
+  | 10-27 to 11-02 | The answer journey, item 5 (Prompt I) |
+  | By 11-08 | `06` submitted; the evaluation report draft |
+  | 11-09 to 11-15 | The results page, item 4 |
+  | About 11-10 onward | The deploy window, after Window A closes 11-09 unless the owner chooses otherwise; live checks of the examples |
+  | By 11-22 | The demonstration script and the backup recording |
+  | By 11-29 | Rehearsal |
+  | By 12-01 | The evaluation report final |
+  | By 12-05 | The documentation packet with revisions; the final package |
+
+  Item 4 may deploy in a second small window if it misses the first.
+
+**Context:**
+- The course's final requirements are code, a documentation packet (with optional revisions of earlier documents) and a live demonstration, not a slide file.
+- The system's architecture (A2A between agents, MCP per specialist, an independent QA stage) is invisible in a single answer. Without visual cues, a live demonstration shows a text box and an answer.
+- Sprints closed early. ADR-113 left seven weeks of buffer, and none of these items changes an answer.
+
+**Alternatives considered:**
+- *A separate slide deck* (rejected): not required, and it duplicates what the UI can show live.
+- *A hosted page builder, or plugin widgets embedded in the product* (rejected): an external dependency that can fail mid-demonstration, weaker security and production-grade claims, and nothing the grader can trace to the repository. The UI stays a static export served by the gateway (ADR-080).
+- *Keep the answer journey on the roadmap* (rejected by the owner): it is the visual that makes the multi-agent design legible, and it fits the one hardening redeploy.
+- *Build the results page now* (rejected): its figures must match the evaluation report, which is drafted first.
+
+**Consequences:**
+- **L-94** is resolved when item 5 deploys.
+- **The cost shown is a list-price estimate,** labelled as one (L-71).
+- **Item 5's timings are the orchestrator's measured hop times,** not the browser timer (rule 7), and the two are labelled differently.
+- **The evaluation report** lists the UI and API additions as differences from the evaluated system (ADR-103), with the `route_v6` default (ADR-116).
+- **Buffer use, named:** about 7 to 10 working sessions of portfolio work, against the evaluation report and documentation packet dates. Those dates take precedence if they conflict.
+- **Records:** the 6.5 item in the sprint log; a dated note in `architecture.md` §10.
