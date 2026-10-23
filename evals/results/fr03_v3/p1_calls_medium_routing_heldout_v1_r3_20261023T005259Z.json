@@ -1,0 +1,884 @@
+{
+ "run_id": "P1:medium:routing_heldout_v1:r3",
+ "level": "medium",
+ "calls": [
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1405,
+   "output_tokens": 233,
+   "thinking_tokens": 196,
+   "answer_tokens": 37,
+   "cost_usd": 0.001004,
+   "latency_s": 1.207,
+   "responded": true,
+   "id": "clear_reporting/CR-04",
+   "expected": "reporting",
+   "tag": "clear_reporting"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 170,
+   "thinking_tokens": 134,
+   "answer_tokens": 36,
+   "cost_usd": 0.0008462,
+   "latency_s": 0.854,
+   "responded": true,
+   "id": "clear_reporting/CR-14",
+   "expected": "reporting",
+   "tag": "clear_reporting"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1407,
+   "output_tokens": 234,
+   "thinking_tokens": 184,
+   "answer_tokens": 50,
+   "cost_usd": 0.0010071,
+   "latency_s": 1.148,
+   "responded": true,
+   "id": "clear_reporting/CR-07",
+   "expected": "reporting",
+   "tag": "clear_reporting"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 361,
+   "thinking_tokens": 333,
+   "answer_tokens": 28,
+   "cost_usd": 0.0013249,
+   "latency_s": 1.448,
+   "responded": true,
+   "id": "clear_reporting/CR-19",
+   "expected": "reporting",
+   "tag": "clear_reporting"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1412,
+   "output_tokens": 375,
+   "thinking_tokens": 337,
+   "answer_tokens": 38,
+   "cost_usd": 0.0013611,
+   "latency_s": 1.514,
+   "responded": true,
+   "id": "clear_reporting/CR-17",
+   "expected": "reporting",
+   "tag": "clear_reporting"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1409,
+   "output_tokens": 282,
+   "thinking_tokens": 225,
+   "answer_tokens": 57,
+   "cost_usd": 0.0011277,
+   "latency_s": 1.343,
+   "responded": true,
+   "id": "clear_sentiment/CS-20",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1405,
+   "output_tokens": 1380,
+   "thinking_tokens": 1331,
+   "answer_tokens": 49,
+   "cost_usd": 0.0038715,
+   "latency_s": 4.184,
+   "responded": true,
+   "id": "clear_sentiment/CS-02",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1417,
+   "output_tokens": 1082,
+   "thinking_tokens": 1028,
+   "answer_tokens": 54,
+   "cost_usd": 0.0031301,
+   "latency_s": 2.911,
+   "responded": true,
+   "id": "clear_sentiment/CS-13",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1407,
+   "output_tokens": 452,
+   "thinking_tokens": 418,
+   "answer_tokens": 34,
+   "cost_usd": 0.0015521,
+   "latency_s": 1.827,
+   "responded": true,
+   "id": "clear_sentiment/CS-06",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 193,
+   "thinking_tokens": 145,
+   "answer_tokens": 48,
+   "cost_usd": 0.0009049,
+   "latency_s": 1.124,
+   "responded": true,
+   "id": "clear_sentiment/CS-07",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1405,
+   "output_tokens": 517,
+   "thinking_tokens": 490,
+   "answer_tokens": 27,
+   "cost_usd": 0.001714,
+   "latency_s": 1.912,
+   "responded": true,
+   "id": "clear_forecast/CF-14",
+   "expected": "forecast",
+   "tag": "clear_forecast"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1406,
+   "output_tokens": 256,
+   "thinking_tokens": 219,
+   "answer_tokens": 37,
+   "cost_usd": 0.0010618,
+   "latency_s": 1.27,
+   "responded": true,
+   "id": "clear_forecast/CF-11",
+   "expected": "forecast",
+   "tag": "clear_forecast"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1407,
+   "output_tokens": 592,
+   "thinking_tokens": 555,
+   "answer_tokens": 37,
+   "cost_usd": 0.0019021,
+   "latency_s": 2.109,
+   "responded": true,
+   "id": "clear_forecast/CF-04",
+   "expected": "forecast",
+   "tag": "clear_forecast"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1407,
+   "output_tokens": 223,
+   "thinking_tokens": 187,
+   "answer_tokens": 36,
+   "cost_usd": 0.0009796,
+   "latency_s": 1.139,
+   "responded": true,
+   "id": "clear_forecast/CF-18",
+   "expected": "forecast",
+   "tag": "clear_forecast"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 387,
+   "thinking_tokens": 338,
+   "answer_tokens": 49,
+   "cost_usd": 0.0013887,
+   "latency_s": 1.554,
+   "responded": true,
+   "id": "clear_forecast/CF-17",
+   "expected": "forecast",
+   "tag": "clear_forecast"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1400,
+   "output_tokens": 686,
+   "thinking_tokens": 658,
+   "answer_tokens": 28,
+   "cost_usd": 0.002135,
+   "latency_s": 2.716,
+   "responded": true,
+   "id": "underspecified/UND-15",
+   "expected": "forecast",
+   "tag": "underspecified"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 441,
+   "thinking_tokens": 385,
+   "answer_tokens": 56,
+   "cost_usd": 0.0015222,
+   "latency_s": 1.751,
+   "responded": true,
+   "id": "underspecified/UND-17",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1405,
+   "output_tokens": 282,
+   "thinking_tokens": 236,
+   "answer_tokens": 46,
+   "cost_usd": 0.0011265,
+   "latency_s": 1.146,
+   "responded": true,
+   "id": "underspecified/UND-12",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 279,
+   "thinking_tokens": 231,
+   "answer_tokens": 48,
+   "cost_usd": 0.0011172,
+   "latency_s": 1.357,
+   "responded": true,
+   "id": "underspecified/UND-02",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1403,
+   "output_tokens": 211,
+   "thinking_tokens": 160,
+   "answer_tokens": 51,
+   "cost_usd": 0.0009484,
+   "latency_s": 1.119,
+   "responded": true,
+   "id": "underspecified/UND-13",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 663,
+   "thinking_tokens": 626,
+   "answer_tokens": 37,
+   "cost_usd": 0.0020772,
+   "latency_s": 2.209,
+   "responded": true,
+   "id": "underspecified/UND-03",
+   "expected": "sentiment",
+   "tag": "underspecified"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 803,
+   "thinking_tokens": 744,
+   "answer_tokens": 59,
+   "cost_usd": 0.0024299,
+   "latency_s": 2.641,
+   "responded": true,
+   "id": "ambiguous/AMB-10",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1398,
+   "output_tokens": 1127,
+   "thinking_tokens": 1079,
+   "answer_tokens": 48,
+   "cost_usd": 0.0032369,
+   "latency_s": 3.407,
+   "responded": true,
+   "id": "ambiguous/AMB-25",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1403,
+   "output_tokens": 295,
+   "thinking_tokens": 225,
+   "answer_tokens": 70,
+   "cost_usd": 0.0011584,
+   "latency_s": 1.305,
+   "responded": true,
+   "id": "ambiguous/AMB-03",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 1472,
+   "thinking_tokens": 1424,
+   "answer_tokens": 48,
+   "cost_usd": 0.0040997,
+   "latency_s": 4.352,
+   "responded": true,
+   "id": "ambiguous/AMB-16",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1397,
+   "output_tokens": 584,
+   "thinking_tokens": 536,
+   "answer_tokens": 48,
+   "cost_usd": 0.0018791,
+   "latency_s": 1.95,
+   "responded": true,
+   "id": "ambiguous/AMB-14",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 511,
+   "thinking_tokens": 448,
+   "answer_tokens": 63,
+   "cost_usd": 0.0016978,
+   "latency_s": 1.862,
+   "responded": true,
+   "id": "ambiguous/AMB-22",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1403,
+   "output_tokens": 440,
+   "thinking_tokens": 386,
+   "answer_tokens": 54,
+   "cost_usd": 0.0015209,
+   "latency_s": 1.594,
+   "responded": true,
+   "id": "ambiguous/AMB-23",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "reporting",
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1412,
+   "output_tokens": 709,
+   "thinking_tokens": 676,
+   "answer_tokens": 33,
+   "cost_usd": 0.0021961,
+   "latency_s": 2.43,
+   "responded": true,
+   "id": "multi_domain/MD-12",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "forecast",
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1420,
+   "output_tokens": 496,
+   "thinking_tokens": 438,
+   "answer_tokens": 58,
+   "cost_usd": 0.001666,
+   "latency_s": 1.814,
+   "responded": true,
+   "id": "multi_domain/MD-13",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "reporting",
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1415,
+   "output_tokens": 419,
+   "thinking_tokens": 387,
+   "answer_tokens": 32,
+   "cost_usd": 0.001472,
+   "latency_s": 1.552,
+   "responded": true,
+   "id": "multi_domain/MD-18",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "reporting",
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1418,
+   "output_tokens": 171,
+   "thinking_tokens": 122,
+   "answer_tokens": 49,
+   "cost_usd": 0.0008529,
+   "latency_s": 1.068,
+   "responded": true,
+   "id": "multi_domain/MD-05",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "reporting",
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1416,
+   "output_tokens": 243,
+   "thinking_tokens": 203,
+   "answer_tokens": 40,
+   "cost_usd": 0.0010323,
+   "latency_s": 1.383,
+   "responded": true,
+   "id": "multi_domain/MD-15",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "reporting",
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1409,
+   "output_tokens": 318,
+   "thinking_tokens": 261,
+   "answer_tokens": 57,
+   "cost_usd": 0.0012177,
+   "latency_s": 1.332,
+   "responded": true,
+   "id": "multi_domain/MD-17",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 346,
+   "thinking_tokens": 298,
+   "answer_tokens": 48,
+   "cost_usd": 0.0012874,
+   "latency_s": 1.904,
+   "responded": true,
+   "id": "out_of_scope/OOS-15",
+   "expected": "out_of_scope",
+   "tag": "out_of_scope"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1407,
+   "output_tokens": 611,
+   "thinking_tokens": 575,
+   "answer_tokens": 36,
+   "cost_usd": 0.0019496,
+   "latency_s": 2.006,
+   "responded": true,
+   "id": "out_of_scope/OOS-03",
+   "expected": "out_of_scope",
+   "tag": "out_of_scope"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 184,
+   "thinking_tokens": 132,
+   "answer_tokens": 52,
+   "cost_usd": 0.0008812,
+   "latency_s": 0.992,
+   "responded": true,
+   "id": "out_of_scope/OOS-01",
+   "expected": "out_of_scope",
+   "tag": "out_of_scope"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1402,
+   "output_tokens": 300,
+   "thinking_tokens": 256,
+   "answer_tokens": 44,
+   "cost_usd": 0.0011706,
+   "latency_s": 1.424,
+   "responded": true,
+   "id": "out_of_scope/OOS-13",
+   "expected": "out_of_scope",
+   "tag": "out_of_scope"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 935,
+   "thinking_tokens": 889,
+   "answer_tokens": 46,
+   "cost_usd": 0.0027587,
+   "latency_s": 3.259,
+   "responded": true,
+   "id": "out_of_scope/OOS-14",
+   "expected": "out_of_scope",
+   "tag": "out_of_scope"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1403,
+   "output_tokens": 571,
+   "thinking_tokens": 522,
+   "answer_tokens": 49,
+   "cost_usd": 0.0018484,
+   "latency_s": 2.226,
+   "responded": true,
+   "id": "near_miss/NM-20",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1403,
+   "output_tokens": 526,
+   "thinking_tokens": 481,
+   "answer_tokens": 45,
+   "cost_usd": 0.0017359,
+   "latency_s": 2.374,
+   "responded": true,
+   "id": "near_miss/NM-17",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1407,
+   "output_tokens": 947,
+   "thinking_tokens": 898,
+   "answer_tokens": 49,
+   "cost_usd": 0.0027896,
+   "latency_s": 2.579,
+   "responded": true,
+   "id": "near_miss/NM-14",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 192,
+   "thinking_tokens": 161,
+   "answer_tokens": 31,
+   "cost_usd": 0.0009024,
+   "latency_s": 1.062,
+   "responded": true,
+   "id": "near_miss/NM-24",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1406,
+   "output_tokens": 463,
+   "thinking_tokens": 428,
+   "answer_tokens": 35,
+   "cost_usd": 0.0015793,
+   "latency_s": 1.895,
+   "responded": true,
+   "id": "near_miss/NM-23",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1411,
+   "output_tokens": 393,
+   "thinking_tokens": 344,
+   "answer_tokens": 49,
+   "cost_usd": 0.0014058,
+   "latency_s": 1.533,
+   "responded": true,
+   "id": "technician/TECH-13",
+   "expected": "reporting",
+   "tag": "technician"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1409,
+   "output_tokens": 256,
+   "thinking_tokens": 205,
+   "answer_tokens": 51,
+   "cost_usd": 0.0010627,
+   "latency_s": 1.282,
+   "responded": true,
+   "id": "technician/TECH-11",
+   "expected": "reporting",
+   "tag": "technician"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1409,
+   "output_tokens": 389,
+   "thinking_tokens": 352,
+   "answer_tokens": 37,
+   "cost_usd": 0.0013952,
+   "latency_s": 1.768,
+   "responded": true,
+   "id": "filtered/FIL-12",
+   "expected": "sentiment",
+   "tag": "filtered"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 149,
+   "thinking_tokens": 96,
+   "answer_tokens": 53,
+   "cost_usd": 0.0007949,
+   "latency_s": 0.967,
+   "responded": true,
+   "id": "filtered/FIL-19",
+   "expected": "reporting",
+   "tag": "filtered"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1406,
+   "output_tokens": 219,
+   "thinking_tokens": 168,
+   "answer_tokens": 51,
+   "cost_usd": 0.0009693,
+   "latency_s": 1.166,
+   "responded": true,
+   "id": "unsupported_in_area/UIA-12",
+   "expected": "forecast",
+   "tag": "unsupported_in_area"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1406,
+   "output_tokens": 312,
+   "thinking_tokens": 275,
+   "answer_tokens": 37,
+   "cost_usd": 0.0012018,
+   "latency_s": 1.414,
+   "responded": true,
+   "id": "unsupported_in_area/UIA-02",
+   "expected": "forecast",
+   "tag": "unsupported_in_area"
+  }
+ ]
+}
