@@ -216,7 +216,7 @@ export default function Page() {
         <h1>Ask about field-service operations</h1>
         <p className="lede">
           Incident reporting, customer sentiment and volume forecasts from one question. A router
-          picks the specialist agent, and an independent QA agent recomputes the figures before you
+          picks the specialist agent, and an independent QA agent checks the figures before you
           see them.
         </p>
         <form className="ask-form" onSubmit={submit}>
