@@ -1,0 +1,76 @@
+{
+  "count": 10,
+  "of": 15,
+  "recognised_ids": [
+    "ambiguous/AMB-03",
+    "ambiguous/AMB-09",
+    "ambiguous/AMB-10",
+    "ambiguous/AMB-14",
+    "ambiguous/AMB-15",
+    "ambiguous/AMB-16",
+    "ambiguous/AMB-21",
+    "ambiguous/AMB-22",
+    "ambiguous/AMB-25",
+    "ambiguous/AMB-29"
+  ],
+  "missed_3_of_3_ids": [
+    "ambiguous/AMB-08",
+    "ambiguous/AMB-11",
+    "ambiguous/AMB-17",
+    "ambiguous/AMB-18",
+    "ambiguous/AMB-23"
+  ],
+  "per_item_hits": {
+    "ambiguous/AMB-03": 3,
+    "ambiguous/AMB-08": 0,
+    "ambiguous/AMB-09": 3,
+    "ambiguous/AMB-10": 3,
+    "ambiguous/AMB-11": 0,
+    "ambiguous/AMB-14": 3,
+    "ambiguous/AMB-15": 3,
+    "ambiguous/AMB-16": 3,
+    "ambiguous/AMB-17": 0,
+    "ambiguous/AMB-18": 0,
+    "ambiguous/AMB-21": 3,
+    "ambiguous/AMB-22": 3,
+    "ambiguous/AMB-23": 0,
+    "ambiguous/AMB-25": 3,
+    "ambiguous/AMB-29": 3
+  },
+  "heldout_per_run_non_ambiguous_correct": [
+    42,
+    42,
+    42
+  ],
+  "heldout_ambiguous_recognised": {
+    "count": 6,
+    "of": 7,
+    "recognised_ids": [
+      "ambiguous/AMB-03",
+      "ambiguous/AMB-10",
+      "ambiguous/AMB-14",
+      "ambiguous/AMB-16",
+      "ambiguous/AMB-22",
+      "ambiguous/AMB-25"
+    ],
+    "missed_3_of_3_ids": [
+      "ambiguous/AMB-23"
+    ],
+    "per_item_hits": {
+      "ambiguous/AMB-03": 3,
+      "ambiguous/AMB-10": 3,
+      "ambiguous/AMB-14": 3,
+      "ambiguous/AMB-16": 3,
+      "ambiguous/AMB-22": 3,
+      "ambiguous/AMB-23": 0,
+      "ambiguous/AMB-25": 3
+    }
+  },
+  "latency_cost": {
+    "calls": 150,
+    "median_s": 0.806,
+    "p95_s": 1.071,
+    "mean_cost_per_call_usd": 0.00054656,
+    "mean_thinking_tokens": 0.0
+  }
+}

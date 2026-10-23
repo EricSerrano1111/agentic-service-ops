@@ -238,3 +238,59 @@ def test_a_level_that_thinks_or_was_dropped_for_cost_prevents_the_stop(ledger):
 def test_verdicts_are_read_back_per_level(ledger):
     ledger.level_verdict("low", "dropped", "zero_thinking", source="run_end")
     assert set(ledger.verdicts()) == {"low"} and ledger.verdicts()["low"]["source"] == "run_end"
+
+
+def test_code_dirty_ignores_the_run_outputs_and_catches_a_code_change(tmp_path):
+    git(tmp_path, "init", "-q")
+    git(tmp_path, "config", "user.email", "t@example.com")
+    git(tmp_path, "config", "user.name", "t")
+    (tmp_path / "evals" / "fr03_v3").mkdir(parents=True)
+    (tmp_path / "evals" / "results" / "fr03_v3").mkdir(parents=True)
+    (tmp_path / "evals" / "fr03_v3" / "ledger.jsonl").write_text("{}\n")
+    (tmp_path / "evals" / "fr03_v3" / "probe.py").write_text("v1")
+    git(tmp_path, "add", ".")
+    git(tmp_path, "commit", "-qm", "base")
+    folder = tmp_path / "evals" / "fr03_v3"
+    clean = mod.git_state(folder)
+    assert (clean["git_dirty"], clean["code_dirty"]) == (False, False)
+    # the run's own outputs: git_dirty is the raw status, code_dirty ignores them
+    (folder / "ledger.jsonl").write_text("{}\n{}\n")
+    (tmp_path / "evals" / "results" / "fr03_v3" / "r.json").write_text("{}")
+    outputs = mod.git_state(folder)
+    assert (outputs["git_dirty"], outputs["code_dirty"]) == (True, False)
+    (folder / "probe.py").write_text("v2")  # a code change
+    code = mod.git_state(folder)
+    assert (code["git_dirty"], code["code_dirty"]) == (True, True)
+
+
+def test_a_run_that_started_and_never_ended_counts_its_whole_plan(ledger):
+    run_ = {"phase": "P1", "level": "medium", "run_id": "P1:medium:x:r1", "items": 20, "k": 1}
+    ledger.run_start(run_)
+    t = ledger.totals()
+    assert t["requests"] == 20 and t["cost_usd"] == pytest.approx(20 * 0.003)
+    ledger.run_end(run_, {"calls": 20, "requests": 20, "cost_usd": 0.02})
+    t = ledger.totals()
+    assert t["requests"] == 20 and t["cost_usd"] == pytest.approx(0.02)
+    ledger.run_start(run_)  # a restart that itself never ends
+    assert ledger.totals()["requests"] == 40
+
+
+def test_a_cap_refusal_carries_its_kind(ledger):
+    end(ledger, "low", requests=1550, calls=1, cost=0.0)
+    with pytest.raises(mod.Refused) as caught:
+        ledger.authorize(run(), now=NOW)
+    assert caught.value.kind == "request_cap"
+    ledger._dirty = lambda: ["x"]
+    with pytest.raises(mod.Refused) as caught:
+        ledger.authorize(run(), now=NOW)
+    assert caught.value.kind == "precondition"
+
+
+def test_run_ends_keeps_the_latest_per_run_id_and_the_p1_events(ledger):
+    a = {"phase": "P1", "level": "medium", "run_id": "r1"}
+    ledger.run_end(a, {"calls": 3, "requests": 3, "cost_usd": 0.0, "stopped": "x"})
+    ledger.run_end(a, {"calls": 5, "requests": 5, "cost_usd": 0.0, "stopped": None})
+    assert ledger.run_ends("P1", "medium")["r1"]["calls"] == 5
+    ledger.p1_verdict("medium", False, {"G1": {"pass": False}}, failed=["G1"])
+    ledger.p2_decision("no_go", reason="budget")
+    assert [e["event"] for e in ledger.events()][-2:] == ["p1_verdict", "p2_decision"]

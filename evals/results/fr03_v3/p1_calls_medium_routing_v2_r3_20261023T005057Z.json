@@ -1,0 +1,316 @@
+{
+ "run_id": "P1:medium:routing_v2:r3",
+ "level": "medium",
+ "calls": [
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 614,
+   "thinking_tokens": 584,
+   "answer_tokens": 30,
+   "cost_usd": 0.0019553,
+   "latency_s": 2.524,
+   "responded": true,
+   "id": "r01",
+   "expected": "sentiment",
+   "tag": "underspecified"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 514,
+   "thinking_tokens": 447,
+   "answer_tokens": 67,
+   "cost_usd": 0.0017053,
+   "latency_s": 2.151,
+   "responded": true,
+   "id": "r02",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 462,
+   "thinking_tokens": 438,
+   "answer_tokens": 24,
+   "cost_usd": 0.0015753,
+   "latency_s": 2.113,
+   "responded": true,
+   "id": "r03",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1402,
+   "output_tokens": 438,
+   "thinking_tokens": 410,
+   "answer_tokens": 28,
+   "cost_usd": 0.0015156,
+   "latency_s": 1.804,
+   "responded": true,
+   "id": "r04",
+   "expected": "forecast",
+   "tag": "underspecified"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1400,
+   "output_tokens": 1228,
+   "thinking_tokens": 1192,
+   "answer_tokens": 36,
+   "cost_usd": 0.00349,
+   "latency_s": 3.705,
+   "responded": true,
+   "id": "r05",
+   "expected": "sentiment",
+   "tag": "underspecified"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 744,
+   "thinking_tokens": 687,
+   "answer_tokens": 57,
+   "cost_usd": 0.0022797,
+   "latency_s": 2.634,
+   "responded": true,
+   "id": "r06",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1402,
+   "output_tokens": 322,
+   "thinking_tokens": 272,
+   "answer_tokens": 50,
+   "cost_usd": 0.0012256,
+   "latency_s": 1.509,
+   "responded": true,
+   "id": "r07",
+   "expected": "sentiment",
+   "tag": "underspecified"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 197,
+   "thinking_tokens": 149,
+   "answer_tokens": 48,
+   "cost_usd": 0.0009137,
+   "latency_s": 1.139,
+   "responded": true,
+   "id": "r08",
+   "expected": "forecast",
+   "tag": "underspecified"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 553,
+   "thinking_tokens": 519,
+   "answer_tokens": 34,
+   "cost_usd": 0.0018037,
+   "latency_s": 2.017,
+   "responded": true,
+   "id": "r09",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 897,
+   "thinking_tokens": 863,
+   "answer_tokens": 34,
+   "cost_usd": 0.0026622,
+   "latency_s": 3.144,
+   "responded": true,
+   "id": "r10",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 883,
+   "thinking_tokens": 837,
+   "answer_tokens": 46,
+   "cost_usd": 0.0026287,
+   "latency_s": 2.851,
+   "responded": true,
+   "id": "r11",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1403,
+   "output_tokens": 722,
+   "thinking_tokens": 678,
+   "answer_tokens": 44,
+   "cost_usd": 0.0022259,
+   "latency_s": 2.438,
+   "responded": true,
+   "id": "r12",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1406,
+   "output_tokens": 207,
+   "thinking_tokens": 159,
+   "answer_tokens": 48,
+   "cost_usd": 0.0009393,
+   "latency_s": 1.318,
+   "responded": true,
+   "id": "r13",
+   "expected": "out_of_scope",
+   "tag": "near_miss"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 277,
+   "thinking_tokens": 243,
+   "answer_tokens": 34,
+   "cost_usd": 0.0011137,
+   "latency_s": 1.689,
+   "responded": true,
+   "id": "r14",
+   "expected": "reporting",
+   "tag": "technician"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 450,
+   "thinking_tokens": 402,
+   "answer_tokens": 48,
+   "cost_usd": 0.0015453,
+   "latency_s": 2.034,
+   "responded": true,
+   "id": "r15",
+   "expected": "reporting",
+   "tag": "technician"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 222,
+   "thinking_tokens": 173,
+   "answer_tokens": 49,
+   "cost_usd": 0.0009762,
+   "latency_s": 1.274,
+   "responded": true,
+   "id": "r16",
+   "expected": "reporting",
+   "tag": "technician"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1405,
+   "output_tokens": 411,
+   "thinking_tokens": 363,
+   "answer_tokens": 48,
+   "cost_usd": 0.001449,
+   "latency_s": 1.644,
+   "responded": true,
+   "id": "r17",
+   "expected": "reporting",
+   "tag": "technician"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1404,
+   "output_tokens": 438,
+   "thinking_tokens": 406,
+   "answer_tokens": 32,
+   "cost_usd": 0.0015162,
+   "latency_s": 1.757,
+   "responded": true,
+   "id": "r18",
+   "expected": "reporting",
+   "tag": "technician"
+  }
+ ]
+}

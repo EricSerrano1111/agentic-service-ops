@@ -1,0 +1,289 @@
+{
+ "run_id": "P1:high:fr03_fresh_v2:r2",
+ "level": "high",
+ "calls": [
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1398,
+   "output_tokens": 1202,
+   "thinking_tokens": 1175,
+   "answer_tokens": 27,
+   "cost_usd": 0.0034244,
+   "latency_s": 3.643,
+   "responded": true,
+   "id": "ambiguous/AMB-29",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1397,
+   "output_tokens": 1025,
+   "thinking_tokens": 976,
+   "answer_tokens": 49,
+   "cost_usd": 0.0029816,
+   "latency_s": 3.103,
+   "responded": true,
+   "id": "ambiguous/AMB-09",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 2049,
+   "thinking_tokens": 2016,
+   "answer_tokens": 33,
+   "cost_usd": 0.0055422,
+   "latency_s": 6.581,
+   "responded": true,
+   "id": "ambiguous/AMB-21",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "ambiguous",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1405,
+   "output_tokens": 1180,
+   "thinking_tokens": 1134,
+   "answer_tokens": 46,
+   "cost_usd": 0.0033715,
+   "latency_s": 3.825,
+   "responded": true,
+   "id": "ambiguous/AMB-15",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1398,
+   "output_tokens": 981,
+   "thinking_tokens": 930,
+   "answer_tokens": 51,
+   "cost_usd": 0.0028719,
+   "latency_s": 3.237,
+   "responded": true,
+   "id": "ambiguous/AMB-18",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "out_of_scope",
+   "domains": [],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 1946,
+   "thinking_tokens": 1913,
+   "answer_tokens": 33,
+   "cost_usd": 0.0052853,
+   "latency_s": 5.96,
+   "responded": true,
+   "id": "ambiguous/AMB-08",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1401,
+   "output_tokens": 651,
+   "thinking_tokens": 617,
+   "answer_tokens": 34,
+   "cost_usd": 0.0020478,
+   "latency_s": 2.095,
+   "responded": true,
+   "id": "ambiguous/AMB-17",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1399,
+   "output_tokens": 644,
+   "thinking_tokens": 615,
+   "answer_tokens": 29,
+   "cost_usd": 0.0020297,
+   "latency_s": 2.158,
+   "responded": true,
+   "id": "ambiguous/AMB-11",
+   "expected": "ambiguous",
+   "tag": "ambiguous"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1398,
+   "output_tokens": 847,
+   "thinking_tokens": 818,
+   "answer_tokens": 29,
+   "cost_usd": 0.0025369,
+   "latency_s": 2.451,
+   "responded": true,
+   "id": "underspecified/UND-09",
+   "expected": "forecast",
+   "tag": "underspecified"
+  },
+  {
+   "route": "reporting",
+   "domains": [
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1397,
+   "output_tokens": 667,
+   "thinking_tokens": 637,
+   "answer_tokens": 30,
+   "cost_usd": 0.0020866,
+   "latency_s": 1.975,
+   "responded": true,
+   "id": "underspecified/UND-11",
+   "expected": "reporting",
+   "tag": "underspecified"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1397,
+   "output_tokens": 760,
+   "thinking_tokens": 731,
+   "answer_tokens": 29,
+   "cost_usd": 0.0023191,
+   "latency_s": 2.456,
+   "responded": true,
+   "id": "underspecified/UND-18",
+   "expected": "sentiment",
+   "tag": "underspecified"
+  },
+  {
+   "route": "forecast",
+   "domains": [
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1397,
+   "output_tokens": 728,
+   "thinking_tokens": 693,
+   "answer_tokens": 35,
+   "cost_usd": 0.0022391,
+   "latency_s": 2.384,
+   "responded": true,
+   "id": "underspecified/UND-05",
+   "expected": "forecast",
+   "tag": "underspecified"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "reporting",
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1408,
+   "output_tokens": 1645,
+   "thinking_tokens": 1615,
+   "answer_tokens": 30,
+   "cost_usd": 0.0045349,
+   "latency_s": 5.232,
+   "responded": true,
+   "id": "clear_sentiment/CS-10",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "sentiment",
+   "domains": [
+    "sentiment"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1406,
+   "output_tokens": 902,
+   "thinking_tokens": 865,
+   "answer_tokens": 37,
+   "cost_usd": 0.0026768,
+   "latency_s": 2.741,
+   "responded": true,
+   "id": "clear_sentiment/CS-03",
+   "expected": "sentiment",
+   "tag": "clear_sentiment"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "sentiment",
+    "forecast"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1413,
+   "output_tokens": 825,
+   "thinking_tokens": 785,
+   "answer_tokens": 40,
+   "cost_usd": 0.0024864,
+   "latency_s": 2.508,
+   "responded": true,
+   "id": "multi_domain/MD-16",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  },
+  {
+   "route": "multi_domain",
+   "domains": [
+    "sentiment",
+    "reporting"
+   ],
+   "error": null,
+   "requests": 1,
+   "input_tokens": 1414,
+   "output_tokens": 1303,
+   "thinking_tokens": 1272,
+   "answer_tokens": 31,
+   "cost_usd": 0.0036817,
+   "latency_s": 3.774,
+   "responded": true,
+   "id": "multi_domain/MD-14",
+   "expected": "multi_domain",
+   "tag": "multi_domain"
+  }
+ ]
+}

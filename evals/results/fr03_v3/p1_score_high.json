@@ -1,0 +1,87 @@
+{
+  "complete": true,
+  "notes": [],
+  "criteria": {
+    "G1": {
+      "count": 9,
+      "of": 15,
+      "need": 11,
+      "pass": false
+    },
+    "G2": {
+      "gain": -1,
+      "baseline_count": 10,
+      "need": 3,
+      "pass": false
+    },
+    "G3": {
+      "item_runs": 3,
+      "of": 285,
+      "max": 11,
+      "pass": true
+    },
+    "G4": {
+      "counts": [
+        43,
+        43,
+        42
+      ],
+      "mean": 42.67,
+      "need": 42.0,
+      "pass": true
+    },
+    "G5": {
+      "calls": 345,
+      "median_s": 2.662,
+      "p95_s": 5.232,
+      "mean_cost_per_call_usd": 0.00274391,
+      "mean_thinking_tokens": 892.4,
+      "pass": true
+    }
+  },
+  "pass": false,
+  "failed": [
+    "G1",
+    "G2"
+  ],
+  "discriminating_missed_3_of_3_ids": [
+    "ambiguous/AMB-11",
+    "ambiguous/AMB-16",
+    "ambiguous/AMB-17",
+    "ambiguous/AMB-23",
+    "ambiguous/AMB-29"
+  ],
+  "flagged_in_2plus_runs_ids": [
+    "r06"
+  ],
+  "v2_ambiguous_reported_not_counted": {
+    "count": 4,
+    "of": 5,
+    "recognised_ids": [
+      "r02",
+      "s15",
+      "s16",
+      "s29"
+    ],
+    "missed_3_of_3_ids": [
+      "s20"
+    ]
+  },
+  "g1_per_item_hits": {
+    "ambiguous/AMB-03": 3,
+    "ambiguous/AMB-08": 1,
+    "ambiguous/AMB-09": 3,
+    "ambiguous/AMB-10": 3,
+    "ambiguous/AMB-11": 0,
+    "ambiguous/AMB-14": 3,
+    "ambiguous/AMB-15": 3,
+    "ambiguous/AMB-16": 0,
+    "ambiguous/AMB-17": 0,
+    "ambiguous/AMB-18": 2,
+    "ambiguous/AMB-21": 3,
+    "ambiguous/AMB-22": 3,
+    "ambiguous/AMB-23": 0,
+    "ambiguous/AMB-25": 3,
+    "ambiguous/AMB-29": 0
+  }
+}

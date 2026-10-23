@@ -1,0 +1,872 @@
+{
+  "seed_set": "routing_heldout_v1.jsonl",
+  "model": "gemini-3.5-flash-lite",
+  "mode": "paid",
+  "thinking_level": "minimal",
+  "prompt_version": "route_v6",
+  "prompt_sha": "a160b528247b",
+  "as_of": "2026-08-30",
+  "run_at": "20261023T004159Z",
+  "ledger_path": null,
+  "answered": 50,
+  "correct": 48,
+  "accuracy_by_tag": {
+    "ambiguous": "6/7 (86%)",
+    "clear_forecast": "5/5 (100%)",
+    "clear_reporting": "5/5 (100%)",
+    "clear_sentiment": "5/5 (100%)",
+    "filtered": "2/2 (100%)",
+    "multi_domain": "6/6 (100%)",
+    "near_miss": "5/5 (100%)",
+    "out_of_scope": "4/5 (80%)",
+    "technician": "2/2 (100%)",
+    "underspecified": "6/6 (100%)",
+    "unsupported_in_area": "2/2 (100%)"
+  },
+  "stopped_early": null,
+  "calls": 50,
+  "requests": 50,
+  "input_tokens": 70316,
+  "output_tokens": 2504,
+  "list_price_cost_usd": 0.027355,
+  "rows": [
+    {
+      "id": "clear_reporting/CR-04",
+      "question": "Give me the incident rate for Ironwood Manufacturing LLC year to date.",
+      "expected": "reporting",
+      "tag": "clear_reporting",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question requests a specific operational metric, incident rate, over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_reporting/CR-14",
+      "question": "How many quality incidents were recorded for Elena Nakamura year to date?",
+      "expected": "reporting",
+      "tag": "clear_reporting",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a count of past recorded quality incidents for a specific technician.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_reporting/CR-07",
+      "question": "What were the main drivers of follow-up visits across all jobs last quarter?",
+      "expected": "reporting",
+      "tag": "clear_reporting",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about operational drivers of past repeat visits from last quarter.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_reporting/CR-19",
+      "question": "What was the first-time fix rate for install jobs across all regions this month?",
+      "expected": "reporting",
+      "tag": "clear_reporting",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a specific past or current operational metric, the first-time fix rate.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_reporting/CR-17",
+      "question": "Incident rate per 100 jobs for Meridian Manufacturing LLC in Q2 2026?",
+      "expected": "reporting",
+      "tag": "clear_reporting",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past incident rates, which falls under reporting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-20",
+      "question": "Total breakdown of positive, neutral, negative and mixed comments for the past 90 days",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a breakdown of post-visit comment tones, which is sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-02",
+      "question": "Are negative customer comments trending up or down quarter over quarter this year?",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about trends in negative customer comments, which falls under sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-13",
+      "question": "Did the share of negative customer comments go down between Q1 2026 and Q2 2026?",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about customer comments and their sentiment over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-06",
+      "question": "How has negative comment volume tracked month over month year to date in the West?",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question tracks the volume of negative comments over time, which belongs to sentiment.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_sentiment/CS-07",
+      "question": "What proportion of customer remarks were mixed or neutral in July 2026?",
+      "expected": "sentiment",
+      "tag": "clear_sentiment",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about the tone of customer remarks in July 2026.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_forecast/CF-14",
+      "question": "Total weekly service request volume estimate for the next 9 weks?",
+      "expected": "forecast",
+      "tag": "clear_forecast",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a future estimate of service request volumes over the next weeks.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_forecast/CF-11",
+      "question": "What is our predicted weekly service call volume for the next 2 weeks?",
+      "expected": "forecast",
+      "tag": "clear_forecast",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a forward-looking prediction of service call volume.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_forecast/CF-04",
+      "question": "Can you give me the weekly maintenance volume forecast for the next 6 weeks?",
+      "expected": "forecast",
+      "tag": "clear_forecast",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a forward-looking volume projection over the coming weeks.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_forecast/CF-18",
+      "question": "What's the weekly volume projection for next month broken down by work type?",
+      "expected": "forecast",
+      "tag": "clear_forecast",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a projection of future request volumes over the next month.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "clear_forecast/CF-17",
+      "question": "Projected weekly inspection volumes for the next 18 weeks?",
+      "expected": "forecast",
+      "tag": "clear_forecast",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a future projection of an in-scope measure.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-15",
+      "question": "how many installs are we forecasting per week?",
+      "expected": "forecast",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a projection of future installation volumes.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-17",
+      "question": "whats our incident rate year to date?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for incident rates over a past or current period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-12",
+      "question": "how many quality incidents happened in Q2 2026?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a count of incidents over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-02",
+      "question": "How many quality incidents did we have?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a count of past operational incidents.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-13",
+      "question": "what is Hana Olsen's first-time fix rate?",
+      "expected": "reporting",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a specific past or current measure, which is reporting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "underspecified/UND-03",
+      "question": "show me customer sentiment mix for the West",
+      "expected": "sentiment",
+      "tag": "underspecified",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question explicitly asks for customer sentiment mix in the West region.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-10",
+      "question": "Can you give me an overview of Northeast for Q2 2026?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment",
+        "forecast"
+      ],
+      "reason": "The question asks for a broad overview of a region without specifying a measure.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-25",
+      "question": "How are customer relations in Northeast?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "reason": "The question asks about customer relations without naming a specific measure, so it could mean operational metrics or customer feedback.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-03",
+      "question": "Give me a quick status update on Silver Creek Foods Inc.",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment",
+        "forecast"
+      ],
+      "reason": "The question asks for a general status update with no named measure, making it unclear whether to check metrics, feedback, or projections.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-16",
+      "question": "How do things look for next month?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment",
+        "forecast"
+      ],
+      "reason": "The question asks about general status without naming a specific measure or domain.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-14",
+      "question": "How are our installs performing?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment",
+        "forecast"
+      ],
+      "reason": "The question asks about performance without a specific measure, so it could mean operational counts, customer feedback, or a projection.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-22",
+      "question": "What's happening with Brightpath Foods Inc.?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "ambiguous",
+      "domains": [],
+      "predicted_candidates": [
+        "reporting",
+        "sentiment",
+        "forecast"
+      ],
+      "reason": "The question asks about a specific client without naming a measure.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "ambiguous/AMB-23",
+      "question": "How is maintenance work looking for the next 4 weeks?",
+      "expected": "ambiguous",
+      "tag": "ambiguous",
+      "candidates": [
+        "forecast",
+        "reporting"
+      ],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a forward-looking outlook over the next four weeks.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-12",
+      "question": "Show me a breakdown of customer sentiment this quarter along with our incident rate per 100 jobs.",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "sentiment",
+        "reporting"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "sentiment",
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question requests both customer sentiment and incident rates for the current quarter.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-13",
+      "question": "What's our projected volume for upgrade jobs next month, and how did SLA % look for upgrades in Q2 2026?",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "forecast",
+        "reporting"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "forecast",
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a future volume forecast and past SLA compliance for upgrades.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-18",
+      "question": "Show SLA % and FTF rate for last quarter, and provide the request volume forecast for the next 4 weeks.",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past SLA and FTF rates as well as a future volume forecast.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-05",
+      "question": "Can I get our SLA % for July 2026 and the expected weekly volume for installs across the next 8 weeks?",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question requests both past SLA performance and a future volume forecast.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-15",
+      "question": "I need the SLA compliance rate for Central this month, plus the projected weekly inspection volume for the next 12 weeks.",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "reporting",
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past SLA compliance and future inspection volume.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "multi_domain/MD-17",
+      "question": "How many quality incidents did Meridian Manufacturing have YTD, and what are their reviews saying?",
+      "expected": "multi_domain",
+      "tag": "multi_domain",
+      "candidates": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted": "multi_domain",
+      "domains": [
+        "reporting",
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for both the count of quality incidents and what customer reviews are saying.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "out_of_scope/OOS-15",
+      "question": "Are any of our service vans in the Northeast due for an oil change this month?",
+      "expected": "out_of_scope",
+      "tag": "out_of_scope",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Vehicle maintenance schedules are outside the in-scope service request, sentiment, and forecast domains.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "out_of_scope/OOS-03",
+      "question": "How many hours of overtime did Elena Nakamura log during the past 2 weeks?",
+      "expected": "out_of_scope",
+      "tag": "out_of_scope",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Overtime hours for a technician are payroll and workforce management data, which is out of scope.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "out_of_scope/OOS-01",
+      "question": "What was our total billed revenue from Ironwood Manufacturing last month?",
+      "expected": "out_of_scope",
+      "tag": "out_of_scope",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for past financial metrics from operational records.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "out_of_scope/OOS-13",
+      "question": "Which supplier do we buy our commercial filter units from?",
+      "expected": "out_of_scope",
+      "tag": "out_of_scope",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "The question asks for procurement details about commercial suppliers, which is outside operational reporting, sentiment, or forecasting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "out_of_scope/OOS-14",
+      "question": "How much did we spend on technician mileage reimbursements last quarter?",
+      "expected": "out_of_scope",
+      "tag": "out_of_scope",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Mileage reimbursements are an expense, not an in-scope measure of operations.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "near_miss/NM-20",
+      "question": "Can I see the dispatch calendar for all maintenance jobs tomorrow?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Schedules and calendar details for future dispatch are not in scope for operational analytics.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "near_miss/NM-17",
+      "question": "Average van fuel expenses per technician last month in the Southeast?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Van fuel expenses are an out_of_scope subject for field-service analytics.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "near_miss/NM-14",
+      "question": "Forecast technician staffing headcounts needed in the West for the next 4 weeks.",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Technician staffing headcounts are an out-of-scope subject.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "near_miss/NM-24",
+      "question": "What's the renewal date on Brightpath Foods Inc.'s master service agreement?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "The question asks for a contract detail, which is outside the operational domains.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "near_miss/NM-23",
+      "question": "Did Lina Olsen turn in her expense receipts for last week's travel?",
+      "expected": "out_of_scope",
+      "tag": "near_miss",
+      "candidates": [],
+      "predicted": "out_of_scope",
+      "domains": [],
+      "predicted_candidates": [],
+      "reason": "Expense receipts and travel costs are out of scope for operations analytics.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "technician/TECH-13",
+      "question": "How many quality incidents did Kara Tran have on repair jobs in 2026 YTD?",
+      "expected": "reporting",
+      "tag": "technician",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a count of past quality incidents for a specific technician.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "technician/TECH-11",
+      "question": "Lina Olsen incident rate per 100 jobs over the past 12 weeks",
+      "expected": "reporting",
+      "tag": "technician",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for incident rates over a past period, which is reporting.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "filtered/FIL-12",
+      "question": "What percentage of feedback comments were positive in the West over the past 90 days?",
+      "expected": "sentiment",
+      "tag": "filtered",
+      "candidates": [],
+      "predicted": "sentiment",
+      "domains": [
+        "sentiment"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about the positivity of feedback comments, which is a sentiment measure over a past period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "filtered/FIL-19",
+      "question": "Did Clearview Hospitality Inc. meet their SLA window over the past 3 weeks?",
+      "expected": "reporting",
+      "tag": "filtered",
+      "candidates": [],
+      "predicted": "reporting",
+      "domains": [
+        "reporting"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks about past SLA compliance, which is a reporting measure.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "unsupported_in_area/UIA-12",
+      "question": "What is the expected FTF rate across the Central region for next month?",
+      "expected": "forecast",
+      "tag": "unsupported_in_area",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a projection of an in-scope measure for a future period.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    },
+    {
+      "id": "unsupported_in_area/UIA-02",
+      "question": "What's our projected SLA compliance percentage for the next 4 weeks?",
+      "expected": "forecast",
+      "tag": "unsupported_in_area",
+      "candidates": [],
+      "predicted": "forecast",
+      "domains": [
+        "forecast"
+      ],
+      "predicted_candidates": [],
+      "reason": "The question asks for a forward-looking SLA outlook over the next 4 weeks.",
+      "error": null,
+      "error_message": null,
+      "dropped_candidates": []
+    }
+  ]
+}
