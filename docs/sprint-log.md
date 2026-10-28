@@ -1267,7 +1267,13 @@ now written; they record the planning decisions above.*
   *2026-10-23 (ADR-117 item 5; assistant-drafted.)* Answer journey built (§6 rule 10; `AskResponse.journey`): merged, not deployed. L-94 resolves on deploy.
 - **The L-78 Cloud SQL suites:** their fixtures need the superuser's credentials, which was refused (Z2a, step 7 note above); housekeeping.
 - **Renewing the `owner-laptop-2` invite about 10-30,** because a renewal tonight would expire before Window A (it expires about 10-27 and Window A opens 10-31, ADR-107).
+  *2026-10-28 (owner-reported 2026-10-28; assistant-drafted.)* Done early. A new owner invite, `owner-laptop-3`, was created 2026-10-28, expiring 2026-11-09 23:59 (`RUNBOOK_GRADING.md`, step 4; the link is held by the owner, not recorded). Every earlier invite had expired. Window A is not opened (ADR-118), so this invite serves the 6.5 deploy window if it is held before 11-09.
 - **The paid-balance check before Window A** (10-31; ADR-105, R-21).
+  *2026-10-28 (owner-reported 2026-10-28; assistant-drafted.)* Read 2026-10-28:
+  - the Gemini API prepaid balance is **$6.21**, above the $5 floor (ADR-105);
+  - **GCP cost from 2026-10-01 to 10-28 is $8.79,** from the owner's billing console.
+
+  Window A is not opened (ADR-118). The check is next due before the 6.5 deploy window and before Window B.
 
 **Blockers encountered:**
 *2026-10-18 (S6-C1; owner-decided 2026-10-18; assistant-drafted.)* The first is owner-reported in S6-C1; the second is recorded in part (the audit, F12); the third is recorded in the S6-R1 note on F6 and in `architecture.md` §7 item 12.

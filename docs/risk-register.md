@@ -415,6 +415,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 
 **Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Owner console reading on 2026-10-16: the prepaid balance is $7.85 (against $7.88 after the 2026-10-15 top-up; the $0.03 difference is not attributed). It is above the $5 minimum (ADR-105). The balance check before Window A (10-31) is carried (`sprint-log.md`, Sprint 6 close). Status stays Open: the balance is not watched programmatically.
 
+**Update 2026-10-28 (ADR-118; owner-decided 2026-10-28; assistant-drafted):** Window A is not opened, so this risk doesn't apply until Window B (12-01 to 12-12). The balance was $6.21 on 2026-10-28, and GCP cost was $8.79 from 10-01 to 10-28 (both owner-reported). The next balance check is before the 6.5 deploy window. Status unchanged.
+
 ---
 
 ## Closed / Realized Risks
