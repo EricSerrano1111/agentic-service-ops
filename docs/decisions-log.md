@@ -118,7 +118,7 @@
 | 104 | Deployed model calls use the paid key for the evaluation and grading window | Accepted |
 | 105 | Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing) | Accepted — superseded in part by ADR-110 |
 | 106 | Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part) | Accepted — superseded in part by ADR-109 and ADR-113 |
-| 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted |
+| 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted — superseded in part by ADR-118 |
 | 108 | Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing) | Accepted |
 | 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted — superseded in part by ADR-113 |
 | 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
@@ -128,7 +128,8 @@
 | 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115; result 2026-10-22: no-go, FR-03 unmet; superseded in part by ADR-116 |
 | 115 | FR-03 attempt: the zero-thinking stop drops a level, and stops the session only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part) | Accepted |
 | 116 | `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met) | Accepted |
-| 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted |
+| 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 |
+| 118 | Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part) | Accepted |
 
 ---
 
@@ -4099,3 +4100,23 @@ After a start, one question through the gateway confirms the data path before th
 - **The evaluation report** lists the UI and API additions as differences from the evaluated system (ADR-103), with the `route_v6` default (ADR-116).
 - **Buffer use, named:** about 7 to 10 working sessions of portfolio work, against the evaluation report and documentation packet dates. Those dates take precedence if they conflict.
 - **Records:** the 6.5 item in the sprint log; a dated note in `architecture.md` §10.
+
+### ADR-118 — Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part)
+*Date: 2026-10-28. Owner-decided 2026-10-28; assistant-drafted. Supersedes ADR-107 in part (Window A, 2026-10-31 to 11-09, is not opened) and ADR-117 in part (its calendar line placing the deploy window "after Window A closes 11-09"). Window B (2026-12-01 to 12-12) and everything else in ADR-105, ADR-107 and ADR-117 stand. ADR-109's rule, kept by ADR-113, stands: no 6.5 change deploys before `06` is submitted.*
+
+**Decision:**
+- **Window A is not opened.** The owner confirmed that the grader reviews `05` and `06` as documents, not against the live system, and that the system needs to be live only for the final submission around 12-05 (Window B).
+- **`ops-db` stays stopped** (`STOPPED NEVER`) through what would have been Window A. No grader invite is created for it.
+- **The 6.5 deploy window may open once `06` is submitted** (ADR-109), and no longer waits for 11-09. Opening it is an owner verification session under ADR-110: `ops-db` is started and stopped in one sitting, and the session gets an entry in the deploy-window log.
+
+**Context:**
+- ADR-105 and ADR-107 added Window A as a precaution, before it was known how `05` and `06` would be graded.
+- Opening it would have run `ops-db` for about ten days, at about $0.30 a day (ADR-105), for access nobody needs.
+
+**Alternatives considered:**
+- *Open Window A anyway as insurance* (rejected by the owner): the grading doesn't use the live system.
+
+**Consequences:**
+- R-21 (the paid balance running out during a grading window) doesn't apply until Window B.
+- The `owner-laptop-3` invite, created 2026-10-28 and expiring 2026-11-09 23:59, covers a deploy window held before then. A later window needs a new owner invite.
+- `05` was submitted (recorded 2026-10-22). `06` is still held, and is due 11-08.
