@@ -158,11 +158,16 @@ def test_clicking_an_example_fills_and_focuses_and_never_submits():
 # ---------------------------------------------------------------- the pages and the export rules
 
 
-def test_the_nav_has_three_links_and_no_evaluation_results_yet():
+def test_the_nav_has_four_links_including_evaluation_results():
     header = source("components", "SiteHeader.jsx")
-    for href, label in (("/", "Ask"), ("/how-it-works/", "How it works"), ("/faq/", "FAQ")):
+    for href, label in (
+        ("/", "Ask"),
+        ("/how-it-works/", "How it works"),
+        ("/faq/", "FAQ"),
+        ("/results/", "Evaluation results"),
+    ):
         assert f'{{ href: "{href}", label: "{label}" }}' in header
-    assert "Evaluation results" not in re.sub(r"//.*", "", header)
+    assert 'href="/results/"' in source("how-it-works", "page.jsx")
 
 
 def test_the_recomputed_line_of_the_first_mockup_is_not_in_the_source():
@@ -254,3 +259,59 @@ def test_no_inline_styles_and_no_new_packages():
 @pytest.mark.parametrize("token", ["prefers-color-scheme: dark", "prefers-reduced-motion"])
 def test_the_stylesheet_has_the_dark_scheme_and_respects_reduced_motion(token):
     assert token in source("globals.css")
+
+
+# ---------------------------------------------------------------- rule 11: the results page
+
+RESULTS_PAGE = ROOT / "web" / "app" / "results" / "page.jsx"
+
+
+def test_rule_11_caveats_are_on_the_page_exactly():
+    listed = rule(11).split("**The page states these caveats", 1)[1]
+    caveats = re.findall(r'^- "(.+)"$', listed, re.M)
+    assert len(caveats) == 5
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    for caveat in caveats:
+        assert f'  "{caveat}",\n' in page, caveat
+
+
+def test_the_results_page_reads_figures_only_from_results_json():
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    assert 'import results from "../../data/results.json";' in page
+    imports = re.findall(r'^import .+ from "(.+)";$', page, re.M)
+    assert sorted(imports) == ["../../data/results.json", "../components/Bar"]
+    assert "fetch(" not in page and "useState" not in page
+
+
+def _code_without_text(path: Path) -> str:
+    """The source with comments, string literals and JSX text taken out."""
+    code = path.read_text(encoding="utf-8")
+    token = re.compile(r'"(?:[^"\\\n]|\\.)*"|`[^`]*`|/\*.*?\*/|//[^\n]*', re.S)
+    code = token.sub(lambda m: '""' if m.group()[0] in '"`' else "", code)
+    return re.sub(r"(?<=[>}])[^<>{}]+(?=[<{])", "", code)
+
+
+@pytest.mark.parametrize("path", [RESULTS_PAGE, WEB / "components" / "Bar.jsx"])
+def test_the_results_page_has_no_numeric_literals_but_layout_constants(path):
+    numbers = re.findall(r"(?<![\w.$])\d+(?:\.\d+)?(?![\w.])", _code_without_text(path))
+    assert set(numbers) <= {"0", "1", "10", "100"}, numbers
+
+
+def test_every_figure_on_the_results_page_shows_its_source_path():
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    bar = source("components", "Bar.jsx")
+    assert '<code className="src">{f.source}</code>' in page  # a stat row
+    assert '<code className="src">{F[headline].source}</code>' in page  # a summary card
+    assert '<code className="src">{F.fr03_route_v6.source}</code>' in page  # the FR-03 text
+    assert '<code className="src">{source}</code>' in bar  # a bar
+    assert page.count("source={") == 6  # every bar is given one
+
+
+def test_the_results_page_links_the_report_and_draws_bars_without_inline_styles():
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    report = json.loads((ROOT / "web" / "data" / "results.json").read_text(encoding="utf-8"))
+    assert report["report"] == "docs/evaluation-report.md"
+    assert "github.com/EricSerrano1111/agentic-service-ops/blob/main/" in page
+    bar = source("components", "Bar.jsx")
+    assert "<svg" in bar and "style=" not in page + bar
+    assert "<strong" in bar  # the number is written beside the bar

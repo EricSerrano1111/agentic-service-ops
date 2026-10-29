@@ -100,6 +100,14 @@ export default function HowItWorks() {
       </section>
 
       <section>
+        <h2>How well it works</h2>
+        <p>
+          The headline figures of the evaluation, each traced to the file it was read from, are on
+          the <a href="/results/">Evaluation results</a> page.
+        </p>
+      </section>
+
+      <section>
         <h2>Limitations</h2>
         <ul className="plain-list">
           <li>

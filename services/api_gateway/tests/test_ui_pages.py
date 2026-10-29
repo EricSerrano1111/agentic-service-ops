@@ -13,7 +13,12 @@ PAGE = """<!DOCTYPE html><html><head><title>t</title>
 <script>self.__next_f=self.__next_f||[];self.__next_f.push([0])</script>
 </head><body>{name}</body></html>
 """
-PAGES = {"index.html": "ask", "how-it-works/index.html": "how", "faq/index.html": "faq"}
+PAGES = {
+    "index.html": "ask",
+    "how-it-works/index.html": "how",
+    "faq/index.html": "faq",
+    "results/index.html": "results",
+}
 
 
 @pytest.fixture
@@ -33,7 +38,7 @@ def kit(tmp_path, export) -> Kit:
     return Kit(tmp_path, static_dir=export)
 
 
-@pytest.mark.parametrize("path", ["/", "/how-it-works/", "/faq/"])
+@pytest.mark.parametrize("path", ["/", "/how-it-works/", "/faq/", "/results/"])
 def test_each_page_is_served_without_a_session_with_the_same_policy(kit, path):
     r = kit.client.get(path)
     assert r.status_code == 200
@@ -48,13 +53,15 @@ def test_the_pages_are_static_files_and_the_api_stays_behind_the_session(kit):
     assert kit.client.get("/api/session").status_code == 401
     assert "<body>how</body>" in kit.client.get("/how-it-works/").text
     assert "<body>faq</body>" in kit.client.get("/faq/").text
+    assert "<body>results</body>" in kit.client.get("/results/").text
     kit.sign_in()
     assert kit.client.get("/api/session").status_code == 200
     assert kit.client.get("/faq/").status_code == 200  # the same file signed in or out
+    assert kit.client.get("/results/").status_code == 200
 
 
 def test_a_path_without_the_trailing_slash_redirects_to_the_page(kit):
-    for page in ("how-it-works", "faq"):
+    for page in ("how-it-works", "faq", "results"):
         r = kit.client.get(f"/{page}", follow_redirects=False)
         assert r.status_code == 307
         assert r.headers["location"] == f"/{page}/"  # path only: never a scheme (L-105)
@@ -80,7 +87,7 @@ def test_the_gateway_still_runs_with_proxy_headers_off(monkeypatch):
     assert seen["proxy_headers"] is False  # the forwarded-for rule is applied in code
 
 
-@pytest.mark.parametrize("path", ["/", "/faq/", "/how-it-works/"])
+@pytest.mark.parametrize("path", ["/", "/faq/", "/how-it-works/", "/results/"])
 def test_html_pages_are_revalidated_on_every_load(kit, path):
     r = kit.client.get(path)
     assert r.status_code == 200 and r.headers["cache-control"] == "no-cache"

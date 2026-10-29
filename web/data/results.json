@@ -1,0 +1,458 @@
+{
+  "figures": {
+    "cost_gcp": {
+      "group": "cost",
+      "hashed": "line",
+      "label": "GCP cost, 2026-10-01 to 2026-10-28",
+      "located": [
+        "8.79"
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "**GCP cost from 2026-10-01 to 10-28 is $8.79,**"
+      },
+      "report_section": "4.7",
+      "sha256": "d37d4695c8f400ab1c9948d2ea7b56f61e334f8c777632dc4be82cac13bbb71a",
+      "source": "docs/sprint-log.md",
+      "text": "$8.79"
+    },
+    "cost_heldout": {
+      "group": "cost",
+      "hashed": "file",
+      "label": "Held-out routing and golden run, list price",
+      "located": [
+        0.172689
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/cost_usd_known"
+        ]
+      },
+      "number": 0.172689,
+      "report_section": "4.7",
+      "sha256": "1e27cb3923aa13c9c643c705d39f34aeb14a0fa0e0a0c8331d4d8ddd09f6c01c",
+      "source": "evals/results/sprint5_x_ledger.json",
+      "text": "$0.172689"
+    },
+    "cost_heldout_requests": {
+      "group": "cost",
+      "hashed": "file",
+      "label": "Requests in that run",
+      "located": [
+        186
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/requests"
+        ]
+      },
+      "number": 186,
+      "report_section": "4.7",
+      "sha256": "1e27cb3923aa13c9c643c705d39f34aeb14a0fa0e0a0c8331d4d8ddd09f6c01c",
+      "source": "evals/results/sprint5_x_ledger.json",
+      "text": "186 requests"
+    },
+    "forecast_holdout_seasonal_naive": {
+      "group": "forecast_holdout",
+      "hashed": "file",
+      "label": "Seasonal naive, holdout MAPE",
+      "located": [
+        14.804865414256025
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/models/loglinear_robust_v2/total/baseline/overall/mape"
+        ]
+      },
+      "number": 14.8,
+      "report_section": "4.4",
+      "sha256": "81b60c32f321ba116dac4a3013cc70a1f6197321cfdf7708a5d9ac97a1ed03b3",
+      "source": "evals/results/forecast/2026-10-02_holdout/holdout.json",
+      "text": "14.80%"
+    },
+    "forecast_holdout_volume_v2": {
+      "group": "forecast_holdout",
+      "hashed": "file",
+      "label": "`volume_v2`, holdout MAPE",
+      "located": [
+        8.808901064412172
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/models/loglinear_robust_v2/total/model/overall/mape"
+        ]
+      },
+      "number": 8.81,
+      "report_section": "4.4",
+      "sha256": "81b60c32f321ba116dac4a3013cc70a1f6197321cfdf7708a5d9ac97a1ed03b3",
+      "source": "evals/results/forecast/2026-10-02_holdout/holdout.json",
+      "text": "8.81%"
+    },
+    "forecast_served": {
+      "group": "forecast_served",
+      "hashed": "file",
+      "label": "Slice-bands served",
+      "located": [
+        5,
+        18
+      ],
+      "locator": {
+        "container": "/serving/slices",
+        "equals": true,
+        "field": "served",
+        "kind": "json_count"
+      },
+      "number": 5,
+      "of": 18,
+      "report_section": "4.4",
+      "sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
+      "source": "ml/forecast/artifacts/volume_v2.manifest.json",
+      "text": "5 of 18"
+    },
+    "fr03_route_v3": {
+      "group": "fr03",
+      "hashed": "line",
+      "label": "`route_v3`, ambiguous recognised",
+      "located": [
+        10,
+        15,
+        0,
+        15
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "| **Both** | **ambiguous recognised** | **10 of 15** | **0 of 15** |"
+      },
+      "number": 0,
+      "of": 15,
+      "report_section": "6",
+      "sha256": "0e35668ce110e69a21aa79058f9ed030f80e63935e5cbc586131cce534698b50",
+      "source": "docs/decisions-log.md",
+      "text": "0 of 15"
+    },
+    "fr03_route_v6": {
+      "group": "fr03",
+      "hashed": "line",
+      "label": "`route_v6`, ambiguous recognised",
+      "located": [
+        10,
+        15,
+        0,
+        15
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "| **Both** | **ambiguous recognised** | **10 of 15** | **0 of 15** |"
+      },
+      "number": 10,
+      "of": 15,
+      "report_section": "6",
+      "sha256": "0e35668ce110e69a21aa79058f9ed030f80e63935e5cbc586131cce534698b50",
+      "source": "docs/decisions-log.md",
+      "text": "10 of 15"
+    },
+    "fr03_third_attempt": {
+      "group": "fr03",
+      "hashed": "line",
+      "label": "FR-03's third attempt (ADR-114)",
+      "located": [
+        "no-go"
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "**P2: no-go. The attempt has failed and FR-03 is unmet, with no further attempt (ADR-113).**"
+      },
+      "report_section": "6",
+      "sha256": "bcdad933144e3d772b5b11c62e6399b854aa8fc0d2fbd194801d6002808a2e08",
+      "source": "docs/decisions-log.md",
+      "text": "no-go"
+    },
+    "golden_mechanical": {
+      "group": "golden",
+      "hashed": "file",
+      "label": "Golden set, mechanical rules",
+      "located": [
+        29,
+        36
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/passed",
+          "/n_scored"
+        ]
+      },
+      "number": 29,
+      "of": 36,
+      "report_section": "4.2",
+      "sha256": "2d6682374783216252465bf0e3e9748626daa41456ddf2ba6ee57c1b339831f8",
+      "source": "evals/results/golden_v2/2026-10-13/score.json",
+      "text": "29 of 36"
+    },
+    "golden_owner": {
+      "group": "golden",
+      "hashed": "file",
+      "label": "Golden set, owner's judgement",
+      "located": [
+        31,
+        36
+      ],
+      "locator": {
+        "column": "owner_pass",
+        "equals": "Y",
+        "kind": "csv_count"
+      },
+      "number": 31,
+      "of": 36,
+      "report_section": "4.2",
+      "sha256": "bbd1bde01138034d15496ff64dcb16515e1676bf4b38157db43c00b9dc7926e8",
+      "source": "evals/results/sprint5_x/golden_owner_review.csv",
+      "text": "31 of 36"
+    },
+    "production_grade": {
+      "group": "production_grade",
+      "hashed": "line",
+      "label": "Checklist items ticked",
+      "located": [
+        11,
+        12
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "so 11 of 12 boxes are ticked"
+      },
+      "number": 11,
+      "of": 12,
+      "report_section": "8",
+      "report_text": "11 of the 12",
+      "sha256": "cd12f6ca31dd69bc112cc98dce258c9a4428c7c08918e32c59231ee5e38a5910",
+      "source": "docs/production-grade-audit.md",
+      "text": "11 of 12"
+    },
+    "qa_faults_m1": {
+      "group": "qa_faults",
+      "hashed": "file",
+      "label": "QA fault cases caught, first measurement",
+      "located": [
+        219,
+        223
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "219/223 = 98.2% (95% Wilson 95.5-99.3%)"
+      },
+      "number": 219,
+      "of": 223,
+      "report_section": "4.3",
+      "sha256": "a8961f44152b25d3391a5858413693d6131bec03cec6191b578ca3678695736a",
+      "source": "evals/results/qa_faults/2026-10-10/report.md",
+      "text": "219 of 223"
+    },
+    "qa_faults_m1_rate": {
+      "group": "qa_faults",
+      "hashed": "file",
+      "label": "First measurement, as a rate",
+      "located": [
+        "98.2"
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "219/223 = 98.2% (95% Wilson 95.5-99.3%)"
+      },
+      "number": 98.2,
+      "report_section": "4.3",
+      "sha256": "a8961f44152b25d3391a5858413693d6131bec03cec6191b578ca3678695736a",
+      "source": "evals/results/qa_faults/2026-10-10/report.md",
+      "text": "98.2%"
+    },
+    "qa_faults_m2": {
+      "group": "qa_faults",
+      "hashed": "file",
+      "label": "QA fault cases caught, after fixes",
+      "located": [
+        223,
+        223
+      ],
+      "locator": {
+        "kind": "markdown_line",
+        "quote": "223/223 = 100.0% (95% Wilson 98.3-100.0%)"
+      },
+      "number": 223,
+      "of": 223,
+      "report_section": "4.3",
+      "sha256": "d6cd6ee636d53805072179a13b039b6256957f28ad638ef4759399e60adfa2a3",
+      "source": "evals/results/qa_faults/2026-10-10-m2/report.md",
+      "text": "223 of 223"
+    },
+    "routing_heldout_ambiguous_not_flagged": {
+      "group": "routing_heldout",
+      "hashed": "file",
+      "label": "Ambiguous questions not flagged",
+      "located": [
+        21
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/taxonomy/ambiguous not flagged"
+        ]
+      },
+      "number": 21,
+      "report_section": "4.1",
+      "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
+      "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
+      "text": "21 item-runs"
+    },
+    "routing_heldout_out_of_scope_accepted": {
+      "group": "routing_heldout",
+      "hashed": "file",
+      "label": "Out-of-scope questions accepted",
+      "located": [
+        15
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/taxonomy/out-of-scope accepted"
+        ]
+      },
+      "number": 15,
+      "report_section": "4.1",
+      "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
+      "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
+      "text": "15 item-runs"
+    },
+    "routing_heldout_run1": {
+      "group": "routing_heldout",
+      "hashed": "file",
+      "label": "Held-out routing, run 1",
+      "located": [
+        38,
+        50
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/runs/0/correct",
+          "/runs/0/n"
+        ]
+      },
+      "number": 38,
+      "of": 50,
+      "report_section": "4.1",
+      "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
+      "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
+      "text": "38 of 50"
+    },
+    "routing_heldout_run2": {
+      "group": "routing_heldout",
+      "hashed": "file",
+      "label": "Held-out routing, run 2",
+      "located": [
+        38,
+        50
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/runs/1/correct",
+          "/runs/1/n"
+        ]
+      },
+      "number": 38,
+      "of": 50,
+      "report_section": "4.1",
+      "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
+      "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
+      "text": "38 of 50"
+    },
+    "routing_heldout_run3": {
+      "group": "routing_heldout",
+      "hashed": "file",
+      "label": "Held-out routing, run 3",
+      "located": [
+        38,
+        50
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/runs/2/correct",
+          "/runs/2/n"
+        ]
+      },
+      "number": 38,
+      "of": 50,
+      "report_section": "4.1",
+      "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
+      "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
+      "text": "38 of 50"
+    },
+    "routing_heldout_without_ambiguous": {
+      "group": "routing_heldout",
+      "hashed": "file",
+      "label": "Without the ambiguous items",
+      "located": [
+        38,
+        43
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/runs/0/correct_without_ambiguous",
+          "/runs/0/n_without_ambiguous"
+        ]
+      },
+      "number": 38,
+      "of": 43,
+      "report_section": "4.1",
+      "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
+      "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
+      "text": "38 of 43"
+    },
+    "sentiment_bert": {
+      "group": "sentiment",
+      "hashed": "file",
+      "label": "BERT (`bert_v1`), macro-F1",
+      "located": [
+        0.9713
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/macro_f1"
+        ]
+      },
+      "number": 0.9713,
+      "report_section": "4.5",
+      "sha256": "f621eba0bcef285284d0b4cbabfad00182988e9b7734b68c6eb4f85be5b4dcb8",
+      "source": "evals/results/sentiment/2026-10-01_bert_v1/bert_v1.test.metrics.json",
+      "text": "0.9713"
+    },
+    "sentiment_tfidf": {
+      "group": "sentiment",
+      "hashed": "file",
+      "label": "TF-IDF + logistic regression, macro-F1",
+      "located": [
+        0.9431
+      ],
+      "locator": {
+        "kind": "json_pointer",
+        "pointers": [
+          "/macro_f1"
+        ]
+      },
+      "number": 0.9431,
+      "report_section": "4.5",
+      "sha256": "064807238ad7f326bf93a2c7f2308911862f740777360db3e720cfa93bc26067",
+      "source": "evals/results/sentiment/2026-10-01_baselines/tfidf_logreg.test.metrics.json",
+      "text": "0.9431"
+    }
+  },
+  "note": "Generated by scripts/build_results_data.py (data dictionary section 6, rule 11).",
+  "report": "docs/evaluation-report.md"
+}
