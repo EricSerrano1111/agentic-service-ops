@@ -5,33 +5,48 @@
 
 **Dates in this skeleton** are the dates in the source files' folder names and headings, not file timestamps. "Sprint 5 system" means the frozen system of ADR-103; "current build" means the commit `9ab7c77`.
 
+*2026-10-28 (full draft; owner-decided 2026-10-28; assistant-drafted.)* **Three systems are named for the whole report, and they replace the two terms in the line above in prose written or edited from this date.** Dated entries and copied tables keep the meaning they had when written; for example, the 2026-10-16 audit table in §8 uses "current build" for the pre-6.5 build. **"The evaluated system"** is the frozen Sprint 5 system: images `9607fa72…`, tree equal to `eval-freeze-s5` (ADR-103). **"The pre-6.5 build"** is `9ab7c77`, build `0dc5aae1`, which served from 2026-10-14 to 2026-10-28. **"The current build"** is `b6fa907`, build `0b96ca2a-8d1c-4e9d-aca8-a8dc3f3c3e75`, deployed on 2026-10-28, with the orchestrator on revision `ops-orchestrator-00010-7sg`.
+
 ## 1. Summary
 
-**What goes here:** the report's summary, written last.
-**Figures to cite:** none yet.
-**Status:** skeleton (left empty on purpose).
+The system is a multi-agent assistant over a synthetic field-service dispatch database: an orchestrator routes each question over A2A to a reporting, sentiment or forecast agent, each calling scoped tools through its own MCP server, and a QA agent checks the answer before it returns. This report evaluates the frozen Sprint 5 system (§2) and says what changed afterwards (§10).
+
+**Headline results**, all on synthetic data (§9):
+- **Held-out routing:** 38 of 50 in each of three runs, and 38 of 43 without the 7 ambiguous items, which `route_v3` cannot route by construction (§4.1).
+- **Golden set:** 29 of 36 by the mechanical rules and 31 of 36 by the owner's judgement, in a single run (§4.2).
+- **QA catch rate:** 219 of 223 injected-fault cases (98.2%) in the first measurement and 223 of 223 after fixes. Both are upper bounds, because QA's author drafted the faults (§4.3).
+- **Sentiment:** BERT scored macro-F1 0.9713 against 0.9431 for TF-IDF, and the two are not distinguishable on the hard-case subsets (§4.5).
+- **Forecast:** `volume_v2` scored 8.81% MAPE against 14.80% for seasonal naive on the 26-week holdout (§4.4).
+
+**FR-03 is not met, and is partly addressed by `route_v6`**, which was deployed as the default on 2026-10-28. It recognises 10 of 15 ambiguous items against 0 of 15 for `route_v3`, below the 75% floor, and the comparison is post hoc on spent sets (§6, §10).
+
+**Production-grade:** 11 of the 12 checklist items are ticked. Item 5 (retries, timeouts, breakers) stays "Met, offline only", because no breaker or retry has acted live (§8).
+
+**Main threats:** all data are synthetic, and a model of the same family as the system wrote the evaluation sets, so the figures do not show how the system does on real users (§9).
+
+**Status:** draft 2026-10-28.
 
 ## 2. The system evaluated
 
-**What goes here:** the frozen Sprint 5 system, the current build, what changed between them and the proof that no answer changed, and the paid key.
+**The evaluated system** is the frozen Sprint 5 system (ADR-103). Its images are tagged `9607fa722c4d1b2dc12478dbe4bb42f6c8d95bfb`. The default router is `route_v3`, the interpretation check is advisory with `qa_interp_v2`, the parse prompts are `parse_v4` (reporting) and `parse_v1` (sentiment, forecast), and every model role is `gemini-3.5-flash-lite` at thinking level minimal. The flags are `QA_INTERP_MODE` `advisory`, `QA_FORECAST_RECOMPUTE` `on` and `MCP_FEEDBACK_SCORING_deploy` `stored_only`, and the as-of date is `2026-08-30`. The held-out routing and golden run used six revisions, identical at the start and end of the run: `ops-forecast-00002-m79`, `ops-gateway-00001-8st`, `ops-orchestrator-00006-bvj`, `ops-qa-00003-hwq`, `ops-reporting-00006-md5` and `ops-sentiment-00002-cxz`.
 
-**Figures to cite:**
-- Frozen system: images tagged `9607fa722c4d1b2dc12478dbe4bb42f6c8d95bfb`; "tree equals `eval-freeze-s5`"; mode `LLM_MODE=paid` on the five model-calling services (ADR-104); default router `route_v3`; interpretation check advisory with `qa_interp_v2`; revisions `ops-forecast-00002-m79`, `ops-gateway-00001-8st`, `ops-orchestrator-00006-bvj`, `ops-qa-00003-hwq`, `ops-reporting-00006-md5`, `ops-sentiment-00002-cxz`, identical at the start and end of the run. Source: `evals/results/sprint5_x.md`, "System under test".
-- Freeze record: `evals/freeze_s5.json` (ADR-103): `default_router` `route_v3`; `shipped_interpretation_prompt` `qa_interp_v2`; parse prompts in service `reporting` `parse_v4`, `sentiment` `parse_v1`, `forecast` `parse_v1`; models for orchestrator, specialist and QA all `gemini-3.5-flash-lite` at thinking level minimal; flags `QA_INTERP_MODE` `advisory`, `QA_FORECAST_RECOMPUTE` `on`, `MCP_FEEDBACK_SCORING_deploy` `stored_only`; `as_of_date` `2026-08-30`.
-- Tree check run for this skeleton (`git rev-parse <ref>^{tree}`, 2026-10-18): `eval-freeze-s5` and `9607fa722c4d1b2dc12478dbe4bb42f6c8d95bfb` both give tree `117198ea86fca83118d9e1cd22ac43601708f458`; `9ab7c77` gives `a399ae2e69837bfce44e4099dd394cd81ae7de27`. `git diff --name-only eval-freeze-s5 9ab7c77 | grep '/prompts/'` printed nothing (no prompt file differs between the freeze and the current build). `eval-freeze-s5` is a lightweight tag at commit `133b6fd`; the images were built from `9607fa72`, whose tree is the same.
-- Current build: build `0dc5aae1-2a6c-498e-bbca-f709c2c91149` from `9ab7c775964bd0aae491ca72082e95229c994129`, six revisions serving at 100% (`docs/sprint-log.md`, "Z2b status, 2026-10-14"); "Deployed system: build `0dc5aae1`, commit `9ab7c77`, unchanged at open and close" (`evals/results/session1/2026-10-15/summary.md`); nine images at tag `9ab7c775964bd0aae491ca72082e95229c994129`, digests equal to the serving revisions' (9 of 9) (`evals/results/ts14d/2026-10-18/summary.md`).
-- What changed between them (`docs/sprint-log.md` lines 1175 to 1184): "Each is one of the changes ADR-103 allows after the freeze (logging, the trace ID, deploy config and tooling); none changes an answer, a route, a parse, a QA verdict or §6's answer wording, and no prompt file changed." Items: the trace ID end to end (ADR-108); the L-60 redaction (ADR-108); the YAML sync to paid mode for the five model-calling containers; the hourly cap of 30 (ADR-107) and daily cap 50; logging of each failed model-call attempt; the public `GET /health`; `plan_full.py` and `verify.py` tooling. Also the Next.js bump to 16.4.1 (`docs/sprint-log.md` line 1197).
-- Proof of no answer change (`docs/sprint-log.md` line 1189, local stack, paid mode, 2026-10-14): 12 requests (3 before, 9 after), $0.0042 on the 9 after-run calls; Q1 "What was SLA compliance in the Northeast last month?" main against `fix/z2-post-freeze`: route `reporting`, `prompt_version` `route_v3`, outcome `answered`, `qa_status` `verified`, figures (141 of 160, rate 0.8813) and answer text identical. **Limit, copied:** "*Q2, sentiment trend by month, after only:*", "*Q3, weekly volume for the next 8 weeks, after only:*", and "*Not covered live:* sentiment and forecast before/after (the cap)." Only Q1 was compared before and after. **Conflict recorded there:** "the prompt asks for the three questions before and after (18 calls) under a 12-request cap, so the before run asked only question 1 (3 calls) and the after run asked all three (9 calls); the cap was kept."
-- The paid key: ADR-104 (`docs/decisions-log.md`, "Deployed model calls use the paid key for the evaluation and grading window"); `evals/results/sprint5_x.md`: "`LLM_MODE=paid` on the five model-calling services (ADR-104)".
+**Proof that it is what was measured.** The freeze record `evals/freeze_s5.json` (ADR-103) holds the settings above. `eval-freeze-s5` (a lightweight tag at commit `133b6fd`) and `9607fa72…` both give tree `117198ea86fca83118d9e1cd22ac43601708f458` (`git rev-parse <ref>^{tree}`, run 2026-10-18 and again 2026-10-28), so the images were built from the frozen tree.
 
-**Conflicts:**
-- **Resolved.** `evals/freeze_s5.json` records `llm_mode_in_services` `free`; `evals/results/sprint5_x.md` records `LLM_MODE=paid` on the five model-calling services. The dated note under ADR-103 (`docs/decisions-log.md` line 3460, 2026-10-14) says: "For deployed serving that is superseded by ADR-104". Both paths kept. Owner ruling 2026-10-18.
+**The pre-6.5 build** is `9ab7c77` (tree `a399ae2e69837bfce44e4099dd394cd81ae7de27`), build `0dc5aae1-2a6c-498e-bbca-f709c2c91149`. It served from 2026-10-14 to 2026-10-28, with six revisions at 100% and nine images whose digests equal the serving revisions' (9 of 9). Its changes are the kind ADR-103 allows after a freeze: the trace ID end to end and the L-60 redaction (ADR-108), the YAML sync to paid mode for the five model-calling containers, the hourly cap of 30 and daily cap 50 (ADR-107), logging of each failed model-call attempt, the public `GET /health`, and the `plan_full.py` and `verify.py` tooling. The sprint log records that none "changes an answer, a route, a parse, a QA verdict or §6's answer wording, and no prompt file changed"; `git diff --name-only eval-freeze-s5 9ab7c77` lists no prompt file. The Next.js bump to 16.4.1 was made separately on 2026-10-14 (sprint log).
 
-**Status:** skeleton.
+The runtime proof is thin. On the local stack in paid mode (2026-10-14), Q1 ("What was SLA compliance in the Northeast last month?") gave the same route (`reporting`, `route_v3`), outcome, `qa_status`, figures (141 of 160, rate 0.8813) and answer text on `main` and on `fix/z2-post-freeze`. **Only Q1 was compared before and after.** The sprint log says "*Not covered live:* sentiment and forecast before/after (the cap)", and the before run asked one question under a 12-request cap. The other answers rest on the unchanged answer-text tests.
+
+**The paid key.** ADR-104 put the five model-calling services on the paid key for the evaluation and grading window, and `evals/results/sprint5_x.md` records `LLM_MODE=paid`. The freeze record says `free`; ADR-103's dated note says that for deployed serving this "is superseded by ADR-104", so paid is what ran.
+
+**The current build** is not the evaluated system. It differs from it in ways that do change routes, described in §10.
+
+*Sources:* `evals/freeze_s5.json`, `evals/results/sprint5_x.md`, `docs/decisions-log.md` (ADR-103, ADR-104, ADR-107, ADR-108), `docs/sprint-log.md` (Z2a and Z2b status, 2026-10-14), `evals/results/session1/2026-10-15/summary.md`, `evals/results/ts14d/2026-10-18/summary.md`.
+
+**Status:** draft 2026-10-28.
 
 ## 3. Methods
 
-**How the sets were built.** The golden set (`golden_v2`) has 36 items: 10 owner-written and 26 drafted. Its expected answers come from oracles that share no code with the system, except the forecast's, which use the server's own prediction code (ADR-074, L-55). The other sets were generated, not owner-written: `gemini-3.8-flash` wrote `routing_heldout_v1`, `fr03_fresh_v2`, `interp_fresh_v1` and `parse_filters_v1` from a brief that the assistant that built the system wrote and the owner reviewed (ADR-094). No item was edited after generation. The owner skimmed every ambiguous-labelled item and could drop an item but not fix one. Five of 31 skimmed rows were dropped on persona grounds, which weights the sets toward broad leadership questions, and generator and system are both Gemini (L-86). The disclosure for every figure from these sets: "In a real deployment, evaluation sets would come from real user questions and subject-matter experts. Here they were generated by an independent model under a written brief; the owner reviewed the brief and spot-checked the ambiguous labels." Spent for blind use: `routing_heldout_v1` and `golden_v2` (run 2026-10-13), and `fr03_fresh_v2`, which judged `route_v6` (ADR-101) and then, with `routing_heldout_v1`, chose a thinking level (ADR-114). The interpretation pairs were used in the Prompt W gates. `parse_filters_v1` and the reserve were not touched in the 2026-10-13 run.
+**How the sets were built.** The golden set (`golden_v2`) has 36 items: 10 owner-written and 26 drafted. Its expected answers come from oracles that share no code with the system, except the forecast's, which use the server's own prediction code (ADR-074, L-55). The other sets were generated, not owner-written: `gemini-3.8-flash` wrote `routing_heldout_v1`, `fr03_fresh_v2`, `interp_fresh_v1` and `parse_filters_v1` from a brief that the assistant that built the system wrote and the owner reviewed (ADR-094). No item was edited after generation. The owner skimmed every ambiguous-labelled item and could drop an item but not fix one. Five of 31 skimmed rows were dropped on persona grounds, which weights the sets toward broad leadership questions, and generator and system are both Gemini (L-86). The disclosure for every figure from these sets: "In a real deployment, evaluation sets would come from real user questions and subject-matter experts. Here they were generated by an independent model under a written brief; the owner reviewed the brief and spot-checked the ambiguous labels." Spent for blind use: `routing_heldout_v1` and `golden_v2` (run 2026-10-13), and `fr03_fresh_v2`, which judged `route_v6` (ADR-101) and then, with `routing_heldout_v1`, chose a thinking level (ADR-114). The interpretation pairs were used in the Sprint 5 gate session (Prompt W). `parse_filters_v1` and the reserve were not touched in the 2026-10-13 run.
 
 **How scoring worked.** Routing evaluations run three times (k=3, ADR-054), because one run cannot separate a change from run-to-run variance (L-17). Each reports the per-run score, the range and every item whose route changed between runs (flipping items). The golden run was a single pass (L-103). Rules were committed before the runs they judge: the interpretation gate on 2026-10-09 at 09:29:14 CDT (`6c79e50`, ADR-089); the Sprint 5 gates on 2026-10-12 at 16:24:33 CDT, with the first Part C call at 16:34 CDT; the golden scoring method on 2026-10-13 at 12:34:49 CDT (`05a1708`), before the first golden call. The golden headline is mechanical: an item passes only if its outcome, route and figures each pass against the oracle. The owner judges `must` and `must_not` in a second column, and the assistant's own reading of them is kept apart as opinion, not score. Rules changed after results are named in §6.
 
@@ -39,9 +54,9 @@
 
 **The offline component protocols.** For sentiment (ADR-064 to ADR-066), near-duplicates were grouped before a fixed split, whose hash was committed before any training code. Settings were chosen on validation only, and each model was scored on test once, in an append-only ledger. BERT counts as better than the TF-IDF baseline only if the paired bootstrap interval excludes zero or McNemar's p is below 0.05, and every subset is reported. For forecasting (ADR-069 to ADR-071), fold A is reported, fold B sets the release gate, and the holdout is scored once, after the folds. ADR-070 corrected the gate after the fold results and ADR-071 set the serving rule after the holdout; both are disclosed (§4.4, §6).
 
-**Ledgers and caps.** The paid runs each kept a ledger with a request cap and a spend cap. Prompt W (the gates): 561 requests and $3.00 (`evals/results/sprint5_w_ledger.json`). Prompt X (held-out routing and golden): 186 requests, $1.50 and 1,000 model calls (`evals/results/sprint5_x_ledger.json`). Owner session 1: 75 requests and $0.25. The third FR-03 attempt: 1,550 requests and $2.50 (`evals/fr03_v3/ledger.jsonl`). The Prompt W and FR-03 harnesses refused a call that would cross a cap. Per-process caps are a backstop (L-88, L-93). Costs are list-price estimates (L-71) and model calls are bounded, not counted (L-94). Earlier live runs were bounded by a stated call budget, for example 5 of 10 calls in the ADR-091 loop demonstration. What each run used is in §4.7 and §6.
+**Ledgers and caps.** The paid runs each kept a ledger with a request cap and a spend cap. The Sprint 5 gate session (Prompt W): 561 requests and $3.00 (`evals/results/sprint5_w_ledger.json`). The held-out evaluation run (Prompt X; held-out routing and golden): 186 requests, $1.50 and 1,000 model calls (`evals/results/sprint5_x_ledger.json`). Owner session 1: 75 requests and $0.25. The third FR-03 attempt: 1,550 requests and $2.50 (`evals/fr03_v3/ledger.jsonl`). The harnesses of the Sprint 5 gate session (Prompt W) and of the third FR-03 attempt refused a call that would cross a cap. Per-process caps are a backstop (L-88, L-93). Costs are list-price estimates (L-71) and model calls are bounded, not counted (L-94). Earlier live runs were bounded by a stated call budget, for example 5 of 10 calls in the ADR-091 loop demonstration. What each run used is in §4.7 and §6.
 
-*Sources:* `docs/decisions-log.md` (ADR-054, ADR-064 to ADR-066, ADR-069 to ADR-071, ADR-074, ADR-089, ADR-091, ADR-094, ADR-101, ADR-114), `evals/sprint5_gates.md`, `evals/results/sprint5_x.md`, `evals/results/sprint5_x/golden_scoring.md`, `evals/results/sprint5_x_ledger.json`, `evals/results/session1/2026-10-15/ledger.json`, `evals/fr03_v3/ledger.jsonl`.
+*Sources:* `docs/decisions-log.md` (ADR-054, ADR-064 to ADR-066, ADR-069 to ADR-071, ADR-074, ADR-089, ADR-091, ADR-094, ADR-101, ADR-114), `evals/sprint5_gates.md`, `evals/results/sprint5_x.md`, `evals/results/sprint5_x/golden_scoring.md`, `evals/results/sprint5_w_ledger.json`, `evals/results/sprint5_x_ledger.json`, `evals/results/session1/2026-10-15/ledger.json`, `evals/fr03_v3/ledger.jsonl`.
 
 **Status:** draft 2026-10-28.
 
@@ -176,7 +191,7 @@ Accuracy measures agreement with a written specification on synthetic, model-wri
 
 Warm requests were fast and cold starts were slow, but every reading stayed inside the 120 s ceiling (ADR-034, R-05). In held-out routing the per-run median was 3.7, 3.5 and 3.81 s and the p95 was 17.62, 5.36 and 5.06 s, with no question over its deadline. In the golden run the median was 3.93 s, the maximum 5.9 s and none exceeded 120 s. These are the frozen system.
 
-A cold start is the first request after idle, when Cloud Run starts new containers. In the deploy window the reporting path took 55.87 s in the browser and 54.47 s at the gateway (2026-10-13). Session 1 (2026-10-15) ran on the current build `9ab7c77` (§2):
+A cold start is the first request after idle, when Cloud Run starts new containers. In the deploy window the reporting path took 55.87 s in the browser and 54.47 s at the gateway (2026-10-13). Session 1 (2026-10-15) ran on the pre-6.5 build `9ab7c77` (§2):
 
 | Path | Reading |
 |---|---|
@@ -219,15 +234,15 @@ The guardrails are a per-request cap of $0.02 and per-process caps of `LLM_MAX_R
 
 The Sprint 5 failures from the held-out routing and golden runs fall into five patterns. Item-level detail, including the 12 items behind the 36 wrong held-out item-runs, is in `evals/results/sprint5_failure_analysis.md`, with the data in `evals/results/sprint5_failure_data.md`. Both sets are spent, so reading either file to revise a prompt makes them development data.
 
-1. **Ambiguity is answered, not flagged.** 21 held-out item-runs and G35 (FR-03, L-58). Since then, ADR-114's third attempt ended in a no-go, and ADR-116 made `route_v6` the default router. It recognises 10 of 15 ambiguous items across two sets, and FR-03 stays not met (§6).
+1. **Ambiguity is answered, not flagged.** 21 held-out item-runs and G35 (FR-03, L-58). Since then, ADR-114's third attempt ended in a no-go, and ADR-116 made `route_v6` the default router, deployed on 2026-10-28 (`docs/deploy-window-log.md`). It recognises 10 of 15 ambiguous items across two sets, and FR-03 stays not met (§6).
 2. **A future-tense question on an out-of-scope subject goes to forecast.** NM-14, NM-20 and G08 (L-96). The specialist declines, so the route is wrong and the outcome is right. `route_v6` states the rule for these questions, and its held-out non-ambiguous score rose from 38 to 42 of 43 (ADR-116, §6). That comparison is post hoc and on a spent set. ADR-116 does not say NM-14 or NM-20 now route correctly, and G08 was not rerun.
 3. **A qualifier the system cannot honour is dropped or not named.** G05 failed. G04 and G10 passed mechanically, and the assistant's reading found a `must_not` breach in G10 (L-56, L-95 (4), R-18).
 4. **A term or period the data does not define is resolved by the system's own reading.** G03 ("district") and G07 ("end of next year"). The reading is stated and not asked, and the rulings are the owner's (L-95 (1) and (2), R-18).
 5. **The mechanical score and the owner's judgement disagree on 4 of 36, in both directions.** The mechanical rule was too strict on G08, G21 and G28 and blind to the text on G27 (R-16, L-95; §4.2).
 
-The failures above are the frozen system's (§2). `route_v6` takes effect at the Sprint 6.5 redeploy (ADR-116).
+The failures above are the evaluated system's (§2). `route_v6`, which ADR-116 made the default, was deployed on 2026-10-28 and is not part of the evaluated system (§10; `docs/deploy-window-log.md`).
 
-*Sources:* `evals/results/sprint5_failure_analysis.md`, `evals/results/sprint5_failure_data.md`, `docs/decisions-log.md` (ADR-114, ADR-116).
+*Sources:* `evals/results/sprint5_failure_analysis.md`, `evals/results/sprint5_failure_data.md`, `docs/decisions-log.md` (ADR-114, ADR-116), `docs/deploy-window-log.md`.
 
 **Status:** draft 2026-10-28.
 
@@ -252,20 +267,20 @@ A higher thinking level did not add a measurable gain: `medium` recognised one m
 
 **What shipped instead (ADR-116; 2026-10-22).** This is a decision, not a gate result. `route_v6` became the default router at `minimal`. It was decided after the results, was not pre-registered and sets no threshold. FR-03 stays not met: 10 of 15 is below ADR-101's 75% floor, and about one ambiguous question in three is still best-fit routed.
 
-| Set | Measure | `route_v6` | `route_v3` (deployed) |
+| Set | Measure | `route_v6` | `route_v3` (evaluated system) |
 |---|---|---|---|
 | `fr03_fresh_v2` (ADR-101) | ambiguous recognised, of 8 | 4 | 0 |
 | `fr03_fresh_v2` (ADR-101) | non-ambiguous correct, per run, of 8 | 7, 7, 7 | 8, 8, 8 |
-| `routing_heldout_v1` (ADR-114 baseline; Prompt X) | ambiguous recognised, of 7 | 6 | 0 |
-| `routing_heldout_v1` (ADR-114 baseline; Prompt X) | non-ambiguous correct, per run, of 43 | 42, 42, 42 | 38, 38, 38 |
+| `routing_heldout_v1` (ADR-114 baseline; the held-out evaluation run, Prompt X) | ambiguous recognised, of 7 | 6 | 0 |
+| `routing_heldout_v1` (ADR-114 baseline; the held-out evaluation run, Prompt X) | non-ambiguous correct, per run, of 43 | 42, 42, 42 | 38, 38, 38 |
 | **Both** | **ambiguous recognised** | **10 of 15** | **0 of 15** |
 | **Both** | **non-ambiguous correct, per run** | **49 of 51** | **46 of 51** |
 
-On an ambiguous question `route_v6` was never worse than `route_v3`; where it misses, it best-fits, as `route_v3` always does. Known costs: CS-10, a clear sentiment question, is routed `multi_domain` in 3 of 3 runs; r06 is over-flagged; s20 is no longer recognised. Its routing call reads about 1,400 input tokens against about 600 (about $0.0005 against $0.0003 at list price, L-71). It was committed before `routing_heldout_v1` was first run, so that set did not tune it, but both sets come from the router's own model family and are spent. The switch takes effect only at the Sprint 6.5 redeploy, so the system evaluated in §2 and §4 uses `route_v3`.
+On an ambiguous question `route_v6` was never worse than `route_v3`; where it misses, it best-fits, as `route_v3` always does. Known costs: CS-10, a clear sentiment question, is routed `multi_domain` in 3 of 3 runs; r06 is over-flagged; s20 is no longer recognised. Its routing call reads about 1,400 input tokens against about 600 (about $0.0005 against $0.0003 at list price, L-71). It was committed before `routing_heldout_v1` was first run, so that set did not tune it, but both sets come from the router's own model family and are spent. `route_v6` was deployed on 2026-10-28 (`docs/deploy-window-log.md`); it is not part of the evaluated system, so §2 and §4 use `route_v3`.
 
 **What the failed gates show about the method.** Pre-registration caught prompt revisions that had learned their examples and not the concept: `route_v5` recognised 5 of 5 ambiguous items on the sets it was revised against and 3 of 5 on fresh questions, and `route_v6` recognised 5 of 5 on `fr03_fresh_v1`, which was development material by then, and 4 of 8 on `fr03_fresh_v2`, missing the same items every run. Rules were nonetheless changed after results, and the records say so. ADR-070 corrected the forecast gate after the fold results, and that correction turned the total slice's recorded failure into a pass (ADR-070 says so); ADR-071 then also required the blind holdout. ADR-076 corrected the accuracy criterion after `route_v5` failed it, and the gate still failed on ambiguous recognition. ADR-115 changed a stop rule after one probe result. ADR-116 chose the default router after the results. Every such change is disclosed in its own entry, the original verdicts stay on record, none is presented as pre-registered, and where possible a later blind test was required. With 5 to 8 ambiguous items per fresh set, these failures show that these prompts did not clear these bars, not that FR-03 cannot be met.
 
-*Sources:* `evals/sprint5_gates.md`, `docs/decisions-log.md` (ADR-075, ADR-076, ADR-089, ADR-101, ADR-102, ADR-114 and its result note, ADR-115, ADR-116), `evals/fr03_v3/ledger.jsonl`, `evals/results/fr03_v3/`.
+*Sources:* `evals/sprint5_gates.md`, `docs/decisions-log.md` (ADR-075, ADR-076, ADR-089, ADR-101, ADR-102, ADR-114 and its result note, ADR-115, ADR-116), `evals/fr03_v3/ledger.jsonl`, `evals/results/fr03_v3/`, `docs/deploy-window-log.md`.
 
 *Notes on sources:* ADR-101 gives `route_v6` 11 of 16 against 8 of 16 on the fresh set; `evals/sprint5_gates.md` gives the 8 non-ambiguous items as 7, 7, 7 against 8, 8, 8. They reconcile: 7 + 4 = 11, and 8 + 0 = 8.
 
@@ -273,7 +288,7 @@ On an ambiguous question `route_v6` was never worse than `route_v3`; where it mi
 
 ## 7. Divergences from the submitted documents
 
-The built system differs from the submitted documents `02` (Detailed Requirements Analysis), `03` (Planning and Management Document), `04` (Project Design and Solution Architecture) and `05` (Test Scenarios). Nothing in a submitted document was edited. Nothing from Sprint 6.5 is counted in `05` or `06` (Production Support Document) (ADR-106), and the owner revises the academic documents in the final documentation packet (ADR-117). Items marked "not deployed" take effect at the Sprint 6.5 redeploy and need a second look in the final report.
+The built system differs from the submitted documents `02` (Detailed Requirements Analysis), `03` (Planning and Management Document), `04` (Project Design and Solution Architecture) and `05` (Test Scenarios). Nothing in a submitted document was edited. Nothing from Sprint 6.5 is counted in `05` or `06` (Production Support Document) (ADR-106), and the owner revises the academic documents in the final documentation packet (ADR-117).
 
 **`02`**
 - FR-10 says a model that fails the threshold on held-out weeks is not deployed. The system deploys `volume_v2` and withholds each failing slice-band, with its error shown (ADR-071; sprint log, 2026-10-04).
@@ -286,26 +301,24 @@ The built system differs from the submitted documents `02` (Detailed Requirement
 - TA-16 quotes the stop date 2026-11-04. ADR-078 moves the deploy window to 2026-10-12 to 10-14 (sprint log, 2026-10-05, recorded twice).
 - "Each component deploys as its own Cloud Run service." ADR-079 runs each MCP server as a sidecar of its agent.
 - The interface "on Node.js LTS." ADR-080 serves a static export from the gateway, so no Node.js runs in production.
-- Table 3 says the orchestrator routes on Agent Card skills. `route_v3` hard-codes the domain descriptions, and the card supplies only the agent's URL.
+- Table 3 says the orchestrator routes on Agent Card skills. The routing prompts hard-code the domain descriptions (`route_v3` in the evaluated system; `route_v6` in the current build), and the card supplies only the agent's URL.
 - Three sentiment lines differ: deployed sentiment reads stored predictions only (ADR-100; sprint log, 2026-10-13).
 
 **`05`**
-- TS-20-E records a known fail: no synthetic-data notice. The repository now has a notice that also covers the sentiment model's synthetic training data (data dictionary §6, rule 6, dated block; sprint log, 2026-10-22). It is not deployed, and `05`'s recorded result stands (ADR-106).
-- TS-02 records FR-03 as a known fail. `route_v6` partly addresses it, in the redeploy after `06` (ADR-116). `05` and `06` describe FR-03 as unmet (ADR-106), and it stays not met.
+- TS-20-E records a known fail: no synthetic-data notice. The repository now has a notice that also covers the sentiment model's synthetic training data (data dictionary §6, rule 6, dated block; sprint log, 2026-10-22). It was deployed on 2026-10-28 and showed in the owner's browser (`docs/deploy-window-log.md`, phase 4), and `05`'s recorded result stands (ADR-106).
+- TS-02 records FR-03 as a known fail. `route_v6` partly addresses it, deployed on 2026-10-28 after `06` (ADR-116; `docs/deploy-window-log.md`). `05` and `06` describe FR-03 as unmet (ADR-106), and it stays not met.
 
 **Not tied to a named document**
 - Identity-Aware Proxy was replaced by invite-link access (ADR-097; sprint log, 2026-10-13). A search of `02` to `06` found no mention of it.
-- The UI and API additions are differences from the evaluated system (ADR-103), not from a named document (ADR-117). Example questions, a "How it works" page, an FAQ and a CI build of the UI are merged. The answer journey, an added field in the orchestrator's response, is also merged (sprint log, 2026-10-22 and 10-23). None is deployed. The evaluation results page and the demonstration runbook are planned.
+- The UI and API additions are differences from the evaluated system (ADR-103), not from a named document (ADR-117). Example questions, a "How it works" page and an FAQ were deployed on 2026-10-28, and the rule 9 examples behaved as captioned (`docs/deploy-window-log.md`, phase 4). The answer journey, an added field in the orchestrator's response, was deployed the same day, and its panel opened on every answer that had one (owner's observation; L-94 resolved). A CI build of the UI runs on pull requests (sprint log, 2026-10-22 and 10-23). The evaluation results page and the demonstration runbook are still planned.
 
-*Sources:* `docs/sprint-log.md` (the post-submission divergence lists of 2026-10-04, 10-05, 10-08, 10-10 and 10-13; the "divergence list" item and its sub-bullets; the carried-over notes of 2026-10-22 and 10-23), `docs/decisions-log.md` (ADR-044, ADR-097, ADR-100, ADR-103, ADR-106, ADR-113, ADR-116, ADR-117), `docs/data-dictionary.md` (§6, rule 6).
+*Sources:* `docs/sprint-log.md` (the post-submission divergence lists of 2026-10-04, 10-05, 10-08, 10-10 and 10-13; the "divergence list" item and its sub-bullets; the carried-over notes of 2026-10-22 and 10-23), `docs/decisions-log.md` (ADR-044, ADR-097, ADR-100, ADR-103, ADR-106, ADR-113, ADR-116, ADR-117), `docs/data-dictionary.md` (§6, rule 6), `docs/deploy-window-log.md` (2026-10-28).
 
 **Status:** draft 2026-10-28.
 
 ## 8. Production-grade status
 
-**What goes here:** the production-grade checklist verdicts and what the evidence does and does not show. The audit itself is `docs/production-grade-audit.md` (dated 2026-10-16, S6-P1).
-
-**Figures to cite:** the summary table of `docs/production-grade-audit.md`, copied as it stands (lines 13 to 26, including item 12's dated notes). Its "Ticks:" line (line 28) is not copied: it predates item 12's later verdict, which the table row records.
+**11 of the 12 checklist items are ticked on the current build** (`docs/architecture.md` §7). Item 5 (retries, timeouts, breakers) stays "Met, offline only" and unticked, because no breaker or retry has acted live. The audit is `docs/production-grade-audit.md`. Its summary table follows as it stands (2026-10-16, S6-P1); in that table "the current build" means the pre-6.5 build.
 
 | # | Item | Required or portfolio | Verdict | Basis |
 |---|---|---|---|---|
@@ -322,33 +335,63 @@ The built system differs from the submitted documents `02` (Detailed Requirement
 | 11 | Cost guardrails and caps | Required | **Met, deployed** | Caps tested and read from the live services; the owner's console readings (2026-10-16) give budget alerts at $10, $50 and $80, a $7.85 prepaid balance and $3.15 GCP cost to date. The caps are per process, so the balance is the real ceiling. |
 | 12 | README, diagram, setup from clean | Required | **Not met** | Step 3 (`docker compose up -d postgres`) fails on a missing `GOOGLE_AI_API_KEY` the README never mentions at that step; the diagram is a placeholder. *2026-10-18 (S6-R1; owner-decided 2026-10-16; assistant-drafted.) Re-run: setup half **met, offline only** (every step before the key-and-weights step passes, and the README warns before it); the diagram is now Mermaid source in the README, not validated (no Node here) and not yet seen rendered. Verdict stays **Not met** until the owner confirms the render; see "Fresh-clone record, re-run 2026-10-18".* *2026-10-18 (S6-R1 follow-up; owner-decided 2026-10-18; assistant-drafted.) The owner saw the diagram render on GitHub, and it validated with mermaid-cli 11.4.2 in headless Chromium with no errors (branch commit `8b55192`). Verdict now **Met, offline only**; ticked in `architecture.md` §7.* |
 
-**Conflicts:** none found in the copied table. The table's item 8 basis, "held-out routing 38/50, golden 29/36, QA faults 223/223 (upper bound)", matches sections 4.1 to 4.3.
+Re-verdicts after the 2026-10-28 deploy window; the table above is kept as the 2026-10-16 audit.
 
-**Status:** skeleton.
+| # | Item | Old verdict | New verdict | Basis |
+|---|---|---|---|---|
+| 4 | Health checks and readiness | Partly met | **Met, deployed** | The QA container's startup probe is `/readyz`, and every container has a `/healthz` liveness probe, read from the deployed revisions. |
+| 6 | Graceful degradation | Met, offline only | **Met, deployed** | A specialist-unavailable path ran on the current build and returned the defined result (HTTP 200, `degraded`, not verified); the alert fired. The unavailability was induced by a 0.5 s hop timeout. |
+| 9 | CI pipeline | Partly met | **Met, deployed** | One pipeline run with `_RUN_VERIFY=true` passed `verify.py` over the six services; CI was green at the same commit. |
+
+**What the evidence does not show.** Item 6's outage was induced, by a 0.5 s hop timeout on a healthy forecast service; it was one failure, so no breaker opened, and only the forecast service was tested live. Item 4's proof that Cloud Run refuses a broken revision (2026-10-08) covers the reporting slice only; for the QA container only the configuration was read. Item 5's retry logging is unverified deployed (0 `llm attempt failed` entries in 7 days). Item 9 is a manual-run pipeline by design (ADR-105), and L-105 records that a manual traffic pin is not reset by a deploy, to be fixed before Window B. L-89 stands: a database outage behind a healthy agent is a 502 error, not the degraded result.
+
+**Operations.** In the 2026-10-28 window the owner ran every state-changing GCP command, ten in all, by hand. The assistant ran only read-only checks (`docs/deploy-window-log.md`, "Who ran what").
+
+*Sources:* `docs/production-grade-audit.md` (summary table; "Re-verdicts after the 6.5 deploy window (2026-10-28)"), `docs/architecture.md` §7, `docs/deploy-window-log.md` (2026-10-28), L-89 and L-105 below.
+
+**Status:** draft 2026-10-28.
 
 ## 9. Threats to validity
 
-**What goes here:** one line each, with its limitation ID. Wording is written in the buffer.
+- **Synthetic data.** The whole evaluation runs on synthetic, generated data, so no figure shows how the system does on real service data (L-102). One consequence is a first-time fix rate of about 98% (0.9798), higher than real operations would give (L-01).
+- **Same-family generated sets.** A model of the same family as the system wrote the routing, FR-03, interpretation and parse-filter sets, and the persona drops weight them toward broad leadership questions (L-86).
+- **QA faults drafted by their author.** The assistant that built QA's checks drafted the faults, so the catch rates are upper bounds (L-85).
+- **Owner-written items scored lower.** The 10 owner-written golden items scored 6 of 10 mechanically, against 23 of 26 for the drafted ones. "The gap is four items and carries no significance claim" (L-54).
+- **Single runs.** The golden run and owner session 1 are single runs, where routing evaluations use k=3 (L-103). Each routing result is a single run, kept as run (L-17, L-18), and the BERT latency proxy's full-window and 12-month figures are single runs too (L-28).
+- **Spent blind sets.** `routing_heldout_v1` and `golden_v2` were run on 2026-10-13, and `fr03_fresh_v2` has since judged `route_v6` and, with `routing_heldout_v1`, chosen a thinking level, so both blind sets are spent.
+- **Decisions made after results.** ADR-070, ADR-076, ADR-115 and ADR-116 are disclosed in §6. The routing improvement claimed for `route_v6` is a post-hoc comparison on spent sets (ADR-116).
 
-**Figures to cite:**
-- Synthetic data: L-102 (the whole evaluation runs on synthetic, generated data); L-01 records one consequence, first-time fix of about 98% (0.9798).
-- Generated sets from the same model family as the system: L-86.
-- QA's faults drafted by its author: L-85 (and `evals/results/qa_faults/2026-10-10/README.md`, "Not blind").
-- Owner-written items scoring lower than drafted ones: L-54; 6 of 10 against 23 of 26 mechanical (`evals/results/golden_v2/2026-10-13/score.json`); "the gap is four items and carries no significance claim" (`evals/results/sprint5_summary.md`).
-- Single runs against k=3: L-103 (the golden run and owner session 1 are single runs; the routing evals are k=3). Detail: routing k=3 (L-17, L-18: "Each recorded result is a single run, kept as run"); the golden set one run (`evals/results/sprint5_x.md`); the BERT proxy's full-window and 12-month figures single runs (L-28); owner session 1 "single run, decision 3" (`evals/results/session1/2026-10-15/summary.md`, "For the 05 revision").
-- Both blind sets spent after 2026-10-13: `evals/results/sprint5_x.md`.
+*Sources:* `evals/results/sprint5_summary.md`, `evals/results/golden_v2/2026-10-13/score.json`, `evals/results/sprint5_x.md`, `evals/results/qa_faults/2026-10-10/README.md`, `evals/results/session1/2026-10-15/summary.md`, and L-01, L-17, L-18, L-28, L-54, L-85, L-86, L-102 and L-103 below.
 
-**Conflicts:** none found.
-
-**Status:** skeleton.
+**Status:** draft 2026-10-28.
 
 ## 10. After the evaluation (Sprint 6.5)
 
-**What goes here:** a placeholder.
+Sprint 6.5 changed routes, which is the condition ADR-113 set for this section. On 2026-10-28 the current build replaced the pre-6.5 build. §4 to §6 describe the evaluated system only.
 
-To be written if 6.5 changes answers (ADR-113).
+**What changed between the evaluated system and the current build.**
 
-**Status:** skeleton.
+| Change | Reference | Changes |
+|---|---|---|
+| `route_v6` became the default router | ADR-116 | **Routes**, not figures |
+| Hardening bundle: error text logged as code, length and hash (L-98); no verification line on a clarification (L-99); QA startup probe on `/readyz` (F1) and liveness probes (F2); the synthetic-data notice | ADR-113 item 1; data dictionary §6, rule 6 | Logging, display, deploy configuration |
+| Example questions, "How it works", FAQ | ADR-117 items 1 to 3 | Display |
+| The answer journey: per-hop timings, QA verdict summary, estimated cost and model-call count | ADR-117 item 5 (resolves L-94) | API |
+
+**What was measured on the current build** (the 2026-10-28 window, `docs/deploy-window-log.md`):
+- **Pipeline and `verify.py`:** build `0b96ca2a-8d1c-4e9d-aca8-a8dc3f3c3e75` ran 17 steps in about 9 minutes, and its verify step gave 35 PASS and 0 FAIL over the six services (F13). The hand-run `verify.py --ipv4` after the build passed every line, and the run at close gave 35 PASS and 0 FAIL.
+- **Twelve live questions,** with `prompt_version` `route_v6` on all 12. Every rule 9 example behaved as captioned, including "How's the Southeast doing?", which returned `needs_clarification` after one model call. L-99 and L-98 were confirmed live, the latter on one tool-error path only. On a second clarification QA still ran, and the response data carries `qa_status=verified`; the fix hides the line only (L-92 update).
+- **Degraded path and alert:** with the forecast hop timeout set to 0.5 s on a healthy service, the question returned `degraded` with HTTP 200 and no figure. The metric `orchestrator_degraded_answers` read 1, and the degraded and resolved alert emails arrived (owner-reported). It was one failure and no breaker opened.
+- **Cold starts:** at most 61.2 s in the browser, inside the 120 s ceiling.
+- **Ledger:** 12 of 25 questions, 29 of 120 model calls and $0.0164 of $0.40 at list price, leaving out the verify questions.
+
+**These are checks of single questions, not an evaluation.** No held-out set was re-run on the current build, because the sets are spent (§9).
+
+**What still describes the evaluated system only:** §4 to §6. The held-out comparison of `route_v6` is in §6.
+
+*Sources:* `docs/deploy-window-log.md` (2026-10-28), `evals/results/deploy_window/2026-10-28/ledger.jsonl`, `docs/decisions-log.md` (ADR-113, ADR-116, ADR-117), and the L-92, L-94, L-98 and L-99 entries below.
+
+**Status:** draft 2026-10-28.
 
 ---
 
