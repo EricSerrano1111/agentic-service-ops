@@ -13,6 +13,9 @@ labels:
   component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
 ingress: INGRESS_TRAFFIC_ALL
 invokerIamDisabled: false # public access is an IAM binding for allUsers, not this switch
+traffic: # 100% to the latest ready revision, so a deploy resets any manual pin (L-105)
+  - type: TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST
+    percent: 100
 template:
   serviceAccount: ${GATEWAY_SA} # dedicated; never the default compute account
   timeout: 300s # the gateway waits up to 125 s for the orchestrator (ADR-097)
