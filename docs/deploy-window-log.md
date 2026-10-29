@@ -438,3 +438,99 @@ Explanation: the server returns the two labels sorted by key (`capability`, `tri
 - **Email:** the owner reports it arrived at 5:26 PM CDT (22:26Z), from Google Cloud Alerting.
 
 **How the incident closed (owner-reported; one point open).** The owner reports a second email from Google Cloud Alerting at "5:26 PM", taken as the incident closing, and says it closed on its own. Two things do not fit and are not resolved here: that is the same minute as the opening email, while the policy's auto-close is 30 minutes (`alertStrategy.autoClose: 1800s`); and the owner wrote the zone as CST, but 5:26 PM CST (23:26Z) had not yet happened when this was written (about 22:36Z), so it is read as CDT. The incident's real open and close times are on **Monitoring, Alerting, Incidents** in the console; the owner is to read them and a later dated note should correct this one if they differ. Until then, this entry claims only: opened, notified by email, and closed per the owner's second email.
+
+## The 6.5 deploy window, 2026-10-28 (Prompt P; ADR-110, ADR-118)
+
+*2026-10-28 (owner present; assistant-drafted.)* Dates are the owner's date (CDT, UTC-5); times are UTC, so events after 19:00 CDT carry 2026-10-29 in UTC. Project `a2a-agentic-service-ops-gcp`, region `us-central1`. Build `0b96ca2a-8d1c-4e9d-aca8-a8dc3f3c3e75` at commit `b6fa907663e76b1799b145eae11c8c5ce473dda7` (`main`, the merge of PR #89). Records: this entry; the window ledger `evals/results/deploy_window/2026-10-28/ledger.jsonl` (27 lines).
+
+**Who ran what.** **The owner ran every command that changed GCP state, by hand.** The assistant's own first attempt at the first one (`sql instances patch ... ALWAYS`) was refused by the session's permission classifier; the assistant did not retry it, and the owner then took over all of them. The assistant ran only reads: `describe`, `list`, `logging read`, `builds log`, `verify.py`, the fingerprint script (through the Cloud SQL Auth Proxy, with the `app_eval` password read from Secret Manager into a variable and cleared), and one Monitoring API `timeSeries` GET. The ten state-changing commands, in order:
+1. `gcloud sql instances patch ops-db --activation-policy ALWAYS`
+2. `gcloud builds triggers import --source .local/trigger_enabled.yaml` (a copy of `deploy/trigger_full.yaml` with `disabled: false`)
+3. `gcloud builds triggers run deploy-reporting-slice --branch main`
+4. `gcloud run services update ops-orchestrator --update-env-vars FORECAST_A2A_TIMEOUT_S=0.5` (revision `00009-rdv`)
+5. `gcloud run services update-traffic ops-orchestrator --to-revisions ops-orchestrator-00008-zwv=100`
+6. `gcloud run services update ops-orchestrator --remove-env-vars FORECAST_A2A_TIMEOUT_S` (revision `00010-7sg`)
+7. `gcloud run services update-traffic ops-orchestrator --to-revisions ops-orchestrator-00010-7sg=100`
+8. `gcloud run services update-traffic ops-orchestrator --to-latest`
+9. `gcloud builds triggers import --source .local/trigger_disabled.yaml` (`disabled: true`)
+10. `gcloud sql instances patch ops-db --activation-policy NEVER`
+
+**Phase 0 (pre-flight, no GCP change; first ledger write 22:34Z).**
+- `main` clean at `b6fa907`; `uv run pytest tests/unit services -q` as one session: 2935 passed, 2 skipped (the Docker-build test and the unbuilt-UI export). CI on `main` at `b6fa907`: run `40728525766`, success.
+- Trigger `deploy-reporting-slice`: `disabled: true`; its filters and substitutions equal `deploy/trigger_full.yaml`, including `_DEPLOY_SENTIMENT: "true"`; `_RUN_VERIFY` defaults to `"true"` in `deploy/cloudbuild.yaml`.
+- **Rollback targets** (all at 100%, image tag `9ab7c775964bd0aae491ca72082e95229c994129`; kept in the revision history): `ops-gateway-00002-w57`, `ops-orchestrator-00007-b8z`, `ops-reporting-00007-8mm`, `ops-sentiment-00003-hx4`, `ops-forecast-00003-ndv`, `ops-qa-00004-t6m`.
+- **Model status (L-104, R-15).** Google's deprecations page, read 2026-10-28 (fetched with `curl`, the table row extracted, not a summary): `gemini-3.5-flash-lite | July 21, 2026 | No shutdown date announced`. No shutdown date before 2026-12-12.
+- **Next.js.** `web/package.json` pins `16.4.1`; npm `latest` is `16.4.3`. The ten newest advisories from the GitHub Security Advisories API (`vercel/next.js`) name `16.4.1` as the highest fixed version (GHSA-2464-fhr4-w9xw critical, GHSA-673q-mjm6-r5xr critical, GHSA-p3m5-59mp-jv5r high, all published 2026-10-14). No advisory names a higher fix, so no stop. `npm` was not on this machine's PATH; the registry's HTTP API was used.
+- **Degraded-path design (phase 5's fault).** Read from `services/orchestrator` and ADR-088: with `FORECAST_A2A_TIMEOUT_S=0.5` the hop timeout equals the hop's own cap, so `delegate` raises `DegradedResult("dependency", "forecast")` and not the deadline result. **Local proof,** compose on the free key with that one variable: `outcome=degraded`, "The forecast service is temporarily unavailable…", `prompt=route_v6`; 1 model call, $0.000554 (22:39Z).
+- Paid balance, owner-confirmed before the window: $6.21.
+
+**Phase 1 (`ops-db` and the fingerprint; ledger 23:22Z).** After the owner's patch, `ops-db` read `RUNNABLE  ALWAYS`. (The exact start time was not recorded; it was between 22:39Z and 23:22Z.) The predictions fingerprint through the Auth Proxy matched the recorded 2026-10-13 values exactly: rows 7521, sha256 `a340b82d8af178173afae34cb17bb7f2a1e3a944baa879321f34c4ac137e259f`, model version `0fa27f641d95260d84b4742501dd47cade23f1f8ae0ff336d8cbf927f70333ad`. So sentiment deployed. The proxy was stopped and the variables cleared.
+
+**Phase 2 (trigger, build, F13).**
+- Trigger enabled by the owner (import of the `disabled: false` copy at about 23:38Z), and read back `disabled` absent, i.e. `False`, with filters and substitutions unchanged.
+- **Build `0b96ca2a-8d1c-4e9d-aca8-a8dc3f3c3e75`:** created 23:38:34Z, started 23:39:19Z, finished 23:48:36Z; `SUCCESS`; all 17 steps `SUCCESS`, including `verify` (**F13: the pipeline's verify step ran on all six services**). **About 9 minutes,** against the 25 to 45 expected; the build log has 12 `CACHED` lines (cached image layers), which is the owner's explanation and is consistent with the log.
+- **The pipeline's verify output:** 35 `PASS`, 0 `FAIL`. Every service serves the revision just deployed; unauthenticated `POST /ask` and `GET /` refused (403); a no-role caller refused by reporting (403); exact invoker sets (specialists accept only `run-orchestrator`; the orchestrator accepts `build-deploy` and `run-gateway`; the gateway accepts `allUsers`); dedicated service accounts; paid mode on the model-calling container only; Cloud SQL `authorizedNetworks` empty; one reporting question answered end to end (HTTP 200, `outcome=answered`).
+
+  | Service | New revision (traffic 100%, image tag `b6fa907…`) | Rollback target |
+  |---|---|---|
+  | `ops-qa` | `ops-qa-00005-78z` | `ops-qa-00004-t6m` |
+  | `ops-sentiment` | `ops-sentiment-00004-bcd` | `ops-sentiment-00003-hx4` |
+  | `ops-forecast` | `ops-forecast-00004-dk4` | `ops-forecast-00003-ndv` |
+  | `ops-reporting` | `ops-reporting-00008-tt8` | `ops-reporting-00007-8mm` |
+  | `ops-orchestrator` | `ops-orchestrator-00008-zwv` (see phase 5: now `00010-7sg`) | `ops-orchestrator-00007-b8z` |
+  | `ops-gateway` | `ops-gateway-00003-fgd` | `ops-gateway-00002-w57` |
+- No `too many connections` and no ERROR-or-higher log entry from any Cloud Run revision after the build started.
+
+**Phase 3 (verification from this machine; ledger 23:59Z).**
+- `.venv\Scripts\python deploy\verify.py --ipv4` (23:58:48Z to 23:59:50Z): every line `PASS`, exit 0.
+- **Probes (F1, F2),** read as JSON from each service's latest ready revision: `ops-qa`'s `agent-qa` startup probe is **`/readyz`** (port 8080); **all nine containers have a `livenessProbe` on `/healthz` at their own port** (gateway, orchestrator, agent-reporting, agent-sentiment, agent-forecast and agent-qa 8080; mcp-incidents 8101, mcp-feedback 8102, mcp-volume 8103). The gateway and orchestrator start-up probes are `/healthz` (no database dependency); every agent and MCP container's is `/readyz`. Not re-run: the 2026-10-08 proof that Cloud Run refuses a revision when `/readyz` fails (for QA, only the configuration was read).
+- **Router (ADR-116):** `PROMPT_NAME = "route_v6"` at `b6fa907` (`routing.py:26`), and `prompt_version=route_v6` on the log line of every live question below.
+- The trigger stayed enabled until phase 6; nothing was merged during the window.
+
+**Phase 4 (live checks in the deployed UI; owner in the browser, the assistant read the logs).** The `owner-laptop-3` invite (the link is not recorded anywhere). Ledger caps for these questions: 25 questions, 120 model calls, $0.40 list price.
+
+*Step 1, the landing page.* **The owner's first view was the pre-deploy UI** (no notice, no examples, no other pages). The gateway log showed the sign-in (`POST /auth/exchange` 200, `GET /session` 200) and the new bundle's files loading only after the owner opened `/faq`. A hard reload showed everything as expected: the notice with rule 6's revised text, the product name "Service Ops Intelligence", the examples grouped (rule 9), How it works and FAQ loading. **Probable cause (not observed in the owner's browser):** the gateway sends no `Cache-Control` on its HTML or its JS and CSS (`ETag` and `Last-Modified` only, read on `/`, `/faq/`, `/how-it-works/` and a chunk), so a browser may serve a page it fetched earlier the same day. **`/faq` without the trailing slash:** the gateway answers `307`, and its `Location` is `http://…/faq/` (the wrong scheme); Cloud Run's front end then answers a plain-`http` request with `302` to `https://…/faq/`, and the owner's browser ended on `https`. Both are recorded as L-105.
+
+*Steps 2 to 5, the questions.* Every one used the paid key, and `prompt_version` was `route_v6` on all. "QA" is the gateway's `qa_status` where one was logged. Costs are the orchestrator's list-price figure.
+
+| # | Question | Route | Outcome | QA | Calls | Cost | Server | Browser |
+|---|---|---|---|---|---|---|---|---|
+| 1 | What was SLA compliance in the Northeast last month? | reporting | answered, headline 88.13% (141 of 160) | verified | 3 | $0.001792 | 44.3 s | 53.0 s |
+| 2 | Which incident types were most common in July 2026? | reporting | answered (no headline: a breakdown) | verified | 3 | $0.001835 | 3.0 s | 3.4 s |
+| 3 | Is negative feedback trending up in the West? | sentiment | answered | verified | 3 | $0.001589 | 26.6 s | 26.9 s |
+| 4 | Show examples of negative comments from last month | sentiment | answered | verified | 3 | $0.001594 | 2.6 s | 2.9 s |
+| 5 | What weekly request volume should we expect for the next 8 weeks? | forecast | answered, 80% ranges and held-out errors | verified | 3 | $0.001516 | 26.0 s | 26.3 s |
+| 6 | How's the Southeast doing? | ambiguous | `needs_clarification` (`intent_ambiguous`), **no verification line** | not applicable | 1 | $0.000562 | 0.7 s | 1.0 s |
+| 7 | What will revenue be next quarter? | out_of_scope | declined | not applicable | 1 | $0.000507 | 0.7 s | 0.8 s |
+| 8 | How did Lina do on first-time fixes last quarter? | reporting | `needs_clarification` (two technicians match), **no verification line** | verified (data) | 3 | $0.001946 | 2.4 s | 2.6 s |
+| 9 | SLA compliance from August 2026 to January 2026 | reporting | HTTP 422 `invalid_range`, fixed message | not applicable | 2 | $0.001157 | 1.6 s | 1.9 s |
+
+The traces are in the ledger. **All seven rule 9 examples behaved as captioned;** no example failed rule 9, so no data-dictionary note is needed. The journey panel opened on every answer and its hops and chips matched the outcome (the owner's observation); the browser timer shows separately; a clarification (Q6) shows the route step only; an HTTP error (Q9) has no journey, as rule 10 says. No answer showed upstream error text.
+- **L-99 (confirmed live).** Q6 and Q8 show a clarification with no verification line. **A remaining nuance:** Q8's response data still carries `qa_status=verified`, and QA ran on it (a third model call; QA's task kind was `decline`), with its advisory `interpretation_matches_question` check failing (`faithful=False`, `differs_in=dates`; the verdict was `pass` because the check is advisory). The fix hides the line and does not change this. Recorded as an L-92 update.
+- **L-98 (confirmed live, Q9).** `agent_reporting`: `tool failed code=tool_error error_chars=138 error_sha=5dceb5fcfcc0` (the MCP tool's side) and `task failed code=invalid_range reason_chars=211 reason_sha=dcda0dfd4821`; the orchestrator's `agent task failed` line and the gateway's `ask refused upstream` line (`upstream_detail_chars=211`, the same hash) agree. **No error text in any of them.** Only this one tool-error path was exercised. The parser read the question as 2026-01-01 to 2026-08-31, and the tool rejected it as `outside_window` (the end is past the data's as-of date, 2026-08-30): the refusal came from the window, not from the reversal (L-100).
+- **Cold starts (R-05), all inside their caps.** Q1: 53.0 s in the browser after about 35 minutes idle; the logs show the gateway about 8.6 s before the orchestrator's first line, then 28.7 s from the routing decision (00:35:33.6Z) to the reporting container's first line (00:36:02.3Z), then 11.7 s from reporting finishing (00:36:04.2Z) to QA's first line (00:36:15.9Z). Q3 (sentiment): 26.9 s. Q5 (forecast): 26.3 s. Q11 (forecast, after the restore, about 14 minutes idle): 27.8 s (27.5 s on the server). Q12 (reporting, after the orchestrator's new revision): 61.2 s in the browser, 45.8 s on the server (the reporting container's first line 24.4 s after routing; QA's 16.4 s after reporting's), so about 15 s of the browser time was before the orchestrator, in the gateway. The 120 s ceiling held on every request.
+- **Forecast, a reader's note, not a rule 9 failure.** The answer's held-out error is larger at 1 to 4 weeks ahead (13.6%) than at 5 to 13 weeks (5.5%), which is unusual. It is the model's evaluation on this data; nothing was changed.
+- The optional cold-start step 6 was effectively measured by Q1.
+
+**Phase 5 (a live specialist-unavailable path).**
+- R_good = `ops-orchestrator-00008-zwv`. The owner set `FORECAST_A2A_TIMEOUT_S=0.5`: revision `ops-orchestrator-00009-rdv`, 100% of traffic, `Ready`, the same image `b6fa907`.
+- **Q10 (forecast example):** `outcome: degraded`; "Not checked: the request ended before verification ran. Sent for follow-up. The forecast service is temporarily unavailable, so this question could not be answered. Questions in other areas are unaffected."; no figure. Journey: browser, gateway, orchestrator and forecast highlighted, with `timeout` on forecast where the lines stop. Logs (trace `53724ffabbfe48218a3b8a0b7d3f6208`, 00:57:45Z): `dependency failed dependency=forecast error=TimeoutError`, then `ask degraded trigger=dependency capability=forecast`; the orchestrator `POST /ask` and the gateway `POST /api/ask` both returned **HTTP 200**; 1 model call (routing only), $0.000541, 1.5 s; gateway `qa_status=not_checked`.
+- **The alert (ADR-112).** The log-based metric `orchestrator_degraded_answers` read 1 at 00:57:33Z (0 in the minutes around it). The owner reports the degraded alert email arrived, followed by the resolved email (owner-reported; only the inbox shows it). This is the first real degraded answer on the current build.
+- **The restore, and a trap in it.** The owner restored with `update-traffic --to-revisions 00008-zwv=100` (Q11 then answered normally). **That command pins traffic to a named revision.** The service's latest template, `00009-rdv`, still carried the fault, and `latestReadyRevisionName` stayed at `00009-rdv`. Running `--to-latest` at that point would have put the fault revision on 100% of traffic. The deploy step (`deploy/deploy_service.py`) sends a PATCH with no `traffic` block, and `RUNBOOK_V.md` assumes traffic follows the latest revision, so after the pin a later pipeline deploy could have left its new revision at 0%. The fix, run by the owner step by step: a clean revision (`--remove-env-vars`, `00010-7sg`), then `update-traffic --to-revisions 00010-7sg=100`, then, once `latestReady` read `00010-7sg`, `--to-latest`. **Verified read-only:** `spec.traffic` is `latestRevision: true, 100%`; serving revision `ops-orchestrator-00010-7sg`; no `FORECAST_A2A_TIMEOUT_S`; the image digest equals `00008-zwv`'s (`sha256:f1c3db937499…`); all 15 variables identical; the same service account and size. **`ops-orchestrator-00009-rdv` (the fault revision) remains in the history with no traffic.** Q12 (a reporting example) then answered normally on `00010-7sg`. The orchestrator is therefore on `00010-7sg`, not `00008-zwv`, with the same image and settings.
+- **Follow-up (L-105):** an explicit "latest revision, 100%" `traffic` block in every `deploy/cloudrun/*.yaml`, with a test, so a pipeline deploy resets any manual pin; before Window B. `RUNBOOK_V.md`'s Rollback section has a dated note.
+
+**Phase 6 (close).** The final `verify.py --ipv4` (01:29:00Z to 01:30:07Z): 35 `PASS`, 0 `FAIL`, exit 0, with the orchestrator's serving revision `00010-7sg`. The owner disabled the trigger (read back `disabled: True`, filters intact), then stopped `ops-db` (read back `STOPPED  NEVER`, about 01:33Z). **The retry-log standing check** (`RUNBOOK_GRADING.md`, "Close the window", step 4): `jsonPayload.msg="llm attempt failed"`, `--freshness 7d`, read-only: **0 entries.** Retry logging therefore stays unverified deployed. The temporary trigger files in `.local\` were deleted.
+
+**Ledger totals against the caps.** Live questions Q1 to Q12 (nine in phase 4, two in phase 5, one proving the unpinned state): **12 of 25 questions; 29 of 120 model calls; $0.0164 of $0.40** list price. Not in these totals: the pipeline's verify question, the two hand-run `verify.py` questions (the runbook says two model calls each; not measured), and the phase 0 local proof (free key, 1 call, $0.000554). **Paid balance:** $6.21 before the window, **$6.19** after (the owner's readings), $0.02 spent, consistent with the ledger plus the verify questions.
+
+**Closing state.** Trigger `disabled: True`; `ops-db` `STOPPED  NEVER`; all six services serving the `b6fa907` image at 100% (orchestrator on `00010-7sg`); no invite revoked or created. Window A is not opened (ADR-118).
+
+**Deviations from the prompt.**
+- The owner ran every GCP state change (above); the assistant's one attempt was refused by the permission classifier.
+- Phase 5's restore needed three more owner commands than the prompt had (a clean revision, a by-name route, then `--to-latest`) because of the traffic pin; the orchestrator ends on `00010-7sg`.
+- The ledger has one timestamp per step (the time the line was written), not a start and an end per step. The GCP start and end times are in this entry instead.
+- The ledger's `model_calls` and `cost_usd` are the orchestrator log's figures, which §6 rule 10 says equal the journey's totals; the owner confirmed the journey panel and its chips on each answer, but the journey's own numbers were not read against the log.
+- The phase-0 deprecations quote was re-taken from the page's table row with `curl` after a first, summarised read.
+- `npm` was not on the PATH, so the Next.js check used the npm registry's and GitHub's HTTP APIs.
+- The records PR adds `deploy/RUNBOOK_V.md` and the ledger to the usual docs-only set (owner-approved), and ticks the sprint-log items F1, F2 (probes) and F13 and `architecture.md` §7 items 4, 6 and 9.
+- Slips with no GCP effect: a verify output was written to `$env:TEMP` and deleted; a variable-name collision (`$r`/`$R`) broke one read loop, which was rerun; the ledger's first line carried a byte-order mark (written by Windows PowerShell), stripped with no entry changed.
