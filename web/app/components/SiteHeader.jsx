@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 
-// "Evaluation results" is added when its page exists (ADR-117 item 4).
 const LINKS = [
   { href: "/", label: "Ask" },
   { href: "/how-it-works/", label: "How it works" },
   { href: "/faq/", label: "FAQ" },
+  { href: "/results/", label: "Evaluation results" },
 ];
 
 export default function SiteHeader() {
