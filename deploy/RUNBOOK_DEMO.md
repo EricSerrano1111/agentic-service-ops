@@ -8,7 +8,7 @@ PowerShell 5.1, from the repo root, with `.venv` built. Every `gcloud` command c
 - **Slot:** 60 minutes. Part 1 is a 30-minute overview. Part 2 is 10 to 20 minutes of instructor questions. The
   instructor holds the remaining 10 to 20 minutes as a buffer. **This plan does not use the buffer;** it is
   there only for recovering when something goes wrong.
-- **No recording** (owner, 2026-10-29). The demonstration runs live, and nothing stands in for it.
+- **No recording** (owner, 2026-10-29; ADR-119). The demonstration runs live, and nothing stands in for it.
 - **Date and time:** `[TBD]`. Slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a slot
   inside Window B** (2026-12-01 to 12-12, ADR-107). A slot outside it means a new ADR to move the window.
 - **No slides** (ADR-117). The visual aids are the system's own pages (landing, How it works, Evaluation
@@ -366,7 +366,7 @@ tested live (§8). No screenshot was taken of that live test.
 
 ## F. If something goes wrong
 
-There is no recording and no fallback video (owner, 2026-10-29): the demonstration runs live.
+There is no recording and no fallback video (owner, 2026-10-29; ADR-119): the demonstration runs live.
 
 | Problem | What to do |
 |---|---|

@@ -329,6 +329,8 @@
 - **Mitigation:** check the deprecations page before the 6.5 deploy window and again before the demonstration. The SDK and model are pinned. Limitation L-104.
 - **Review trigger:** the 6.5 hardening redeploy, and the demonstration rehearsal (11-29).
 
+*2026-10-29 (ADR-119; assistant-drafted.)* The rehearsal trigger becomes the live run-through the day before the demonstration (`RUNBOOK_DEMO.md` A3), where the deprecations page is checked (A2).
+
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
 **Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.
