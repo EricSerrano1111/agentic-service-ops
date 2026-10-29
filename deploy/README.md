@@ -4,7 +4,7 @@
 >
 > **Updated 2026-10-14 (Z1):** the full system was deployed 2026-10-13 and runs on the paid key (ADR-104); `ops-db` is stopped outside announced grading windows (ADR-105); the window procedure is `RUNBOOK_GRADING.md` (ADR-107). The build trigger is disabled and must not be enabled until `cloudrun/*.yaml` is synced to paid mode (Z2). Statements below about the free key describe the reporting slice as deployed on 2026-10-08.
 >
-> **Added 2026-10-29 (ADR-117 item 6):** `RUNBOOK_DEMO.md` is the owner's guide for the live demonstration in Window B and its backup recording. This file has no formal list of runbooks; the others are named in the notes here (`RUNBOOK_V.md`, `RUNBOOK_GRADING.md`).
+> **Added 2026-10-29 (ADR-117 item 6):** `RUNBOOK_DEMO.md` is the owner's guide for the live demonstration (there is no recording, owner 2026-10-29). This file has no formal list of runbooks; the others are named in the notes here (`RUNBOOK_V.md`, `RUNBOOK_GRADING.md`).
 >
 > **Full system (2026-10-12, ADR-099):** six services now. `RUNBOOK_V.md` is the window runbook, `plan_full.py` the plan, `cloudrun/*.yaml` the six definitions, `trigger_full.yaml` the trigger. Everything below describes the reporting slice and still holds for it; where this README and `RUNBOOK_V.md` differ, the runbook is current. `ops-sentiment` deploys with the others, reading stored predictions only (ADR-100, which resolved R-19); the runbook is two sittings.
 

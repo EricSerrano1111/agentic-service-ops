@@ -1,4 +1,4 @@
-# Runbook: the live demonstration and its backup recording (ADR-117 item 6)
+# Runbook: the live demonstration (ADR-117 item 6)
 
 Written 2026-10-29 (ADR-117 item 6; owner inputs 2026-10-29; assistant-drafted). Not yet run. Windows
 PowerShell 5.1, from the repo root, with `.venv` built. Every `gcloud` command carries `--project`.
@@ -8,14 +8,15 @@ PowerShell 5.1, from the repo root, with `.venv` built. Every `gcloud` command c
 - **Slot:** 60 minutes. Part 1 is a 30-minute overview. Part 2 is 10 to 20 minutes of instructor questions. The
   instructor holds the remaining 10 to 20 minutes as a buffer. **This plan does not use the buffer;** it is
   there only for recovering when something goes wrong.
-- **Recording tool:** Zoom's local recording, made in a solo Zoom meeting with the same screen share, so the
-  recording looks like the live demonstration.
-- **Date and time:** `[TBD]`, inside Window B (2026-12-01 to 12-12, ADR-107).
+- **No recording** (owner, 2026-10-29). The demonstration runs live, and nothing stands in for it.
+- **Date and time:** `[TBD]`. Slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a slot
+  inside Window B** (2026-12-01 to 12-12, ADR-107). A slot outside it means a new ADR to move the window.
 - **No slides** (ADR-117). The visual aids are the system's own pages (landing, How it works, Evaluation
   results), the public repository and the evaluation report.
+- **Rehearsal:** the narration is rehearsed offline with the tabs. The only live run-through is A3, the day
+  before.
 
-**Deadlines (ADR-117's calendar):** the backup recording by **11-22**, the rehearsal by **11-29**, the
-demonstration in Window B.
+**Deadline:** one owner deploy session before 2026-11-09 (Preconditions).
 
 ```powershell
 $P  = 'a2a-agentic-service-ops-gcp'
@@ -32,48 +33,43 @@ hold is `[TBD]`, and a thing only the owner can say is `[OWNER]`. Nothing here c
 
 ## Preconditions: read this before anything else
 
-The plan below needs a live system that the records say does not yet exist. Three things have to happen
-first, **in this order**: deploy, record, rehearse. Window B comes after all three.
+The plan below needs a live system that the records say does not yet exist. **One owner deploy session, before
+2026-11-09,** puts it right. There is no recording and no rehearsal session (owner, 2026-10-29).
 
-1. **The live system does not have the Evaluation results page yet.**
-   - Build `0b96ca2a` (commit `b6fa907`) deployed on 2026-10-28 and did not include it
-     (`docs/sprint-log.md`, 2026-10-28: "The evaluation-results page and the demonstration runbook ... were not
-     part of this deploy"; 2026-10-29: "merged, not deployed").
-   - The L-105 fixes (`Cache-Control` on the HTML, the path-only trailing-slash redirect, the explicit
-     "latest revision, 100%" traffic block) are in the same state: "Fixed in the repo, not deployed. Deploys in
-     the next window" (L-105, 2026-10-29).
-   - ADR-117 allows this: "Item 4 may deploy in a second small window if it misses the first."
-   - **The deploy is a window under `RUNBOOK_V.md` and the 2026-10-28 procedure in
-     `docs/deploy-window-log.md`.** Its date is `[TBD]`. This runbook does not run it.
-   - **Check whether it has happened** (read-only):
-     ```powershell
-     curl.exe -4 -s -o NUL -w "%{http_code}`n" "$G/results/"
-     gcloud run services describe ops-gateway --region $R --project $P --format "value(status.latestReadyRevisionName)"
-     ```
-     `200` from the first line means the page is served. The second line read `ops-gateway-00003-fgd` after the
-     2026-10-28 deploy (`docs/deploy-window-log.md`, phase 2); the same name now means nothing newer has
-     deployed. The trailing slash matters: the gateway redirects `/results` (L-105).
-   - **If the deploy has not happened by the recording date,** do not record segment 8 live. Use
-     `docs/screenshots/results-page-2026-10-29/results-light-1280.png` and the report on GitHub (tab 5), and say
-     so on the recording.
+1. **The session uses the `owner-laptop-3` invite.** It expires 2026-11-09 23:59 (ADR-118,
+   `docs/sprint-log.md`), so the session must end before then. Window B needs a new owner invite and the grader's
+   (`RUNBOOK_GRADING.md`, "Open the window", steps 3 and 4).
+2. **What the session does.**
+   - **Deploys the L-105 fixes and the Evaluation results page.** Build `0b96ca2a` (commit `b6fa907`) deployed on
+     2026-10-28 without them (`docs/sprint-log.md`, 2026-10-28: "The evaluation-results page and the
+     demonstration runbook ... were not part of this deploy"; 2026-10-29: "merged, not deployed"; L-105,
+     2026-10-29: "Deploys in the next window"). ADR-117 allows it: "Item 4 may deploy in a second small window if
+     it misses the first." The deploy follows `RUNBOOK_V.md` and the 2026-10-28 procedure in
+     `docs/deploy-window-log.md`. Its date is `[TBD]`. This runbook does not run it.
+   - **Takes a current screenshot of each live example,** in light theme, at the browser zoom chosen in A4, from
+     the signed-in page: the SLA answer, the answer journey, the sentiment answer, the forecast answer, the
+     clarification ("How's the Southeast doing?") and the revenue decline. Save them under
+     `docs/screenshots/demo-session-[TBD date]/`, one file per example. They replace the 2026-10-23 screenshots,
+     which predate the deploy. They are committed in a later change.
+3. **The session is an ADR-110 owner verification session.** `ops-db` is started and stopped in one sitting, with
+   no grader invite and the paid balance at **$5 or more**, checked in the console (ADR-110). It gets a dated
+   entry in `docs/deploy-window-log.md`. Run `RUNBOOK_GRADING.md`, "Open the window" steps 1 and 2 and the smoke
+   check (step 5), and "Close the window" steps 2 to 4. Steps 3 and 4 of opening (a grader invite; renewing the
+   owner's) are skipped: `owner-laptop-3` is the invite.
+4. **Check whether the deploy has happened** (read-only; also a quick check before Window B):
+   ```powershell
+   curl.exe -4 -s -o NUL -w "%{http_code}`n" "$G/results/"
+   gcloud run services describe ops-gateway --region $R --project $P --format "value(status.latestReadyRevisionName)"
+   ```
+   `200` from the first line means the page is served. The second line read `ops-gateway-00003-fgd` after the
+   2026-10-28 deploy (`docs/deploy-window-log.md`, phase 2); the same name now means nothing newer has deployed.
+   The trailing slash matters: the gateway redirects `/results` (L-105).
+5. **If the deploy has not happened by the demonstration,** tab 3 does not exist. Show
+   `docs/screenshots/results-page-2026-10-29/results-light-1280.png` and the report on GitHub (tab 5), and say so.
 
-2. **The recording and the rehearsal fall outside Window B, so each needs its own session.** The live system is
-   down outside a window: `ops-db` is stopped and the system answers every data question with "The data service
-   is unavailable right now." (`RUNBOOK_GRADING.md`, "Close the window", step 2).
-   - ADR-110 allows an owner verification session: start and stop `ops-db` in one sitting, with no grader
-     invite, and the paid balance at **$5 or more**, checked in the console.
-   - Each session gets a dated entry in `docs/deploy-window-log.md` (ADR-110).
-   - Run it with `RUNBOOK_GRADING.md`, "Open the window" steps 1, 2 and 4, then the smoke check (step 5), and
-     "Close the window" steps 2 to 4. Skip the grader invite (step 3).
-   - Dates: recording session `[TBD]` (by 11-22); rehearsal session `[TBD]` (by 11-29).
-
-3. **A new owner invite is needed for each session and for Window B.** `owner-laptop-3` expires 2026-11-09
-   23:59 (ADR-118, `docs/sprint-log.md`). Make one that covers the session, revoke the old one by id, and keep
-   the link in the password manager only (`RUNBOOK_GRADING.md`, steps 3 and 4).
-
-**Order, because each step depends on the one before:** deploy window (results page live) → backup recording →
-rehearsal → Window B (grader invite, owner invite) → demonstration. A recording made before the deploy has no
-results page in it.
+**Order:** deploy session (before 11-09) → Window B (grader invite, owner invite) → demonstration. The
+demonstration's date is `[TBD]`. The slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a
+slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the window.
 
 ---
 
@@ -98,12 +94,10 @@ results page in it.
    decision (L-104: "This must be done before any role moves to a model newer than 3.5 Flash-Lite", and the
    evaluated system includes `temperature=0.0`). Do not change a model in the days before a demonstration.
 3. **Run the whole of Part 1 once on the live system, timed** (the same signed-in browser, the same order as
-   section D).
+   section D). **This is the only live run-through.** The narration is rehearsed offline with the tabs.
    - Write down the elapsed time the page shows for each question ("Answered in N.N s", data dictionary §6
      rule 7) and which questions were cold.
    - Note any example that misbehaves (rule 9: replace or remove it, and add a dated note there).
-   - **Is the first live question cold after a gap?** Part 1's first live question comes about 18 minutes after
-     the warm-up (see C, "the gap"). Time this on purpose: note the gap and the time.
    - Part 1 asks 5 questions (A5). Do the two examples Part 1 does not use ("Which incident types were most
      common in July 2026?" and "Show examples of negative comments from last month") only if you want them ready
      for the instructor's questions.
@@ -120,9 +114,14 @@ results page in it.
      keeps it at 50). **So the grader's questions on the same day do draw on the owner's 50.** If the grader works
      on the day of the demonstration, the demonstration can hit the cap. The grading is expected around 12-05
      (ADR-110, ADR-107).
+   - **Every accepted question counts toward the 50, including a clarification, a decline and an error.** The
+     gateway calls `daily_cap.take()` before it forwards the question, and nothing refunds it afterwards
+     (`services/api_gateway/src/api_gateway/app.py`, the `ask` route). "Accepted" means it passed the session
+     check, the body check and the hourly check, which run first.
    - **The per-invite cap** is **30 an hour** (ADR-107; the pre-6.5 build already carries it, evaluation report
      §2). It is keyed by invite id (ADR-097, note of 2026-10-12), so the grader's use does not touch the owner's
-     hourly count. The sources do not say how the hour is measured, so this runbook does not either.
+     hourly count. The hourly check runs before the daily one, so a question the daily cap refuses has already
+     counted toward the hour. The sources do not say how the hour is measured, so this runbook does not either.
    - **Both counters are per instance and reset on a cold start** (L-88), so the cap is approximate. It is not an
      exact ceiling in either direction.
    - **The count for the demonstration day**, using the per-question model calls of 2026-10-28
@@ -131,19 +130,20 @@ results page in it.
      | Item | Questions | Model calls |
      |---|---|---|
      | Warm-up (C): reporting, sentiment, forecast | 3 | 9 |
+     | Re-warm at segment 3 (C): the same three | 3 | 9 |
      | Part 1 live: SLA, sentiment trend, forecast, "How's the Southeast doing?", "What will revenue be next quarter?" | 5 | 11 |
-     | **Part 1 and warm-up** | **8** | **20** |
+     | **Part 1 with both warm-ups** | **11** | **29** |
      | Instructor's own questions, margin (my assumption: up to 10) | 10 | up to 30 |
-     | **Total** | **18 of 50** | **about 50** |
+     | **Total** | **21 of 50** | **about 59** |
 
      The "Show the answer journey" panel reuses the SLA answer and asks nothing. The list-price cost of Part 1 is
      about $0.006 (the five 2026-10-28 costs summed: $0.001792 + $0.001589 + $0.001516 + $0.000562 +
-     $0.000507). The per-request cap is $0.02 (evaluation report §4.7).
+     $0.000507). The per-request cap is $0.02 (evaluation report §4.7). At 21 questions the hourly cap of 30 is
+     not reached if they fall inside one hour.
    - **The day-before run** (5 questions) falls on a different Pacific-time day, so it does not draw on the
      demonstration day's 50.
    - **Before the demonstration:** `[OWNER]` ask the grader whether they plan to use the system that day, or
-     choose a day they have said they will not. `[TBD]`: whether the gateway counts clarifications and declines
-     toward the 50 (ADR-097 does not say; plan as if they do, as the table does).
+     choose a day they have said they will not.
 
 ## B. 30 minutes before
 
@@ -180,19 +180,19 @@ results page in it.
 2. **Confirm all three answered** (an answer, not a degraded result or an error).
 3. **Ask nothing else** until the demonstration starts.
 
-**The gap, and what the records support.** The warm-up is at -10 minutes. Part 1's first live question is at 0:08,
-about 18 minutes later, and the sentiment and forecast questions at 0:14, about 24 minutes later. The sentiment
-and forecast services are separate from the reporting one, so the SLA question does not warm them.
+**Re-warm, and why.** The warm-up is at -10 minutes. Part 1's first live question is at 0:08, about 18 minutes
+later, and the sentiment and forecast questions at 0:14, about 24 minutes later. The sentiment and forecast
+services are separate from the reporting one, so the SLA question does not warm them.
 - On 2026-10-28 a forecast question about 14 minutes after the last traffic still took 27.8 s (Q11,
   `docs/deploy-window-log.md`), and `RUNBOOK_V.md` step 12 treats 15 minutes idle as the cold condition.
-- The documents do not say how long Cloud Run keeps an idle instance. **The warm-up may not hold until the live
-  segments.**
-- **`[OWNER]` choose one, after the day-before run (A3) shows what happened:**
-  - **(a) Re-warm off-screen.** From the second device, in the same invite, ask one sentiment and one forecast
-    question during segments 2 and 3 (0:02 to 0:08). This costs 2 more questions and 6 more model calls, so the
-    count in A5 becomes 10 questions before the instructor's. It uses the same invite, so the same hourly count.
-  - **(b) Accept the wait and narrate it.** The F row for an answer over 30 s covers it. The journey view
-    (segment 5) is a good thing to talk through while a cold answer loads.
+- **No minimum instances are set:** `minInstanceCount: 0` in all six files under `deploy/cloudrun/`. Every service
+  can scale to zero, and the documents do not say how long Cloud Run keeps an idle instance.
+- **So re-warm at the start of segment 3 (0:06).** From a **second browser window that is not shared** (the Zoom
+  share is the demonstration's browser window, so another window is not in it), resend the same three warm-up
+  questions. The same browser profile keeps the same session, so they use the owner invite and its hourly count.
+  They take 26 to 61 s cold and finish before segment 4 at 0:08.
+- **If anything is still cold** when a live question is sent, narrate it (F: an answer over 30 s). The journey
+  view (segment 5) is a good thing to talk through while a cold answer loads.
 
 ## D. Part 1: the 30-minute overview
 
@@ -226,6 +226,8 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
 - **The audience should see:** the services diagram and the route of one question.
 
 ### 3. The code: 0:06 (about 2 min)
+- **At the start of this segment, re-warm** (C, "Re-warm, and why"): in the second, unshared browser window, send
+  the three warm-up questions again. They finish while you are in segment 3.
 - **On screen:** the repository root (tab 4), then `docs/decisions-log.md` (tab 6) at ADR-001.
 - **Say:**
   - `services/` holds the agents and MCP servers, `deploy/` the Cloud Run definitions and runbooks, `evals/` the
@@ -327,16 +329,12 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
     (ADR-100) (`docs/sprint-log.md`, "Planned vs done", 2026-10-18).
   - Hand over to questions.
 
-**Never inject a fault live.** If asked about degradation, describe the 2026-10-28 live test (evaluation report
-§10; `docs/deploy-window-log.md`, phase 5): the forecast hop's timeout was set to 0.5 s on a healthy service, and
-the question returned `degraded` with HTTP 200, no figure, and "Not checked: the request ended before
-verification ran." The metric read 1 and the alert emails arrived (owner-reported). It was one failure, so no
-breaker opened, and only the forecast service was tested live (§8).
-- **Screenshot:** none was recorded from that live test. The repo's degraded screenshots are
-  `docs/screenshots/ui-polish-2026-10-22/degraded-light.png` (committed 2026-10-23; how it was made is not
-  recorded) and `docs/screenshots/answer-journey-2026-10-23/constructed-journey-degraded-light.png` (the name
-  says constructed). **Both predate the 10-28 deploy, so say "this is how the screen looks", not "this is the
-  live test."** `[TBD]` an owner capture, if one is wanted.
+**Never inject a fault live.** If asked about degradation, show the constructed image and say it is constructed
+(section F), then describe the 2026-10-28 live test (evaluation report §10; `docs/deploy-window-log.md`, phase 5):
+the forecast hop's timeout was set to 0.5 s on a healthy service, and the question returned `degraded` with HTTP
+200, no figure, and "Not checked: the request ended before verification ran." The metric read 1 and the alert
+emails arrived (owner-reported). It was one failure, so no breaker opened, and only the forecast service was
+tested live (§8). No screenshot was taken of that live test.
 
 ## E. Part 2: instructor questions (10 to 20 minutes)
 
@@ -368,43 +366,52 @@ breaker opened, and only the forecast service was tested live (§8).
 
 ## F. If something goes wrong
 
+There is no recording and no fallback video (owner, 2026-10-29): the demonstration runs live.
+
 | Problem | What to do |
 |---|---|
 | An answer takes over 30 s | Say it's a cold start (R-05), and narrate the journey while waiting. Measured: 26 to 61 s on 2026-10-28, inside the 120 s ceiling. |
-| An example misbehaves | Say so plainly, show its screenshot, and move on. Screenshots in `docs/screenshots/`: SLA answer, `ui-polish-2026-10-22/answered-headline-light.png` and `answer-journey-2026-10-23/live-journey-reporting-light.png`; sentiment, `live-journey-sentiment-light.png`; forecast, `live-journey-forecast-light.png`; the Southeast clarification, `live-journey-clarification-light.png` and `ui-polish-2026-10-22/clarification-light.png`; the results page, `results-page-2026-10-29/results-light-1280.png`. **The revenue decline has none: `[TBD]`.** All were committed 2026-10-23 or earlier, before the 10-28 deploy, so check each against the live look in A3. |
-| The system is down, or the network drops | Rejoin by phone if needed. Share the backup recording at the matching segment (G). In Zoom, share the player window with "Share sound" and "Optimize for video" on (owner input). With `ops-db` stopped the page shows "The data service is unavailable right now." (`docs/screenshots/gateway-data-service-unavailable.png`); if you see it, `ops-db` is not running, so check `RUNBOOK_GRADING.md`, step 2. |
+| A single example fails | Show its screenshot from the deploy session (`docs/screenshots/demo-session-[TBD date]/`), say so plainly, and move on. |
+| The degraded state is asked about | Show `docs/screenshots/answer-journey-2026-10-23/constructed-journey-degraded-light.png` and **say aloud that it is "constructed"**: built from test data, not captured from the live fault test. Then describe the 2026-10-28 live test (end of section D). |
 | Zoom's screen share freezes | Stop sharing and share the window again. |
-| The daily cap is reached (ADR-097) | The message is "Daily limit reached: this demo answers a fixed number of questions a day. It resets at midnight Pacific time." (data dictionary §6 rule 5). Use the recording. |
+| The network drops | Rejoin by phone audio on the hotspot (B5) and carry on with whatever you can show. If the PC is offline, the live system cannot be shown: use the last step of the recovery sequence. |
+| The system is down | Run the recovery sequence below inside the instructor's buffer. |
+| The daily cap is reached (ADR-097) | The message is "Daily limit reached: this demo answers a fixed number of questions a day. It resets at midnight Pacific time." (data dictionary §6 rule 5). No step clears it inside the buffer. The counter is in process and resets on a cold start (L-88), but that is not tested as a fix, so do not rely on it. Show the screenshots and the report (tab 5), then use the last step of the recovery sequence. |
 | Running long | Shorten segment 6 to one example, and segment 8 to two figures (keep the caveats). |
 
-## G. The backup recording, by 11-22
+**Recovery sequence: the system is down.** Run these in order from the owner's PC, with the `$P $R $N $G $S` block
+loaded. Tell the instructor what you are doing. The buffer is 10 to 20 minutes, and on 2026-10-14 each `gcloud`
+call took 1 to 4 minutes (`RUNBOOK_V.md`, "Windows PowerShell 5.1 notes"), so stop at the first step that fixes it.
 
-**It needs the preconditions: the results page deployed and an ADR-110 session open.**
+1. **Check service status.**
+   - Reachability: `curl.exe -4 -m 20 $G/health` answers 200 with `{"status":"ok"}` (`RUNBOOK_GRADING.md`, step 5;
+     `/healthz` does not work on the public URL).
+   - Per service, the serving revision: `gcloud run services describe <svc> --region $R --project $P --format
+     "value(status.traffic[0].revisionName)"` (`RUNBOOK_V.md`, "Rollback").
+   - All six at once: `.venv\Scripts\python deploy\verify.py --ipv4` (about 1 minute when healthy on 2026-10-28,
+     `docs/deploy-window-log.md`, phase 3; it prints a line per check as it goes).
+2. **Check `ops-db` is running.** With it stopped the page shows "The data service is unavailable right now."
+   (`RUNBOOK_GRADING.md`, "Close the window", step 2).
+   ```powershell
+   gcloud sql instances describe ops-db --project $P --format "value(state,settings.activationPolicy)"
+   ```
+   Expect `RUNNABLE  ALWAYS`. If not, run the start in `RUNBOOK_GRADING.md`, "Open the window", step 2 (the
+   `patch ... ALWAYS` and its wait loop). `RUNBOOK_V.md`, step 1, budgets about 5 minutes for it.
+3. **Roll back the failing service, or redeploy it.**
+   - **Roll back** (`RUNBOOK_V.md`, "Rollback (per service)"): `gcloud run revisions list --service <svc> ...`, then
+     `gcloud run services update-traffic <svc> --to-revisions <previous-revision>=100 ...`, then the `describe`
+     above to confirm. This fits the buffer. The rollback pins traffic; the note of 2026-10-28 there says how to
+     clear the pin afterwards, and once the explicit "latest revision, 100%" block is deployed a later deploy
+     resets it (L-105).
+   - **Redeploy** needs the build trigger enabled and a build: about 9 minutes on 2026-10-28
+     (`docs/deploy-window-log.md`, phase 2; `RUNBOOK_V.md`, step 8). It probably does not fit the buffer, so
+     prefer the rollback.
+4. **Run the smoke check** (`RUNBOOK_GRADING.md`, "Open the window", step 5): ask one question ("How many
+   incidents last quarter?"). Expect an answer with an "Interpreted as:" line and a verification line. A first
+   answer after idle can take about 56 s.
+5. **Last resort: `[OWNER]` asks the instructor for another slot.**
 
-- **Record all of Part 1 once,** on the live system, in a solo Zoom meeting with local recording. Use the same
-  window share and browser zoom as the live demonstration, and the warm-up from C.
-- **Store it outside the repository;** recordings are not committed. Note where it is kept here, without a link:
-  `[TBD]`.
-- **List each segment's timestamp** in the recording, so you can jump to it during the demonstration. Fill the
-  right-hand column when the recording exists.
-
-| # | Segment | Planned start | Timestamp in the recording |
-|---|---|---|---|
-| 1 | The problem | 0:00 | `[TBD]` |
-| 2 | The architecture | 0:02 | `[TBD]` |
-| 3 | The code | 0:06 | `[TBD]` |
-| 4 | Live: the SLA example | 0:08 | `[TBD]` |
-| 5 | Live: the answer journey | 0:11 | `[TBD]` |
-| 6 | Live: sentiment and forecast | 0:14 | `[TBD]` |
-| 7 | Live: the boundaries | 0:18 | `[TBD]` |
-| 8 | The evaluation | 0:21 | `[TBD]` |
-| 9 | Production-grade, cost, what's next | 0:25 | `[TBD]` |
-
-- The recording is made in a session that sits outside a window, so close it the same day: `RUNBOOK_GRADING.md`,
-  "Close the window", steps 2 to 4 (stop `ops-db`, record the dates, read the retry log), and a
-  `docs/deploy-window-log.md` entry (ADR-110). Revoke the session's owner invite if it was a test invite.
-
-## H. After the demonstration
+## G. After the demonstration
 
 Close the window with `RUNBOOK_GRADING.md`, "Close the window": stop `ops-db`, revoke the grader invite, run the
 retry-log check, and add the log entry. **Close the window only once grading no longer needs the live system,**
