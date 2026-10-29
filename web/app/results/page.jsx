@@ -22,6 +22,16 @@ const CAVEATS = [
   "These figures describe the evaluated Sprint 5 system unless marked otherwise.",
 ];
 
+// Rule 11's fixed strings. A figure whose scope is not "evaluated" carries one of these tags.
+const TAGS = {
+  current: "Current build, 2026-10-28",
+  post_hoc: "After the evaluation, post hoc (ADR-116)",
+  project: "Whole project, 2026-10-01 to 10-28",
+};
+const ITEM_5 = "Item 5 (retries, timeouts, breakers) is met offline only.";
+
+const tagOf = (id) => TAGS[F[id].scope];
+
 function inline(text) {
   return text.split("`").map((part, i) => (i % 2 ? <code key={i}>{part}</code> : part));
 }
@@ -30,22 +40,26 @@ function Stat({ id, label }) {
   const f = F[id];
   return (
     <div className="stat">
-      <dt>{label ?? f.label}</dt>
+      <dt>{label ?? inline(f.label)}</dt>
       <dd>
         <strong>{f.text}</strong>
         <code className="src">{f.source}</code>
+        {tagOf(id) && <span className="small muted">{tagOf(id)}</span>}
       </dd>
     </div>
   );
 }
 
-function Card({ title, headline, children }) {
+function Card({ title, headline, note, children }) {
   return (
     <section className="card card-pad stat-card">
       <h3>{title}</h3>
       <p className="stat-headline">{F[headline].text}</p>
+      <span className="small muted">{inline(F[headline].label)}</span>
       <code className="src">{F[headline].source}</code>
+      {tagOf(headline) && <span className="small muted">{tagOf(headline)}</span>}
       <dl className="stats">{children}</dl>
+      {note && <p className="small muted">{note}</p>}
     </section>
   );
 }
@@ -87,7 +101,7 @@ export default function Results() {
             <Stat id="forecast_holdout_seasonal_naive" />
             <Stat id="forecast_served" />
           </Card>
-          <Card title="Production-grade" headline="production_grade" />
+          <Card title="Production-grade" headline="production_grade" note={ITEM_5} />
         </div>
       </section>
 
@@ -105,22 +119,22 @@ export default function Results() {
         </div>
         <div className="card card-pad bars">
           <h3>Ambiguous questions recognised, higher is better</h3>
-          <Bar label="route_v6" text={F.fr03_route_v6.text} {...fraction("fr03_route_v6")} source={F.fr03_route_v6.source} />
-          <Bar label="route_v3" text={F.fr03_route_v3.text} {...fraction("fr03_route_v3")} source={F.fr03_route_v3.source} base />
+          <Bar label="route_v6" text={F.fr03_route_v6.text} {...fraction("fr03_route_v6")} source={F.fr03_route_v6.source} tag={tagOf("fr03_route_v6")} />
+          <Bar label="route_v3" text={F.fr03_route_v3.text} {...fraction("fr03_route_v3")} source={F.fr03_route_v3.source} tag={tagOf("fr03_route_v3")} base />
         </div>
       </section>
 
       <section>
         <h2>FR-03: ambiguous questions</h2>
         <p>
-          FR-03 asks the router to ask for a rephrase when a question is ambiguous. It is not met:{" "}
+          FR-03 asks the router to ask for a rephrase when a question is ambiguous. It is not met.{" "}
           <code>route_v6</code> recognised {F.fr03_route_v6.text} ambiguous questions against{" "}
-          {F.fr03_route_v3.text} for <code>route_v3</code>, which is below the floor set for it, and
-          the third attempt to improve it ended in a {F.fr03_third_attempt.text}.
+          {F.fr03_route_v3.text} for <code>route_v3</code>; that is below the floor the gate set,
+          and the third attempt to improve it ended in a {F.fr03_third_attempt.text}.
         </p>
         <p>
           It is partly addressed because <code>route_v6</code> is now the default router, but about
-          one ambiguous question in three is still routed to a best guess.
+          one ambiguous question in three is still best-fit routed.
         </p>
         <p className="small muted">
           <code className="src">{F.fr03_route_v6.source}</code>

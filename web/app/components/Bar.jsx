@@ -5,7 +5,7 @@
 const BAR_WIDTH = 100;
 const BAR_HEIGHT = 10;
 
-export default function Bar({ label, text, value, max, source, base = false }) {
+export default function Bar({ label, text, value, max, source, tag, base = false }) {
   const width = max > 0 ? (value / max) * BAR_WIDTH : 0;
   return (
     <div className="bar-row">
@@ -22,6 +22,7 @@ export default function Bar({ label, text, value, max, source, base = false }) {
       </svg>
       <strong className="bar-num">{text}</strong>
       <code className="src">{source}</code>
+      {tag && <span className="small muted bar-tag">{tag}</span>}
     </div>
   );
 }

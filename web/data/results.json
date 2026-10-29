@@ -12,6 +12,7 @@
         "quote": "**GCP cost from 2026-10-01 to 10-28 is $8.79,**"
       },
       "report_section": "4.7",
+      "scope": "project",
       "sha256": "d37d4695c8f400ab1c9948d2ea7b56f61e334f8c777632dc4be82cac13bbb71a",
       "source": "docs/sprint-log.md",
       "text": "$8.79"
@@ -31,6 +32,7 @@
       },
       "number": 0.172689,
       "report_section": "4.7",
+      "scope": "evaluated",
       "sha256": "1e27cb3923aa13c9c643c705d39f34aeb14a0fa0e0a0c8331d4d8ddd09f6c01c",
       "source": "evals/results/sprint5_x_ledger.json",
       "text": "$0.172689"
@@ -50,6 +52,7 @@
       },
       "number": 186,
       "report_section": "4.7",
+      "scope": "evaluated",
       "sha256": "1e27cb3923aa13c9c643c705d39f34aeb14a0fa0e0a0c8331d4d8ddd09f6c01c",
       "source": "evals/results/sprint5_x_ledger.json",
       "text": "186 requests"
@@ -69,6 +72,7 @@
       },
       "number": 14.8,
       "report_section": "4.4",
+      "scope": "evaluated",
       "sha256": "81b60c32f321ba116dac4a3013cc70a1f6197321cfdf7708a5d9ac97a1ed03b3",
       "source": "evals/results/forecast/2026-10-02_holdout/holdout.json",
       "text": "14.80%"
@@ -88,6 +92,7 @@
       },
       "number": 8.81,
       "report_section": "4.4",
+      "scope": "evaluated",
       "sha256": "81b60c32f321ba116dac4a3013cc70a1f6197321cfdf7708a5d9ac97a1ed03b3",
       "source": "evals/results/forecast/2026-10-02_holdout/holdout.json",
       "text": "8.81%"
@@ -109,6 +114,7 @@
       "number": 5,
       "of": 18,
       "report_section": "4.4",
+      "scope": "evaluated",
       "sha256": "c5284000a2411eec0749442e4b5b56757dd1a6a0588fccc3464ba5e6a698a83c",
       "source": "ml/forecast/artifacts/volume_v2.manifest.json",
       "text": "5 of 18"
@@ -130,6 +136,7 @@
       "number": 0,
       "of": 15,
       "report_section": "6",
+      "scope": "post_hoc",
       "sha256": "0e35668ce110e69a21aa79058f9ed030f80e63935e5cbc586131cce534698b50",
       "source": "docs/decisions-log.md",
       "text": "0 of 15"
@@ -151,6 +158,7 @@
       "number": 10,
       "of": 15,
       "report_section": "6",
+      "scope": "post_hoc",
       "sha256": "0e35668ce110e69a21aa79058f9ed030f80e63935e5cbc586131cce534698b50",
       "source": "docs/decisions-log.md",
       "text": "10 of 15"
@@ -167,6 +175,7 @@
         "quote": "**P2: no-go. The attempt has failed and FR-03 is unmet, with no further attempt (ADR-113).**"
       },
       "report_section": "6",
+      "scope": "evaluated",
       "sha256": "bcdad933144e3d772b5b11c62e6399b854aa8fc0d2fbd194801d6002808a2e08",
       "source": "docs/decisions-log.md",
       "text": "no-go"
@@ -189,6 +198,7 @@
       "number": 29,
       "of": 36,
       "report_section": "4.2",
+      "scope": "evaluated",
       "sha256": "2d6682374783216252465bf0e3e9748626daa41456ddf2ba6ee57c1b339831f8",
       "source": "evals/results/golden_v2/2026-10-13/score.json",
       "text": "29 of 36"
@@ -209,6 +219,7 @@
       "number": 31,
       "of": 36,
       "report_section": "4.2",
+      "scope": "evaluated",
       "sha256": "bbd1bde01138034d15496ff64dcb16515e1676bf4b38157db43c00b9dc7926e8",
       "source": "evals/results/sprint5_x/golden_owner_review.csv",
       "text": "31 of 36"
@@ -229,6 +240,7 @@
       "of": 12,
       "report_section": "8",
       "report_text": "11 of the 12",
+      "scope": "current",
       "sha256": "cd12f6ca31dd69bc112cc98dce258c9a4428c7c08918e32c59231ee5e38a5910",
       "source": "docs/production-grade-audit.md",
       "text": "11 of 12"
@@ -248,6 +260,7 @@
       "number": 219,
       "of": 223,
       "report_section": "4.3",
+      "scope": "evaluated",
       "sha256": "a8961f44152b25d3391a5858413693d6131bec03cec6191b578ca3678695736a",
       "source": "evals/results/qa_faults/2026-10-10/report.md",
       "text": "219 of 223"
@@ -265,6 +278,7 @@
       },
       "number": 98.2,
       "report_section": "4.3",
+      "scope": "evaluated",
       "sha256": "a8961f44152b25d3391a5858413693d6131bec03cec6191b578ca3678695736a",
       "source": "evals/results/qa_faults/2026-10-10/report.md",
       "text": "98.2%"
@@ -284,6 +298,7 @@
       "number": 223,
       "of": 223,
       "report_section": "4.3",
+      "scope": "evaluated",
       "sha256": "d6cd6ee636d53805072179a13b039b6256957f28ad638ef4759399e60adfa2a3",
       "source": "evals/results/qa_faults/2026-10-10-m2/report.md",
       "text": "223 of 223"
@@ -303,6 +318,7 @@
       },
       "number": 21,
       "report_section": "4.1",
+      "scope": "evaluated",
       "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
       "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
       "text": "21 item-runs"
@@ -322,6 +338,7 @@
       },
       "number": 15,
       "report_section": "4.1",
+      "scope": "evaluated",
       "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
       "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
       "text": "15 item-runs"
@@ -344,6 +361,7 @@
       "number": 38,
       "of": 50,
       "report_section": "4.1",
+      "scope": "evaluated",
       "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
       "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
       "text": "38 of 50"
@@ -366,6 +384,7 @@
       "number": 38,
       "of": 50,
       "report_section": "4.1",
+      "scope": "evaluated",
       "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
       "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
       "text": "38 of 50"
@@ -388,6 +407,7 @@
       "number": 38,
       "of": 50,
       "report_section": "4.1",
+      "scope": "evaluated",
       "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
       "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
       "text": "38 of 50"
@@ -410,6 +430,7 @@
       "number": 38,
       "of": 43,
       "report_section": "4.1",
+      "scope": "evaluated",
       "sha256": "de080efad3326633b16f3a3abc8c51936f91de51bccab425281878f2e113f9dd",
       "source": "evals/results/routing_heldout_v1/2026-10-13/score.json",
       "text": "38 of 43"
@@ -429,6 +450,7 @@
       },
       "number": 0.9713,
       "report_section": "4.5",
+      "scope": "evaluated",
       "sha256": "f621eba0bcef285284d0b4cbabfad00182988e9b7734b68c6eb4f85be5b4dcb8",
       "source": "evals/results/sentiment/2026-10-01_bert_v1/bert_v1.test.metrics.json",
       "text": "0.9713"
@@ -448,6 +470,7 @@
       },
       "number": 0.9431,
       "report_section": "4.5",
+      "scope": "evaluated",
       "sha256": "064807238ad7f326bf93a2c7f2308911862f740777360db3e720cfa93bc26067",
       "source": "evals/results/sentiment/2026-10-01_baselines/tfidf_logreg.test.metrics.json",
       "text": "0.9431"

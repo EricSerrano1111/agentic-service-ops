@@ -315,3 +315,35 @@ def test_the_results_page_links_the_report_and_draws_bars_without_inline_styles(
     bar = source("components", "Bar.jsx")
     assert "<svg" in bar and "style=" not in page + bar
     assert "<strong" in bar  # the number is written beside the bar
+
+
+def test_rule_11_tag_strings_are_in_the_page_once_each_and_in_the_dictionary():
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    text = rule(11)
+    fixed = text.split("**The page also states these fixed strings:**", 1)[1]
+    strings = re.findall(r'"([^"]+)"', fixed)
+    assert strings == [
+        "Current build, 2026-10-28",
+        "After the evaluation, post hoc (ADR-116)",
+        "Whole project, 2026-10-01 to 10-28",
+        "Item 5 (retries, timeouts, breakers) is met offline only.",
+    ]
+    for string in strings:
+        assert page.count(f'"{string}"') == 1, string
+
+
+def test_every_card_headline_renders_its_label():
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    assert "{inline(F[headline].label)}" in page
+    figures = json.loads((ROOT / "web" / "data" / "results.json").read_text(encoding="utf-8"))
+    headlines = re.findall(r'headline="(\w+)"', page)
+    assert len(headlines) == 6
+    for fid in headlines:
+        assert figures["figures"][fid]["label"], fid
+
+
+def test_a_figure_not_from_the_evaluated_system_is_tagged_where_it_is_shown():
+    page = RESULTS_PAGE.read_text(encoding="utf-8")
+    assert "tagOf(headline)" in page and "tagOf(id)" in page
+    assert page.count("tag={tagOf(") == 2  # the two FR-03 bars
+    assert "tag" in source("components", "Bar.jsx")

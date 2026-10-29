@@ -184,3 +184,17 @@ def test_a_changed_source_would_be_caught(tmp_path, monkeypatch):
     (root / script.ROUTING).write_text(json.dumps(altered), encoding="utf-8")
     monkeypatch.setattr(script, "ROOT", root)
     assert script.build() != text_of("web/data/results.json")
+
+
+SCOPE_TAGS = {
+    "production_grade": "current",
+    "fr03_route_v6": "post_hoc",
+    "fr03_route_v3": "post_hoc",
+    "cost_gcp": "project",
+}
+
+
+def test_every_figure_has_one_of_the_four_scopes_and_the_marked_ones_are_these():
+    assert {f["scope"] for f in FIGURES.values()} <= {"evaluated", "current", "post_hoc", "project"}
+    for fid, entry in FIGURES.items():
+        assert entry["scope"] == SCOPE_TAGS.get(fid, "evaluated"), fid

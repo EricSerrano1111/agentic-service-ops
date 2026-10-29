@@ -568,7 +568,8 @@ Clicking an example fills the input and does not submit it. Each example is chec
 - its source file's path;
 - that file's SHA-256, taken with line endings normalised to LF (a checkout on Windows and one on Linux then agree). For the three living documents that gain entries all the time (`docs/decisions-log.md`, `docs/sprint-log.md` and `docs/production-grade-audit.md`), it is the SHA-256 of the quoted line instead, so an unrelated entry does not break the build;
 - a locator: a JSON pointer for a JSON file, an exact quoted line for a Markdown file, or a stated count for a CSV;
-- the evaluation report section that cites it.
+- the evaluation report section that cites it;
+- its scope: the evaluated system, the current build, a post-hoc comparison, or the whole project; any figure not from the evaluated system is tagged on the page with a fixed string.
 
 **The UI computes nothing** except bar widths drawn from the figures shown. Every figure shows its source path in small type.
 
@@ -578,6 +579,12 @@ Clicking an example fills the input and does not submit it. Each example is chec
 - "QA's catch rate is an upper bound: its author drafted the faults."
 - "`route_v6`'s comparison was made after the results, on sets already used."
 - "These figures describe the evaluated Sprint 5 system unless marked otherwise."
+
+**The page also states these fixed strings:**
+- the tag on a figure from the current build: "Current build, 2026-10-28";
+- the tag on a post-hoc comparison: "After the evaluation, post hoc (ADR-116)";
+- the tag on a whole-project figure: "Whole project, 2026-10-01 to 10-28";
+- under the production-grade card: "Item 5 (retries, timeouts, breakers) is met offline only."
 
 The page links to the full evaluation report in the public repository.
 
