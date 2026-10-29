@@ -130,6 +130,7 @@
 | 116 | `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met) | Accepted |
 | 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 |
 | 118 | Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part) | Accepted |
+| 119 | The demonstration runs live only; no backup recording (supersedes ADR-117 in part) | Accepted |
 
 ---
 
@@ -4120,3 +4121,30 @@ After a start, one question through the gateway confirms the data path before th
 - R-21 (the paid balance running out during a grading window) doesn't apply until Window B.
 - The `owner-laptop-3` invite, created 2026-10-28 and expiring 2026-11-09 23:59, covers a deploy window held before then. A later window needs a new owner invite.
 - `05` was submitted (recorded 2026-10-22). `06` is still held, and is due 11-08.
+
+### ADR-119 — The demonstration runs live only; no backup recording (supersedes ADR-117 in part)
+*Date: 2026-10-29. Owner-decided 2026-10-29; assistant-drafted. Supersedes ADR-117 in part: item 6's "recorded backup of the full demonstration", and ADR-117's calendar rows "By 11-22 | The demonstration script and the backup recording" and "By 11-29 | Rehearsal". Every other part of ADR-117 stands.*
+
+**Context:**
+- The owner confirmed that the course requires the system to run live during the demonstration, with the grader present. No recording is required.
+- Playing a recording would itself count as a failed demonstration, so a recording isn't a real fallback.
+- The demonstration is over Zoom, in a 60-minute slot: a 30-minute overview, then 10 to 20 minutes of instructor questions. The instructor holds 10 to 20 minutes as a buffer.
+- Slots are announced about 11-15 to 11-22, and the owner chooses one.
+
+**Decision:**
+1. No backup recording.
+2. Reliability goes into the live run:
+   - one live run-through the day before (`deploy/RUNBOOK_DEMO.md` A3);
+   - a smoke check and a warm-up on the day, then an off-screen re-warm;
+   - a current screenshot of each live example, used when a single example misbehaves;
+   - a recovery sequence the owner runs inside the instructor's buffer.
+3. Narration is rehearsed offline.
+4. One owner deploy session before 11-09, using the `owner-laptop-3` invite, ships the L-105 fixes and the results page, and takes the screenshots.
+5. The owner prefers a slot inside Window B (ADR-107). A slot outside it needs a new ADR to move the window, the grader invite's expiry with it.
+
+**Consequences:**
+- If the system can't be recovered within the buffer, the demonstration fails. The owner's last resort is to ask for another slot.
+- There is no 11-22 recording deadline, and no 11-29 rehearsal session.
+
+**Alternatives considered:**
+- *A recorded backup* (rejected): it fails the requirement even when it plays well.

@@ -379,6 +379,7 @@ Use **Gemini on the free API tier** (Google AI Studio key) as the primary runtim
 - rehearsal by 11-29;
 - the evaluation report draft by 11-08 and final by 12-01;
 - the documentation packet with revisions by 12-05.
+*2026-10-29 (ADR-119; assistant-drafted.)* Superseded: no backup recording; the live run-through is the day before the demonstration (`deploy/RUNBOOK_DEMO.md` A3); the deploy session is before 11-09.
 
 The 6.5 deploy window is after Window A (about 11-10 onward), unless the owner chooses otherwise. The final package is code, a documentation packet and a live demonstration, with no slide file (ADR-117).
 
