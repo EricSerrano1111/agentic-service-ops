@@ -27,6 +27,8 @@ This audits the 12 items of `docs/architecture.md` §7, "Definition of Productio
 
 **Ticks:** items 1, 2, 3, 7, 8, 10 and 11 (10 was already ticked). Items 4, 5, 6, 9 and 12 stay unticked, each with a dated reason in `architecture.md` §7.
 
+*2026-10-28 (6.5 deploy window; owner-decided 2026-10-28; assistant-drafted.)* **Re-verdicts:** items 4, 6 and 9 are now **Met, deployed**, from the deploy window of 2026-10-28; see "Re-verdicts after the 6.5 deploy window" below. The table above, the findings and every earlier verdict are unchanged. Item 12 was ticked on 2026-10-18, so 11 of 12 boxes are ticked; item 5 is the one that stays unticked.
+
 ## Findings
 
 Differences between what a document says and what the system or repository shows, plus anything surprising. Appendix A has the deployed-state reads behind F1, F2 and F7. Nothing here was fixed.
@@ -258,6 +260,56 @@ So the trace ID is on the gateway, the orchestrator, the A2A agent, its MCP side
 - (b) Architecture diagram: `README.md:39` reads "Architecture diagram: placeholder. The owner draws it and adds it here." A placeholder is not a diagram.
 
 **Gaps and limits.** The remaining README steps (Alembic, the loader, the full stack) were not run. The first needs Postgres, which needs Docker Desktop, which was not running on this machine, and the step before it already fails. The full stack also needs a model key and the gitignored `models/` weights; the README says so in a later section. Stale README lines (F4): "Sprint 6 (2026-10-26 to 11-08)" against ADR-109 (2026-10-15 to 10-25); "The build trigger is disabled until the deploy YAML is synced to the paid key (Z2)" (the sync is done, `381bd3f`; the trigger is disabled under ADR-105); "the five least-privilege agent roles" in the description of the first migration (ADR-063 later made it seven; the sentence does not say so).
+
+## Re-verdicts after the 6.5 deploy window (2026-10-28)
+
+*2026-10-28 (6.5 deploy window; owner-decided 2026-10-28; assistant-drafted.)* Evidence: `docs/deploy-window-log.md`, 2026-10-28 (build `0b96ca2a-8d1c-4e9d-aca8-a8dc3f3c3e75`, commit `b6fa907663e76b1799b145eae11c8c5ce473dda7`; the six services serving the new revisions at 100%) and its ledger. Each verdict below was held against the item's committed criterion text, quoted. **No criterion was changed, and no old verdict, table row or finding is edited:** the earlier text stays as written and this section is added to it. The bare word "Met" is not in the audit's verdict vocabulary, so the new verdicts read **Met, deployed**.
+
+| # | Item | Old verdict | New verdict | Basis |
+|---|---|---|---|---|
+| 4 | Health checks and readiness | Partly met | **Met, deployed** | The QA container's startup probe is `/readyz`, and every container has a `/healthz` liveness probe, read from the deployed revisions. |
+| 6 | Graceful degradation | Met, offline only | **Met, deployed** | A specialist-unavailable path ran on the current build and returned the defined result (HTTP 200, `degraded`, not verified); the alert fired. The unavailability was induced by a 0.5 s hop timeout. |
+| 9 | CI pipeline | Partly met | **Met, deployed** | One pipeline run with `_RUN_VERIFY=true` passed `verify.py` over the six services; CI was green at the same commit. |
+
+### 4. Health checks and readiness probes on every service
+
+- **Criterion (committed 2026-10-16, quoted):** "the criterion is a startup probe on every container that gates on `/readyz` where a dependency exists, plus the endpoints for liveness", with the QA agent in scope; "a configured Cloud Run `livenessProbe` is **not** required by §7's wording".
+- **Part (a), the endpoints:** unchanged and met (2026-10-16).
+- **Part (b), the gap (F1), closed:** the `agent-qa` container of `ops-qa-00005-78z` has its startup probe on **`/readyz`** (port 8080). The three agents and the three MCP sidecars were already on `/readyz` and still are. The gateway and orchestrator probe `/healthz` at start-up, which the chosen reading allows (no sidecar or database dependency). Read as JSON from each service's latest ready revision on 2026-10-28, after the build.
+- **Beyond the criterion (F2, closed):** all nine containers now have a `livenessProbe` on `/healthz` at their own port, so "`/healthz` liveness on every service" is now true of the configuration as well as the endpoints.
+- **Limits:** the configuration was read; the 2026-10-08 proof that Cloud Run refuses a revision whose `/readyz` fails was not repeated, so it is still shown for the reporting slice only.
+
+### 6. Graceful degradation: defined behaviour when any specialist agent is unavailable
+
+- **Criterion (committed 2026-10-16, quoted):** a documented behaviour for each unavailable dependency; "a defined, honest result (HTTP 200, marked degraded and not verified) rather than an error or a hang"; covered by tests; "a degraded answer is visible to the operator (the alert, ADR-112)". "Met on the deployed system means a real degraded path ran on the **current** build."
+- **The path that ran (current image `b6fa907`):** the forecast hop was made to time out (`FORECAST_A2A_TIMEOUT_S=0.5` on revision `ops-orchestrator-00009-rdv`). The browser showed "Not checked: the request ended before verification ran. Sent for follow-up. The forecast service is temporarily unavailable…" with no figure; the journey stopped at the forecast hop, marked `timeout`. The logs (trace `53724ffabbfe48218a3b8a0b7d3f6208`): `dependency failed dependency=forecast error=TimeoutError`, then `ask degraded trigger=dependency capability=forecast`; the orchestrator's `POST /ask` and the gateway's `POST /api/ask` both returned HTTP 200; gateway `qa_status=not_checked`. This is the criterion's defined result, not an error and not a hang, and not the deadline result.
+- **The alert:** the metric `orchestrator_degraded_answers` counted it (1 at 00:57:33Z); the degraded alert email and then the resolved email arrived (owner-reported). So the ADR-112 chain ran end to end on a real degraded answer, where 2026-10-16 had only a synthetic entry.
+- **Honest limits.**
+  - The specialist was healthy. Its unavailability was induced by a hop timeout of 0.5 s, so the path run is a timeout on the forecast hop, the same `dependency` branch a real outage reaches, and not a stopped specialist.
+  - It was one failure, so the forecast breaker did not open.
+  - Live, forecast only. The other specialists, QA unavailable, the cost cap and the model-transport breaker did not run on Cloud Run.
+  - L-89 stands: a database outage behind a healthy agent is a 502 error, not the degraded result.
+- **Why the verdict still moves:** the 2026-10-16 gap read "No specialist-unavailable path has run on the current build". One has now, with the monitoring working on it.
+
+### 9. CI pipeline
+
+- **Criterion (committed 2026-10-16, quoted):** "CI: lint ..., unit and integration run in GitHub Actions on every push and pull request to `main`"; "CD: a build trigger that builds the images, deploys, and verifies the revision"; the item is met if CI is met and CD is "**either** working as a default path **or** explicitly scoped to manual runs with a documented reason (ADR-105 disables the trigger outside deploy windows)". The 2026-10-16 audit named what would move it: "one pipeline run with `_RUN_VERIFY=true` that passes `verify.py` over the six services, in a deploy window".
+- **CI:** run `40728525766` on `main` at `b6fa907`, success (lint, unit, integration), the same commit that was deployed.
+- **CD (F13, closed):** build `0b96ca2a-8d1c-4e9d-aca8-a8dc3f3c3e75`, started by the owner on `main` with the trigger enabled for the run and `_RUN_VERIFY` at its default `true`. It built the images, deployed the six services in order, and its `verify` step passed all 35 checks (0 `FAIL`) over all six, ending `SUCCESS` in about 9 minutes. The trigger was disabled again afterwards, under ADR-105, which is the criterion's documented scope-out.
+- **Limits:** it is still a manual-run pipeline by design. The hardening items of 2026-10-16 are unchanged (a separate `verify-caller` account, deploy with no traffic then verify (L-64), the default compute account's Editor role, Terraform). **New:** a manual `update-traffic --to-revisions` pins traffic and the deploy step does not reset it, so a later pipeline deploy could land at 0% (L-105); the window handled it by hand, and the fix is an explicit traffic block in the service definitions, before Window B.
+
+### Items whose evidence changed but whose verdict does not
+
+- **3. Structured logging, trace IDs: stays Met, deployed.** The 2026-10-16 basis said "L-98 limit stands". L-98's fix is now deployed: on the `invalid_range` request one trace (`aa80741778ee4e779470683b628aa690`) runs through the gateway, orchestrator, reporting and its sidecar, and the error lines carry codes, lengths and hashes only. Only that one tool-error path was exercised.
+- **5. Retries, timeouts, breakers: stays Met, offline only.** New deployed evidence: a per-hop A2A timeout acted on the current build (the forecast hop, as configured for the fault test), and the 120 s ceiling held across cold starts (server time up to 45.8 s, browser time up to 61.2 s). Still not shown on Cloud Run: a breaker opening, the 60 s timeout acting, the QA hop clamp, a model-call retry or the revision loop. Retry logging stays unverified deployed: 0 `llm attempt failed` entries in 7 days (2026-10-28).
+
+### Findings closed
+
+- **F1** (the QA startup probe): resolved 2026-10-28.
+- **F2** (no liveness probes): resolved 2026-10-28.
+- **F13** (the pipeline's verify step on the six services): resolved 2026-10-28.
+
+The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits: the QA startup probe on `/healthz` (F1), no liveness probes (F2), the pipeline's verify step not yet run on all six services (F13), tool error text in two services' logs (L-98), and "a degraded result has not occurred on the current build". All five are closed or changed by the 2026-10-28 window. `06` is not edited here (`CLAUDE.md`); the owner decides whether a revision is wanted.
 
 ## Changes to a criterion after evidence
 

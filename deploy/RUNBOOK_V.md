@@ -552,6 +552,15 @@ previous revision (00004). For a service created in this window there is none: "
 invoker binding (`gcloud run services remove-iam-policy-binding`), and leave the service, or delete it
 (`gcloud run services delete <svc> --region $R --project $P`; ask first).
 
+*2026-10-28 (6.5 deploy window; owner-decided 2026-10-28; assistant-drafted.)* **`update-traffic --to-revisions` pins traffic to that revision, and a pipeline deploy does not clear the pin.** After any rollback or fault test, unpin before the next deploy, or the pipeline's new revision can land at 0% (L-105; the pipeline's `verify` step would fail the build on it). This applies to every future rollback, not only the one that found it. **Do not simply run `--to-latest`:** it follows the service's *latest ready* revision, which may still be the one you rolled back from. In the 2026-10-28 window the latest ready revision was the fault revision (`ops-orchestrator-00009-rdv`) after the restore, so `--to-latest` would have put it back on 100%. `--to-latest` is safe only when the latest ready revision is the one you want serving. The sequence that worked (`docs/deploy-window-log.md`, 2026-10-28, phase 5), each step checked read-only before the next:
+1. Make a clean revision with the settings you want, for a fault test by removing it (`gcloud run services update <svc> --remove-env-vars <VAR> ...`). While traffic is pinned, the new revision serves 0%.
+2. Wait until it is ready (`status.latestCreatedRevisionName`).
+3. Route to it by name: `gcloud run services update-traffic <svc> --to-revisions <new-revision>=100 ...`.
+4. Confirm `status.latestReadyRevisionName` equals that revision, and that its image digest and environment match what you meant to serve.
+5. Only then `gcloud run services update-traffic <svc> --to-latest ...`, and confirm `spec.traffic` shows `latestRevision: true` at 100%.
+
+After a rollback to an older revision, the service's template still holds the newer settings, so fix the template (or let a fixed build replace it) before step 5. The fix in code, due before Window B, is an explicit "latest revision, 100%" `traffic` block in each `deploy/cloudrun/*.yaml`, with a test, so a deploy resets any pin by itself.
+
 | At step | Stop and roll back when |
 |---|---|
 | 1 | the instance is not `RUNNABLE` within 10 min: stop; nothing to undo |

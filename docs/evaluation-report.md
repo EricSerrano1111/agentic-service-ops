@@ -1368,6 +1368,12 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Takes effect in the hardening redeploy, after `06` is submitted.** Until then the deployed system is the evaluated one, `route_v3`.
 - **Recorded in:** ADR-116.
 
+### L-58 update — `route_v6` is the deployed default; one live sighting (2026-10-28)
+*2026-10-28 (6.5 deploy window; owner present; assistant-drafted.)*
+- **Status: standing; FR-03 stays not met.** The 6.5 deploy window (build `0b96ca2a`, commit `b6fa907`) put `route_v6` into production: the routing log line read `prompt_version=route_v6` on every live question (12 of 12). The ambiguous example, "How's the Southeast doing?", returned `needs_clarification` with reason `intent_ambiguous`, after one model call, and asked the user to choose between reporting, sentiment and forecast. The clear examples routed as captioned (reporting, sentiment, forecast), and "What will revenue be next quarter?" went `out_of_scope` and was declined.
+- **What this is not:** one ambiguous question, asked once. It is not a measurement. It changes neither the held-out result (10 of 15 ambiguous items recognised) nor ADR-101's 75% floor, and about one ambiguous question in three is still best-fit routed.
+- **Recorded in:** `docs/deploy-window-log.md`, 2026-10-28 (phase 4, question 6).
+
 ### L-74 update — the Sprint 5 interpretation gate also failed; the check stays advisory (2026-10-12)
 - **Status: standing.** `qa_interp_v3` met the catch criterion in run 1 (19 of 23 caught, the floor) and failed the false-reject criterion (3 of 23 against at most 1: reporting 1 of 10, forecast 1 of 7, sentiment 1 of 6). Runs 2 and 3 were not made, as pre-registered. `QA_INTERP_MODE` stays `advisory`, `qa_interp_v2` stays the shipped prompt, and `qa_interp_v3` is not shipped.
 - **What v3 fixed on the used pairs (development, not held out):** false rejects 7 of 42 (v2) to 3 of 42; the two quarter-range pairs are now accepted. The three remaining false rejects are decline pairs (3 of 7), the known failure kind (L-92).
@@ -1380,6 +1386,7 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** the sets were generated once and frozen (ADR-094), and a third attempt in Sprint 5 is not allowed. Disclosed in the pre-registration before the gate ran. At this scale a gate that cannot see its known failure kind is a real weakness, not a portfolio choice.
 - **Fix (option):** a decline-heavy interpretation set (new, generated or owner-written, before any further prompt work), and a gate stated on it.
 - **Recorded in:** ADR-102; `evals/sprint5_gates.md` (B2 scope limits).
+- *2026-10-28 (6.5 deploy window; owner present; assistant-drafted.)* **One live sighting of the known failure kind.** On the deployed system, QA received the clarification for "How did Lina do on first-time fixes last quarter?" (two technicians match; trace `9e8cfcb1a053445dbd419e68f303d9a0`) as a decline, and its advisory `interpretation_matches_question` check failed (`faithful=False`, `differs_in=dates`), although the parsed period (2026-04-01 to 2026-06-30) is last quarter as of the data's date. The check is advisory, so QA's verdict was `pass`, the gateway logged `qa_status=verified`, and the UI showed no verification line (L-99). This is one sighting, not a measurement; it changes neither the gate result nor this limitation.
 
 ### L-93 — Per-process model-call caps are not a spend ceiling (2026-10-13)
 - **What:** the deployed containers run on the paid key (ADR-104) with `LLM_MAX_REQUESTS=1500` and `LLM_MAX_SPEND_USD=1.00` per process. The client counts these in memory, so they reset when an instance restarts or scales to zero, and each service can run several instances. The bound that actually holds is the gateway's 50-question daily cap (ADR-097), about 350 calls a day, plus the paid project's prepaid balance and budget alert (R-02), which were not re-verified on 2026-10-13.
@@ -1393,6 +1400,7 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Fix (option):** return `cost_usd` and `model_calls` in `AskResponse` (or response headers) when the gateway contract is decided; a redeploy, so after the evaluation freeze.
 - **Recorded in:** `evals/results/sprint5_x.md`, deviation 1.
 - *2026-10-23:* fixed in the repo (`journey.model_calls`, `journey.cost_usd`); not yet deployed.
+- *2026-10-28 (6.5 deploy window; owner present; assistant-drafted.)* **Resolved on deploy.** The response now carries `journey.model_calls` and `journey.cost_usd`, and the UI's chips ("Model calls", "Estimated cost") showed on the answers the owner checked (owner's observation: the journey was good on every answer that had one). The window ledger took each question's calls and cost from the orchestrator's log line, which §6 rule 10 says the journey's totals equal; the journey's own values were not read against the log in this window.
 
 ### L-95 — Golden findings the routing taxonomy does not hold (2026-10-13)
 - **What:** the first `golden_v2` run (29 of 36 mechanical) shows five behaviours outside the routing taxonomy. (1) "district" is read as an unsupported breakdown (G03), where the item expects regions. (2) "through the end of next year" is read as calendar 2027, so the weeks from September to December 2026 are not shown and 8 weeks are returned (G07). (3) A forecast request wholly beyond the horizon returns outcome `answered` with an empty week list and a sentence saying so, not `not_available` (G28). (4) A qualifier the system cannot honour (fiber, G10) is not named in the answer; the text says "install requests" and nothing about fiber. (5) The sentiment trend's p-value is carried and shown to four places, so an oracle comparison at full precision fails it (G21).
@@ -1422,6 +1430,8 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 
 *2026-10-22 (ADR-113 item 1; assistant-drafted.)* Fixed in the repo (PR: this branch); not yet deployed. It deploys in the hardening window after `06` is submitted.
 
+*2026-10-28 (6.5 deploy window; owner present; assistant-drafted.)* **Deployed and confirmed live, on the path observed.** On the `invalid_range` question (trace `aa80741778ee4e779470683b628aa690`), `agent_reporting` logged `tool failed code=tool_error error_chars=138 error_sha=5dceb5fcfcc0` and `task failed code=invalid_range reason_chars=211 reason_sha=dcda0dfd4821`; the orchestrator's `agent task failed` line and the gateway's `ask refused upstream` line carried the same length and hash. None of these lines carried error text. Only this one tool-error path was triggered in the window; other tool errors, which might carry values taken from the question, were not.
+
 ### L-99 — The verification line shows on a clarification (2026-10-15)
 - **What:** a `needs_clarification` page (the "Priya" question, two technicians matched) shows "Figures checked for the request as interpreted", although no figures were produced. The display claims a check with nothing to check.
 - **Why accepted:** the page also explains the clarification and lists both matches, so no wrong figure is shown; the cost is a misleading line.
@@ -1429,6 +1439,8 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Recorded in:** `evals/results/session1/2026-10-15/summary.md` ("For the 05 revision"); `run-notes.md` (step 3.6). Owner-decided 2026-10-15; assistant-drafted.
 
 *2026-10-22 (ADR-113 item 1; assistant-drafted.)* Fixed in the repo (PR: this branch); not yet deployed. It deploys in the hardening window after `06` is submitted.
+
+*2026-10-28 (6.5 deploy window; owner present; assistant-drafted.)* **Deployed and confirmed live.** "How's the Southeast doing?" (`intent_ambiguous`) and "How did Lina do on first-time fixes last quarter?" (two technicians match) each showed a clarification with no verification line in the owner's browser. The fix is display-only: the response data for the second still carries `qa_status=verified` and QA ran on it (see the L-92 update of the same date).
 
 ### L-100 — A backwards date range is silently reordered (2026-10-15)
 - **What:** "August 2026 to January 2026" was parsed as 2026-01-01 to 2026-08-31 and was then refused on the dataset window (422 `invalid_range`). The user is not told their range was backwards.
@@ -1463,3 +1475,13 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
   - Google's deprecations page, read 2026-10-22, lists no shutdown date for `gemini-3.5-flash-lite` or `gemini-3.8-flash`.
 - **Fix (option):** send `temperature` only when it is explicitly configured, or refuse it at startup for models that ignore it (like ADR-052's thinking-level check), as a new decision. **This must be done before any role moves to a model newer than 3.5 Flash-Lite.**
 - **Recorded in:** ADR-048 (item 5), ADR-049, ADR-052, ADR-103; Google notices of 2026-10-22; https://ai.google.dev/gemini-api/docs/deprecations (read 2026-10-22).
+- *2026-10-28 (6.5 deploy window; assistant-drafted.)* Google's deprecations page, read again on 2026-10-28 (the table row, fetched with `curl`): `gemini-3.5-flash-lite | July 21, 2026 | No shutdown date announced`. No shutdown date before 2026-12-12 (R-15). The deployed routing line reads `model=gemini-3.5-flash-lite`, and `temperature=0.0` is still sent. Standing.
+
+### L-105 — The gateway sends no cache headers and builds redirects with the wrong scheme; a deploy does not reset a manual traffic pin (2026-10-28)
+- **What:** three defects found in the 6.5 deploy window, in the serving and deploy path. None changes an answer.
+  - **No `Cache-Control` on the gateway's HTML, JS or CSS** (`ETag` and `Last-Modified` only). A browser may reuse a page it fetched earlier, so a returning viewer can see the pre-deploy UI until a hard reload. The owner's first view of the new build was the old UI (no notice, no examples, no other pages). The cause is inferred from the headers, not observed in the owner's browser.
+  - **The gateway's `/faq` redirect (307) has `Location: http://…/faq/`**, the wrong scheme. Cloud Run's front end answers the plain-`http` request with a 302 to `https`, and the owner's browser ended on `https`, so the effect was nil in this check.
+  - **A manual `update-traffic --to-revisions` pins traffic to a named revision,** and the deploy step (`deploy/deploy_service.py`) sends a PATCH with no `traffic` block. `RUNBOOK_V.md` assumes traffic follows the latest revision. Whether the PATCH resets a pin was not tested (the window avoided the question). If it does not, a pipeline deploy after any rollback or fault test puts its new revision at 0%, and the pipeline's verify step would fail the build.
+- **Why accepted:** the first is a stale view for a returning viewer, cured by a reload; the second had no effect on the browser; the third was handled in the window by a clean revision and an unpin, verified read-only (`docs/deploy-window-log.md`, 2026-10-28, phase 5). Nothing merges during a deploy window, so the fix waits for the next PR.
+- **Fix (option):** gateway: `Cache-Control` on HTML and forwarded-proto trust, one PR before Window B. The same PR adds an explicit "latest revision, 100%" `traffic` block to every `deploy/cloudrun/*.yaml`, with a test that every definition carries it, so a pipeline deploy resets any manual pin; hashed `/_next/static/` files can stay cacheable.
+- **Recorded in:** `docs/deploy-window-log.md`, 2026-10-28 (phase 4 step 1; phase 5); `deploy/RUNBOOK_V.md`, Rollback. Owner-decided 2026-10-28; assistant-drafted.
