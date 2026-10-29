@@ -1533,3 +1533,9 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
 - **Why accepted:** the first is a stale view for a returning viewer, cured by a reload; the second had no effect on the browser; the third was handled in the window by a clean revision and an unpin, verified read-only (`docs/deploy-window-log.md`, 2026-10-28, phase 5). Nothing merges during a deploy window, so the fix waits for the next PR.
 - **Fix (option):** gateway: `Cache-Control` on HTML and forwarded-proto trust, one PR before Window B. The same PR adds an explicit "latest revision, 100%" `traffic` block to every `deploy/cloudrun/*.yaml`, with a test that every definition carries it, so a pipeline deploy resets any manual pin; hashed `/_next/static/` files can stay cacheable.
 - **Recorded in:** `docs/deploy-window-log.md`, 2026-10-28 (phase 4 step 1; phase 5); `deploy/RUNBOOK_V.md`, Rollback. Owner-decided 2026-10-28; assistant-drafted.
+- *2026-10-29 (assistant-drafted.)* Fixed in the repo, not deployed:
+  - HTML is served `no-cache` and hashed `/_next/static/` files `immutable`.
+  - The trailing-slash redirect sends a path-only `Location`. This is chosen over forwarded-proto trust because the gateway keeps `proxy_headers=False` on purpose: its forwarded-for rule and rate limits are applied in code.
+  - Every service definition carries an explicit "latest revision, 100%" traffic block, so a pipeline deploy resets a manual pin.
+
+  It deploys in the next window.

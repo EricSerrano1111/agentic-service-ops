@@ -561,6 +561,8 @@ invoker binding (`gcloud run services remove-iam-policy-binding`), and leave the
 
 After a rollback to an older revision, the service's template still holds the newer settings, so fix the template (or let a fixed build replace it) before step 5. The fix in code, due before Window B, is an explicit "latest revision, 100%" `traffic` block in each `deploy/cloudrun/*.yaml`, with a test, so a deploy resets any pin by itself.
 
+*2026-10-29 (L-105; assistant-drafted.)* That block is now in all six `deploy/cloudrun/*.yaml` (`traffic: [{type: TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST, percent: 100}]`), merged but not yet deployed. Once a build has deployed it, a pipeline deploy resets a manual pin by itself. A rollback by `update-traffic --to-revisions` still pins traffic until the next deploy. The five-step restore in the 2026-10-28 note above still applies if a pin must be cleared **without** a deploy.
+
 | At step | Stop and roll back when |
 |---|---|
 | 1 | the instance is not `RUNNABLE` within 10 min: stop; nothing to undo |

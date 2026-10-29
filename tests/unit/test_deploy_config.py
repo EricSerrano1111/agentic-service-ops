@@ -593,6 +593,26 @@ LIVENESS_PORTS = {
 }
 
 
+LATEST_100 = [{"type": "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST", "percent": 100}]
+
+
+@pytest.mark.parametrize("service", ALL_SERVICES)
+def test_every_definition_sends_all_traffic_to_the_latest_ready_revision(service):
+    """L-105: a PATCH carrying this block resets a manual `update-traffic` pin."""
+    doc = yaml.safe_load((DEPLOY / "cloudrun" / f"{service}.yaml").read_text("utf-8"))
+    assert doc["traffic"] == LATEST_100
+
+
+def test_the_deploy_scripts_pass_the_traffic_block_through_unchanged():
+    ds = _load("deploy_service")
+    for service in ALL_SERVICES:
+        raw = yaml.safe_load((DEPLOY / "cloudrun" / f"{service}.yaml").read_text("utf-8"))
+        assert render.render_value(raw["traffic"], ENV) == LATEST_100, service
+    doc = rendered("reporting")
+    assert doc["traffic"] == LATEST_100
+    assert ds.create_body(doc)["traffic"] == LATEST_100  # an update sends `doc` as it is
+
+
 def test_every_container_has_a_liveness_probe_on_healthz_at_its_own_port():
     """F2: /healthz checks no database, so a stopped database never causes a restart loop."""
     seen = {}

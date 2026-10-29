@@ -21,7 +21,6 @@ from common import TraceAccessLog, current_trace_id, text_fields
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -30,6 +29,7 @@ from .config import Settings
 from .interpret import view
 from .invites import Invite, InviteStore, find_by_id, find_by_token
 from .limits import DailyCap, SlidingWindow
+from .serving import UIFiles
 from .upstream import Orchestrator, OrchestratorTimeout, OrchestratorUnavailable
 
 log = logging.getLogger("gateway")
@@ -344,5 +344,5 @@ def create_app(
 
     # Last, so it never shadows an API or auth route.
     if settings.static_dir is not None:
-        app.mount("/", StaticFiles(directory=settings.static_dir, html=True), name="ui")
+        app.mount("/", UIFiles(directory=settings.static_dir, html=True), name="ui")
     return app

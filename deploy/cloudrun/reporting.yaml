@@ -17,6 +17,9 @@ labels:
   component: deploy # lets billing reports separate deploy cost from paid inference (ADR-083)
 ingress: INGRESS_TRAFFIC_ALL # IAM is the boundary in this deploy (ADR-081)
 invokerIamDisabled: false # the --no-allow-unauthenticated equivalent
+traffic: # 100% to the latest ready revision, so a deploy resets any manual pin (L-105)
+  - type: TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST
+    percent: 100
 template:
   serviceAccount: ${REPORTING_SA} # dedicated; never the default compute account
   timeout: 300s # at least 120 s (TA-16)

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 from api_gateway import csp
-from gateway_testkit import Kit
+from gateway_testkit import JSON_HEADERS, Kit
 
 PAGE = """<!DOCTYPE html><html><head><title>t</title>
 <script>self.__next_f=self.__next_f||[];self.__next_f.push([0])</script>
@@ -57,7 +57,66 @@ def test_a_path_without_the_trailing_slash_redirects_to_the_page(kit):
     for page in ("how-it-works", "faq"):
         r = kit.client.get(f"/{page}", follow_redirects=False)
         assert r.status_code == 307
-        assert r.headers["location"].endswith(f"/{page}/")
+        assert r.headers["location"] == f"/{page}/"  # path only: never a scheme (L-105)
+
+
+def test_the_redirect_keeps_the_query_string_and_is_never_absolute(kit):
+    r = kit.client.get("/faq?a=1&b=two", follow_redirects=False)
+    assert r.status_code == 307 and r.headers["location"] == "/faq/?a=1&b=two"
+    for path in ("/faq", "/how-it-works", "/faq?x=y"):
+        location = kit.client.get(path, follow_redirects=False).headers["location"]
+        assert location.startswith("/") and not location.startswith("//")
+        assert "://" not in location
+
+
+def test_the_gateway_still_runs_with_proxy_headers_off(monkeypatch):
+    from api_gateway import __main__ as entry
+
+    seen = {}
+    monkeypatch.setattr(entry.uvicorn, "run", lambda app, **kw: seen.update(kw))
+    monkeypatch.setattr(entry, "build_app", lambda: (None, type("S", (), {"port": 1})()))
+    monkeypatch.setattr(entry, "configure_logging", lambda *a: None)
+    assert entry.main(["serve"]) == 0
+    assert seen["proxy_headers"] is False  # the forwarded-for rule is applied in code
+
+
+@pytest.mark.parametrize("path", ["/", "/faq/", "/how-it-works/"])
+def test_html_pages_are_revalidated_on_every_load(kit, path):
+    r = kit.client.get(path)
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-cache"
+    assert r.headers["etag"] and r.headers["last-modified"]
+
+
+def test_hashed_next_files_are_immutable_and_other_static_files_revalidate(kit, export):
+    chunk = export / "_next" / "static" / "chunks" / "app-abc123.js"
+    chunk.parent.mkdir(parents=True)
+    chunk.write_text("console.log(1)", encoding="utf-8")
+    (export / "favicon.ico").write_bytes(b"\x00\x00")
+    r = kit.client.get("/_next/static/chunks/app-abc123.js")
+    assert r.status_code == 200
+    assert r.headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert r.headers["etag"] and r.headers["last-modified"]
+    assert kit.client.get("/favicon.ico").headers["cache-control"] == "no-cache"
+    # A conditional request is answered 304 and keeps the same policy.
+    again = kit.client.get(
+        "/_next/static/chunks/app-abc123.js", headers={"If-None-Match": r.headers["etag"]}
+    )
+    assert again.status_code == 304
+    assert again.headers["cache-control"] == "public, max-age=31536000, immutable"
+    # A missing hashed file is the 404 page, which must not be cached as immutable.
+    missing = kit.client.get("/_next/static/chunks/gone.js")
+    assert missing.status_code == 404 and missing.headers["cache-control"] == "no-cache"
+
+
+def test_api_session_and_health_routes_keep_their_own_headers(kit):
+    assert kit.client.get("/api/session").headers["cache-control"] == "no-store"  # 401 error
+    kit.sign_in()
+    assert kit.client.get("/api/session").headers["cache-control"] == "no-store"
+    ask = kit.client.post("/api/ask", json={"question": ""}, headers=JSON_HEADERS)
+    assert ask.status_code == 422 and ask.headers["cache-control"] == "no-store"
+    health = kit.client.get("/health")
+    assert health.status_code == 200 and "cache-control" not in health.headers
+    assert "cache-control" not in kit.client.get("/healthz").headers
 
 
 def test_an_unknown_path_is_a_404_carrying_the_export_page_and_the_policy(kit):
