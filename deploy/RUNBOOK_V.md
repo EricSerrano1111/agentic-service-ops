@@ -563,6 +563,8 @@ After a rollback to an older revision, the service's template still holds the ne
 
 *2026-10-29 (L-105; assistant-drafted.)* That block is now in all six `deploy/cloudrun/*.yaml` (`traffic: [{type: TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST, percent: 100}]`), merged but not yet deployed. Once a build has deployed it, a pipeline deploy resets a manual pin by itself. A rollback by `update-traffic --to-revisions` still pins traffic until the next deploy. The five-step restore in the 2026-10-28 note above still applies if a pin must be cleared **without** a deploy.
 
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* **A pipeline deploy reset a manual pin: once, for one service.** `ops-orchestrator` was pinned by name to `ops-orchestrator-00010-7sg` (`spec.traffic`: that revision at 100%, no `latestRevision`). Build `6f8abad0-6de2-45fc-a301-9ebac0e97976` then deployed the explicit "latest revision, 100%" block, and `spec.traffic` read `latestRevision: true` at 100%, serving the new revision `00011-mml`; the build's `verify` step passed (`docs/deploy-window-log.md`, 2026-10-30, phase 2). It does not show the other five services, or a pin made another way. The five-step restore in the 2026-10-28 note still applies when no deploy follows a pin. The same day a by-name pin of `ops-reporting` to `00008-tt8`, made for a test, was cleared with `--to-latest`, which was safe only because the latest ready revision (`00009-bjp`) was the clean build: check that first, as the note above says.
+
 | At step | Stop and roll back when |
 |---|---|
 | 1 | the instance is not `RUNNABLE` within 10 min: stop; nothing to undo |

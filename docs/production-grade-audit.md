@@ -311,6 +311,19 @@ So the trace ID is on the gateway, the orchestrator, the A2A agent, its MCP side
 
 The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits: the QA startup probe on `/healthz` (F1), no liveness probes (F2), the pipeline's verify step not yet run on all six services (F13), tool error text in two services' logs (L-98), and "a degraded result has not occurred on the current build". All five are closed or changed by the 2026-10-28 window. `06` is not edited here (`CLAUDE.md`); the owner decides whether a revision is wanted.
 
+## Notes after the 2026-10-30 deploy session
+
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* Evidence: `docs/deploy-window-log.md`, 2026-10-30 (build `6f8abad0-6de2-45fc-a301-9ebac0e97976`, commit `9599bae`) and its ledger. **No verdict, table row or finding above is edited, and none is re-verdicted here.** These are dated notes added to what is above.
+
+### 9. CI pipeline: the L-105 pin finding
+- The 2026-10-28 note above records that a manual `update-traffic --to-revisions` pins traffic and the deploy step did not reset it (L-105). **Resolved, for one service.** `ops-orchestrator` was pinned by name to `ops-orchestrator-00010-7sg` (`spec.traffic` read that revision at 100% with no `latestRevision`). One pipeline run followed (build `6f8abad0-6de2-45fc-a301-9ebac0e97976`, started by the owner on `main` with `_RUN_VERIFY` at its default `true`); `spec.traffic` then read `latestRevision: true`, 100%, serving the new revision `ops-orchestrator-00011-mml`. The build's `verify` step passed all 35 checks (0 `FAIL`) over the six services, and the build ended `SUCCESS` in about 7 minutes. CI was green at the same commit (run `40931673834`).
+- **Limits:** one service, one pin made by name, one deploy. Not shown for the other five services or for a pin made another way. The trigger was disabled again afterwards (ADR-105).
+
+### 6. Graceful degradation: an unplanned failure and the alert
+- The 2026-10-28 note above records the ADR-112 chain on an induced timeout. On 2026-10-30 degraded answers occurred that nobody induced: the reporting service and QA failed to start new instances (L-106). The first three were at 19:00:13, 19:12:34 and 19:15:36 UTC. **The owner reports three alert emails between 19:04 and 19:16** (owner-reported; the assistant read no alert state). Three more degraded answers followed (19:26:26, 19:37:52 and 19:43:02), and it is not known whether those alerted.
+- What users saw matched the criterion's defined result: HTTP 200, marked degraded and not verified, with no error text ("The reporting service is temporarily unavailable…"; "Not verified: the checking service was unavailable"), after 60 to 92 s, inside the 120 s ceiling.
+- **Limits:** one underlying failure, on one build. The alert's behaviour is the owner's report, not a read of the alert policy.
+
 ## Changes to a criterion after evidence
 
 *2026-10-16: none. No criterion was changed after the evidence was seen. Any later change is added here as a dated line under the item it changes, with the original kept.*
