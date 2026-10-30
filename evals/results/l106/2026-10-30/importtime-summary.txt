@@ -1,0 +1,33 @@
+agent-forecast: agent_forecast.app total_s run1/2/3 = 3.404 / 2.672 / 2.681
+  top-level (cumulative ms): a2a.server.request_handlers 1712, agent_forecast.executor 906, a2a.server.routes 529, logging 140, agent_forecast.config 85, _virtualenv 43, llm 23, common 6, encodings.aliases 4, os 3
+  top self-time (ms): mcp_types._types 194, mcp_types._v2025_11_25 168, mcp_types._v2026_07_28 158, fastapi.openapi.models 145, a2a.compat.v0_3.types 113
+agent-qa: agent_qa.app total_s run1/2/3 = 2.535 / 2.471 / 2.183
+  top-level (cumulative ms): a2a.server.request_handlers 1438, asyncio 521, a2a.server.routes 405, agent_qa.config 102, _virtualenv 56, llm 27, agent_qa.executor 26, common 8, agent_qa.db 4, encodings.aliases 3
+  top self-time (ms): fastapi.openapi.models 151, a2a.compat.v0_3.types 149, asyncio.base_events 43, inspect 33, typing 33
+agent-reporting: agent_reporting.app total_s run1/2/3 = 2.614 / 2.732 / 2.638
+  top-level (cumulative ms): a2a.server.request_handlers 1147, agent_reporting.executor 831, a2a.server.routes 387, logging 134, agent_reporting.config 79, _virtualenv 45, llm 24, common 7, encodings.aliases 3, os 3
+  top self-time (ms): mcp_types._types 192, mcp_types._v2025_11_25 152, mcp_types._v2026_07_28 146, fastapi.openapi.models 137, a2a.compat.v0_3.types 104
+agent-sentiment: agent_sentiment.app total_s run1/2/3 = 2.676 / 2.915 / 2.935
+  top-level (cumulative ms): a2a.server.request_handlers 1146, agent_sentiment.executor 874, a2a.server.routes 402, logging 139, agent_sentiment.config 81, _virtualenv 45, llm 22, common 7, encodings.aliases 3, os 3
+  top self-time (ms): mcp_types._v2026_07_28 209, mcp_types._types 168, mcp_types._v2025_11_25 147, fastapi.openapi.models 134, a2a.compat.v0_3.types 100
+gateway: api_gateway.app total_s run1/2/3 = 1.271 / 1.268 / 1.266
+  top-level (cumulative ms): fastapi 632, common 320, api_gateway.upstream 100, logging 84, json 63, _virtualenv 45, typing 36, api_gateway.limits 20, encodings.aliases 4, os 4
+  top self-time (ms): fastapi.openapi.models 119, typing 36, inspect 34, urllib.request 24, zipfile 23
+mcp-feedback: mcp_feedback.server total_s run1/2/3 = 2.449 / 2.407 / 2.307
+  top-level (cumulative ms): mcp.server.mcpserver 1508, mcp_feedback.classifier 284, common 273, logging 148, dataclasses 93, schemas 91, _virtualenv 56, typing 30, mcp_feedback.scoring 9, os 4
+  top self-time (ms): mcp_types._types 180, mcp_types._v2026_07_28 149, mcp_types._v2025_11_25 148, numpy._core.shape_base 89, numpy._core._multiarray_umath 71
+mcp-incidents: mcp_incidents.server total_s run1/2/3 = 2.595 / 3.026 / 2.812
+  top-level (cumulative ms): mcp.server.mcpserver 1500, mcp_incidents.metrics 489, common 244, logging 145, schemas 87, dataclasses 87, _virtualenv 47, typing 32, encodings.aliases 5, os 3
+  top self-time (ms): mcp_types._types 185, mcp_types._v2025_11_25 160, mcp_types._v2026_07_28 157, db_models.reference 62, inspect 35
+mcp-volume: mcp_volume.server total_s run1/2/3 = 2.582 / 2.528 / 2.522
+  top-level (cumulative ms): mcp.server.mcpserver 1673, mcp_volume.artifact 309, common 250, logging 132, dataclasses 93, schemas 88, _virtualenv 48, typing 28, os 3, encodings.aliases 3
+  top self-time (ms): mcp_types._types 180, mcp_types._v2026_07_28 166, mcp_types._v2025_11_25 150, numpy._core.fromnumeric 85, numpy._core._multiarray_umath 73
+orchestrator: orchestrator.app total_s run1/2/3 = 2.008 / 1.542 / 1.617
+  top-level (cumulative ms): a2a.client 652, asyncio 451, httpx 370, fastapi 334, schemas 105, _virtualenv 82, llm 25, orchestrator.a2a_client 17, common 16, dataclasses 13
+  top self-time (ms): fastapi.openapi.models 114, a2a.client.client 65, click 61, fastapi.routing 40, _virtualenv 40
+
+packages by cost (cumulative ms of the heaviest line in the package):
+  in agent-qa and mcp-incidents (>= 50 ms each) but < 5 ms in each of the other seven:
+    sqlalchemy: agent-qa 241, mcp-incidents 230, others max 0.28
+  packages present in agent-qa only: agent_qa, greenlet
+  packages present in mcp-incidents only: db_models, mcp_incidents
