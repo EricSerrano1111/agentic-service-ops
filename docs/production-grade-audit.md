@@ -324,6 +324,12 @@ The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits:
 - What users saw matched the criterion's defined result: HTTP 200, marked degraded and not verified, with no error text ("The reporting service is temporarily unavailable…"; "Not verified: the checking service was unavailable"), after 60 to 92 s of server time, inside the 120 s ceiling. One of them reached 151.5 s in the browser, because a 36 s gateway start and a further 42 s that no log explains came before the orchestrator saw the question (L-106): the ceiling did not hold end to end that once.
 - **Limits:** one underlying failure, on one build. The alert's behaviour is the owner's report, not a read of the alert policy.
 
+### L-106: an open availability defect
+
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* **L-106 is an open availability defect on the current build:** from 18:59 UTC on 2026-10-30, every cold start of `ops-reporting` and `ops-qa` failed (six of six), with no recovery found in the session. The degraded path and the alert behaved as designed (item 6 note above). Verdicts are unchanged pending the owner's decision below.
+
+*Decision pending (the owner's): whether any verdict above changes. The assistant's proposal is in the report of this change, not in this file.*
+
 ## Changes to a criterion after evidence
 
 *2026-10-16: none. No criterion was changed after the evidence was seen. Any later change is added here as a dated line under the item it changes, with the original kept.*
