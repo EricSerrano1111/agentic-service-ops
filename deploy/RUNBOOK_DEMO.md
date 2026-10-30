@@ -45,11 +45,11 @@ The plan below needs a live system that the records say does not yet exist. **On
      demonstration runbook ... were not part of this deploy"; 2026-10-29: "merged, not deployed"; L-105,
      2026-10-29: "Deploys in the next window"). ADR-117 allows it: "Item 4 may deploy in a second small window if
      it misses the first." The deploy follows `RUNBOOK_V.md` and the 2026-10-28 procedure in
-     `docs/deploy-window-log.md`. Its date is `[TBD]`. This runbook does not run it.
+     `docs/deploy-window-log.md`. It ran on 2026-10-30 (`docs/deploy-window-log.md`, 2026-10-30). This runbook does not run it.
    - **Takes a current screenshot of each live example,** in light theme, at the browser zoom chosen in A4, from
      the signed-in page: the SLA answer, the answer journey, the sentiment answer, the forecast answer, the
      clarification ("How's the Southeast doing?") and the revenue decline. Save them under
-     `docs/screenshots/demo-session-[TBD date]/`, one file per example. They replace the 2026-10-23 screenshots,
+     `docs/screenshots/demo-session-2026-10-30/`, one file per example. They replace the 2026-10-23 screenshots,
      which predate the deploy. They are committed in a later change.
 3. **The session is an ADR-110 owner verification session.** `ops-db` is started and stopped in one sitting, with
    no grader invite and the paid balance at **$5 or more**, checked in the console (ADR-110). It gets a dated
@@ -66,6 +66,8 @@ The plan below needs a live system that the records say does not yet exist. **On
    The trailing slash matters: the gateway redirects `/results` (L-105).
 5. **If the deploy has not happened by the demonstration,** tab 3 does not exist. Show
    `docs/screenshots/results-page-2026-10-29/results-light-1280.png` and the report on GitHub (tab 5), and say so.
+
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* The deploy session ran on 2026-10-30 (`docs/deploy-window-log.md`, 2026-10-30): `/results/` is served, the L-105 fixes are live, and the screenshots are in `docs/screenshots/demo-session-2026-10-30/`. Item 2 is done; item 4's check now reads `ops-gateway-00004-zqw` (and `/results/` answers 200); item 5 applies only if the deploy is rolled back. **The system as left has an open failure (L-106): after an idle gap, a cold start of the reporting service or of QA can fail. Read section F before relying on a live run.** `owner-laptop-3` expires 2026-11-09 23:59.
 
 **Order:** deploy session (before 11-09) → Window B (grader invite, owner invite) → demonstration. The
 demonstration's date is `[TBD]`. The slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a
@@ -280,6 +282,7 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
     day against what the page shows.
 - **The audience should see:** the sentiment buckets and the stated comparison; the forecast ranges and the
   error with each band.
+- *2026-10-30 (deploy session; assistant-drafted.)* **The sentiment example can split.** "Is negative feedback trending up in the West?" failed its caption once on 2026-10-30: the router answered `split_required` ("Your question covers more than one area… please ask about each separately") and called no specialist. The same question passed on a retake that day and on 2026-10-28 (L-58 update; data dictionary §6, rule 9). If the split appears live, narrate it as the router asking for one question at a time, which is a designed outcome, then resend the question once or use the other sentiment example. No screenshot of the split exists. A stability check of all seven examples is planned.
 
 ### 7. Live: the boundaries: 0:18 (about 3 min)
 - **On screen:** "How's the Southeast doing?" then "What will revenue be next quarter?"
@@ -371,13 +374,17 @@ There is no recording and no fallback video (owner, 2026-10-29; ADR-119): the de
 | Problem | What to do |
 |---|---|
 | An answer takes over 30 s | Say it's a cold start (R-05), and narrate the journey while waiting. Measured: 26 to 61 s on 2026-10-28, inside the 120 s ceiling. |
-| A single example fails | Show its screenshot from the deploy session (`docs/screenshots/demo-session-[TBD date]/`), say so plainly, and move on. |
+| A single example fails | Show its screenshot from the deploy session (`docs/screenshots/demo-session-2026-10-30/`), say so plainly, and move on. |
+| The sentiment example answers "please ask about each separately" (a split, seen 2026-10-30) | Narrate it as designed: the router asking for one question at a time. There is no screenshot of the split to show. Resend once, or use the other sentiment example (L-58 update). |
+| "The reporting service is temporarily unavailable", or "Not verified: the checking service was unavailable", after an idle gap (L-106) | A cold start of the reporting service or QA failed. Read the dated note below this table; no recovery has been found. |
 | The degraded state is asked about | Show `docs/screenshots/answer-journey-2026-10-23/constructed-journey-degraded-light.png` and **say aloud that it is "constructed"**: built from test data, not captured from the live fault test. Then describe the 2026-10-28 live test (end of section D). |
 | Zoom's screen share freezes | Stop sharing and share the window again. |
 | The network drops | Rejoin by phone audio on the hotspot (B5) and carry on with whatever you can show. If the PC is offline, the live system cannot be shown: use the last step of the recovery sequence. |
 | The system is down | Run the recovery sequence below inside the instructor's buffer. |
 | The daily cap is reached (ADR-097) | The message is "Daily limit reached: this demo answers a fixed number of questions a day. It resets at midnight Pacific time." (data dictionary §6 rule 5). No step clears it inside the buffer. The counter is in process and resets on a cold start (L-88), but that is not tested as a fix, so do not rely on it. Show the screenshots and the report (tab 5), then use the last step of the recovery sequence. |
 | Running long | Shorten segment 6 to one example, and segment 8 to two figures (keep the caveats). |
+
+*2026-10-30 (L-106; deploy session; assistant-drafted.)* **A failure mode with no recovery found.** From 18:59 to 19:45 UTC on 2026-10-30, every new instance of the reporting service (four of four) and of QA (two of two) failed to start. The question waited 60 s, and the answer was "The reporting service is temporarily unavailable…", or came back "Not verified: the checking service was unavailable", after 60 to 92 s. Sentiment, forecast, the orchestrator and the gateway started normally in that period (a sentiment start at 19:48 failed for a different reason, after `ops-db` was stopped: L-106, next-session item 9). **What did not help:** repeating the question (every repeat failed) and rolling reporting back to its previous revision (it failed the same way). The cause is unknown (L-106). **What is known:** a question that lands on an instance that is already running answers normally, and the one reporting instance that ran that day, started by the deploy, shut down 15 minutes after its last request. **Until L-106 is resolved, do not count on a cold start of reporting or QA in a live run.** Before the demonstration, ask one reporting question after a quiet period of 15 minutes or more to see whether the failure persists, and decide then. If it fails live, say so plainly (the degraded notice is designed behaviour: HTTP 200, marked not verified), show the screenshots from the deploy session, and use the recovery sequence below, remembering that a rollback did not fix this failure. Minimum instances on reporting and QA are listed for the next session in L-106; they are not set.
 
 **Recovery sequence: the system is down.** Run these in order from the owner's PC, with the `$P $R $N $G $S` block
 loaded. Tell the instructor what you are doing. The buffer is 10 to 20 minutes, and on 2026-10-14 each `gcloud`

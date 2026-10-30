@@ -302,6 +302,7 @@ So the trace ID is on the gateway, the orchestrator, the A2A agent, its MCP side
 
 - **3. Structured logging, trace IDs: stays Met, deployed.** The 2026-10-16 basis said "L-98 limit stands". L-98's fix is now deployed: on the `invalid_range` request one trace (`aa80741778ee4e779470683b628aa690`) runs through the gateway, orchestrator, reporting and its sidecar, and the error lines carry codes, lengths and hashes only. Only that one tool-error path was exercised.
 - **5. Retries, timeouts, breakers: stays Met, offline only.** New deployed evidence: a per-hop A2A timeout acted on the current build (the forecast hop, as configured for the fault test), and the 120 s ceiling held across cold starts (server time up to 45.8 s, browser time up to 61.2 s). Still not shown on Cloud Run: a breaker opening, the 60 s timeout acting, the QA hop clamp, a model-call retry or the revision loop. Retry logging stays unverified deployed: 0 `llm attempt failed` entries in 7 days (2026-10-28).
+  - *2026-10-30 (deploy session; owner present; assistant-drafted.)* **Correction to "the 120 s ceiling held across cold starts":** The ceiling is enforced from the gateway's receipt of a request. On 2026-10-30 a sentiment question took 151.5 s in the browser: a 36 s gateway cold start and a further 42 s that no log explains came before the orchestrator saw it (72.9 s). Platform start time before the gateway can receive a request is not bounded by the ceiling.
 
 ### Findings closed
 
@@ -310,6 +311,39 @@ So the trace ID is on the gateway, the orchestrator, the A2A agent, its MCP side
 - **F13** (the pipeline's verify step on the six services): resolved 2026-10-28.
 
 The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits: the QA startup probe on `/healthz` (F1), no liveness probes (F2), the pipeline's verify step not yet run on all six services (F13), tool error text in two services' logs (L-98), and "a degraded result has not occurred on the current build". All five are closed or changed by the 2026-10-28 window. `06` is not edited here (`CLAUDE.md`); the owner decides whether a revision is wanted.
+
+## Notes after the 2026-10-30 deploy session
+
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* Evidence: `docs/deploy-window-log.md`, 2026-10-30 (build `6f8abad0-6de2-45fc-a301-9ebac0e97976`, commit `9599bae`) and its ledger. **No verdict, table row or finding above is edited, and none is re-verdicted here.** These are dated notes added to what is above.
+
+### 9. CI pipeline: the L-105 pin finding
+- The 2026-10-28 note above records that a manual `update-traffic --to-revisions` pins traffic and the deploy step did not reset it (L-105). **Resolved, for one service.** `ops-orchestrator` was pinned by name to `ops-orchestrator-00010-7sg` (`spec.traffic` read that revision at 100% with no `latestRevision`). One pipeline run followed (build `6f8abad0-6de2-45fc-a301-9ebac0e97976`, started by the owner on `main` with `_RUN_VERIFY` at its default `true`); `spec.traffic` then read `latestRevision: true`, 100%, serving the new revision `ops-orchestrator-00011-mml`. The build's `verify` step passed all 35 checks (0 `FAIL`) over the six services, and the build ended `SUCCESS` in about 7 minutes. CI was green at the same commit (run `40931673834`).
+- **Limits:** one service, one pin made by name, one deploy. Not shown for the other five services or for a pin made another way. The trigger was disabled again afterwards (ADR-105).
+- **Limit (2026-10-30, L-106):** the pipeline's `verify` step passed on the deploy's own rollout instances at 17:59 to 18:01, an hour before the first failed start. It cannot catch a cold-start failure that appears later: `verify` tests a revision that was just started, not an autoscale start after a quiet period. The verdict is unchanged.
+
+### 6. Graceful degradation: an unplanned failure and the alert
+- The 2026-10-28 note above records the ADR-112 chain on an induced timeout. On 2026-10-30 degraded answers occurred that nobody induced: the reporting service and QA failed to start new instances (L-106; not revision-specific: with reporting pinned to its previous revision it failed the same way). The first three were at 19:00:13, 19:12:34 and 19:15:36 UTC. **The owner reports three alert emails between 19:04 and 19:16** (owner-reported; the assistant read no alert state). Three more degraded answers followed (19:26:26, 19:37:52 and 19:43:02), and it is not known whether those alerted.
+- What users saw matched the criterion's defined result: HTTP 200, marked degraded and not verified, with no error text ("The reporting service is temporarily unavailable…"; "Not verified: the checking service was unavailable"), after 60 to 92 s of server time, inside the 120 s ceiling (ADR-034), enforced from the gateway's receipt of a request. One of them reached 151.5 s in the browser (the gateway's own access line recorded 115.4 s), because a 36 s gateway start and a further 42 s that no log explains came before the orchestrator saw the question (L-106); the start before the gateway could receive the request is outside the ceiling.
+- **Limits:** one underlying failure, on one build. The alert's behaviour is the owner's report, not a read of the alert policy.
+- **Limit (2026-10-30, L-106):** a persistent start failure reads to a user as "temporarily unavailable" after 60 to 92 s; the degraded path defines the result but says nothing of the cause. Whether the last three degraded answers alerted is not known. The verdict is unchanged.
+
+### 3. Structured logging, trace IDs: a limit
+
+- *2026-10-30 (deploy session; owner present; assistant-drafted.)* **Limit (L-106):** on the six failed starts no container wrote a log line in 59 to 60 s, and the platform's request error carries no trace ID, so a trace that reaches the orchestrator ends at its timeout line (`dependency failed … TimeoutError`). Cloud SQL connection logging is off and Data Access audit logs are not enabled, which made the first diagnosis weak. The verdict is unchanged.
+
+### 4. Health checks and readiness: what the failed starts show
+
+- *2026-10-30 (deploy session; owner present; assistant-drafted.)* The startup probes kept all six failed instances from serving: Cloud Run abandoned each after 20 failed probes ("The instance was not started"). That is instance-level gating. It is **not** the refusal of a broken revision, because the same revision served normally at 18:18, and it is not offered as the 2026-10-08 refusal proof for QA.
+- **Limit (L-106):** the liveness probe on `mcp-feedback` and `mcp-volume` (`/healthz`) checks the database (in `mcp_feedback` one handler serves `/healthz` and `/readyz`, `server.py:318-319`), and a stopped `ops-db` shut their warm instances down at 19:48 (L-106, next-session item 9). `deploy/cloudrun/reporting.yaml` says liveness never checks the database; that holds for `mcp-incidents`. The quoted criterion does not require a liveness probe, so this is a limit, not a downgrade. The verdict is unchanged.
+
+### 5. Retries, timeouts, breakers: new deployed evidence and a limit
+
+- *2026-10-30 (deploy session; owner present; assistant-drafted.)* **New deployed evidence.** The 60 s A2A timeout acted live six times: `dependency failed … TimeoutError` at 60.0 s on the reporting hop (18:59, 19:12, 19:14, 19:25) and a QA hop that gave up after about 50 s (19:37, 19:42), each ending in the defined `ask degraded` result. The 2026-10-16 text above lists "the 60 s A2A timeout acting" and "the QA hop clamp" as having no deployed evidence; whether the QA give-up is the hop clamp or its own timeout was not read. A breaker opening was not examined (four reporting failures in 26 minutes; whether it opened was not read). The model-call retry and the revision loop did not run.
+- **Limit.** A sentiment question took 151.5 s in the browser (the gateway's request log 150.9 s, its own access line 115.4 s) against 72.9 s on the orchestrator; see the correction under the 2026-10-28 note on this item. The verdict is unchanged: **Met, offline only**.
+
+### 7. Test suite: a limit
+
+- *2026-10-30 (deploy session; owner present; assistant-drafted.)* **Limit (L-106):** the tests assert the source definitions, not the deployed state. `test_cloud_sql_is_mounted_into_the_mcp_sidecar_only` (`tests/unit/test_deploy_config.py`) asserts the `/cloudsql` mount on the sidecar in the YAML, while the Cloud Run v2 API returns the mount on the agent container of all four database-using services, on `00008` and `00009` alike. This is not explained, not changed and not connected to the six failures. CI was green on every commit of this branch. The verdict is unchanged.
 
 ## Changes to a criterion after evidence
 
@@ -372,6 +406,8 @@ The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits:
 | Alerting beyond ADR-112 | **None.** One alert policy exists (`Orchestrator degraded answer`). No uptime check, no error-rate, latency or instance alert, budget alerts at $10, $50 and $80 exist per the owner's console reading of 2026-10-16 (not readable from the CLI; F8, resolved by that observation), but they are notifications and not alerting on the system's behaviour. | `gcloud alpha monitoring policies list` (23:11Z): one policy. |
 | Single region and zone | Everything is in `us-central1`; the database is zonal; Cloud Run is regional. No failover. | Appendix A; `gcloud sql instances describe ops-db`. |
 | Per-user identity | **None.** Invite links identify an invite, not a person; the hourly and daily caps are per instance (at most one gateway instance), so they reset on a restart (L-88). | `docs/evaluation-report.md` L-88; `services/api_gateway/src/api_gateway/config.py:48-49`. |
+
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* **L-106 is an open availability defect on the current build:** from 18:59 to 19:45 UTC on 2026-10-30, every cold start of `ops-reporting` and `ops-qa` failed (six of six), with no recovery found in the session. The degraded path and the alert behaved as designed (item 6 note above). Verdicts are unchanged: the owner kept every verdict, and the limits are in the dated notes above. Evidence and the list for the next session: `docs/evaluation-report.md`, L-106.
 
 ## Appendix A: Deployed-state reads
 
