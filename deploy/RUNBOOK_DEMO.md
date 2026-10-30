@@ -67,7 +67,7 @@ The plan below needs a live system that the records say does not yet exist. **On
 5. **If the deploy has not happened by the demonstration,** tab 3 does not exist. Show
    `docs/screenshots/results-page-2026-10-29/results-light-1280.png` and the report on GitHub (tab 5), and say so.
 
-*2026-10-30 (deploy session; owner present; assistant-drafted.)* The deploy session ran on 2026-10-30 (`docs/deploy-window-log.md`, 2026-10-30): `/results/` is served, the L-105 fixes are live, and the screenshots are in `docs/screenshots/demo-session-2026-10-30/`. Items 2 and 4 above are done, and item 5 applies only if the deploy is rolled back. **The system as left has an open failure (L-106): after an idle gap, a cold start of the reporting service or of QA can fail. Read section F before relying on a live run.** `owner-laptop-3` expires 2026-11-09 23:59.
+*2026-10-30 (deploy session; owner present; assistant-drafted.)* The deploy session ran on 2026-10-30 (`docs/deploy-window-log.md`, 2026-10-30): `/results/` is served, the L-105 fixes are live, and the screenshots are in `docs/screenshots/demo-session-2026-10-30/`. Item 2 is done; item 4's check now reads `ops-gateway-00004-zqw` (and `/results/` answers 200); item 5 applies only if the deploy is rolled back. **The system as left has an open failure (L-106): after an idle gap, a cold start of the reporting service or of QA can fail. Read section F before relying on a live run.** `owner-laptop-3` expires 2026-11-09 23:59.
 
 **Order:** deploy session (before 11-09) → Window B (grader invite, owner invite) → demonstration. The
 demonstration's date is `[TBD]`. The slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a
