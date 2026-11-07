@@ -67,6 +67,7 @@ template:
         - name: LLM_MAX_SPEND_USD
           value: "1.00"
       resources:
+        startupCpuBoost: true # ADR-120: more CPU while the container starts
         limits:
           cpu: "1"
           memory: 512Mi
@@ -77,7 +78,7 @@ template:
         initialDelaySeconds: 2
         periodSeconds: 3
         timeoutSeconds: 3
-        failureThreshold: 20
+        failureThreshold: 40 # ADR-120: 40 x 3 s, about a 120 s startup window
       livenessProbe:
         httpGet:
           path: /healthz

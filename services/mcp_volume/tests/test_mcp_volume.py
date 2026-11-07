@@ -178,10 +178,19 @@ async def test_history_passes_through(artifact):
     assert [w["week_start"] for w in r["weeks"]] == ["2026-08-10", "2026-08-17", "2026-08-24"]
 
 
-def test_healthz(artifact):
+def test_healthz_is_live_whether_or_not_the_database_answers(artifact):
+    """ADR-120: liveness never depends on the database; `/readyz` does."""
+    host = {"host": "localhost:8103"}
+    live = {"status": "ok", "service": "mcp_volume"}
     with TestClient(create_app(SETTINGS, backend(artifact))) as client:
-        r = client.get("/healthz", headers={"host": "localhost:8103"})
-    assert r.status_code == 200 and r.json()["model_version"] == artifact.model_version
+        r = client.get("/healthz", headers=host)
+        assert r.status_code == 200 and r.json() == live
+        assert client.get("/readyz", headers=host).status_code == 200
+    down = Backend(artifact=artifact, history=fake_history, ready=_down)
+    with TestClient(create_app(SETTINGS, down)) as client:
+        r = client.get("/healthz", headers=host)
+        assert r.status_code == 200 and r.json() == live
+        assert client.get("/readyz", headers=host).status_code == 503
 
 
 # --------------------------------------------------------------------------- start-up

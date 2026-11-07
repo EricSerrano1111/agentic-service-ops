@@ -650,3 +650,35 @@ def test_the_deploy_scripts_pass_probes_through_unchanged():
         for name, c in _raw_containers(service).items():
             probes = {k: c[k] for k in ("startupProbe", "livenessProbe")}
             assert render.render_value(probes, ENV) == probes, (service, name)
+
+
+def test_every_container_has_startup_cpu_boost_and_a_120_s_startup_window():
+    """ADR-120: boost on all nine containers; initialDelay + period x threshold >= 120 s."""
+    for service in ALL_SERVICES:
+        for name, c in _raw_containers(service).items():
+            assert c["resources"]["startupCpuBoost"] is True, (service, name)
+            p = c["startupProbe"]
+            window = p["initialDelaySeconds"] + p["periodSeconds"] * p["failureThreshold"]
+            assert window >= 120, (service, name, window)
+            assert c["livenessProbe"]["httpGet"]["path"] == "/healthz", (service, name)
+
+
+FULL_ENV = ENV | {
+    "FORECAST_SA": "fc@proj-x.iam.gserviceaccount.com",
+    "GATEWAY_SA": "gw@proj-x.iam.gserviceaccount.com",
+    "SENTIMENT_SA": "se@proj-x.iam.gserviceaccount.com",
+    "QA_SA": "qa@proj-x.iam.gserviceaccount.com",
+    "GEMINI_MODEL_QA": "m3",
+}
+
+
+def test_the_deploy_scripts_pass_boost_window_and_liveness_path_through_unchanged():
+    ds = _load("deploy_service")
+    for service in ALL_SERVICES:
+        raw = _raw_containers(service)
+        doc = render.render_file(DEPLOY / "cloudrun" / f"{service}.yaml", FULL_ENV)
+        sent = {c["name"]: c for c in ds.create_body(doc)["template"]["containers"]}
+        for name, c in raw.items():
+            assert sent[name]["resources"]["startupCpuBoost"] is True, (service, name)
+            assert sent[name]["startupProbe"] == c["startupProbe"], (service, name)
+            assert sent[name]["livenessProbe"]["httpGet"]["path"] == "/healthz", (service, name)

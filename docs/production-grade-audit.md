@@ -335,6 +335,7 @@ The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits:
 
 - *2026-10-30 (deploy session; owner present; assistant-drafted.)* The startup probes kept all six failed instances from serving: Cloud Run abandoned each after 20 failed probes ("The instance was not started"). That is instance-level gating. It is **not** the refusal of a broken revision, because the same revision served normally at 18:18, and it is not offered as the 2026-10-08 refusal proof for QA.
 - **Limit (L-106):** the liveness probe on `mcp-feedback` and `mcp-volume` (`/healthz`) checks the database (in `mcp_feedback` one handler serves `/healthz` and `/readyz`, `server.py:318-319`), and a stopped `ops-db` shut their warm instances down at 19:48 (L-106, next-session item 9). `deploy/cloudrun/reporting.yaml` says liveness never checks the database; that holds for `mcp-incidents`. The quoted criterion does not require a liveness probe, so this is a limit, not a downgrade. The verdict is unchanged.
+- *2026-10-30 (ADR-120; assistant-drafted.)* Hardening merged, not deployed: the startup window is now about 120 s on every container (`failureThreshold` 40 at `periodSeconds: 3`), so a revision whose `/readyz` fails is refused after about 120 s, not 60 s; the refusal itself is unchanged. The sidecars' `/healthz` no longer calls the database. No verdict changes; the deployed configuration was not read.
 
 ### 5. Retries, timeouts, breakers: new deployed evidence and a limit
 
@@ -408,6 +409,8 @@ The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits:
 | Per-user identity | **None.** Invite links identify an invite, not a person; the hourly and daily caps are per instance (at most one gateway instance), so they reset on a restart (L-88). | `docs/evaluation-report.md` L-88; `services/api_gateway/src/api_gateway/config.py:48-49`. |
 
 *2026-10-30 (deploy session; owner present; assistant-drafted.)* **L-106 is an open availability defect on the current build:** from 18:59 to 19:45 UTC on 2026-10-30, every cold start of `ops-reporting` and `ops-qa` failed (six of six), with no recovery found in the session. The degraded path and the alert behaved as designed (item 6 note above). Verdicts are unchanged: the owner kept every verdict, and the limits are in the dated notes above. Evidence and the list for the next session: `docs/evaluation-report.md`, L-106.
+
+*2026-10-30 (ADR-120; assistant-drafted.)* Hardening for L-106 is merged, not deployed (startup CPU boost, a 120 s startup window, liveness without the database in the two sidecars). L-106 stays open until the pre-registered cold-start test passes. No verdict changes.
 
 ## Appendix A: Deployed-state reads
 

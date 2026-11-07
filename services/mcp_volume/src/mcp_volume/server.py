@@ -168,11 +168,15 @@ def create_server(settings: Settings, backend: Backend) -> MCPServer:
         return await run(HISTORY, ctx, validate, backend.history)
 
     @server.custom_route("/healthz", methods=["GET"])
-    @server.custom_route("/readyz", methods=["GET"])
     async def healthz(request: Request) -> JSONResponse:
+        """Live: the process is serving. No database call, so a stopped database never kills it."""
+        return JSONResponse({"status": "ok", "service": "mcp_volume"})
+
+    @server.custom_route("/readyz", methods=["GET"])
+    async def readyz(request: Request) -> JSONResponse:
         """Ready: the artifact hashes verified at start-up and the database answers.
 
-        `/readyz` is the same check under the name the Cloud Run probes use.
+        The Cloud Run startup probe points here; liveness uses `/healthz` (ADR-120).
         """
         try:
             await anyio.to_thread.run_sync(backend.ready)

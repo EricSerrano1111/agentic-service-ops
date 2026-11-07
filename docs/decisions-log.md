@@ -4148,3 +4148,40 @@ After a start, one question through the gateway confirms the data path before th
 
 **Alternatives considered:**
 - *A recorded backup* (rejected): it fails the requirement even when it plays well.
+
+### ADR-120 — Cold-start hardening for the deployed services: startup CPU boost, a 120 s startup window, liveness without the database (supersedes ADR-081 and ADR-099 in part)
+*Date: 2026-10-30. Owner-decided 2026-10-30; assistant-drafted. Supersedes ADR-081 and ADR-099 in part: the deploy configuration they introduced carried `startupProbe.failureThreshold: 20` (a 60 s window at `periodSeconds: 3`) in the service definitions, and no ADR states that value. It also replaces the shared `/healthz` and `/readyz` handler in `mcp_feedback` and `mcp_volume`, which came in with the readiness endpoints (commit 687f0a8, sprint log 6.2.2) and has no ADR of its own. ADR-113 item 1 (F2, liveness probes on `/healthz`) stands and is completed here for the two sidecars. Everything else in ADR-081 and ADR-099 stands.*
+
+**Context:**
+- On 2026-10-30, six autoscale starts produced no log line within the 60 s startup window, and autoscale starts spent up to 36 s before the first log line; rollout starts took 8 to 29 s (L-106). Locally, all nine containers start in 1.6 to 3.7 s (2.7 to 8.4 s from a cold cache), with nothing slow in `agent-qa` or `mcp-incidents` (PRs #95 and #96), so the time is on the platform side, before the app logs anything.
+- Separately (L-106 item 9), `mcp_feedback` and `mcp_volume` serve `/healthz` and `/readyz` from one handler that checks the database, so their liveness probe killed warm instances when `ops-db` stopped at 19:47.
+
+**Decision:**
+1. **Startup CPU boost on every container of the six services** (`resources.startupCpuBoost: true`).
+2. **A startup window of about 120 s on every container:** `failureThreshold` goes from 20 to 40 at `periodSeconds: 3`, with `initialDelaySeconds` unchanged. This gives a slow start time to finish, so the next request finds a ready instance.
+   - The per-hop timeout (60 s; 85 s for sentiment) and the 120 s ceiling (ADR-034) are unchanged, so a request that triggers a slow cold start can still return the degraded result. This decision makes the retry succeed. It doesn't make the first request succeed.
+3. **Liveness checks the process, never the database.** In `mcp_feedback` and `mcp_volume`, `/healthz` returns 200 when the process is serving. `/readyz` keeps the database check and is used only by the startup probe. Every liveness probe stays on `/healthz`.
+4. **Not decided here:** minimum instances for the demonstration (a later ADR, after the verification session, with costs).
+5. **The execution environment is not set to first generation.** The six YAMLs stay without `executionEnvironment`.
+   - *What is known (read-only, 2026-11-07):* no current revision records an execution environment. The v1 revision carries no `run.googleapis.com/execution-environment` annotation, the v2 revision's `executionEnvironment` is empty, and the status and conditions hold nothing about it. When it is unset, Cloud Run "selects a suitable execution environment" based on "the features used" and "can select either the first generation or the second generation environment" (Execution environments page). That page does not say which features decide it. **Which generation the six revisions run on is not established.**
+   - *Why not set first generation:* the cold-start advice favors it, but the documentation confirms first generation for only one of the five features these services use.
+     - Gen1 "features fast cold start times"; gen2 "has longer cold start times than first generation for some services" (Execution environments page).
+     - Sidecars: confirmed. "You can deploy multiple containers in either the first or second generation execution environment" (Deploying multiple containers page).
+     - Container dependencies: the same page says dependent containers "must use healthchecks" and names no generation. It does not name the `container-dependencies` annotation.
+     - HTTP startup and liveness probes (Health checks page) and startup CPU boost (CPU page): neither page mentions an execution environment, so neither confirms first generation.
+     - Cloud SQL volume mount: no generation requirement is stated for the socket mount. The Cloud SQL page says "The first generation execution environment of Cloud Run embeds the Cloud SQL Auth Proxy v1" and that gen1 can connect only to instances on the per-instance CA. `ops-db` reads `serverCaMode: GOOGLE_MANAGED_INTERNAL_CA`, so that limit is met today, but the page puts that sentence under public IP and does not say the volume mount is covered.
+   - A silent page is not a "not supported", but ADR-120's change has to be one that cannot break the six services, and a generation switch cannot be tried before the deploy. The cold-start test in the verification session measures the starts first. **If it still fails, setting gen1 on one service is the next experiment, with its own ADR.**
+   - Also found: all six current revisions carry `run.googleapis.com/cpu-throttling=false`, so CPU is always allocated (instance-based billing). The YAMLs do not set `cpuIdle`, and the deployed state is what costs money. Item 3 of the minimum-instance costing depends on this and is for the later ADR.
+
+**Consequences:**
+- A broken revision now takes up to about 120 s to be refused at deploy, not 60 s; the refusal itself is unchanged.
+- Startup CPU boost adds startup-time CPU billing: the boosted CPU is charged for the container startup time (Cloud Run CPU documentation, read 2026-11-07).
+- Stopping `ops-db` no longer kills warm sidecar instances; their requests fail instead, through the existing degraded path.
+- A first request that hits a slow cold start can still degrade.
+
+**Verification:** a pre-registered cold-start test in the next deploy session (separate prompt). L-106 stays open until it passes.
+
+**Alternatives considered:**
+- *Lengthen the per-hop timeout* (rejected for now): it spends the 120 s budget that QA also needs.
+- *Minimum instances only* (deferred): it sidesteps cold starts without making them reliable, and it costs money continuously.
+- *Changing app code* (rejected on the evidence): local startup is fast.

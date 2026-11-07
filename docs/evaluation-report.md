@@ -1680,3 +1680,5 @@ Evidence: the QA-vs-tools integration cases (100) and the new ones pass against 
     3. **Is anything shared only by the failing pair?** At the image, container and deployment level, no (above). Only the database-role point above, which is not a property of a container and has no evident link to a silent one.
   - **Not established:** the cause; whether the failures are slow starts or no starts; why they began at about 18:59; whether they persist.
 - **Recorded in:** `docs/deploy-window-log.md`, 2026-10-30 (phase 4 and "The cold-start failure"); `evals/results/deploy_window/2026-10-30/` (`ledger.jsonl`, `startup_table.md`); R-05 (update 2026-10-30); `deploy/RUNBOOK_DEMO.md`, section F. Status: **open**.
+
+*2026-10-30 (ADR-120; assistant-drafted.)* Hardening merged, not deployed: startup CPU boost on every container; a 120 s startup window; liveness without the database in `mcp_feedback` and `mcp_volume`. The per-hop timeout and the 120 s ceiling are unchanged, so a first request that hits a slow cold start can still degrade. Open until the pre-registered cold-start test passes.

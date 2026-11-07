@@ -370,19 +370,23 @@ async def test_store_failure_does_not_leak_detail():
     assert "secret_stuff" not in result.content[0].text
 
 
-def test_healthz_reports_ready_and_unready():
+def test_healthz_is_live_whether_or_not_the_database_answers():
+    """ADR-120: liveness never depends on the database; `/readyz` does."""
+    host = {"host": "localhost:8102"}
     ok = backend(MemoryStore([]))
     with TestClient(create_app(SETTINGS, ok)) as client:
-        r = client.get("/healthz", headers={"host": "localhost:8102"})
-    assert r.status_code == 200 and r.json()["model_version"] == V1
+        r = client.get("/healthz", headers=host)
+        assert r.status_code == 200 and r.json() == {"status": "ok", "service": "mcp_feedback"}
+        assert client.get("/readyz", headers=host).status_code == 200
 
     def down():
         raise OSError("connection refused")
 
     bad = Backend(MemoryStore([]), StubClassifier(), V1, 300, ready=down)
     with TestClient(create_app(SETTINGS, bad)) as client:
-        r = client.get("/healthz", headers={"host": "localhost:8102"})
-    assert r.status_code == 503
+        r = client.get("/healthz", headers=host)
+        assert r.status_code == 200 and r.json() == {"status": "ok", "service": "mcp_feedback"}
+        assert client.get("/readyz", headers=host).status_code == 503
 
 
 # --------------------------------------------------------------------------- start-up
