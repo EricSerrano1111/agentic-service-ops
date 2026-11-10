@@ -13,7 +13,7 @@
 | Trigger `deploy-reporting-slice` | `disabled: True`; `includedFiles`, `ignoredFiles`, `substitutions`, `filename` and `serviceAccount` equal `deploy/trigger_full.yaml`; push filter `^main$` | `gcloud builds triggers describe ... --format json`, compared in Python |
 | Log retention | `_Default` bucket 30 days (the calibration works until about 2026-11-29) | `gcloud logging buckets describe _Default` |
 | gcloud | Google Cloud SDK 531.0.0; account is the owner's; configuration `a2a-deploy` | `gcloud --version`, `gcloud config get-value account` |
-| Paid Gemini balance | **Not yet given** (the owner types it at G0; $5 or more required) | n/a |
+| Paid Gemini balance | **$6.18** (owner-read from AI Studio, 2026-11-10 at 3:06 pm CDT; $5 or more required) | the owner's reading; not verified by the assistant |
 
 **Idle state today (C3, run once).** Newest request per service: gateway `2026-11-10T05:15:55Z` (HTTP 404: an unsolicited request to the public gateway, not ours); orchestrator `2026-10-30T19:41:30Z`; reporting `2026-10-30T19:25:28Z`; sentiment `2026-10-30T19:37:01Z`; forecast `2026-10-30T19:42:11Z`; QA `2026-10-30T19:42:12Z`. **Consequence for the idle rule:** the gateway has `allUsers` invoker, so unsolicited internet requests can start or keep a gateway instance outside our control. Each gate's idle check (C3) is read at the gate, and a gateway request we did not make is recorded, not hidden.
 
@@ -48,7 +48,10 @@ Known limit of the calibration: it checks the pass and fail logic and the groupi
 
 ## 4. The extractor, fixed before any result
 
-`.local/l106/extract_starts.py`, sha256 `2cf8043b67f1261b97cb59c9c229ffa1209ae7eaac2714bd9915cdfe3c9c456e`. It is not committed with this PR (it lives in `.local\`, per the temporary-file rule); the owner decides at the records PR whether it joins `evals/results/l106/<run-date>/`.
+`evals/l106/extract_starts.py`, committed with the pre-registration (owner's decision 2026-11-10), **sha256 `ee282ac62ce0478bb308242b537065b3d140edbffe3b52727e6c6a476404540f`**. Every round runs this committed file, not a copy.
+
+- **Lint-only change after the first recording.** This section first recorded sha256 `2cf8043b67f1261b97cb59c9c229ffa1209ae7eaac2714bd9915cdfe3c9c456e` (the file as calibrated). Copied into `evals/`, that file failed CI's `ruff check` (8 × E501, 1 × UP017) and `ruff format --check`. `ruff check --fix` and `ruff format` were applied; no logic was edited. Evidence that behaviour is unchanged: the extraction rows from the 10-30 window (18 starts) and the 17:50 to 18:30 window (6 starts) are identical, key by key, between the two versions; the calibration still prints `REPRODUCES 10-30: True` (4 / 2 / 5). Nothing had been measured live at the time of the change.
+- **Audit (owner's two checks, 2026-11-10).** It opens a file in three places, each on a path given on the command line: the log export (`load`, `open(path)`), and, in `round` mode only, the `STARTS.json` it merges into and writes (`open(out)`, twice). It reads nothing else, and nothing from `.local\` by name (the string `.local/` appears only in the usage line of the docstring). It imports `json`, `re`, `sys` and `datetime` only: no `subprocess`, network, `os` or environment access. A search for `token`, `secret`, `password`, `api key`, `bearer`, `invite`, `credential` finds only the variable `token`, the Reason token parsed from a start line (`kind_of`, `extract`). It holds no project secret or credential.
 
 - **Per start (2d):** one row per `(service, instanceId)` that has a `Starting new instance` line inside the read. Per container: first stdout or stderr line and its seconds after the start; the probe line verbatim, attempts, seconds after the start. `secs_to_probe_success` is the latest container's success, set only when the start passed.
 - **Expected containers** (from the 10-30 table and the YAML container names): gateway `gateway`; orchestrator `orchestrator`; reporting `agent-reporting`, `mcp-incidents`; sentiment `agent-sentiment`, `mcp-feedback`; forecast `agent-forecast`, `mcp-volume`; QA `agent-qa`.
@@ -83,7 +86,7 @@ Source: the six `pre` exports taken 2026-11-10 (`.local/l106/svc-<service>-pre.y
 
 ## 6. Gate commands (proposal for the owner's approval)
 
-The `!` prompt runs Git Bash, not PowerShell (`docs/deploy-window-log.md:547`: a backslash path failed on 10-30). Each gate therefore prints two forms: the runbook line verbatim with its file and line, and a one-line literal form for `!` (values expanded, forward slashes, no backticks, no `$env:`). The assistant runs only the reads.
+The `!` prompt runs Git Bash, not PowerShell (`docs/deploy-window-log.md:547`: a backslash path failed on 10-30). Each gate therefore prints two forms: the runbook line verbatim with its file and line, and the literal one-liner the owner types (values expanded, forward slashes, no backticks, no `$env:`). **Owner's rulings (2026-11-10):** if a literal argument starts with `/`, the line is prefixed with `MSYS_NO_PATHCONV=1` so Git Bash does not rewrite it; and any case where the two forms could behave differently is flagged at the gate. The assistant runs only the reads.
 
 | Gate | Runbook line (verbatim source) | Notes |
 |---|---|---|
@@ -100,3 +103,12 @@ The `!` prompt runs Git Bash, not PowerShell (`docs/deploy-window-log.md:547`: a
 
 - **Step order.** The calibration, the idle read (C3) and the C4 `pre` read ran before the README was committed (the extractor needed the calibration to be fixed first). All were read-only; nothing live had changed. **C4 `pre` will be taken again at G2, immediately before the deploy,** and that copy is the one compared with `post`.
 - **`.local\l106\` already held files** from an earlier session (`env`, `logs`, `build.log`, `build.sh`, `smoke.csv`, `summary.before`). They were not opened or changed. The C4 `pre` read wrote only `svc-*-pre.yaml`.
+
+## 8. Owner rulings at G0 (owner-decided 2026-11-10; assistant-drafted wording)
+
+1. **Idle precondition (interprets README §1; changes nothing in it).** A request the session did not make (any request before the owner's first question in a round that is not from the owner or from the pipeline's verify step) is **recorded in the ledger, and does not reset the 20-minute idle clock.** The clock starts at the last request that the owner or the pipeline made. This covers the unsolicited gateway request seen on 2026-11-10 (§1). **Any service, the gateway included, counts in a round only if an `AUTOSCALING` start line for it falls inside the round** (§1, "cold is proved, not assumed"). A start line outside every round (for example, an instance started by an unsolicited request between rounds) is recorded in the ledger, is not a start of any round, and enters no pass rule count. It is disclosed in `summary.md` with this ruling.
+   - *Round window used for "inside the round".* A round opens at the owner's `go` at the round's gate and closes when the owner reports the last answer of the round. The assistant records both times in the ledger.
+2. **The invite.** The owner runs `scripts/invites.py create` in their own terminal, outside this session, with an expiry no later than 2026-11-11 23:59 CDT, and gives the assistant only the label and the id from `list`. **The assistant runs neither `create` nor `list`, and opens nothing in `.local\` that might hold invite output.** No invite text appears in the session.
+3. **`_RUN_VERIFY` stays on** (the default, `deploy/cloudbuild.yaml:41`), as on 2026-10-30. Its one question is the allowance outside the caps (README §5). **If the build fails at the verify step, that is README §5's "the build fails" stop:** record which step failed and its logs as evidence, then G-CLOSE. **R1's idle clock starts at the verify step's last request** (read from the requests log; the pipeline's requests count for the clock, ruling 1).
+4. **The extractor** is committed in this PR (§4).
+5. **Pre-existing `.local\l106\` files** (`env`, `logs`, `build.log`, `build.sh`, `smoke.csv`, `summary.before`) are left untouched. Before every commit: `git status` shows nothing from `.local\`, and `git check-ignore -v .local/l106/env` shows `.gitignore:70:.local/` (checked 2026-11-10 before this PR's second commit).
