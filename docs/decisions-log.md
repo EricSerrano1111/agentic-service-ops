@@ -131,6 +131,7 @@
 | 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 |
 | 118 | Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part) | Accepted |
 | 119 | The demonstration runs live only; no backup recording (supersedes ADR-117 in part) | Accepted |
+| 121 | The deploy pipeline's step images are pinned by digest; the Cloud SDK steps pin `591.0.0-slim`, the last image with `python3` on its PATH | Accepted |
 
 ---
 
@@ -4185,3 +4186,63 @@ After a start, one question through the gateway confirms the data path before th
 - *Lengthen the per-hop timeout* (rejected for now): it spends the 120 s budget that QA also needs.
 - *Minimum instances only* (deferred): it sidesteps cold starts without making them reliable, and it costs money continuously.
 - *Changing app code* (rejected on the evidence): local startup is fast.
+
+### ADR-121 — The deploy pipeline's step images are pinned by digest; the Cloud SDK steps pin `591.0.0-slim`, the last image with `python3` on its PATH
+*Date: 2026-11-10. Owner-decided 2026-11-10; assistant-drafted. Supersedes nothing: a search of this log for `cloud-sdk`, `cloudsdktool`, `step image`, `@sha256`, `python:3.12-slim` and `cloud-builders` found no entry that names a pipeline step image (2026-11-10). ADR-081 and ADR-099 introduced the pipeline and ADR-100 the sentiment build; none chose an image. **Required, not portfolio:** every deploy is blocked until this is fixed.*
+
+**Context:**
+- **The failure.** On 2026-11-10 build `51b9dc00-b524-4648-be92-70a6e7d841d7` (commit `f2cddf6`, `_RUN_VERIFY=true`) failed at its first deploy step, `deploy-qa`: `exec: "python3": executable file not found in $PATH`. Nothing was deployed. `deploy/cloudbuild.yaml:134-136` runs the floating tag `gcr.io/google.com/cloudsdktool/cloud-sdk:slim` with `entrypoint: python3`; the other five deploy steps and `verify` use the same tag (L-107).
+- **The 10-30 comparison, now answered.** `gcloud builds describe <id> --region=us-central1`, field `results.buildStepImages` (read 2026-11-10; the flag is required, and the field is populated for both builds; L-107 recorded it as null):
+
+  | Step image | Build `6f8abad0` (2026-10-30, passed) | Build `51b9dc00` (2026-11-10, failed) |
+  |---|---|---|
+  | `cloud-sdk:slim` (steps 10-16) | `sha256:b38f2881…` | `sha256:e8394c66…` |
+  | `gcr.io/cloud-builders/docker` (steps 0-8) | `sha256:f772ab45…` | `sha256:fbc05705…` |
+  | `python:3.12-slim` (step 9) | `sha256:aa943ce4…` | `sha256:5e2bdb1b…` |
+
+  All three floating images changed between the two builds. `gcloud container images list-tags` on `cloud-sdk` maps the two `:slim` digests to `591.0.0-slim` (pushed 2026-10-27) and `593.0.0-slim` (pushed 2026-11-10 08:49 CST). `:slim` also pointed at `592.0.0-slim` from 2026-11-03.
+- **The cause.** Tested locally on 2026-11-10 (Docker 29.8.0, linux/amd64, the repo mounted read-only): `591.0.0-slim` has `/usr/bin/python3` (3.13.5) and the deploy scripts' imports and entry points run. `592.0.0-slim` and `593.0.0-slim` have no `python3` on PATH, and the image is 368 MB smaller (1675 MB to 1307 MB). Python left the `:slim` image at 592. The migration page does not say why (unverified).
+- **Google's migration note.** `docs.cloud.google.com/sdk/docs/migrate-docker-images` (read 2026-11-10; the update date of 2026-11-03 is the owner's, not visible in the fetched text) recommends moving off `:latest`, `:alpine`, `:emulators`, `:slim` and `:debian_component_based` to `:stable`, for "a smaller image size and improved security fixes". It gives no dates or support timelines. **`:stable` does not run this pipeline:** it has no `python3` on PATH either (below).
+- **What the steps need** (read from the files): `python3` and `gcloud` only. `deploy/deploy_service.py:16-21` imports `json`, `subprocess`, `sys`, `time`, `urllib.error`, `urllib.request` and calls `gcloud auth print-access-token` (line 30); `deploy/verify.py:30-42` imports only the standard library and calls `gcloud`. The `render` step needs `pyyaml`, which it installs.
+- **Local results**, each image pulled by digest (`python3` as the container entrypoint, the same imports, `deploy_service.py` with no arguments, `verify.py --help`):
+
+  | Image | Digest | `python3` on PATH | Scripts run |
+  |---|---|---|---|
+  | `591.0.0-slim` | `sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64` | yes, 3.13.5 | yes |
+  | `592.0.0-slim` | `sha256:08c9cb2c82625689f26172f46f2cefdf30c3449959a71492569a824b537d369f` | no | no (rc 127) |
+  | `593.0.0-slim` (`:slim` on 11-10) | `sha256:e8394c66f4f66336af311343ff9a84c84521f8c1113ebc8abfe98bab9a155099` | no | no |
+  | `591.0.0-stable` | `sha256:b8aa7d77de8546173434e5409b7054a99e5adfbf788690073238d85ee2fb4cd2` | no | no |
+  | `592.0.0-stable` | `sha256:948b300d714686aec57c4c35458a5c6d1bfc1a0957121cf3f5295b689081a763` | no | no |
+  | `593.0.0-stable` (`:stable` on 11-10) | `sha256:52197967c48ab4b1d622bbc302a27decb3aecc465165757c369f464e1718eddd` | no | no |
+  | `593.0.0` (`:latest`) | `sha256:1933d2e733c14df2506fa4e8a06f72b8abbde5da4768c768f589f8abf86c9d77` | no | no |
+  | `593.0.0-debian_component_based` | `sha256:9ff9b11d65969ad6137c59198c56659d50032c54a86cba7333db8334e9839752` | no | no |
+
+  The 592 and 593 images carry gcloud's own bundled Python (3.14.9) at `/usr/lib/google-cloud-sdk/platform/bundledpythonunix/bin/python3`, off PATH. Run by that absolute path in `593.0.0-stable`, the imports, `deploy_service.py` and `verify.py --help` all work.
+
+**Decision:**
+1. **Every step image in `deploy/cloudbuild.yaml` is pinned by digest** (`name: <image>@sha256:…`). Only the `name:` lines change; no step order, substitution, timeout, service account, entrypoint or deploy logic.
+   - the seven Cloud SDK steps (`deploy-qa`, `deploy-sentiment`, `deploy-forecast`, `deploy-reporting`, `deploy-orchestrator`, `deploy-gateway`, `verify`): `gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64` (`591.0.0-slim`);
+   - the nine docker steps (eight builds and `push-images`): `gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36`;
+   - `render`: `python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b`.
+   - The last two are the digests that passed steps 0 to 9 of build `51b9dc00` on the current code.
+2. **A unit test fails if any `steps[].name` in `deploy/cloudbuild.yaml` has no `@sha256:` digest** (`tests/unit/test_cloudbuild_images_pinned.py`). It covers `cloudbuild.yaml` steps only.
+3. **Not decided here:** the `FROM` lines of the service Dockerfiles. Read 2026-11-10, none of the 22 `FROM` lines in the repo is pinned by digest (all use `python:3.12-slim` or `node:24-slim`), so the application images have the same drift risk. Left as they are; a separate decision if wanted.
+
+**Consequences:**
+- **The slim line has no `python3` after 591.** A later re-pin to any newer Cloud SDK image needs option B or C below. Both are recorded as alternatives with today's evidence.
+- **No re-pin before 2026-12-12 (owner-decided), unless the pinned digest stops resolving.** Re-pinning before grading would bring back the risk this ADR removes: an image nobody has run the pipeline against.
+- **The pinned image gets no security fixes** until someone re-pins it. It is a 2026-10-27 build (gcloud 591.0.0), carrying whatever was in it then. This is accepted for the grading period, and the pipeline's deploy scope is unchanged.
+- **Fallback if a pinned digest stops resolving:** mirror the 591 image into the project's Artifact Registry, pinned by digest, under its own ADR. The `python:3.12-slim` and `cloud-builders/docker` digests are handled the same way.
+- **Every later deploy session's preflight checks, read-only, that each pinned digest still resolves** (`gcloud container images describe <image>@<digest>` for the two `gcr.io` images; `docker manifest inspect` for the Docker Hub image). A digest that does not resolve stops the session before any state-changing command.
+- **Not proven live.** The first live proof is the L-106 verification rerun's G2. Until then this is verified only offline: the unit test, the existing deploy and trigger tests, and the local runs above. Whether Cloud Build starts a step from a digest-pinned `name:` exactly as it does from a tag is expected, not yet observed here.
+- The pinned `591.0.0-slim` is 1675 MB against 1307 MB for the current `:slim`; the pull time rises.
+
+**Alternatives considered:**
+- *A floating `:stable` tag* (rejected twice over): it is the same failure mode (a tag that moves under the pipeline), and it is also not a drop-in: `593.0.0-stable`, `592.0.0-stable` and `591.0.0-stable` have no `python3` on PATH.
+- *`593.0.0-stable` pinned by digest, with the seven Python steps calling the bundled interpreter by absolute path* (option B; rejected for now, kept for the re-pin). It works locally and is 717 MB, with Python 3.14.9. It changes the `entrypoint` of five steps and the bash bodies of two, which is more than an image change. The path is an internal of the image that Google does not document (unverified). A re-pin session would test it first.
+- *A custom deploy-tools image* (python plus gcloud, built into the project's Artifact Registry and pinned by digest; option C; rejected for now, kept for the re-pin). It is the cleanest long-term answer, and Google's migration guide points to extending the image or building a Dockerfile. It adds a new build, a registry path and a patching duty, and it cannot be proven before a live build; for a solo project with a fixed grading date, that is a larger change than the failure warrants.
+- *`:latest` (3167 MB) and `:debian_component_based` (3149 MB), pinned* (rejected): tested, no `python3` on PATH, and about four times the size of `:stable` (3.1 GB against 717 MB).
+- *`592.0.0-slim`, pinned* (rejected): tested, no `python3`.
+- *`591.0.0-stable`, pinned* (rejected): tested, no `python3`.
+- *Leave the docker builder and `python:3.12-slim` floating and pin only the Cloud SDK steps* (rejected): all three images changed between 10-30 and 11-10, and the unit test would then have to carve out exceptions. The other two did not fail on 11-10, so this part is prevention, not a fix.
+- *Mirror the 591 image into Artifact Registry now* (deferred): it removes the dependence on Google keeping an old tag, but costs a registry path and a push step. It is the fallback above, not the first move.
