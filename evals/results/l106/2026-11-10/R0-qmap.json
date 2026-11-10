@@ -1,0 +1,7 @@
+{"2026-11-10T21:34:23.291": {"question": "page load (no question)", "trace": null},
+ "2026-11-10T21:35:08.194": {"question": "none identified (no request matched within 1 s; before Q1 was asked at 21:36:18)", "trace": null},
+ "2026-11-10T21:36:20.964": {"question": "Q1", "trace": "dcc87f78dd4b410687588f080c1aa933"},
+ "2026-11-10T21:36:31.390": {"question": "Q1", "trace": "dcc87f78dd4b410687588f080c1aa933"},
+ "2026-11-10T21:36:56.926": {"question": "Q1", "trace": "dcc87f78dd4b410687588f080c1aa933"},
+ "2026-11-10T21:38:40.662": {"question": "Q2", "trace": "87f8d41dea87451db9c7be0d7cae94d9"},
+ "2026-11-10T21:40:18.539": {"question": "Q3", "trace": "021c8e3e8ddf4e4cac73385f428d22d8"}}
