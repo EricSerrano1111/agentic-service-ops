@@ -1,0 +1,298 @@
+[
+ {
+  "round": "R0",
+  "service": "ops-gateway",
+  "revision": "ops-gateway-00004-zqw",
+  "instanceId": "00e8a408bd687957063bfe9a2da2818fbb91d099b700674ce3b0350ae8901fe94e39c2466fbc0ae908cdaaedc417b737e34a61ba3d16af4e1ff3fa2c86ddadaf1cef0ed688b109749c6c4b308f6ac6429d55",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:34:23.291793Z",
+  "containers": {
+   "gateway": {
+    "probe": {
+     "result": "pass",
+     "attempts": 2,
+     "secs_after_start": 5.303,
+     "text": "STARTUP HTTP probe succeeded after 2 attempts for container \"gateway\" on port 8080 path \"/healthz\"."
+    },
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 3.85,
+     "text": "Started server process [1]",
+     "filled_by": "fill_round.py (no container_name label)"
+    }
+   }
+  },
+  "secs_to_probe_success": 5.303,
+  "max_attempts": 2,
+  "over_60s": false,
+  "request": {
+   "ts": "2026-11-10T21:34:23.229905Z",
+   "status": 304,
+   "latency": "5.140256727s",
+   "message": null,
+   "trace": "projects/a2a-agentic-service-ops-gcp/traces/6b3d99236d9f6ae150e5e6ed1d39a14c"
+  },
+  "question": "page load (no question)",
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "R0",
+  "service": "ops-gateway",
+  "revision": "ops-gateway-00004-zqw",
+  "instanceId": "00e8a408bd58440272388d7cb941d97cbbe6cc25555ea7f56f1e856e4f468fd604b65a695e8c6e33d64bbd531df3b403897339039f4aaa9fc6b069e35a50a0df3a24c88ad0e2531afdf03b4a126a4ef369954abcb75c005caf",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:35:08.194520Z",
+  "containers": {
+   "gateway": {
+    "probe": {
+     "result": "pass",
+     "attempts": 2,
+     "secs_after_start": 5.317,
+     "text": "STARTUP HTTP probe succeeded after 2 attempts for container \"gateway\" on port 8080 path \"/healthz\"."
+    },
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 4.057,
+     "text": "Started server process [1]",
+     "filled_by": "fill_round.py (no container_name label)"
+    }
+   }
+  },
+  "secs_to_probe_success": 5.317,
+  "max_attempts": 2,
+  "over_60s": false,
+  "request": null,
+  "question": "none identified (no request matched within 1 s; before Q1 was asked at 21:36:18)",
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "R0",
+  "service": "ops-orchestrator",
+  "revision": "ops-orchestrator-00011-mml",
+  "instanceId": "00e8a408bd50681f2a44ccabc5926ff654f6a48122fbce1f01c0f492515ce9cb2f23cefe2c46e188a8d0c045980329469d210e0834d9eba41b39dcbe32774781b08cb9acea9addbb7940fb2cea61662844d7855e206c259e57",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:36:20.964188Z",
+  "containers": {
+   "orchestrator": {
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.213,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"orchestrator\" on port 8080 path \"/healthz\"."
+    },
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 7.213,
+     "text": "Started server process [1]",
+     "filled_by": "fill_round.py (no container_name label)"
+    }
+   }
+  },
+  "secs_to_probe_success": 8.213,
+  "max_attempts": 3,
+  "over_60s": false,
+  "request": {
+   "ts": "2026-11-10T21:36:20.851656Z",
+   "status": 200,
+   "latency": "51.636880422s",
+   "message": null,
+   "trace": "projects/a2a-agentic-service-ops-gcp/traces/a1dd0ed174a4ddaa503450476a099db3"
+  },
+  "question": "Q1",
+  "trace": "dcc87f78dd4b410687588f080c1aa933",
+  "verdict": "pass"
+ },
+ {
+  "round": "R0",
+  "service": "ops-reporting",
+  "revision": "ops-reporting-00009-bjp",
+  "instanceId": "00e8a408bd338428a4db6c202f815f6db537faed6a194c653c79d4a871788769c0c9b58a33b368ee944c33e2e54cabd6f2143a9b5f87c762f54af1553a880a4fae772d6b1c6fe9187d68197a58ad184b38d3bd1157e2772e41",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:36:31.390945Z",
+  "containers": {
+   "mcp-incidents": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 10.31,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 4,
+     "secs_after_start": 11.71,
+     "text": "STARTUP HTTP probe succeeded after 4 attempts for container \"mcp-incidents\" on port 8101 path \"/readyz\"."
+    }
+   },
+   "agent-reporting": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 20.729,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 4,
+     "secs_after_start": 23.637,
+     "text": "STARTUP HTTP probe succeeded after 4 attempts for container \"agent-reporting\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 23.637,
+  "max_attempts": 4,
+  "over_60s": false,
+  "request": {
+   "ts": "2026-11-10T21:36:31.335863Z",
+   "status": 200,
+   "latency": "23.293742395s",
+   "message": null,
+   "trace": "projects/a2a-agentic-service-ops-gcp/traces/5584d278091ca869c8bc9564b1ea5c49"
+  },
+  "question": "Q1",
+  "trace": "dcc87f78dd4b410687588f080c1aa933",
+  "verdict": "pass"
+ },
+ {
+  "round": "R0",
+  "service": "ops-qa",
+  "revision": "ops-qa-00006-dj4",
+  "instanceId": "00e8a408bdbbb11752ef3bc79f69417321649a9f5e3046fa158c865f5ebea52257f46cccf1c9c9973cc658162144f791bcdadf311f1c252a30333ecedc4dbfc2e1aebb7eeebe89ccba0729b8bee122d2efb1d1b62f381a6ccf",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:36:56.926860Z",
+  "containers": {
+   "agent-qa": {
+    "probe": {
+     "result": "pass",
+     "attempts": 5,
+     "secs_after_start": 14.625,
+     "text": "STARTUP HTTP probe succeeded after 5 attempts for container \"agent-qa\" on port 8080 path \"/readyz\"."
+    },
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 13.176,
+     "text": "Started server process [1]",
+     "filled_by": "fill_round.py (no container_name label)"
+    }
+   }
+  },
+  "secs_to_probe_success": 14.625,
+  "max_attempts": 5,
+  "over_60s": false,
+  "request": {
+   "ts": "2026-11-10T21:36:56.846604Z",
+   "status": 200,
+   "latency": "14.452832455s",
+   "message": null,
+   "trace": "projects/a2a-agentic-service-ops-gcp/traces/84e7c972edca9edafefe4464c0bb1fce"
+  },
+  "question": "Q1",
+  "trace": "dcc87f78dd4b410687588f080c1aa933",
+  "verdict": "pass"
+ },
+ {
+  "round": "R0",
+  "service": "ops-sentiment",
+  "revision": "ops-sentiment-00005-nzq",
+  "instanceId": "00e8a408bdab02b87fa006dd8c6e35fe95051dee5ccd991ead998fd584a57fa6153b925e40e3f7711a78e21b7f62490c77497ccf1a0a0d0bee384f1459f5c3ef8b436f66fd2c8674645deceacdbe1f6f80c6eef0a2e762a194b5d41b",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:38:40.662395Z",
+  "containers": {
+   "mcp-feedback": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 8.322,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.818,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"mcp-feedback\" on port 8102 path \"/readyz\"."
+    }
+   },
+   "agent-sentiment": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 16.954,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 4,
+     "secs_after_start": 20.115,
+     "text": "STARTUP HTTP probe succeeded after 4 attempts for container \"agent-sentiment\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 20.115,
+  "max_attempts": 4,
+  "over_60s": false,
+  "request": {
+   "ts": "2026-11-10T21:38:40.530511Z",
+   "status": 200,
+   "latency": "19.648753714s",
+   "message": null,
+   "trace": "projects/a2a-agentic-service-ops-gcp/traces/ff05cbb844746fd7a04456acfb0d2c01"
+  },
+  "question": "Q2",
+  "trace": "87f8d41dea87451db9c7be0d7cae94d9",
+  "verdict": "pass"
+ },
+ {
+  "round": "R0",
+  "service": "ops-forecast",
+  "revision": "ops-forecast-00005-k5r",
+  "instanceId": "00e8a408bda830fe091b3d95f82427d5ff7abcd827ba8b8b49b444862cd6127bae2c17925f5f78a2a3b42763c7379c60ff5ebd78456c356dca0dd6c2bcfbacc05c931661af6abbb3fd941b20c4b84b320ff9522b0cdd2a1fffdaa9",
+  "reason": "Starting new instance. Reason: AUTOSCALING",
+  "kind": "autoscale",
+  "start_ts": "2026-11-10T21:40:18.539183Z",
+  "containers": {
+   "mcp-volume": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 9.538,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 4,
+     "secs_after_start": 11.997,
+     "text": "STARTUP HTTP probe succeeded after 4 attempts for container \"mcp-volume\" on port 8103 path \"/readyz\"."
+    }
+   },
+   "agent-forecast": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 20.809,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 4,
+     "secs_after_start": 23.605,
+     "text": "STARTUP HTTP probe succeeded after 4 attempts for container \"agent-forecast\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 23.605,
+  "max_attempts": 4,
+  "over_60s": false,
+  "request": {
+   "ts": "2026-11-10T21:40:18.494874Z",
+   "status": 200,
+   "latency": "23.217584287s",
+   "message": null,
+   "trace": "projects/a2a-agentic-service-ops-gcp/traces/5e5c5818b9c3c6eac1ae4695de7518a6"
+  },
+  "question": "Q3",
+  "trace": "021c8e3e8ddf4e4cac73385f428d22d8",
+  "verdict": "pass"
+ }
+]
