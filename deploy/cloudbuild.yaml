@@ -43,36 +43,36 @@ substitutions:
 steps:
   # ---- build (parallel) ---------------------------------------------------------------
   - id: build-orchestrator
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/orchestrator/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/orchestrator:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   - id: build-agent-reporting
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/agent_reporting/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-reporting:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   - id: build-mcp-incidents
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/mcp_incidents/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-incidents:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   - id: build-agent-qa
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/agent_qa/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-qa:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   - id: build-agent-forecast
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/agent_forecast/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/agent-forecast:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   - id: build-mcp-volume
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/mcp_volume/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/mcp-volume:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   - id: build-gateway
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     args: ["build", "-f", "services/api_gateway/Dockerfile", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/gateway:${COMMIT_SHA}", "."]
     waitFor: ["-"]
   # Sentiment: skipped only if _DEPLOY_SENTIMENT is "false" (ADR-100).
   - id: build-sentiment
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     entrypoint: bash
     args:
       - -c
@@ -85,7 +85,7 @@ steps:
 
   # ---- push: must finish before a definition can reference the tags -------------------
   - id: push-images
-    name: gcr.io/cloud-builders/docker
+    name: gcr.io/cloud-builders/docker@sha256:fbc05705e6f24467e40ae8a4097ab9b8fae1116551f838fa2c55f4367427fc36
     entrypoint: bash
     args:
       - -c
@@ -101,7 +101,7 @@ steps:
   # ---- render ---------------------------------------------------------------------------
   # Fails the build if any placeholder has no value or remains after rendering.
   - id: render
-    name: python:3.12-slim
+    name: python:3.12-slim@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b
     entrypoint: bash
     env:
       - PROJECT_ID=${PROJECT_ID}
@@ -132,12 +132,12 @@ steps:
 
   # ---- deploy, in dependency order: callees before their callers ------------------------
   - id: deploy-qa
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/qa.json"]
     waitFor: ["render"]
   - id: deploy-sentiment
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: bash
     args:
       - -c
@@ -147,29 +147,29 @@ steps:
         python3 deploy/deploy_service.py /workspace/rendered/sentiment.json
     waitFor: ["deploy-qa"]
   - id: deploy-forecast
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/forecast.json"]
     waitFor: ["deploy-sentiment"]
   - id: deploy-reporting
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/reporting.json"]
     waitFor: ["render", "deploy-forecast"]
   - id: deploy-orchestrator
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/orchestrator.json"]
     waitFor: ["deploy-reporting"]
   - id: deploy-gateway
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: python3
     args: ["deploy/deploy_service.py", "/workspace/rendered/gateway.json"]
     waitFor: ["deploy-orchestrator"]
 
   # ---- post-deploy check: fails the build on any FAIL -----------------------------------
   - id: verify
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64
     entrypoint: bash
     env:
       - PROJECT_ID=${PROJECT_ID}

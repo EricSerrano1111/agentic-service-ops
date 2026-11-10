@@ -614,10 +614,12 @@ def test_arguments():
 
 # ------------------------------------------------------------------------- cloudbuild is unchanged
 
-#: The verify step as it was before S6-T1: deploy/cloudbuild.yaml, unchanged since 05a0c34.
+#: The verify step as it was before S6-T1: deploy/cloudbuild.yaml, unchanged since 05a0c34, except
+#: that `name` is now the digest-pinned image (ADR-121, 2026-11-10); it was `cloud-sdk:slim`.
 VERIFY_STEP_BEFORE = {
     "id": "verify",
-    "name": "gcr.io/google.com/cloudsdktool/cloud-sdk:slim",
+    "name": "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    "@sha256:b38f2881552c3054d140c8eeb4ad88bdc0eb4deeeb38507c5dac1403adc3ee64",
     "entrypoint": "bash",
     "env": [
         "PROJECT_ID=${PROJECT_ID}",
