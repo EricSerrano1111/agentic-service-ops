@@ -92,7 +92,7 @@
 | 078 | The reporting-slice deploy is pulled forward to 2026-10-12 (supersedes ADR-045's dates and stop date only) | Accepted |
 | 079 | Each MCP server runs as a Cloud Run sidecar of its agent; the first deploy is two services (supersedes ADR-045 in part) | Accepted |
 | 080 | The UI is a Next.js static export served by the FastAPI gateway (builds on ADR-009) | Accepted |
-| 081 | Deploy configuration for the reporting slice: v2 service format for a per-container Cloud SQL mount, IAM as the boundary, dedicated service accounts (clarifies ADR-079) | Accepted |
+| 081 | Deploy configuration for the reporting slice: v2 service format for a per-container Cloud SQL mount, IAM as the boundary, dedicated service accounts (clarifies ADR-079) | Accepted — superseded in part by ADR-120 |
 | 082 | Sprint calendar re-baselined: Sprint 4 is 2026-10-06 to 10-25, Sprint 6 ends 11-22, 11-23 to 12-05 is buffer | Accepted |
 | 083 | The deploy runs in the paid project; cost-split labels; trigger disabled between windows (extends ADR-041) | Accepted |
 | 084 | The deploy window was pulled forward to 2026-10-08 to 10-10; verified serving on day one (supersedes ADR-078's dates) | Accepted |
@@ -110,7 +110,7 @@
 | 096 | QA also checks the 95% interval ends (supersedes ADR-095 in part) | Accepted |
 | 097 | Invite-link access to the gateway (builds on ADR-079, ADR-080 and ADR-081; supersedes nothing) | Accepted |
 | 098 | The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087) | Accepted |
-| 099 | Deploy configuration for the full system (extends ADR-081 to six services) | Accepted |
+| 099 | Deploy configuration for the full system (extends ADR-081 to six services) | Accepted — superseded in part by ADR-120 |
 | 100 | Deployed sentiment reads stored predictions only; scoring is an offline batch (supersedes ADR-062 in part; builds on ADR-099; resolves R-19's blocker) | Accepted |
 | 101 | The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default | Accepted— superseded in part by ADR-116 |
 | 102 | The Sprint 5 interpretation gate: `qa_interp_v3` failed (a) in run 1; the check stays advisory with `qa_interp_v2` | Accepted |
