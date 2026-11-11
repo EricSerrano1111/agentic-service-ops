@@ -1,0 +1,146 @@
+{
+ "R0": {
+  "2026-11-11T17:54:42.051": {
+   "question": "page load (no question)",
+   "trace": "c09e3030fd6b440d8f746075c31d1e3f"
+  },
+  "2026-11-11T17:55:27.739": {
+   "question": "Q1",
+   "trace": "2b11b90a0b214f67a1539a554cb0ce3e"
+  },
+  "2026-11-11T17:55:38.507": {
+   "question": "Q1",
+   "trace": "2b11b90a0b214f67a1539a554cb0ce3e"
+  },
+  "2026-11-11T17:56:02.020": {
+   "question": "Q1",
+   "trace": "2b11b90a0b214f67a1539a554cb0ce3e"
+  },
+  "2026-11-11T17:57:37.463": {
+   "question": "Q2",
+   "trace": "0c5a045adb134accab48ca22c276f917"
+  },
+  "2026-11-11T17:58:53.268": {
+   "question": "Q3",
+   "trace": "e45e8cc4da3e4b01a233deea2d79c641"
+  }
+ },
+ "R1": {
+  "2026-11-11T18:37:36.333": {
+   "question": "page load (no question)",
+   "trace": "980c28dea3c44542ab9aaad9ae662ee5"
+  },
+  "2026-11-11T18:37:56.454": {
+   "question": "Q1",
+   "trace": "883dae16a18b41abab920e8339dfaa29"
+  },
+  "2026-11-11T18:38:03.321": {
+   "question": "Q1",
+   "trace": "883dae16a18b41abab920e8339dfaa29"
+  },
+  "2026-11-11T18:38:28.158": {
+   "question": "Q1",
+   "trace": "883dae16a18b41abab920e8339dfaa29"
+  },
+  "2026-11-11T18:39:26.768": {
+   "question": "Q2",
+   "trace": "5884b961b33047dc9b5d5a7b24e19ce7"
+  },
+  "2026-11-11T18:40:21.468": {
+   "question": "Q3",
+   "trace": "522aea58434848b482b56841bb74d54e"
+  }
+ },
+ "R2": {
+  "2026-11-11T19:01:14.921": {
+   "question": "page load (no question)",
+   "trace": "0f3516c3e25a4195891a98ba2f85a758"
+  },
+  "2026-11-11T19:01:29.336": {
+   "question": "Q1",
+   "trace": "dc66a46a7aa24e749a524a41996bac65"
+  },
+  "2026-11-11T19:01:40.702": {
+   "question": "Q1",
+   "trace": "dc66a46a7aa24e749a524a41996bac65"
+  },
+  "2026-11-11T19:02:05.521": {
+   "question": "Q1",
+   "trace": "dc66a46a7aa24e749a524a41996bac65"
+  },
+  "2026-11-11T19:03:36.032": {
+   "question": "Q2",
+   "trace": "6bc9f02bb98b4003a8513a028c753baa"
+  },
+  "2026-11-11T19:04:21.939": {
+   "question": "Q3",
+   "trace": "95281417608a4097a76bd664afdbb2a7"
+  }
+ },
+ "R3": {
+  "2026-11-11T19:27:42.156": {
+   "question": "page load (no question)",
+   "trace": "725a2436c80c401994f3d793d0030216"
+  },
+  "2026-11-11T19:28:02.083": {
+   "question": "Q1",
+   "trace": "964fc1fa9e3b421e900da8afeed285d7"
+  },
+  "2026-11-11T19:28:08.597": {
+   "question": "Q1",
+   "trace": "964fc1fa9e3b421e900da8afeed285d7"
+  },
+  "2026-11-11T19:28:33.563": {
+   "question": "Q1",
+   "trace": "964fc1fa9e3b421e900da8afeed285d7"
+  },
+  "2026-11-11T19:29:28.450": {
+   "question": "Q2",
+   "trace": "bf4ad83b5fc74c18908843b104af4ab0"
+  },
+  "2026-11-11T19:30:15.163": {
+   "question": "Q3",
+   "trace": "36fe06e2232647398459e47cc581777f"
+  }
+ },
+ "R4": {
+  "2026-11-11T20:02:08.795": {
+   "question": "page load (no question)",
+   "trace": "e74920965b0b463fa1052b1d0c925a59"
+  },
+  "2026-11-11T20:02:21.123": {
+   "question": "Q1",
+   "trace": "6e09a9d9e9f346b6a130dcd8720449e3"
+  },
+  "2026-11-11T20:02:35.379": {
+   "question": "Q1",
+   "trace": "6e09a9d9e9f346b6a130dcd8720449e3"
+  },
+  "2026-11-11T20:03:03.214": {
+   "question": "Q1",
+   "trace": "6e09a9d9e9f346b6a130dcd8720449e3"
+  },
+  "2026-11-11T20:03:51.000": {
+   "question": "Q2",
+   "trace": "054b66d9df8c4cdba1416fece0808cf0"
+  },
+  "2026-11-11T20:04:14.032": {
+   "question": "Q2",
+   "trace": "054b66d9df8c4cdba1416fece0808cf0"
+  },
+  "2026-11-11T20:05:00.250": {
+   "question": "Q3",
+   "trace": "312e28037b92405ea08e841d38d25011"
+  }
+ },
+ "R5": {
+  "2026-11-11T20:27:37.378": {
+   "question": "R5 Q1 (exploratory)",
+   "trace": "28cae26569d84b008c4cedd496c66003"
+  },
+  "2026-11-11T20:28:02.493": {
+   "question": "R5 Q1 (exploratory)",
+   "trace": "28cae26569d84b008c4cedd496c66003"
+  }
+ }
+}

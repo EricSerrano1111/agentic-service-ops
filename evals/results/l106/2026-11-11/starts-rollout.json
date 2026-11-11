@@ -1,0 +1,212 @@
+[
+ {
+  "round": "ROLLOUT",
+  "service": "ops-qa",
+  "revision": "ops-qa-00007-w9l",
+  "instanceId": "00e8a408bd67194d79da4294ceef13e55e49db5d33e00fd279d025c651775abbbaf9fd64bf0be9c746b66867b712e42d5f9cc3dd26f4e56bb6c81676f6e6a7939c71e412381534bd0eff54091bc9f15b8d585cbb431bf766",
+  "reason": "Starting new instance. Reason: DEPLOYMENT_ROLLOUT",
+  "kind": "rollout",
+  "start_ts": "2026-11-11T18:12:53.366682Z",
+  "containers": {
+   "agent-qa": {
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.634,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"agent-qa\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 8.634,
+  "max_attempts": 3,
+  "over_60s": false,
+  "request": null,
+  "question": null,
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "ROLLOUT",
+  "service": "ops-sentiment",
+  "revision": "ops-sentiment-00006-8jp",
+  "instanceId": "00e8a408bdb17cf29456daa8a8a98a2267da4e38b9a0f5e5cf177f51b9d2cf2c3bc94202122b3d3742c3747f37a12b125ec016c8ee9de212899f7d917a162415924a5304123ad113543d181abe39a1c05bb838e0905d7c4f80",
+  "reason": "Starting new instance. Reason: DEPLOYMENT_ROLLOUT",
+  "kind": "rollout",
+  "start_ts": "2026-11-11T18:13:22.491513Z",
+  "containers": {
+   "mcp-feedback": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 5.925,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.601,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"mcp-feedback\" on port 8102 path \"/readyz\"."
+    }
+   },
+   "agent-sentiment": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 14.917,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 16.77,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"agent-sentiment\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 16.77,
+  "max_attempts": 3,
+  "over_60s": false,
+  "request": null,
+  "question": null,
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "ROLLOUT",
+  "service": "ops-forecast",
+  "revision": "ops-forecast-00006-nsf",
+  "instanceId": "00e8a408bd6666bf734a0bde55885349e227868fd963e824e8b0b710a1bfa0a79ba4e0f82b46c8905efac57b8b327eb1e4ef4912a67c8672b3ea789cfa8e9ca809e3a8e8c0dbbd887e05b754c1d44c9836c7c17178247a6f18",
+  "reason": "Starting new instance. Reason: DEPLOYMENT_ROLLOUT",
+  "kind": "rollout",
+  "start_ts": "2026-11-11T18:13:53.324017Z",
+  "containers": {
+   "mcp-volume": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 6.633,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.789,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"mcp-volume\" on port 8103 path \"/readyz\"."
+    }
+   },
+   "agent-forecast": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 13.669,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 2,
+     "secs_after_start": 14.096,
+     "text": "STARTUP HTTP probe succeeded after 2 attempts for container \"agent-forecast\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 14.096,
+  "max_attempts": 3,
+  "over_60s": false,
+  "request": null,
+  "question": null,
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "ROLLOUT",
+  "service": "ops-reporting",
+  "revision": "ops-reporting-00010-xtq",
+  "instanceId": "00e8a408bd7a74f546e75512dc89fae4e233819597bd93fd6ce813c315b2232e5545323cb3536475c8c5df8e9902230453a4e501b5ba66ddd61a6090c573676bf894e853ea1bec16ea314fcbf805f222f0d91ff7caa5356fde",
+  "reason": "Starting new instance. Reason: DEPLOYMENT_ROLLOUT",
+  "kind": "rollout",
+  "start_ts": "2026-11-11T18:14:29.378386Z",
+  "containers": {
+   "mcp-incidents": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 5.505,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.582,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"mcp-incidents\" on port 8101 path \"/readyz\"."
+    }
+   },
+   "agent-reporting": {
+    "first_line": {
+     "stream": "stdout",
+     "secs_after_start": 14.667,
+     "text": "Started server process [1]"
+    },
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 16.77,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"agent-reporting\" on port 8080 path \"/readyz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 16.77,
+  "max_attempts": 3,
+  "over_60s": false,
+  "request": null,
+  "question": null,
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "ROLLOUT",
+  "service": "ops-orchestrator",
+  "revision": "ops-orchestrator-00012-t27",
+  "instanceId": "00e8a408bdcaf916abf6943ec187e235fc69c9a3ce5e1cdf5f1fad87fcc8fe127331b5cfd71eafa27e09f666e6028171be7955477cc9bfa76bfa7a9e746b8b7903c3a5a4c3ec3f4a7425bef6b109a9e137e6927cdf89ab3c59",
+  "reason": "Starting new instance. Reason: DEPLOYMENT_ROLLOUT",
+  "kind": "rollout",
+  "start_ts": "2026-11-11T18:14:57.925029Z",
+  "containers": {
+   "orchestrator": {
+    "probe": {
+     "result": "pass",
+     "attempts": 3,
+     "secs_after_start": 8.272,
+     "text": "STARTUP HTTP probe succeeded after 3 attempts for container \"orchestrator\" on port 8080 path \"/healthz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 8.272,
+  "max_attempts": 3,
+  "over_60s": false,
+  "request": null,
+  "question": null,
+  "trace": null,
+  "verdict": "pass"
+ },
+ {
+  "round": "ROLLOUT",
+  "service": "ops-gateway",
+  "revision": "ops-gateway-00005-m67",
+  "instanceId": "00e8a408bd9742020f64b6a9878b239f8483481b99505bd4de26d2b95591e641bc9754abd8a1efb9e117eacda1503dd6a223aa2f84103b29ffd9ba4139f94b5a8721f5f3584c78aacaf769de8bbbf68da18829203d0607cfa7bd39",
+  "reason": "Starting new instance. Reason: DEPLOYMENT_ROLLOUT",
+  "kind": "rollout",
+  "start_ts": "2026-11-11T18:15:18.965537Z",
+  "containers": {
+   "gateway": {
+    "probe": {
+     "result": "pass",
+     "attempts": 2,
+     "secs_after_start": 5.387,
+     "text": "STARTUP HTTP probe succeeded after 2 attempts for container \"gateway\" on port 8080 path \"/healthz\"."
+    }
+   }
+  },
+  "secs_to_probe_success": 5.387,
+  "max_attempts": 2,
+  "over_60s": false,
+  "request": null,
+  "question": null,
+  "trace": null,
+  "verdict": "pass"
+ }
+]
