@@ -55,25 +55,25 @@
 | 041 | Remaining corpus generation on a separate paid, spend-capped project | Accepted — supersedes ADR-029 in part |
 | 042 | Generator: explicit deterministic IDs, per-state timezones, committed name lists, loads as app_generator | Accepted |
 | 043 | Generator world rules: SLA-conditioned incidents, snapshot semantics, age-dependent statuses, templated incident notes | Accepted |
-| 044 | No final paper: limitations and results go in the evaluation report | Accepted— superseded in part by ADR-117 |
+| 044 | No final paper: limitations and results go in the evaluation report | Accepted — superseded in part by ADR-117 |
 | 045 | Minimal Cloud Run deploy of the reporting slice in Sprint 4 | Accepted — supersedes ADR-007 in part; superseded in part by ADR-078 and ADR-079 |
 | 046 | Specialists parse their own questions; figures stay deterministic | Accepted |
 | 047 | Protocol SDKs pinned (`mcp==2.2.0`, `a2a-sdk==1.1.5`); A2A used as a minimal subset | Accepted |
-| 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted |
+| 048 | LLM client policy: free by default, paid opt-in with caps, per-minute vs daily 429, list-price metering, validated structured output, one provider | Accepted — superseded in part by ADR-104 |
 | 049 | Per-role runtime models and thinking levels; the orchestrator stays on `gemini-3.5-flash-lite` (seed set: 28/28 vs 3.7 Flash 27/28) | Accepted — superseded in part by ADR-052 |
 | 050 | Reporting answers resolve relative dates against a fixed as-of date (the dataset end), stated in every answer | Accepted |
 | 051 | `locations.region`: the customer site's region, stored, written by the generator from the one state-to-region mapping | Accepted — superseded in part by ADR-067 |
 | 052 | Thinking level follows the model called: each model's supported levels in `prices.toml`, default the lowest, a per-role override only if supported | Accepted — supersedes ADR-049 in part |
 | 053 | Routing prompt `route_v2`: forecast covers forward-looking questions about the operation, not only request volume | Accepted |
 | 054 | Routing prompt `route_v3`: the as-of date is given to the router as today's date; every routing eval reports k=3 runs | Accepted |
-| 055 | The orchestrator owns the QA loop; QA verifies with its own SQL, per-agent answer-time scope | Accepted — supersedes ADR-003 and ADR-022 in part; superseded in part by ADR-069 |
+| 055 | The orchestrator owns the QA loop; QA verifies with its own SQL, per-agent answer-time scope | Accepted — supersedes ADR-003 and ADR-022 in part; superseded in part by ADR-069 and ADR-088 |
 | 056 | QA checks numbers without a model and interpretation with one LLM call; Pro QA comparison optional | Accepted |
 | 057 | Forecast evaluation: 26-week headline holdout plus rolling-origin folds over the Q4 peaks | Accepted — superseded in part by ADR-069 |
 | 058 | Forecast model form: log-linear trend plus K annual harmonics chosen from data, robust down-weighting, 26-week horizon | Accepted — superseded in part by ADR-070 |
 | 059 | Sentiment training: pinned `bert-base-uncased`, stratified split, class weights, calibrated threshold, required TF-IDF baseline | Accepted |
 | 060 | No agent framework; LangGraph removed from the stack | Accepted |
 | 061 | Portability without Terraform; Terraform a buffer-only stretch goal | Accepted — supersedes ADR-005 in part |
-| 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted |
+| 062 | Inference inside the MCP servers; artifacts versioned in Cloud Storage; training code in `ml/` | Accepted — superseded in part by ADR-098 and ADR-100 |
 | 063 | Offline read roles: `app_eval` for validation and evaluation, `app_train` for training; gold labels leave `app_qa` | Accepted |
 | 064 | Sentiment split and evaluation protocol: near-duplicate groups, committed hashed split, test scored once, interpretation rule fixed in advance | Accepted |
 | 065 | BERT training, comparison and latency protocol (pre-registered): fixed recipe, learning-rate budget, paired bootstrap and McNemar comparison, latency budget | Accepted — superseded in part by ADR-067 |
@@ -86,35 +86,35 @@
 | 072 | Forecast agent and `mcp_volume`: served-only numbers, track record shown, future periods only; prediction code in `packages/forecast_runtime` | Accepted |
 | 073 | Reporting additions: incident counts by breakdown, a single-technician filter with `find_technician`, repeat-visit drivers with a significance rule, parse prompt `parse_v3` | Accepted |
 | 074 | Golden set v1: blind, independently computed expected answers | Accepted |
-| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted; not in effect. Gate failed; corrected gate (ADR-076) also failed. FR-03 open until Sprint 5 (L-58). |
+| 075 | Ambiguous questions are not force-routed: the router returns `ambiguous` and the orchestrator asks the user to rephrase (FR-03); `AskResponse` gains `reason` | Accepted — superseded in part by ADR-076 (its gate only); takes effect through `route_v6` since ADR-116: "ADR-075's definition and orchestrator behaviour take effect through `route_v6`." FR-03 stays not met: the gates of ADR-076 and ADR-101 failed, and ADR-114's result note reads "P2: no-go. The attempt has failed and FR-03 is unmet" (L-58). |
 | 076 | Corrected FR-03 routing gate (supersedes ADR-075's gate only), confirmed on a fresh owner-written set | Accepted |
 | 077 | Minimal circuit breaking for NFR-4, built in Sprint 4 | Accepted |
-| 078 | The reporting-slice deploy is pulled forward to 2026-10-12 (supersedes ADR-045's dates and stop date only) | Accepted |
+| 078 | The reporting-slice deploy is pulled forward to 2026-10-12 (supersedes ADR-045's dates and stop date only) | Accepted — superseded in part by ADR-084 |
 | 079 | Each MCP server runs as a Cloud Run sidecar of its agent; the first deploy is two services (supersedes ADR-045 in part) | Accepted |
 | 080 | The UI is a Next.js static export served by the FastAPI gateway (builds on ADR-009) | Accepted |
-| 081 | Deploy configuration for the reporting slice: v2 service format for a per-container Cloud SQL mount, IAM as the boundary, dedicated service accounts (clarifies ADR-079) | Accepted — superseded in part by ADR-120 |
-| 082 | Sprint calendar re-baselined: Sprint 4 is 2026-10-06 to 10-25, Sprint 6 ends 11-22, 11-23 to 12-05 is buffer | Accepted |
+| 081 | Deploy configuration for the reporting slice: v2 service format for a per-container Cloud SQL mount, IAM as the boundary, dedicated service accounts (clarifies ADR-079) | Accepted — superseded in part by ADR-085 and ADR-120 |
+| 082 | Sprint calendar re-baselined: Sprint 4 is 2026-10-06 to 10-25, Sprint 6 ends 11-22, 11-23 to 12-05 is buffer | Accepted — superseded in part by ADR-093 |
 | 083 | The deploy runs in the paid project; cost-split labels; trigger disabled between windows (extends ADR-041) | Accepted |
 | 084 | The deploy window was pulled forward to 2026-10-08 to 10-10; verified serving on day one (supersedes ADR-078's dates) | Accepted |
 | 085 | Deploy verification and IAM changes found in the window: build account self-impersonation, `verify.py` checks 2 and 6, create body (supersedes ADR-081 in part) | Accepted |
 | 086 | Region and account filters on the reporting metrics, `find_account`, and the parse gate (resolves L-62) | Accepted |
 | 087 | The QA agent's checks; the sentiment rating cross-check rule, pre-registered (extends ADR-055 and ADR-056) | Accepted |
-| 088 | The verification loop, one request deadline, circuit breaker values and the per-request cost cap (supersedes ADR-055 in part; fixes ADR-077's open values) | Accepted |
+| 088 | The verification loop, one request deadline, circuit breaker values and the per-request cost cap (supersedes ADR-055 in part; fixes ADR-077's open values) | Accepted — superseded in part by ADR-089 |
 | 089 | The QA agent for reporting and forecast, the verification contract and the loop | Accepted |
 | 090 | QA checks for sentiment answers; `not_checked` no longer stands for "no check yet" | Accepted |
 | 091 | The QA fault-injection harness, catalogue v1, the freezing rule and the measured catch rate (extends ADR-055 and ADR-087) | Accepted |
 | 092 | QA fixes from the fault injection: answer text by position, zero denominators, small samples, `qa_status: failed`, and measurement 2 (extends ADR-091) | Accepted |
-| 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted — superseded in part by ADR-109 |
+| 093 | Sprint calendar re-baselined at the Sprint 4 close: Sprint 5 10-12 to 10-25, Sprint 6 10-26 to 11-08, buffer 11-09 to 12-05 (supersedes ADR-082's sprint dates only) | Accepted — superseded in part by ADR-106 and ADR-109 |
 | 094 | Evaluation sets are written by an independent model (supersedes "owner-written" for the Sprint 5 sets only) | Accepted — superseded in part by ADR-114 |
-| 095 | QA recomputes served forecast numbers independently (L-83(a)) | Accepted |
+| 095 | QA recomputes served forecast numbers independently (L-83(a)) | Accepted — superseded in part by ADR-096 |
 | 096 | QA also checks the 95% interval ends (supersedes ADR-095 in part) | Accepted |
 | 097 | Invite-link access to the gateway (builds on ADR-079, ADR-080 and ADR-081; supersedes nothing) | Accepted |
 | 098 | The `volume_v2` parameter files are committed and baked into the forecast and QA images (supersedes ADR-062 in part; extends ADR-087) | Accepted |
 | 099 | Deploy configuration for the full system (extends ADR-081 to six services) | Accepted — superseded in part by ADR-120 |
 | 100 | Deployed sentiment reads stored predictions only; scoring is an offline batch (supersedes ADR-062 in part; builds on ADR-099; resolves R-19's blocker) | Accepted |
-| 101 | The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default | Accepted— superseded in part by ADR-116 |
+| 101 | The Sprint 5 FR-03 gate on `fr03_fresh_v2`: `route_v6` failed (c); `route_v3` stays the default | Accepted — superseded in part by ADR-116 |
 | 102 | The Sprint 5 interpretation gate: `qa_interp_v3` failed (a) in run 1; the check stays advisory with `qa_interp_v2` | Accepted |
-| 103 | Evaluation freeze for Sprint 5: the system Prompt X measures | Accepted |
+| 103 | Evaluation freeze for Sprint 5: the system Prompt X measures | Accepted — superseded in part by ADR-104 |
 | 104 | Deployed model calls use the paid key for the evaluation and grading window | Accepted |
 | 105 | Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing) | Accepted — superseded in part by ADR-110 |
 | 106 | Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part) | Accepted — superseded in part by ADR-109 and ADR-113 |
@@ -124,11 +124,11 @@
 | 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
 | 111 | Owner verification session 1 ran on a weekday, 2026-10-15 (supersedes ADR-110 in part: the weekend clause only) | Accepted |
 | 112 | A log-based alert on degraded answers, tested with a synthetic entry (extends ADR-088 and ADR-089; supersedes nothing) | Accepted |
-| 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted— superseded in part by ADR-117 |
+| 113 | Sprint 6 closes 2026-10-18; the buffer starts 2026-10-19; the Sprint 6.5 scope (supersedes ADR-109's sprint dates in part) | Accepted — superseded in part by ADR-117 |
 | 114 | FR-03's third and final attempt: `route_v6` unchanged, with a higher thinking level for routing (pre-registered) | Accepted — superseded in part by ADR-115; result 2026-10-22: no-go, FR-03 unmet; superseded in part by ADR-116 |
 | 115 | FR-03 attempt: the zero-thinking stop drops a level, and stops the session only when every level above `minimal` shows zero thinking (supersedes ADR-114 in part) | Accepted |
 | 116 | `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met) | Accepted |
-| 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 |
+| 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 and ADR-119 |
 | 118 | Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part) | Accepted |
 | 119 | The demonstration runs live only; no backup recording (supersedes ADR-117 in part) | Accepted |
 | 120 | Cold-start hardening for the deployed services: startup CPU boost, a 120 s startup window, liveness without the database (supersedes ADR-081 and ADR-099 in part) | Accepted |
@@ -4247,3 +4247,5 @@ After a start, one question through the gateway confirms the data path before th
 - *`591.0.0-stable`, pinned* (rejected): tested, no `python3`.
 - *Leave the docker builder and `python:3.12-slim` floating and pin only the Cloud SDK steps* (rejected): all three images changed between 10-30 and 11-10, and the unit test would then have to carve out exceptions. The other two did not fail on 11-10, so this part is prevention, not a fix.
 - *Mirror the 591 image into Artifact Registry now* (deferred): it removes the dependence on Google keeping an old tag, but costs a registry path and a push step. It is the fallback above, not the first move.
+
+*Note under ADR-121, 2026-11-11 (owner-decided 2026-11-11 at the audit triage; assistant-drafted from audit finding F-36, `docs/audits/2026-11-11-project-audit.md`; the entry above is unchanged).* **The CI workflow's actions are pinned by major tag, not by commit SHA.** `.github/workflows/ci.yml:23, 24, 27` use `actions/checkout@v4`, `actions/setup-python@v5` and `astral-sh/setup-uv@v6`, and the same three recur in each job (lines 45 to 49, 107 to 111; `actions/checkout@v4` again at line 142). A major tag can move, which is the failure mode this ADR removes from the deploy pipeline. **Accepted for now:** CI cannot reach a deploy. The workflow runs with `permissions: contents: read` (`ci.yml:9-10`), holds no key or `.env` (`ci.yml:16-18`), and does not start the Cloud Build trigger, which is disabled (ADR-105). **Future work, not scheduled:** pin each action by commit SHA. This note does not change ADR-121's decision or its scope (the pipeline's step images; the Dockerfile `FROM` lines stay open under decision 3).
