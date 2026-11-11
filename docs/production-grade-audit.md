@@ -413,6 +413,8 @@ The sprint log records that `06` (v1.3, drafted 2026-10-18) states these limits:
 
 *2026-10-30 (ADR-120; assistant-drafted.)* Hardening for L-106 is merged, not deployed (startup CPU boost, a 120 s startup window, liveness without the database in the two sidecars). L-106 stays open until the pre-registered cold-start test passes. No verdict changes.
 
+*2026-11-11 (L-106 verification attempt 2; owner present; assistant-drafted.)* ADR-120 is **deployed** (build `8b6493d8-5004-4e9a-9627-4e68a9dab296`, commit `8ec22db`). The pre-registered verification gave verdict PASS (README section 4): 0 of 25 autoscale starts failed in R1 to R4, with the control also passing, so **L-106 stays open: not reproduced on either configuration**; it is neither mitigated nor fixed (`docs/evaluation-report.md`, L-106, update 2026-11-11). The liveness change for the two sidecars was not exercised (no warm sidecar when `ops-db` stopped). No verdict changes.
+
 ## Appendix A: Deployed-state reads
 
 *Read-only `gcloud run services describe ... --region us-central1` and `get-iam-policy`, 2026-10-16T22:47:31Z, project `a2a-agentic-service-ops-gcp`. Every serving revision is at 100% traffic and `Ready`. Every image tag is `<registry>/<name>:9ab7c775964bd0aae491ca72082e95229c994129`. Startup probes: `httpGet`, `initialDelaySeconds` 2, `periodSeconds` 3, `timeoutSeconds` 3, `failureThreshold` 20 (40 on the sentiment agent). No container has a `livenessProbe`. Ingress is `all` on every service. Concurrency 8 (20 on the gateway). Request timeout 300 s. CPU not throttled, 1 vCPU and 512Mi per container.*
