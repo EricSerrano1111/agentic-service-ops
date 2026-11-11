@@ -1,6 +1,6 @@
 # L-106 cold-start verification, attempt 2, 2026-11-11: summary
 
-*2026-11-11 (owner present). Assistant-drafted, except the status line (owner-decided at G-REC, 2026-11-11), the rulings marked "owner-decided", and the one statement about ADR-120 item 9, whose wording is the owner's.* The pre-registration is `evals/l106/README.md` (merged in PR #98, merge commit `f2cddf68ee8b23427d974f5701023318581cbdc8`; sha256 `5de4856b3fb78c1573397ffbd9f398b71e33a88327a88c275ab6e7ebbe4dfde3`; the extractor's committed blob has sha256 `ee282ac62ce0478bb308242b537065b3d140edbffe3b52727e6c6a476404540f`). Nothing in either was changed after a result was seen. Attempt 2 re-ran everything from R0 under the same frozen pre-registration; **attempt 1's R0 (2026-11-10) does not count here.** Section 9 of `evals/l106/phase1-checks.md` (PR #101, merge commit `8ec22db032f8b5e66da166eeb0a84de84b2d4784`) was fixed before any result; that merge commit is the deploy target. Times are UTC unless marked CST (the owner's machine is UTC-6). Files beside this one: `starts.json` (R0 to R5; the six pipeline rollout starts are in `starts-rollout.json`), `ledger.jsonl`, `qmap.json`. They hold no invite link, token or invite id (the files were scanned for every invite id that appears in the session's raw gateway logs; none is present).
+*2026-11-11 (owner present). Assistant-drafted, except the status line (owner-decided at G-REC, 2026-11-11), the rulings marked "owner-decided", and the one statement about ADR-120 decision 3 (liveness without the database; from L-106 item 9), whose wording is the owner's.* The pre-registration is `evals/l106/README.md` (merged in PR #98, merge commit `f2cddf68ee8b23427d974f5701023318581cbdc8`; sha256 `5de4856b3fb78c1573397ffbd9f398b71e33a88327a88c275ab6e7ebbe4dfde3`; the extractor's committed blob has sha256 `ee282ac62ce0478bb308242b537065b3d140edbffe3b52727e6c6a476404540f`). Nothing in either was changed after a result was seen. Attempt 2 re-ran everything from R0 under the same frozen pre-registration; **attempt 1's R0 (2026-11-10) does not count here.** Section 9 of `evals/l106/phase1-checks.md` (PR #101, merge commit `8ec22db032f8b5e66da166eeb0a84de84b2d4784`) was fixed before any result; that merge commit is the deploy target. Times are UTC unless marked CST (the owner's machine is UTC-6). Files beside this one: `starts.json` (R0 to R5; the six pipeline rollout starts are in `starts-rollout.json`), `ledger.jsonl`, `qmap.json`. They hold no invite link, token or invite id (the files were scanned for every invite id that appears in the session's raw gateway logs; none is present).
 
 ## Verdict (README section 4)
 
@@ -55,7 +55,7 @@
 
 **The verify step** (outside the caps; at most 1 question): 1 question, `answered`, route `reporting`, 5,747 ms at the orchestrator, 3 model calls, $0.00183 (trace `fea3220392c34fcda06cd1b8c6addf8f`). Its log also holds HTTP 403 responses at the orchestrator and reporting (18:15:31 to 18:15:33); they were not examined here.
 
-**Trigger.** Enabled from between 18:07:21 and 18:08:31 to between 18:17:19 and 18:19:10 (the exact times of the two imports were not read); read back `disabled: True` at 18:19:10 and again at 20:37:08, equal to `deploy/trigger_full.yaml` in every field. No other build ran.
+**Trigger.** Enabled from between 18:07:21 and 18:08:31 to between 18:17:19 and 18:19:10 (the exact times of the two imports were not read); read back `disabled: True` at 18:19:10, equal to `deploy/trigger_full.yaml` in every field (compared in Python), and `disabled: True` again at 20:37:08 (that later read covered the `disabled` value only). No other build ran.
 
 **Readback, C4 `pre` against `post`** (key-by-key comparison of the six `gcloud run services describe --format export` files). It matches the expected readback of `phase1-checks.md` section 5, as restated in section 9.6; no stop:
 
@@ -201,7 +201,7 @@ All `answered`, `verified`, no retry, under the 120 s ceiling.
 
 E1 and E2 made no request to reporting, QA, sentiment or forecast and started no instance. The gateway and orchestrator had no start line and no shutdown line from E2 to the end of R5. **The 10-30 condition (cold reporting and QA behind a warm gateway and orchestrator) reproduced once; 0 of 2 starts failed; one observation, not a rate.** The status line above contains nothing from R5. Q1 had no retry. R5's starts are in `starts.json` as round `R5`, outside every count.
 
-## ADR-120 item 9 (liveness without the database)
+## ADR-120 decision 3 (liveness without the database; from L-106 item 9)
 
 **Not exercised: no warm sidecar at the stop** (owner-decided wording). The `mcp-feedback` instance (sentiment `77a006`) shut down at 20:19:38Z and the `mcp-volume` instance (forecast `da3c1b`) at 20:20:19Z, both idle shutdowns before `ops-db` stopped at 20:34:37Z. It is not recorded as working. After the stop, the read to 20:37:42Z holds no request, start, shutdown or probe-failure line. Starts or shutdowns after that read are "after G-CLOSE" and counted nowhere (none were read).
 
