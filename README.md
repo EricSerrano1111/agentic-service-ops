@@ -27,6 +27,10 @@ interpretation check is advisory (ADR-102). The deploy YAML has been synced to t
 status is in [docs/sprint-log.md](docs/sprint-log.md); requirement-by-requirement evidence is in
 [docs/requirements-traceability.md](docs/requirements-traceability.md).
 
+*Updated 2026-11-11 (audit follow-up, finding F-05; assistant-drafted from the records; the paragraph above is the 2026-10-18 status and is left as it was).*
+
+The deployed system is build `8ec22db` (Cloud Build `8b6493d8-5004-4e9a-9627-4e68a9dab296`, 2026-11-11): ADR-120's cold-start hardening is live, and the deploy pipeline's step images are pinned by digest (ADR-121; its first live run passed). The default routing prompt is `route_v6` (ADR-116). FR-03, handling ambiguous questions, stays unmet after three attempts (the gates of ADR-076 and ADR-101, and ADR-114's no-go); `route_v6` asks the user to rephrase for most ambiguous questions and best-fits the rest. Sprint 6 closed on 2026-10-18 (ADR-113). The 6.5 hardening and polish deployed on 2026-10-28 (build `0b96ca2a`), and the evaluation results page (`/results/`) and the fixes of L-105 on 2026-10-30 (build `6f8abad0`). One limitation is open: **L-106**, a failure of cold starts of the reporting service and QA seen on 2026-10-30. On 2026-11-11 it was not reproduced on the old configuration or on ADR-120's, and it is neither mitigated nor fixed (evaluation report, L-106: "ADR-120 is deployed and untested against the failure"). The interpretation check is still advisory (ADR-102), and `ops-db` is stopped between announced windows, with the build trigger disabled outside deploy windows (ADR-105). **Ahead:** the live demonstration (slots are announced about 11-15 to 11-22; the date is `[TBD]`, preferably inside Window B), Window B for graders (2026-12-01 to 12-12, ADR-107, ADR-118), the evaluation report's final pass (12-01) and the final submission with the documentation packet (12-05, ADR-117).
+
 ### Deployed architecture
 
 Six Cloud Run services: the **gateway** (FastAPI plus the static UI; the only public ingress; invite
@@ -276,3 +280,5 @@ tests/                  unit, integration (live grants, MCP figures), e2e (RUN_E
 .github/workflows/      CI: lint, unit, integration (CD trigger disabled, ADR-105)
 docker-compose.yml      the full local stack
 ```
+
+*Note 2026-11-11 (audit follow-up, finding F-23; assistant-drafted; the layout above is unchanged).* CI also runs a fourth job, `ui-build`, on pull requests only: it builds the UI stage of the gateway image (`npm ci`, the helper tests, the Next.js export, `npm audit`; `.github/workflows/ci.yml:135-144`, ADR-117). The `lint`, `unit` and `integration` jobs run on every push and on pull requests to `main`. `main` requires all four checks (read-only `gh api repos/{owner}/{repo}/branches/main/protection`, 2026-11-11).

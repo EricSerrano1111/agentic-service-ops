@@ -53,8 +53,11 @@ def test_running_the_script_reproduces_the_committed_file_byte_for_byte():
 
 
 def test_the_file_is_sorted_and_the_build_is_deterministic():
-    raw = RESULTS.read_bytes()
-    assert raw.endswith(b"\n") and raw.decode("utf-8") == text_of("web/data/results.json") or True
+    # The committed blob is LF; core.autocrlf=true checks it out as CRLF on Windows. This asserts
+    # only what it checks: after normalising CRLF, it ends with a newline and decodes as UTF-8.
+    raw = RESULTS.read_bytes().replace(b"\r\n", b"\n")
+    assert raw.endswith(b"\n")
+    raw.decode("utf-8")
     keys = list(FIGURES)
     assert keys == sorted(keys)
     assert _load_script().build() == _load_script().build()

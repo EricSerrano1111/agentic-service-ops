@@ -483,6 +483,8 @@ Each part is `Label: value`, in this order, and a part with nothing to show is o
 
 Example: `Area: incident reporting · Measure: SLA compliance · Period: 2026-07-01 to 2026-07-31 · Region: Northeast`.
 
+*2026-11-11 (audit follow-up, finding F-25; assistant-drafted; the rule and table above are unchanged.)* **The forecast line is built in a different order from the one the table gives.** As built (`services/api_gateway/src/api_gateway/interpret.py:133-141`) it reads: **Area, Measure, Slice, Period, Horizon, History**, then Not supported when present; a forecast has no Region. The table's order would put Period and Horizon before Slice. The tested behaviour is the as-built order: `test_a_forecast_answer_shows_the_resolved_weeks_and_the_horizon` (`services/api_gateway/tests/test_gateway_display.py:98`) asserts `Area: volume forecast · Measure: weekly service request volume · Slice: all service types · Period: weeks starting 2026-08-31 to 2026-10-19 · Horizon: next 8 weeks` (lines 108 to 112). The reporting and sentiment lines follow the table's order (`interpret.py:91-120`, read, not re-tested here). No code or test is changed.
+
 **3. `qa_status` wording (exact user-facing words).** `verified` means "the figures are correct for the request as the specialist parsed it" (L-74); it never says the question was understood correctly, so the words are never "verified correct".
 
 | `qa_status` | Words |

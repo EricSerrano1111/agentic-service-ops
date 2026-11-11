@@ -219,6 +219,8 @@
 
 **Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Evidence changed this sprint. The 2026-10-18 line above stands: the assignment text for `06` arrived, `06` is drafted in Word as version 1.3 and held, not submitted (due 2026-11-08), and `05` is complete and held (owner). Status stays Monitoring.
 
+**Update 2026-11-11 (audit follow-up, finding F-19; owner-decided 2026-11-11; assistant-drafted):** The 2026-10-18 line above says `06` is "held, not submitted" and `05` is "complete and held"; it is not edited. **Both were submitted:** `05` on 2026-10-22 and `06` on 2026-10-28 (`docs/sprint-log.md:1264-1265`). **Status stays Monitoring (owner-decided).** This risk is that the course rubric differs from the assumed deliverable plan, and the largest graded items are still ahead: the final package on 12-05 (the code, the documentation packet and optional revisions to `03` to `06`) and the live demonstration, whose slot is not yet announced. **Review again when the demonstration slot and the final rubric are confirmed; close after the 12-05 submission.**
+
 ### R-10 — Sprint 6 buffer erodes from earlier slippage
 **Description:** Sprint 6 is the only planned buffer in a 12-week solo timeline. Without a second person creating schedule pressure, slippage in Sprints 1–5 tends to get quietly absorbed rather than confronted.
 **Mitigation:** Treat any missed sprint goal as an immediate scope conversation at that sprint's retro, not something to "catch up on later." Scope expansion is only considered if genuinely ahead, per the working agreement.
@@ -241,6 +243,8 @@
 **Update 2026-10-15 (Owner-decided 2026-10-15; assistant-drafted.):** The calendar moves again (ADR-109). Sprint 6 now runs 2026-10-15 to 10-25 and the buffer is 10-26 to 12-05. The scope decision (ADR-106) stays at the Sprint 6 close, now 10-25, and Sprint 6.5 if any starts 10-26 (was about 11-09) and runs to about 11-29. 6.5 can therefore start before `05` (11-01) and `06` (11-08) are submitted, so no 6.5 change is deployed before `06` is submitted. "Demo rehearsed" in the Sprint 6 goal is not expected inside the sprint; it is a buffer target (11-29). Status stays Monitoring.
 
 **Update 2026-10-18 (Sprint 6 boundary review, S6-C1; owner-decided 2026-10-18; assistant-drafted):** Reviewed. The buffer is larger again: Sprint 6 closed on 2026-10-18, day 4 of a sprint planned to 10-25, and the buffer runs 2026-10-19 to 12-05, about seven weeks (ADR-113, which supersedes ADR-109's dates in part). The work is the 6.5 scope with the FR-03 attempt timeboxed to end by 11-08, the evaluation report (draft 11-08, final 12-01) and the presentation (draft 11-22, rehearsal 11-29); slippage lands on 6.5 first. Status stays Monitoring.
+
+**Update 2026-11-11 (audit follow-up, finding F-19; owner-decided 2026-11-11; assistant-drafted):** The 2026-10-18 line above still carries "the presentation (draft 11-22, rehearsal 11-29)"; it is not edited. Those targets were replaced. ADR-117 made the final package "code, a documentation packet and a live demonstration" with no slide file, and replaced the buffer targets "presentation draft 11-22, rehearsal 11-29". ADR-119 then removed the backup recording and the "By 11-29 | Rehearsal" row (`decisions-log.md`, ADR-119, Date line). **The presentation is the live demonstration, with the slot to be announced about 11-15 to 11-22 and chosen by the owner; the date is `[TBD]`, preferably inside Window B, 2026-12-01 to 12-12** (`deploy/RUNBOOK_DEMO.md:12-13`). The only live run-through is the day before it (`deploy/RUNBOOK_DEMO.md`, A3). The final submission stays 12-05 (ADR-117). No status change is made here: Monitoring.
 
 ### R-11 — Vendor pricing or model access changes mid-project
 **Description:** Gemini pricing, free-tier rate limits, or model availability could change over a 12-week window in ways that affect the budget plan (see ADR-029).
@@ -343,6 +347,8 @@
 
 *2026-10-29 (ADR-119; assistant-drafted.)* The rehearsal trigger becomes the live run-through the day before the demonstration (`RUNBOOK_DEMO.md` A3), where the deprecations page is checked (A2).
 
+**Update 2026-11-11 (deprecations check; owner-read 2026-11-11; assistant-drafted):** The deprecations page has moved: `https://ai.google.dev/gemini-api/docs/deprecations` now answers `301` to **`https://aistudio.google.com/docs/deprecations`** (read-only `curl`, audit finding F-01). Read by the owner on 2026-11-11 at the new address: `gemini-3.5-flash-lite` shows **no shutdown date and is listed as active.** This agrees with the readings of 2026-10-22 and 2026-10-28 (L-104). **Carried, not fixed here:** `deploy/RUNBOOK_DEMO.md:91-95` still fetches the old address with `curl.exe -s` and no `-L`, so its day-before check would save no table and print nothing (F-01); that runbook change goes to the next session, ADR-122. Status stays Realized.
+
 ### R-16 — Evaluation validity: measured differences may be noise
 *Added 2026-09-30.*
 **Description:** The development routing sets are small (28 and 18 questions), routing_v1 has been used to revise the routing prompt (L-16), and model output varies between runs even at temperature 0 (L-17, L-18). Together these mean a measured difference between models or prompts may be noise, and a reported accuracy may be optimistic.
@@ -431,6 +437,8 @@ The same steps are in the README's "Local environment recovery". Check the memor
 
 **Update 2026-10-28 (ADR-118; owner-decided 2026-10-28; assistant-drafted):** Window A is not opened, so this risk doesn't apply until Window B (12-01 to 12-12). The balance was $6.21 on 2026-10-28, and GCP cost was $8.79 from 10-01 to 10-28 (both owner-reported). The next balance check is before the 6.5 deploy window. Status unchanged.
 
+**Update 2026-11-11 (audit follow-up, finding F-19; owner-decided 2026-11-11; assistant-drafted):** The 2026-10-28 line above says the next check is "before the 6.5 deploy window"; that window ran on 2026-10-28, and three more deploy sessions followed (2026-10-30, 2026-11-10, 2026-11-11; `docs/deploy-window-log.md`). **The balance check that now matters precedes Window B (2026-12-01 to 12-12, ADR-118)**, against the $5 floor of ADR-105. Latest reading: **$6.15**, owner-read at 14:56 CST on 2026-11-11, after the L-106 attempt 2 session (`docs/deploy-window-log.md:726`); the reading before it was $6.18 (owner-read 11:30 CST, `:710`). It is above the floor. Auto-reload is still off and the balance is still not watched programmatically. Status unchanged: Open.
+
 ---
 
 ## Closed / Realized Risks
@@ -440,3 +448,4 @@ The same steps are in the README's "Local environment recovery". Check the memor
 - **R-03 — Cloud Run build/deploy decoupling.** Closed 2026-10-13: did not materialise in either deploy (the 2026-10-08 slice and the Sprint 5 full deploy; traffic verified at 100%). The detail and reopen trigger stay under R-03 above.
 - **R-15 — Provider capacity.** Realized 2026-10-13: the free tier returned 504s; mitigated by moving the deployed services to the paid key (ADR-104, ADR-105). The detail stays under R-15 above.
 - **R-19 — The sentiment model weights have no path into a Cloud Run image.** Closed 2026-10-13: resolved by ADR-100 and verified serving. The detail stays under R-19 above.
+- **R-14 — Environment parity: verified only against local Docker Postgres.** Closed 2026-10-14 (added to this list 2026-11-11, audit finding F-18; the summary table and the 2026-10-14 update already read Closed): did not materialise. All nine migrations ran unchanged on Cloud SQL on 2026-10-08 (27 s, roles and `PUBLIC` revokes included), and after the Sprint 5 full deploy (2026-10-13) the sentiment backfill's rows and hashes matched the local table and the forecast service answered a question on the deployed system. The detail stays under R-14 above.
