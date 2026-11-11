@@ -53,7 +53,7 @@
 | 18:14:57.92 | orchestrator | `00012-t27` | rollout | 8.3 | 3 |
 | 18:15:18.96 | gateway | `00005-m67` | rollout | 5.4 | 2 |
 
-**The verify step** (outside the caps; at most 1 question): 1 question, `answered`, route `reporting`, 5,747 ms at the orchestrator, 3 model calls, $0.00183 (trace `fea3220392c34fcda06cd1b8c6addf8f`). Its log also holds HTTP 403 responses at the orchestrator and reporting (18:15:31 to 18:15:33); they were not examined here.
+**The verify step** (outside the caps; at most 1 question): 1 question, `answered`, route `reporting`, 5,747 ms at the orchestrator, 3 model calls, $0.00183 (trace `fea3220392c34fcda06cd1b8c6addf8f`). Its log holds four HTTP 403 responses (18:15:31 to 18:15:33): they are `deploy/verify.py`'s refusal probes, each expected to be 401 or 403 (`refused()`, `deploy/verify.py:143-144`): the three unauthenticated `INGRESS_PROBES` (`:149-153`: orchestrator `POST /ask`, orchestrator `GET /`, reporting `GET /`) and the probe-service-account call `reporting refuses a caller that is not the orchestrator` (`:84`, `:573-584`: reporting `GET /.well-known/agent-card.json`). The four requests-log entries match them one for one (same methods, paths and order, user agent `Python-urllib`), and the step passed.
 
 **Trigger.** Enabled from between 18:07:21 and 18:08:31 to between 18:17:19 and 18:19:10 (the exact times of the two imports were not read); read back `disabled: True` at 18:19:10, equal to `deploy/trigger_full.yaml` in every field (compared in Python), and `disabled: True` again at 20:37:08 (that later read covered the `disabled` value only). No other build ran.
 
@@ -215,7 +215,7 @@ E1 and E2 made no request to reporting, QA, sentiment or forecast and started no
 | Session time from the `ops-db` start | 2 h 48 min 19 s (17:46:18.7Z to the stop command 20:34:37.5Z) | 4 hours |
 | The pipeline's verify question | 1 (3 model calls, $0.00183), outside the caps | at most 1 |
 
-The paid balance was $6.18 before the session (owner-read 11:30 CST); no reading after. The gateway's own limits (30 an hour per invite, 50 a day in total) were not approached: 18 questions through the gateway today, at most 6 in any hour.
+The paid balance was $6.18 before the session (owner-read 11:30 CST). Paid balance after the session: $6.15 (owner-read 1456CST). (A drop of $0.03; this session's list-price total, including the verify step's question, is $0.02932. Balances are read to the cent, so the two are consistent, not proven equal.) The gateway's own limits (30 an hour per invite, 50 a day in total) were not approached: 18 questions through the gateway today, at most 6 in any hour.
 
 ## Rulings and disclosures
 
@@ -236,7 +236,7 @@ The paid balance was $6.18 before the session (owner-read 11:30 CST); no reading
 6. **Two tool slips with no effect on a result:** a PowerShell call that contained a bash heredoc failed to parse and ran nothing (it was rerun as two calls); one early per-container attempt print used the wrong key (the rows were correct).
 7. **The extractor leaves `first_line` empty for single-container services** (gateway, orchestrator, QA); the committed `evals/results/l106/2026-11-10/fill_round.py` (unchanged, run as committed) fills it, and the question and trace fields come from `qmap.json`.
 8. **The trigger's enable and disable times** are bounded by reads (enabled by 18:08:31, disabled by 18:19:10), not exact.
-9. **Not recorded:** `startup_latencies` (no repo method), the v2 execution environment (no read mode; the C4 annotation is absent on all six), the base-image digests inside the rebuilt application images, the Service Health page reading (no start failed), the paid balance after the session, and the 403 responses in the verify step's log.
+9. **Not recorded:** `startup_latencies` (no repo method), the v2 execution environment (no read mode; the C4 annotation is absent on all six), the base-image digests inside the rebuilt application images, and the Service Health page reading (no start failed).
 10. **Ledger:** written during the session from the assistant's reads; it holds one appended correction (Q1's timing). The owner's R5 ruling and its two adjustments are in it, verbatim, with their times.
 11. **R5** was added after R0 to R3 were seen (owner-decided), and is outside the pre-registration.
 

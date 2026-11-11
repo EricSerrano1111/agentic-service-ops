@@ -723,4 +723,4 @@ The owner also ran one out-of-band read: `docker manifest inspect` of the pinned
 - C4 `pre` was taken about 4 minutes before the enable.
 - The assistant stated three things wrongly during the session, each corrected by the owner (the coverage rule for R2 to R4, the direction of the R5 E2 timing risk, and a G-R5 "deviation" that the owner's timing showed was not one); the ledger keeps the earlier line and the appended correction.
 - R5 was added after R0 to R3 were seen (owner-decided) and is outside the pre-registration.
-- `startup_latencies`, the v2 execution environment, the base-image digests inside the rebuilt application images, the Service Health page and the paid balance after the session were not recorded.
+- `startup_latencies`, the v2 execution environment, the base-image digests inside the rebuilt application images, and the Service Health page were not recorded. Paid balance after the session: $6.15 (owner-read 14:56 CST).
