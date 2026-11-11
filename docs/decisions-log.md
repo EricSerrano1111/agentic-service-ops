@@ -131,6 +131,7 @@
 | 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 |
 | 118 | Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part) | Accepted |
 | 119 | The demonstration runs live only; no backup recording (supersedes ADR-117 in part) | Accepted |
+| 120 | Cold-start hardening for the deployed services: startup CPU boost, a 120 s startup window, liveness without the database (supersedes ADR-081 and ADR-099 in part) | Accepted |
 | 121 | The deploy pipeline's step images are pinned by digest; the Cloud SDK steps pin `591.0.0-slim`, the last image with `python3` on its PATH | Accepted |
 
 ---

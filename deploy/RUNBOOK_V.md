@@ -64,6 +64,20 @@ sitting 1 depends on the order of the others except: 1 before 4 (the database mu
 | 0e | `allUsers` is permitted by org policy | `gcloud resource-manager org-policies describe iam.allowedPolicyMemberDomains --effective --project $P` | `allValues: ALLOW` (read 2026-10-12) |
 | 0f | Trigger exists, disabled | `gcloud builds triggers describe deploy-reporting-slice --region $R --project $P --format="value(disabled)"` | `True` |
 
+*Updated 2026-11-10 (ADR-121; assistant-drafted): the pipeline's step images are pinned by digest, so check before the window that every pinned digest in `deploy/cloudbuild.yaml` still resolves. Read-only: nothing is pulled and nothing is billed. Use `gcloud container images describe <image>@<digest>` for the `gcr.io` images and `docker manifest inspect <image>@<digest>` for the Docker Hub image (tested 2026-11-10 with Docker Desktop running). **If any digest does not resolve, stop: do not start the window.** The fallback, mirroring the image into the project's Artifact Registry, needs its own ADR (ADR-121); it is not decided here.*
+
+```powershell
+$bad = 0
+$refs = Select-String -Path deploy\cloudbuild.yaml -Pattern '^\s+name:\s+(\S+@sha256:[0-9a-f]{64})\s*$' | ForEach-Object { $_.Matches[0].Groups[1].Value } | Sort-Object -Unique
+foreach ($r in $refs) {
+  if ($r -like 'gcr.io/*') { gcloud container images describe $r --format="value(image_summary.digest)" | Out-Null } else { docker manifest inspect $r | Out-Null }
+  if ($LASTEXITCODE -ne 0) { "DOES NOT RESOLVE: $r"; $bad = 1 } else { "resolves: $r" }
+}
+if ($bad) { "STOP: do not start the window." } else { "all $($refs.Count) pinned digests resolve" }
+```
+
+Expect one `resolves:` line per distinct pinned image (three on 2026-11-10: the docker builder, the Cloud SDK image and `python:3.12-slim`), then `all 3 pinned digests resolve`, and no `STOP`.
+
 **Next.js (the out-of-band security release announced for 2026-10-14).** Today's pin is 16.3.8
 (sprint log, 2026-10-12). At the window:
 
