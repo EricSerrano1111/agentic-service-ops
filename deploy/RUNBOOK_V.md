@@ -295,6 +295,11 @@ foreach ($s in 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment',
 }
 ```
 
+*2026-11-12 (audit finding F-37; owner-decided; assistant-drafted.)* **Read the tag from the latest successful build.** `builds list --limit 1` returns the newest build whatever its status, so after a failed build (the state of 2026-11-10 to 11-11, build `51b9dc00`) the `$sha` line above reads a commit that never deployed and every container shows `False`. Add `--filter "status=SUCCESS"` (`gcloud builds list --help` lists `--filter=EXPRESSION`). The filter is applied before `--limit`: read 2026-11-12, `--filter "status=FAILURE" --limit 1` returned `51b9dc00`, which is not the newest build, and `--filter "status=SUCCESS" --limit 1` returned `8b6493d8` at commit `8ec22db`.
+```powershell
+$sha = (gcloud builds list --region $R --project $P --filter "status=SUCCESS" --limit 1 --format="value(substitutions.COMMIT_SHA)")
+```
+
 Expect `True` on every container (`deploy/verify.py` makes the same check for all six services).
 **Stop and roll back** a service whose ready revision does not hold 100%.
 
@@ -372,6 +377,11 @@ $env:CLOUD_SQL_INSTANCE_NAME = 'ops-db'
 
 *Updated 2026-10-15 (S6-T1): `--ipv4` because this runs from the owner's PC, where IPv6 to `*.run.app`
 black-holes (PowerShell notes below). Leave it off from a machine where IPv6 works.*
+
+*2026-11-12 (audit finding F-37; owner-decided; assistant-drafted.)* **Same correction for the `EXPECTED_IMAGE_TAG` line in this section's block above.** After a failed build, `EXPECTED_IMAGE_TAG` takes the failed build's commit, and `verify.py` reports false FAILs. Read the tag from the latest successful build (the filter is checked in the note under 5e above):
+```powershell
+$env:EXPECTED_IMAGE_TAG = (gcloud builds list --region $R --project $P --filter "status=SUCCESS" --limit 1 --format="value(substitutions.COMMIT_SHA)")
+```
 
 Expect `PASS` on every line and exit 0. *Updated 2026-10-14 (Z2a): `verify.py` now covers all six
 services: for each, the exact invoker set (ADR-099), the dedicated service account, 100% of traffic on the
@@ -663,6 +673,8 @@ apply." `ops-db` is `db-f1-micro`, Enterprise, zonal, 10 GB SSD, no backups, no 
 | Secret Manager, about 100 accesses a day | about 3,000 a month, inside a recalled free tier of 10,000; active versions about $0.06 each a month beyond a free few: cents a month |
 | `min_instances=1` on the gateway and the orchestrator (**option; not applied**) | an idle instance bills at a reduced rate; at 1 vCPU and 512 MiB, recalled at about $0.3 a day each, so about $0.65 a day for both |
 | Cloud Build, one full build on `E2_HIGHCPU_8` | about 15 to 25 min; recalled at $0.016 a minute: $0.25 to $0.40 a build; the monthly free minutes apply to the default machine only |
+
+*2026-11-12 (ADR-122; owner-decided; assistant-drafted.)* **Correction to the `min_instances=1` row above.** The services bill by instance (CPU always allocated, `cpu-throttling: 'false'`, ADR-120), so a minimum instance has **no idle discount**, and "about $0.3 a day each" is wrong. At the rates the owner confirmed from `https://cloud.google.com/run/pricing` on 2026-11-12 (CPU $0.000018 per vCPU-second, memory $0.000002 per GiB-second), one container at 1 vCPU and 512 MiB costs $0.000019 a second: **about $1.64 a day for a single-container service** (gateway, orchestrator, QA) **and about $3.28 a day for a two-container one** (reporting, sentiment, forecast). So the gateway and the orchestrator together are about $3.28 a day, not $0.65. All six warm for 3 hours is about $1.85 (ADR-122). The row above is left as written.
 
 **Grading window with `ops-db` running (database about $0.36 a day with storage; everything else
 about $0.01 to $0.05):** **7 days about $2.5 to $3; 14 days about $5 to $6**, plus about $1 for builds

@@ -11,6 +11,7 @@ PowerShell 5.1, from the repo root, with `.venv` built. Every `gcloud` command c
 - **No recording** (owner, 2026-10-29; ADR-119). The demonstration runs live, and nothing stands in for it.
 - **Date and time:** `[TBD]`. Slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a slot
   inside Window B** (2026-12-01 to 12-12, ADR-107). A slot outside it means a new ADR to move the window.
+  - *2026-11-12 (ADR-122; owner-decided; assistant-drafted.)* The warm instances of section H apply whatever the slot's date. A slot before 2026-12-01 still needs its own window ADR before section A's day-before steps are run (note under A1).
 - **No slides** (ADR-117). The visual aids are the system's own pages (landing, How it works, Evaluation
   results), the public repository and the evaluation report.
 - **Rehearsal:** the narration is rehearsed offline with the tabs. The only live run-through is A3, the day
@@ -69,6 +70,13 @@ The plan below needs a live system that the records say does not yet exist. **On
 
 *2026-10-30 (deploy session; owner present; assistant-drafted.)* The deploy session ran on 2026-10-30 (`docs/deploy-window-log.md`, 2026-10-30): `/results/` is served, the L-105 fixes are live, and the screenshots are in `docs/screenshots/demo-session-2026-10-30/`. Item 2 is done; item 4's check now reads `ops-gateway-00004-zqw` (and `/results/` answers 200); item 5 applies only if the deploy is rolled back. **The system as left has an open failure (L-106): after an idle gap, a cold start of the reporting service or of QA can fail. Read section F before relying on a live run.** `owner-laptop-3` expires 2026-11-09 23:59.
 
+*2026-11-12 (audit finding F-04, `docs/audits/2026-11-11-project-audit.md`; owner-decided; assistant-drafted.)* **The state as of 2026-11-11, replacing the stale lines above** (the audit's line numbers, at `0bab705`: the deadline at 19, the invite and revision names at 36-40, 64-65, 70 and 72, and, further down, the L-106 note and the ADR-120 note under section F).
+- **The deploy sessions are over.** The ADR-120 deploy ran on 2026-11-11 as build `8b6493d8-5004-4e9a-9627-4e68a9dab296` at commit `8ec22db` (all 17 steps `SUCCESS`; ADR-121's pinned step images passed their first live run; `docs/deploy-window-log.md`, 2026-11-11; `evals/results/l106/2026-11-11/summary.md`). The 2026-11-09 deadline and the `owner-laptop-3` invite are history. Service code is frozen until after the demonstration (owner-decided 2026-11-11, `docs/sprint-log.md`), so `main` keeps matching `8ec22db`.
+- **The six serving revisions, each at 100%:** gateway `ops-gateway-00005-m67`, orchestrator `ops-orchestrator-00012-t27`, reporting `ops-reporting-00010-xtq`, sentiment `ops-sentiment-00006-8jp`, forecast `ops-forecast-00006-nsf`, QA `ops-qa-00007-w9l` (read from the live services on 2026-11-12; the same names as `summary.md`). So item 4's gateway check now reads `ops-gateway-00005-m67`; a different name means something deployed after this note.
+- **ADR-120 is deployed, and L-106 is open.** The owner-decided status line (2026-11-11): "Open; not reproduced on either configuration. … 0 of 8 starts of the pair failed … P2 (a retry after a degraded first answer) was not exercised. L-106 is neither reproduced, nor mitigated, nor fixed; ADR-120 is deployed and untested against the failure." So the "Not yet verified" in the ADR-120 note under section F is superseded: the cold-start test ran and passed its pre-registered verdict, and a retry after a degraded answer has still never run. **Read section F's L-106 guidance with that status, and section H for what ADR-122 does about it.**
+- **Minimum instances are not set** (the "No minimum instances are set" line in section C and the L-106 note under section F say so, the latter with "listed for the next session"). ADR-122 sets them for the rehearsal and the demonstration only (section H).
+- **The owner invite `owner-laptop-5` expires 2026-11-13** (17:10:59Z, as the owner read it; `summary.md`, "Rulings and disclosures"). No rehearsal or slot can fall before then (slots are announced about 11-15 to 11-22), so **a new owner invite must be made before the rehearsal:** on the rehearsal day, as step 4 of "Open the window" in `RUNBOOK_GRADING.md`. The expired one needs no revoke. No invite link or id is written here.
+
 **Order:** deploy session (before 11-09) → Window B (grader invite, owner invite) → demonstration. The
 demonstration's date is `[TBD]`. The slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a
 slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the window.
@@ -84,6 +92,8 @@ slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the 
    - The grader's invite, expiring 12-12 (step 3).
    - The owner's invite (step 4).
    - The smoke check (step 5). It also confirms the trigger is still disabled.
+
+   *2026-11-12 (ADR-122; assistant-drafted.)* **A slot before 2026-12-01.** This step opens Window B, which ADR-107 puts at 12-01 to 12-12. A slot outside it needs its own window ADR first (ADR-119 item 5; the note at the top), and none exists. Do not run this step early on the strength of this runbook. ADR-122 itself (section H) applies whatever the date, but it needs `ops-db` running, so an earlier slot's window ADR must also cover starting it.
 2. **Check the deprecations page for `gemini-3.5-flash-lite`** (L-104, R-15). The 2026-10-28 reading was the
    table row `gemini-3.5-flash-lite | July 21, 2026 | No shutdown date announced`, fetched with `curl`, the row
    itself and not a summary (`docs/deploy-window-log.md`, phase 0).
@@ -95,6 +105,14 @@ slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the 
    Read the row. **If it now names a shutdown date before the demonstration, stop.** Changing the model is a new
    decision (L-104: "This must be done before any role moves to a model newer than 3.5 Flash-Lite", and the
    evaluated system includes `temperature=0.0`). Do not change a model in the days before a demonstration.
+
+   *2026-11-12 (audit finding F-01; owner-decided; assistant-drafted.)* **Use the new address, and treat "no row found" as a failed check.** `https://ai.google.dev/gemini-api/docs/deprecations` now answers `301` to `https://aistudio.google.com/docs/deprecations` (read 2026-11-12 with `curl -s -o /dev/null -w "%{http_code} -> %{redirect_url}"`). The `curl.exe -s` above, with no `-L`, saves a page with no table, so `Select-String` prints nothing, which reads like "no shutdown date". Fetch the new address with `-L` and read the row itself, not a summary:
+   ```powershell
+   curl.exe -sL -o "$env:TEMP\deprecations.html" https://aistudio.google.com/docs/deprecations
+   Select-String -Path "$env:TEMP\deprecations.html" -Pattern 'gemini-3.5-flash-lite' -Context 0,3 | Select-Object -First 1
+   Remove-Item "$env:TEMP\deprecations.html"
+   ```
+   **Expected** (assistant, `curl -sL` returned 200 with the table as raw text, 2026-11-12): the first match is the model's row, with the next lines "July 21, 2026" and "No shutdown date announced". Owner-read 2026-11-11: no shutdown date for `gemini-3.5-flash-lite`, listed as active. **The check fails if nothing prints, and it fails if the second line after the model name is not "No shutdown date announced".** Later matches on that page are other models' replacement columns and a notice about `gemini-2.5-flash`, not this row. If a shutdown date appears before the demonstration, the stop rule above applies unchanged.
 3. **Run the whole of Part 1 once on the live system, timed** (the same signed-in browser, the same order as
    section D). **This is the only live run-through.** The narration is rehearsed offline with the tabs.
    - Write down the elapsed time the page shows for each question ("Answered in N.N s", data dictionary §6
@@ -103,6 +121,13 @@ slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the 
    - Part 1 asks 5 questions (A5). Do the two examples Part 1 does not use ("Which incident types were most
      common in July 2026?" and "Show examples of negative comments from last month") only if you want them ready
      for the instructor's questions.
+
+   *2026-11-12 (ADR-122; owner-decided at gate W-G2; assistant-drafted.)* **This day is also the rehearsal of the warm-instance procedure (section H),** so demo day is not its first run. Run it for real, by the person who will run it on demo day, in this order, so L-106's next cold-start observation is kept (`docs/evaluation-report.md`, L-106, "Next step"; R-05, update 2026-11-11):
+   1. `ops-db` up (H1), the minimums still at 0, and the services idle for 20 minutes or more.
+   2. **Part 1 as written above, cold and timed.** This is the observation L-106 and R-05 name: record each "Answered in N.N s", which questions were cold, and any degraded answer.
+   3. **Wait until every service has gone cold again:** about 15 minutes after the last Part 1 request each instance shuts down (`summary.md`, "Idle shutdowns"), so wait 20 minutes, and confirm with H3 (d)'s read (`Shutting down`, each service) using the time Part 1 began in place of `$t0`. **Without this wait the minimums are raised on services that are still running,** and H3 (b) may show no start line with the minimum's reason (the caveat in H3 (b)), so demo day would be the first observation of it, which defeats the rehearsal.
+   4. Then H2 to H5 in full: capture, raise, readback, the three-question smoke check, **a 20-minute wait and one reporting question** (it must answer in seconds: a warm instance has to outlive the idle shutdown of about 15 minutes that every instance hit on 2026-11-11, `summary.md`, "Idle shutdowns"), lower, readback. **Record how long the six `--min` updates take** (on 2026-10-14 each `gcloud` call took 1 to 4 minutes, as noted in F) and what the `describe` shows, so the annotation name and the no-new-revision claim are observed, not assumed (ADR-122, Consequences).
+   The rehearsal's warm period is about 1.5 hours, about $1 at list price; the wait in step 3 adds about 20 minutes of the evening, and no cost.
 4. **Zoom check.**
    - Join a test meeting from a second device (a phone is enough).
    - Share the browser **window**, not the whole screen.
@@ -146,6 +171,35 @@ slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the 
      demonstration day's 50.
    - **Before the demonstration:** `[OWNER]` ask the grader whether they plan to use the system that day, or
      choose a day they have said they will not.
+
+*2026-11-12 (audit finding F-39; ADR-122; assistant-drafted.)* **The cap table above omits three questions the runbooks prescribe, and ADR-122 removes one.**
+
+| Item | Questions | Model calls | Source |
+|---|---|---|---|
+| The table above, as written | 21 | about 59 | this step |
+| + the idle-gap reporting question | 1 | 3 | the note at F, "ask one reporting question after a quiet period" |
+| + the smoke check "How many incidents last quarter?" | 1 | 3 | `RUNBOOK_GRADING.md`, "Open the window", step 5 (counts toward the day only if Window B is opened that Pacific day) |
+| + the recovery sequence's smoke check | 1 | 3 | F, recovery step 4 (only if recovery runs) |
+| **As written, worst case** | **24 of 50** | **about 68** | |
+| − the segment-3 re-warm (ADR-122 replaces it, the minimums being raised, H; owner-decided at gate W-G2) | −3 | −9 | C |
+| **With ADR-122, worst case** | **21 of 50** | **about 59** | H4's smoke check keeps the warm-up's three |
+
+Per question: 3 model calls for an answer, 1 for a clarification or a decline (as above). The idle-gap question cannot run cold while the minimums are 1 (note at F), so on demo day it is not asked; it is kept in the worst case as margin.
+
+**Reading the headroom, read-only (no model call).** The gateway's counter is in process and cannot be read (L-88). The request log gives an upper bound: POST requests to `/api/ask` since Pacific midnight. It over-counts, because requests refused before the cap (no session, a bad body, the hourly cap) are logged too. **Validated 2026-11-12 against 2026-11-11:** the filter returned 18 requests, all HTTP 200, and `summary.md` ("Spend against the caps") records 18 questions through the gateway that day. Pacific midnight is 08:00Z under PST (2026-11-01 to 2027-03-14). Headroom is 50 minus the count; if it is below the worst case above, the cap, not the services, is today's risk (F, "The daily cap is reached"). Run it at T−75 and again before the T−30 smoke check (H).
+
+PowerShell, the owner's terminal (read-only; the assistant may run it too):
+```powershell
+$pac   = [TimeZoneInfo]::FindSystemTimeZoneById('Pacific Standard Time')
+$today = [TimeZoneInfo]::ConvertTimeFromUtc((Get-Date).ToUniversalTime(), $pac).Date
+$since = [TimeZoneInfo]::ConvertTimeToUtc($today, $pac).ToString('yyyy-MM-ddTHH:mm:ssZ')
+$f = 'resource.type="cloud_run_revision" AND resource.labels.service_name="ops-gateway" AND log_id("run.googleapis.com/requests") AND httpRequest.requestMethod="POST" AND httpRequest.requestUrl:"/api/ask" AND timestamp>="' + $since + '"'
+(gcloud logging read ($f -replace '"','\"') --project $P --limit 500 '--format=value(timestamp,httpRequest.status)' | Measure-Object -Line).Lines
+```
+One line for the `!` prompt (Git Bash; `TZ=PST8` is the fixed UTC−8 that holds from 2026-11-01 to 2027-03-14):
+```
+SINCE=$(date -u -d "$(TZ=PST8 date +%Y-%m-%d) 08:00" +%Y-%m-%dT%H:%M:%SZ); gcloud logging read "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"ops-gateway\" AND log_id(\"run.googleapis.com/requests\") AND httpRequest.requestMethod=\"POST\" AND httpRequest.requestUrl:\"/api/ask\" AND timestamp>=\"$SINCE\"" --project a2a-agentic-service-ops-gcp --limit 500 '--format=value(timestamp,httpRequest.status)' | wc -l
+```
 
 ## B. 30 minutes before
 
@@ -196,6 +250,8 @@ services are separate from the reporting one, so the SLA question does not warm 
 - **If anything is still cold** when a live question is sent, narrate it (F: an answer over 30 s). The journey
   view (segment 5) is a good thing to talk through while a cold answer loads.
 
+*2026-11-12 (ADR-122; owner-decided at gate W-G2; assistant-drafted.)* **Superseded while the minimums are raised.** With minimum instances of 1 on all six services (section H), the line "No minimum instances are set" above no longer holds, and nothing goes cold between T−60 and the end of the questions, so **the segment-3 re-warm is not done.** **C's warm-up becomes H4, the smoke check at T−30:** the same three questions from the landing page, asked before joining or sharing, each confirmed as an answer; the difference is that each is expected to answer in seconds (about 3 s warm on 2026-10-28, as cited above), not 26 to 61 s. **If the readback in H3 shows a service not at minimum 1, C and the re-warm apply to that service as written.**
+
 ## D. Part 1: the 30-minute overview
 
 **Plan for 27 minutes,** which leaves 3 in hand. The segment times: 2 + 4 + 2 + 3 + 3 + 4 + 3 + 4 + 2 = **27**.
@@ -230,6 +286,7 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
 ### 3. The code: 0:06 (about 2 min)
 - **At the start of this segment, re-warm** (C, "Re-warm, and why"): in the second, unshared browser window, send
   the three warm-up questions again. They finish while you are in segment 3.
+  - *2026-11-12 (ADR-122; assistant-drafted.)* Skipped when the minimums were raised and read back (section H); the note under C says why.
 - **On screen:** the repository root (tab 4), then `docs/decisions-log.md` (tab 6) at ADR-001.
 - **Say:**
   - `services/` holds the agents and MCP servers, `deploy/` the Cloud Run definitions and runbooks, `evals/` the
@@ -367,6 +424,11 @@ tested live (§8). No screenshot was taken of that live test.
 | 14 | Why is the forecast error larger at 1 to 4 weeks than at 5 to 13? | It is the model's held-out evaluation on this data. It looked unusual on 2026-10-28 and I didn't change anything (`docs/deploy-window-log.md`, phase 4). The figure on screen is what the page shows on the day. |
 | 15 | Why is the first answer after a quiet period slow? | A cold start: Cloud Run starts new containers down the chain (gateway, orchestrator, specialist, QA). It measured 26 to 61 s on 2026-10-28, inside the 120 s ceiling (§4.6, §10; R-05). Keeping a service warm (`min_instances`) was rejected for now as a standing cost to remove a delay inside the deadline (ADR-107). |
 
+*2026-11-12 (ADR-122; assistant-drafted.)* **Rows 11 and 15 changed.**
+- **Row 15 (why is the first answer slow):** on the day it should not be, because the services are held warm for the rehearsal and the demonstration (section H). Say that first, then the cold start as history: a cold reporting question took 42 to 58 s on 2026-11-11 (26 to 61 s on 2026-10-28), inside the 120 s ceiling (R-05). If asked why they are not left on: it is a cost choice. Instance-based billing makes the nine containers about $0.62 an hour at list price, about $177 for the 12 days of Window B, so they are warm for the two days that need it (ADR-122; ADR-107 still holds for the rest of Window B).
+- **Row 11 (what would you change):** `min_instances` is no longer only a roadmap item; it is used for the demonstration. What a real deployment would still change is that the setting should not need an operator to raise and lower it, and that a cold start can fail at all (L-106 is open; its cause was never found).
+- Everything else in rows 11 and 15 stands.
+
 ## F. If something goes wrong
 
 There is no recording and no fallback video (owner, 2026-10-29; ADR-119): the demonstration runs live.
@@ -384,9 +446,21 @@ There is no recording and no fallback video (owner, 2026-10-29; ADR-119): the de
 | The daily cap is reached (ADR-097) | The message is "Daily limit reached: this demo answers a fixed number of questions a day. It resets at midnight Pacific time." (data dictionary §6 rule 5). No step clears it inside the buffer. The counter is in process and resets on a cold start (L-88), but that is not tested as a fix, so do not rely on it. Show the screenshots and the report (tab 5), then use the last step of the recovery sequence. |
 | Running long | Shorten segment 6 to one example, and segment 8 to two figures (keep the caveats). |
 
+*2026-11-12 (audit finding F-03; owner-decided; assistant-drafted.)* **Model-side failures: three fixed messages, which a rollback does not fix.** The gateway maps a failure on the model's side to one of three sentences (`services/api_gateway/src/api_gateway/app.py:53-64`; `docs/data-dictionary.md:510`).
+
+| The page says | What it means | What to do | What to say |
+|---|---|---|---|
+| "The language model is rate-limited right now. Please try again in about a minute." (429, `rate_limited`) | The provider is throttling the key. | Wait about a minute and resend once. Do not send a third. | "The model provider is rate-limiting us; it clears in about a minute." Narrate the route meanwhile. |
+| "The language model's daily quota is used up. It resets at midnight Pacific time." (503, `daily_quota_exhausted`) | Google's daily quota for the key is used up. This is not the gateway's own 50-question cap, which has its own message (the row above, "The daily cap is reached"); the orchestrator maps Google's quota to this code (`docs/decisions-log.md`, ADR-097, "Daily cap arithmetic": "The real backstop is Google's quota"). | Waiting does not help before midnight Pacific. Check the paid balance in the console (R-21; there is no API) and top up if it is low; no redeploy is needed (`RUNBOOK_GRADING.md`, "If the balance runs out mid-window"). Then the screenshots. | "The model's daily quota is used up, so I'll show the recorded examples." |
+| "The language model is temporarily unavailable. Please try again shortly." (503, `model_unavailable`) | The provider errored or timed out (for example the free-tier 504s of 2026-10-13, ADR-104). | Wait a few seconds and resend once, then the screenshots. | "The model service is down; here are the screenshots from the deploy session." |
+
+**Which of these an exhausted prepaid balance produces is unverified:** the sources say only that answers "degrade" (R-21). The balance is read in A1, so it is not discovered live. In all three cases show `docs/screenshots/demo-session-2026-10-30/`, say plainly that the failure is the provider's or the balance's, and **do not roll back or redeploy; neither fixes it.** Never inject a fault to show it.
+
 *2026-10-30 (L-106; deploy session; assistant-drafted.)* **A failure mode with no recovery found.** From 18:59 to 19:45 UTC on 2026-10-30, every new instance of the reporting service (four of four) and of QA (two of two) failed to start. The question waited 60 s, and the answer was "The reporting service is temporarily unavailable…", or came back "Not verified: the checking service was unavailable", after 60 to 92 s. Sentiment, forecast, the orchestrator and the gateway started normally in that period (a sentiment start at 19:48 failed for a different reason, after `ops-db` was stopped: L-106, next-session item 9). **What did not help:** repeating the question (every repeat failed) and rolling reporting back to its previous revision (it failed the same way). The cause is unknown (L-106). **What is known:** a question that lands on an instance that is already running answers normally, and the one reporting instance that ran that day, started by the deploy, shut down 15 minutes after its last request. **Until L-106 is resolved, do not count on a cold start of reporting or QA in a live run.** Before the demonstration, ask one reporting question after a quiet period of 15 minutes or more to see whether the failure persists, and decide then. If it fails live, say so plainly (the degraded notice is designed behaviour: HTTP 200, marked not verified), show the screenshots from the deploy session, and use the recovery sequence below, remembering that a rollback did not fix this failure. Minimum instances on reporting and QA are listed for the next session in L-106; they are not set.
 
 *2026-10-30 (ADR-120; assistant-drafted.)* **After the hardening deploys,** a retry after a degraded first answer is expected to work, because a slow start now has about 120 s to finish and the next request finds a ready instance. **Not yet verified:** until the cold-start test in the next deploy session passes, treat the row above as it stands. The first request that hits a slow cold start can still degrade.
+
+*2026-11-12 (ADR-122; owner-decided at gate W-G2; assistant-drafted.)* **With the minimums raised, the idle-gap question and the failure row change.** The "ask one reporting question after a quiet period of 15 minutes or more" in the L-106 note above cannot produce a cold start while the minimums are 1, so it is not asked on demo day; it is taken at the rehearsal, cold, as Part 1 itself, before the minimums are raised (the note under A3). A warm instance that dies is replaced by a cold start, and a question that lands on it takes the degraded path (HTTP 200, "Not verified"), whose retry has never run (L-106). **Never inject a fault live.**
 
 **Recovery sequence: the system is down.** Run these in order from the owner's PC, with the `$P $R $N $G $S` block
 loaded. Tell the instructor what you are doing. The buffer is 10 to 20 minutes, and on 2026-10-14 each `gcloud`
@@ -399,6 +473,7 @@ call took 1 to 4 minutes (`RUNBOOK_V.md`, "Windows PowerShell 5.1 notes"), so st
      "value(status.traffic[0].revisionName)"` (`RUNBOOK_V.md`, "Rollback").
    - All six at once: `.venv\Scripts\python deploy\verify.py --ipv4` (about 1 minute when healthy on 2026-10-28,
      `docs/deploy-window-log.md`, phase 3; it prints a line per check as it goes).
+   - *2026-11-12 (audit finding F-02; owner-decided; assistant-drafted.)* **Drop `verify.py` from this live recovery.** It needs eight environment variables (`PROJECT_ID`, `PROJECT_NUMBER`, `REGION`, `EXPECTED_IMAGE_TAG`, `ORCHESTRATOR_SA`, `REPORTING_SA`, `PROBE_SA`, `CLOUD_SQL_INSTANCE_NAME`; `deploy/verify.py:496-509`), and the `$P $R $N $G $S` block loaded here sets none of them, so it exits 1 with `FAIL  configuration: unset …`. It already failed this way on 2026-10-30 (audit F-02, citing `docs/deploy-window-log.md:594`). It also asks a model question and sends refusal probes, which is more than a status check. **In a live recovery, step 1 is the browser plus a read-only `describe`:** the page and `/health` (the first bullet), the serving revision (the second bullet), and, while section H is active, the minimums read in H3. **`verify.py` belongs in the rehearsal only,** run after the variable block in `RUNBOOK_V.md` section 6, "Verification run from the owner's machine" (the `$env:PROJECT_ID = $P` lines above its `verify.py` call), has been pasted into the same PowerShell window.
 2. **Check `ops-db` is running.** With it stopped the page shows "The data service is unavailable right now."
    (`RUNBOOK_GRADING.md`, "Close the window", step 2).
    ```powershell
@@ -426,6 +501,8 @@ Close the window with `RUNBOOK_GRADING.md`, "Close the window": stop `ops-db`, r
 retry-log check, and add the log entry. **Close the window only once grading no longer needs the live system,**
 and no later than the day after Window B ends (that file's own rule). Window B ends 12-12, so that is 12-13.
 
+*2026-11-12 (ADR-122; audit finding F-09; assistant-drafted.)* **Two corrections to this section.** (1) **Lower the minimums before stopping `ops-db`** (H5): while they are raised the services stay warm, and with the database stopped a warm service would only fail its requests. Lowering happens on the demonstration day, after the questions, not at the close of the window; if the window closes the same day, the order is lower, read back, then stop. (2) **The retry-log read below uses `--freshness 7d`, which misses the first days of a 12-day window** (12-01 to 12-12, closed 12-13). Use `--freshness 14d` (the same note is under "Close the window", step 4, in `RUNBOOK_GRADING.md`).
+
 ```powershell
 .venv\Scripts\python scripts\invites.py --secret $S list
 gcloud sql instances patch ops-db --activation-policy NEVER --project $P
@@ -435,3 +512,150 @@ gcloud logging read 'resource.type=cloud_run_revision AND jsonPayload.msg=\"llm 
 
 Revoke each invite by `scripts\invites.py ... revoke --id <id>` after reading its id from `list`. Expect
 `STOPPED  NEVER`. No output from the log read means no retry happened; record that in the log entry.
+
+## H. Warm instances for the live run (ADR-122), added 2026-11-12
+
+*2026-11-12 (ADR-122; owner-decided; assistant-drafted.) Written before the first run: nothing here has been run yet, and the day-before rehearsal (the note under A3) is its first run.* Every `gcloud` flag below was read in `--help` on this machine (gcloud 531.0.0), and every log read was run read-only on 2026-11-12 against the 2026-11-11 logs; the exceptions are marked **unobserved** and are what the rehearsal exists to observe.
+
+**What it is.** Minimum instances of 1 on all six services, **from T−60 until after the instructor's questions, T being the slot's start, and the same at the day-before rehearsal.** Not for the rest of Window B (ADR-107 holds there). It holds whatever the slot's date. It is set at the **service level** with `--min`, which "can be modified without deploying a new Revision" (`gcloud run services update --help`; the Cloud Run minimum-instances page), so it creates no revision, changes no code and leaves `main` matching the deployed commit `8ec22db`. **Do not use `--min-instances`:** it deploys a revision. Cost: about $0.62 an hour for the nine containers at list price, so $1.23 for the two hours T−60 to the end of a 60-minute slot, and $1.85 for three hours, the ceiling (ADR-122; the free tier may cover it and is not counted on).
+
+**The rules.**
+- **`ops-db` first, minimums off first.** Start `ops-db` before raising; lower before stopping it (ADR-122, decision 3).
+- **No pipeline deploy while the minimums are raised** (the code freeze already holds). **Re-read the minimums after any deploy:** `deploy/deploy_service.py:73-74` sends a PATCH with no update mask, and whether that clears a service-level minimum is **unverified**.
+- **The service-level annotation's name is unobserved** (today's `describe` shows only `run.googleapis.com/maxScale` at the service level). H3 prints every `Scale` line so the new one is read, not assumed.
+- **Never inject a fault live.** If a warm instance dies, its replacement starts cold and a question on it takes the degraded path (F).
+- **Who runs what.** The owner runs every state-changing command (the `ops-db` start, the `--min` updates, the stop). The reads (`describe`, `revisions list`, `gcloud logging read`) are read-only and may be run by the owner or by the assistant.
+
+The PowerShell block (the owner's terminal) extends the one at the top of this file; keep it in the same window for H2 to H5. The `!` forms are one line each, in Git Bash (use forward slashes), from the repo root; they start with their own variables because each `!` line is a fresh shell.
+
+```powershell
+$P = 'a2a-agentic-service-ops-gcp'; $R = 'us-central1'
+$svc = 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment','ops-forecast','ops-qa'
+New-Item -ItemType Directory -Force .local\w1 | Out-Null    # .local/ is gitignored
+```
+
+| When | What | Who | Section |
+|---|---|---|---|
+| T−75 | `ops-db` running (start it if not); the cap headroom read | Owner starts; reads by either | H1; A5 note |
+| T−60 | capture the state, then raise to 1 | Owner | H2 |
+| T−55 | readback: each service at 1, a running instance shown from the system log | Either (read-only) | H3 |
+| T−30 | smoke check: one question per area, each answering in seconds | Owner, in the browser | H4 |
+| After the questions | lower to default, then readback | Owner, then either | H5 |
+
+### H1. T−75: `ops-db` running
+
+Read first. Expect `RUNNABLE  ALWAYS`. If it is not, start it with `RUNBOOK_GRADING.md`, "Open the window", step 2 (the `patch ... ALWAYS` and its wait loop). On 2026-11-11 `ops-db` read `RUNNABLE ALWAYS` 6 min 47 s after the start command, and the start operation read `DONE` after 9 min 29 s (`summary.md`, "What happened, in order"), so T−75 leaves room.
+
+PowerShell (read; the start is the file step above):
+```powershell
+gcloud sql instances describe ops-db --project $P --format "value(state,settings.activationPolicy)"
+```
+`!` form, the read, then the start (owner) only if the read does not say `RUNNABLE  ALWAYS`:
+```
+gcloud sql instances describe ops-db --project a2a-agentic-service-ops-gcp --format "value(state,settings.activationPolicy)"
+gcloud sql instances patch ops-db --activation-policy ALWAYS --project a2a-agentic-service-ops-gcp
+```
+Then read the headroom (the A5 note) and the paid balance (A1).
+
+### H2. T−60: capture, then raise (owner)
+
+The capture is read-only and is what H5 compares against. **Write down `$t0`:** the readback filters on it. **Capture and compare in the same shell** (PowerShell for both, or Git Bash for both): checked read-only on 2026-11-12, a capture written by PowerShell (`Out-File -Encoding utf8` adds a byte-order mark and CRLF line endings) and compared from Git Bash read `DIFFERENT` for all six services with nothing changed, and both shells read `same` when used alone.
+
+PowerShell:
+```powershell
+foreach ($s in $svc) {
+  gcloud run services describe $s --region $R --project $P --format export | Out-File -Encoding utf8 ".local\w1\$s-before.yaml"
+  gcloud run revisions list --service $s --region $R --project $P --format "value(metadata.name)" | Out-File -Encoding utf8 ".local\w1\$s-revs-before.txt"
+}
+$t0 = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'); $t0 | Out-File -Encoding ascii .local\w1\t0.txt; "raising at $t0"
+foreach ($s in $svc) { gcloud run services update $s --region $R --project $P --min=1 --async }
+```
+`!` form, two lines (the capture and the time, then the raise):
+```
+P=a2a-agentic-service-ops-gcp; R=us-central1; mkdir -p .local/w1; for s in ops-gateway ops-orchestrator ops-reporting ops-sentiment ops-forecast ops-qa; do gcloud run services describe $s --region $R --project $P --format export > .local/w1/$s-before.yaml; gcloud run revisions list --service $s --region $R --project $P --format "value(metadata.name)" > .local/w1/$s-revs-before.txt; done; date -u +%Y-%m-%dT%H:%M:%SZ | tee .local/w1/t0.txt
+P=a2a-agentic-service-ops-gcp; R=us-central1; for s in ops-gateway ops-orchestrator ops-reporting ops-sentiment ops-forecast ops-qa; do gcloud run services update $s --region $R --project $P --min=1 --async; done
+```
+`--async` returns at once (`--help`); without it each call may take minutes (on 2026-10-14 each `gcloud` call took 1 to 4 minutes, see F), and six in series could run past T−55. **Record, at the rehearsal, how long the six updates take to take effect.** An `--async` error is not shown: H3 is what finds it.
+
+### H3. T−55: readback (either; read-only)
+
+Four reads. **Done means all four hold for every service:** the setting shows 1; a start line with the reason; a startup probe success for every container; no shutdown.
+
+Setup for the PowerShell reads below. It is safe to run in a window that did not run H2, because it reads `$t0` back from the file H2 wrote (the `!` forms already do):
+```powershell
+$P = 'a2a-agentic-service-ops-gcp'; $R = 'us-central1'
+$svc = 'ops-gateway','ops-orchestrator','ops-reporting','ops-sentiment','ops-forecast','ops-qa'
+$t0 = (Get-Content .local\w1\t0.txt).Trim()
+$sys = 'resource.type="cloud_run_revision" AND log_id("run.googleapis.com/varlog/system") AND timestamp>="' + $t0 + '" AND '
+```
+
+**(a) The setting.** Each service must show a service-level minimum of 1 (the key name is **unobserved**) and its template `autoscaling.knative.dev/minScale: '0'` unchanged.
+```powershell
+foreach ($s in $svc) { "=== $s"; gcloud run services describe $s --region $R --project $P --format "yaml(metadata.annotations,spec.template.metadata.annotations)" | Select-String -Pattern 'scale' }
+```
+```
+P=a2a-agentic-service-ops-gcp; R=us-central1; for s in ops-gateway ops-orchestrator ops-reporting ops-sentiment ops-forecast ops-qa; do echo "=== $s"; gcloud run services describe $s --region $R --project $P --format "yaml(metadata.annotations,spec.template.metadata.annotations)" | grep -i scale; done
+```
+
+**(b) A start with the minimum's reason, per service.** Cloud Run logs each start as `Starting new instance. Reason: REASON - DESCRIPTION`, and an instance started for a minimum carries `MANUAL_OR_CUSTOMER_MIN_INSTANCE` (`https://docs.cloud.google.com/run/docs/logging`, read 2026-11-12, which lists it beside `AUTOSCALING` and `DEPLOYMENT_ROLLOUT`). **Expect six lines, one per service. The reason line itself is unobserved** until the rehearsal; the same read for `AUTOSCALING` was observed on 2026-11-11 and prints `Starting new instance. Reason: AUTOSCALING - Instance started due to configured scaling factors …`. If a service shows no line with the minimum's reason, read its newest `Starting new instance` line of any reason: **a service that already had a running instance when the minimum was raised may not start a second one (unobserved)**, and an instance that started earlier and has not shut down (the read in (d)) satisfies the minimum. A reason other than the two above is a new observation: record it.
+```powershell
+$f = $sys + 'textPayload:"MANUAL_OR_CUSTOMER_MIN_INSTANCE"'
+gcloud logging read ($f -replace '"','\"') --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,labels.instanceId,textPayload)'
+```
+```
+P=a2a-agentic-service-ops-gcp; T0=$(tr -d '\r' < .local/w1/t0.txt); gcloud logging read "resource.type=\"cloud_run_revision\" AND log_id(\"run.googleapis.com/varlog/system\") AND textPayload:\"MANUAL_OR_CUSTOMER_MIN_INSTANCE\" AND timestamp>=\"$T0\"" --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,labels.instanceId,textPayload)' | cut -c1-200
+```
+
+**(c) A startup probe success for every container: nine lines** (gateway, orchestrator, `agent-reporting` and `mcp-incidents`, `agent-sentiment` and `mcp-feedback`, `agent-forecast` and `mcp-volume`, `agent-qa`), shaped `STARTUP HTTP probe succeeded after N attempts for container "<name>" on port <p> path "<path>".` (observed 2026-11-11; that wording is not in Google's documentation, only in this project's logs). **A line that says `STARTUP HTTP probe failed` means that start failed:** do not go on to H4; see "If a readback fails" below.
+```powershell
+$f = $sys + 'textPayload:"STARTUP HTTP probe succeeded"'
+gcloud logging read ($f -replace '"','\"') --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,textPayload)'
+$f = $sys + 'textPayload:"STARTUP HTTP probe failed"'
+gcloud logging read ($f -replace '"','\"') --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,textPayload)'
+```
+```
+P=a2a-agentic-service-ops-gcp; T0=$(tr -d '\r' < .local/w1/t0.txt); for w in succeeded failed; do echo "--- probe $w"; gcloud logging read "resource.type=\"cloud_run_revision\" AND log_id(\"run.googleapis.com/varlog/system\") AND textPayload:\"STARTUP HTTP probe $w\" AND timestamp>=\"$T0\"" --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,textPayload)' | cut -c1-200; done
+```
+The second read (`failed`) must print nothing.
+
+**(d) No shutdown line.** An instance's shutdown is logged on its stdout, not in the system log: the uvicorn line `Shutting down` in `jsonPayload.msg` (observed 2026-11-11, sentiment, 20:08:57Z). It carries the same `labels.instanceId` as the instance's start line (compare the last ten characters). **Expect nothing.** A line here means an instance went away after the raise: match its id to the start lines in (b) and (c); a shutdown of an instance that started before the raise, with a minimum instance still running, is not a failure.
+```powershell
+$f = 'resource.type="cloud_run_revision" AND jsonPayload.msg="Shutting down" AND timestamp>="' + $t0 + '"'
+gcloud logging read ($f -replace '"','\"') --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,labels.instanceId)'
+```
+```
+P=a2a-agentic-service-ops-gcp; T0=$(tr -d '\r' < .local/w1/t0.txt); gcloud logging read "resource.type=\"cloud_run_revision\" AND jsonPayload.msg=\"Shutting down\" AND timestamp>=\"$T0\"" --project $P --order asc --limit 50 '--format=value(timestamp,resource.labels.service_name,labels.instanceId)' | cut -c1-120
+```
+
+**If a readback fails.** A service shows no minimum: run its update once more (`--min=1`) and read again. A start line is missing or a probe failed: do not raise again blindly; read that service's system log since `$t0` (the `--order asc` read above without the text filter), and decide at T−30 whether the demonstration runs on that service cold (C and the re-warm of C apply to it as written, F covers a failed start). The rehearsal is the day this is found, not the demonstration.
+
+### H4. T−30: the smoke check (owner, in the browser)
+
+Count first: the headroom read (A5 note) must leave room for the worst case there. Then, **before joining Zoom or sharing,** ask one question per area from the landing page's examples (they fill the input and do not submit): reporting, sentiment, forecast (C, steps 1 and 2; it is the same warm-up). **Each is expected to answer in seconds** (about 3 s, 2.6 to 3.4 s, warm on 2026-10-28; `docs/deploy-window-log.md`, phase 4, as cited in C), and each must be an answer, not a degraded result or an error. **A first answer that takes over about 10 s** (assistant-proposed, not a measured threshold and not owner-decided) means an instance was not warm: stop and run H3 (b) to (d) again before going on. Three questions, 9 model calls (A5 note).
+
+### H5. After the questions: lower, then read back (owner, then either)
+
+Do not lower while the instructor may still ask for a live question. Lower only after the instructor ends the questions (or, at the rehearsal, after H4's wait and its last question). `--min=default` removes the service-level minimum (`--help`: "or 'default' to remove"), which returns each service to its state of 2026-11-12.
+
+PowerShell:
+```powershell
+foreach ($s in $svc) { gcloud run services update $s --region $R --project $P --min=default --async }
+```
+```
+P=a2a-agentic-service-ops-gcp; R=us-central1; for s in ops-gateway ops-orchestrator ops-reporting ops-sentiment ops-forecast ops-qa; do gcloud run services update $s --region $R --project $P --min=default --async; done
+```
+**Then read back (read-only), once the updates have taken effect.** Expected: `describe` shows **no service-level minimum** (the `Scale` lines of H3 (a) are back to today's: `run.googleapis.com/maxScale` and the template's `minScale: '0'`), **`revisions list` is the same as before** (no new revision from raising or lowering), and the `--format export` is the same as before (it proves the template did not change, not only the revision names; it is the C4 comparison of `evals/l106/README.md`).
+```powershell
+foreach ($s in $svc) {
+  gcloud run revisions list --service $s --region $R --project $P --format "value(metadata.name)" | Out-File -Encoding utf8 ".local\w1\$s-revs-after.txt"
+  gcloud run services describe $s --region $R --project $P --format export | Out-File -Encoding utf8 ".local\w1\$s-after.yaml"
+  "{0}: revisions {1}; export {2}" -f $s,
+    $(if (Compare-Object (Get-Content ".local\w1\$s-revs-before.txt") (Get-Content ".local\w1\$s-revs-after.txt")) {'DIFFERENT'} else {'same'}),
+    $(if (Compare-Object (Get-Content ".local\w1\$s-before.yaml") (Get-Content ".local\w1\$s-after.yaml")) {'DIFFERENT'} else {'same'})
+  gcloud run services describe $s --region $R --project $P --format "yaml(metadata.annotations,spec.template.metadata.annotations)" | Select-String -Pattern 'scale'
+}
+```
+```
+P=a2a-agentic-service-ops-gcp; R=us-central1; for s in ops-gateway ops-orchestrator ops-reporting ops-sentiment ops-forecast ops-qa; do gcloud run revisions list --service $s --region $R --project $P --format "value(metadata.name)" > .local/w1/$s-revs-after.txt; gcloud run services describe $s --region $R --project $P --format export > .local/w1/$s-after.yaml; echo "$s: revisions $(diff -q .local/w1/$s-revs-before.txt .local/w1/$s-revs-after.txt >/dev/null && echo same || echo DIFFERENT); export $(diff -q .local/w1/$s-before.yaml .local/w1/$s-after.yaml >/dev/null && echo same || echo DIFFERENT)"; gcloud run services describe $s --region $R --project $P --format "yaml(metadata.annotations,spec.template.metadata.annotations)" | grep -i scale; done
+```
+If the export shows `DIFFERENT`, read the differing lines (`Compare-Object` or `diff` on the two files). The export leaves out the volatile fields: read 2026-11-12, it holds no `operation-id`, no `lastModifier`, no `generation` and no `status`, so after lowering a `DIFFERENT` is a real difference, most likely a minimum annotation that was not removed. (Between H2 and the lowering, with the minimums raised, the only expected difference is the added service-level minimum.) **Only after this readback** stop `ops-db`, if the window is closing (G; the order is lower, read back, then stop). Record in the window log (`docs/deploy-window-log.md`): the time raised and lowered, the minutes the updates took, the six-by-nine readback results, and any shutdown line.
