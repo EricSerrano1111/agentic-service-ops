@@ -22,6 +22,14 @@ $S  = "projects/$N/secrets/gateway-invites"
 
 The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-12-12.
 
+*2026-11-12 (audit finding F-14; ADR-118; owner-decided; assistant-drafted.)* **Window B: what to use in place of this file's Window A text.** Window A was never opened (ADR-118), and this file is still written for it.
+- **`$end`:** `[datetime]'2026-12-12 23:59'` (step 3). The default in the file, `2026-11-09`, gives a negative `--days`, which `scripts/invites.py` refuses with `error: --days must be positive` (`scripts/invites.py:127-128`), so it fails safe.
+- **The grader's label:** `grader-B` (the file hard-codes `grader-A` in step 3 and in "Close the window", step 1).
+- **The owner's invite:** step 4 names `owner-laptop`, "created 2026-10-13". The current one is `owner-laptop-5`, expiring 2026-11-13 (owner-stated; `evals/results/l106/2026-11-11/summary.md`, "Rulings and disclosures"), so Window B needs a new one, made as step 4 says. The label is free text (`scripts/invites.py:107`); `owner-laptop-6` follows the pattern.
+- **The banner at the top is satisfied.** All five model-calling YAMLs say `LLM_MODE: paid` (`deploy/cloudrun/forecast.yaml:43`, `orchestrator.yaml:49`, `qa.yaml:51`, `reporting.yaml:53`, `sentiment.yaml:46`; read 2026-11-12). The trigger stays disabled, and step 5's read still expects `True` (read 2026-11-12: `True`).
+- **30 an hour per invite is now deployed,** not "15 until Z2b deploys" (the line under "Reference"): the live gateway revision `ops-gateway-00005-m67` has `GATEWAY_ASKS_PER_SESSION_HOUR` at `'30'` (`describe`, read 2026-11-12), and `deploy/cloudrun/gateway.yaml:46-47` says the same. The daily cap stays 50.
+- **Warm instances for the live run** are not part of opening or closing the window: `deploy/RUNBOOK_DEMO.md`, section H (ADR-122).
+
 ## Open the window (do it the day before, or the morning of the start)
 
 1. **Check the paid balance (owner, in the console; there is no API).** Billing > the paid project's
@@ -93,6 +101,12 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
    ```
    No output means no retry happened; record that in the window log. A line shows `attempt`, `http_status`, `kind`, `next_wait_s` and `elapsed_s`; if one appears, copy its trace id and tick the sprint-log item "Still not verified deployed".
 
+   *2026-11-12 (audit finding F-09; owner-decided; assistant-drafted.)* **The read above covers only 7 days; Window B is 12** (12-01 to 12-12, closed by 12-13), so about 12-01 to 12-05, the expected grading days, are never read, and "no output means no retry happened" would be recorded for days the read did not cover. Use `--freshness 14d`, the window's length plus a day (`--freshness` is in `gcloud logging read --help`, default `1d`):
+   ```powershell
+   gcloud logging read 'resource.type=cloud_run_revision AND jsonPayload.msg=\"llm attempt failed\"' --project $P --freshness 14d --format json
+   ```
+   (`evals/l106/README.md` lists "`--freshness` ignored when the filter has a timestamp" as unverified; this filter has no timestamp, so the flag applies.)
+
 ## Reference
 
 - **List the active invites, without hashes:**
@@ -116,6 +130,7 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
   from the owner's PC with `--ipv4`, because the PC's IPv6 to `*.run.app` black-holes (Windows PowerShell
   notes in `RUNBOOK_V.md`):
   `.venv\Scripts\python deploy\verify.py --ipv4` (*updated 2026-10-15, S6-T1*).
+  *2026-11-12 (audit finding F-02; owner-decided; assistant-drafted.)* **That `verify.py` line is not a recovery step.** `verify.py` needs eight environment variables (`PROJECT_ID`, `PROJECT_NUMBER`, `REGION`, `EXPECTED_IMAGE_TAG`, `ORCHESTRATOR_SA`, `REPORTING_SA`, `PROBE_SA`, `CLOUD_SQL_INSTANCE_NAME`; `deploy/verify.py:496-509`) and exits 1 with `FAIL  configuration: unset …` if any is missing; this file's block sets only `$P $R $N $G $S`. In a live "system is down" recovery, use the browser plus a read-only `describe`; `verify.py` belongs in a rehearsal, after the variable block in `RUNBOOK_V.md` section 6, "Verification run from the owner's machine" (the `$env:PROJECT_ID = $P` lines above its `verify.py` call), has been pasted into the same window (`deploy/RUNBOOK_DEMO.md`, the note under recovery step 1).
 - **Spend ceiling:** the prepaid balance and the daily cap. The per-process caps are not one (L-93).
 - **If the balance runs out mid-window:** the paid key fails closed and answers degrade (R-21). Top up in
   the console; no redeploy is needed.
