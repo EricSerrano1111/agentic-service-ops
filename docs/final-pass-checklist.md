@@ -1,6 +1,6 @@
 # Evaluation report final pass: checklist (due 2026-12-01)
 
-*Drafted 2026-11-11 (assistant-drafted, from the read-only project audit, `docs/audits/2026-11-11-project-audit.md`; the list of items was set by the owner at the audit triage, the wording is the assistant's). A plan, not a decision: nothing here has been done.*
+*Drafted 2026-11-11 (from the read-only project audit, `docs/audits/2026-11-11-project-audit.md`; the list of items was set by the owner at the audit triage). A plan, not a decision: nothing here has been done.*
 
 **The pass is one planned pull request,** because the report, the results page's data and a test that pins it must change together (item 3 below); done piecemeal, CI fails between the pieces. The final submission with the documentation packet is 2026-12-05 (ADR-117). Window B, the grading window, is 2026-12-01 to 12-12 (ADR-107, ADR-118).
 
@@ -50,10 +50,11 @@ The summary table (`docs/sprint-log.md`, "Cumulative Summary") ends at Sprint 6;
 - The report's header notes (`docs/evaluation-report.md:12-14`) name the current build. If a build deploys after `8ec22db`, add a note rather than assume.
 - The Limitations log: L-108, L-109 and L-110 are open and record F-12, F-13 and F-24. If any is fixed after the demonstration, close it with a dated note.
 - `docs/requirements-traceability.md` counts against its rows, if any requirement's status changes.
+- *2026-11-23 (owner-decided).* A full re-read of every row and the counts in `docs/requirements-traceability.md` before 12-05. The 2026-10-18 notes predate the 6.5 deploy (e.g. the synthetic-data notice and the liveness probes were fixed then); the Part 1 scorecard quotes these counts.
 
 ## After the demonstration (code)
 
-*Added 2026-11-11 (owner-decided 2026-11-11; assistant-drafted).* These are not part of the 12-01 pass. **Service code is frozen until after the demonstration** (owner-decided 2026-11-11), so that `main` keeps matching the deployed commit `8ec22db`. Each item that changes a service is a code change with a redeploy of that service, under its own decision and the deploy runbooks; none is scheduled. Findings are in `docs/audits/2026-11-11-project-audit.md`.
+*Added 2026-11-11 (owner-decided 2026-11-11).* These are not part of the 12-01 pass. **Service code is frozen until after the demonstration** (owner-decided 2026-11-11), so that `main` keeps matching the deployed commit `8ec22db`. Each item that changes a service is a code change with a redeploy of that service, under its own decision and the deploy runbooks; none is scheduled. Findings are in `docs/audits/2026-11-11-project-audit.md`.
 
 **Code fixes recorded as limitations (evaluation report):**
 

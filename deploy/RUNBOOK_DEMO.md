@@ -9,13 +9,37 @@ PowerShell 5.1, from the repo root, with `.venv` built. Every `gcloud` command c
   instructor holds the remaining 10 to 20 minutes as a buffer. **This plan does not use the buffer;** it is
   there only for recovering when something goes wrong.
 - **No recording** (owner, 2026-10-29; ADR-119). The demonstration runs live, and nothing stands in for it.
-- **Date and time:** `[TBD]`. Slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a slot
+- **Date and time:** Saturday 2026-12-05, 14:00 to 15:00 US Central (ADR-123). Slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a slot
   inside Window B** (2026-12-01 to 12-12, ADR-107). A slot outside it means a new ADR to move the window.
   - *2026-11-12 (ADR-122; owner-decided; assistant-drafted.)* The warm instances of section H apply whatever the slot's date. A slot before 2026-12-01 still needs its own window ADR before section A's day-before steps are run (note under A1).
 - **No slides** (ADR-117). The visual aids are the system's own pages (landing, How it works, Evaluation
   results), the public repository and the evaluation report.
 - **Rehearsal:** the narration is rehearsed offline with the tabs. The only live run-through is A3, the day
   before.
+
+*2026-11-23 (ADR-123, ADR-124; owner-decided 2026-11-23; assistant-drafted.)* **The slot is set, and it changes what the lines above say.**
+- **Slot:** Saturday 2026-12-05, 14:00 to 15:00 US Central, the only date offered. It is inside Window B, so no window ADR is needed (ADR-107; ADR-119 item 5). The final package (code, documentation packet and demonstration) is due 2026-12-05 at 23:59 Central.
+- **Format (owner):** one hour. Part 1 is a presentation of at most 30 minutes. Then come 10 to 20 minutes of instructor questions or requested demonstrations of features not covered in Part 1. This is the owner's latest statement of the slot. The lines above, from 2026-10-29, call the instructor's remaining time a buffer, and are not edited.
+- **Part 1 must cover (the course agenda, as the owner gave it):** an overview of the project and its objectives; key design decisions; the success criteria; a walk-through of the application covering all features promised at the start of the term; key metrics that prove the success criteria were met.
+- **Evaluation criteria (as the owner gave them):** knowledge of the project as a whole; answers questions effectively; presents with confidence; delivery of all promised features as agreed in the detailed requirements analysis (group-level grade); quality of the presentation per the rubric (group-level); quality of each student's presentation (individual-level). The project is solo, so the group-level grades rest on the owner.
+- **What the grader reviews (owner-stated):** the live presentation, followed by the code, the revised project documents and a "final risk management assessment". **The "final risk management assessment" is the risk content of the weekly status reports; there is no separate submission (owner, from the instructor, 2026-11-23).**
+- **Rehearsal and check:** the full rehearsal is 2026-11-23, and the day before has a short check (ADR-123; the note under A3).
+- **No grader invite** for Window B (ADR-124). A1's grader-invite bullet and A5's "ask the grader" line no longer apply. `ops-db` is not run for the whole window: it is started and stopped in two sittings, 2026-12-04 and 2026-12-05. A1 ("Open Window B") and G ("Close the window") are read with that and with the note of 2026-11-23 in `RUNBOOK_GRADING.md`.
+- **The owner invite** is `owner-laptop-6`, created 2026-11-23, expiring 2026-12-07 (owner-reported; the link is held by the owner and is not recorded here).
+- **Segment timings are provisional.** They are set from the timed rehearsal of 2026-11-23 (the note under D).
+- **Clock times for demonstration day, 2026-12-05** (T = 14:00 Central; the offsets are those of section H and the A5 note):
+
+  | Offset | Central | What |
+  |---|---|---|
+  | T−75 | 12:45 | `ops-db` read, and started if it is not running (H1; `RUNNABLE ALWAYS` read 6 min 47 s after the start on 2026-11-11, the operation `DONE` after 9 min 29 s); the paid balance (A1); the cap headroom read (A5 note) |
+  | T−60 | 13:00 | capture the state, raise `--min=1` (H2) |
+  | T−55 | 13:05 | the readback, four reads (H3) |
+  | about T−35 | 13:25 | the second cap headroom read (A5 note: again before the T−30 smoke check) |
+  | T−30 | 13:30 | the smoke check, three questions, before joining Zoom or sharing (H4) |
+  | T | 14:00 | Part 1 starts (at most 30 minutes) |
+  | about T+30 | 14:30 | Part 1 ends; the instructor's questions begin (10 to 20 minutes) |
+  | after the questions | about 14:40 to 14:50; not a fixed time | lower to default and read back (H5), then stop `ops-db` (ADR-124). Lower only after the instructor ends the questions. |
+  | T+60 | 15:00 | the slot ends |
 
 **Deadline:** one owner deploy session before 2026-11-09 (Preconditions).
 
@@ -78,7 +102,7 @@ The plan below needs a live system that the records say does not yet exist. **On
 - **The owner invite `owner-laptop-5` expires 2026-11-13** (17:10:59Z, as the owner read it; `summary.md`, "Rulings and disclosures"). No rehearsal or slot can fall before then (slots are announced about 11-15 to 11-22), so **a new owner invite must be made before the rehearsal:** on the rehearsal day, as step 4 of "Open the window" in `RUNBOOK_GRADING.md`. The expired one needs no revoke. No invite link or id is written here.
 
 **Order:** deploy session (before 11-09) → Window B (grader invite, owner invite) → demonstration. The
-demonstration's date is `[TBD]`. The slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a
+demonstration's date is 2026-12-05, 14:00 Central (ADR-123). The slots are announced about 11-15 to 11-22 and the owner chooses. **Prefer a
 slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the window.
 
 ---
@@ -128,6 +152,14 @@ slot inside Window B (ADR-107).** A slot outside it means a new ADR to move the 
    3. **Wait until every service has gone cold again:** about 15 minutes after the last Part 1 request each instance shuts down (`summary.md`, "Idle shutdowns"), so wait 20 minutes, and confirm with H3 (d)'s read (`Shutting down`, each service) using the time Part 1 began in place of `$t0`. **Without this wait the minimums are raised on services that are still running,** and H3 (b) may show no start line with the minimum's reason (the caveat in H3 (b)), so demo day would be the first observation of it, which defeats the rehearsal.
    4. Then H2 to H5 in full: capture, raise, readback, the three-question smoke check, **a 20-minute wait and one reporting question** (it must answer in seconds: a warm instance has to outlive the idle shutdown of about 15 minutes that every instance hit on 2026-11-11, `summary.md`, "Idle shutdowns"), lower, readback. **Record how long the six `--min` updates take** (on 2026-10-14 each `gcloud` call took 1 to 4 minutes, as noted in F) and what the `describe` shows, so the annotation name and the no-new-revision claim are observed, not assumed (ADR-122, Consequences).
    The rehearsal's warm period is about 1.5 hours, about $1 at list price; the wait in step 3 adds about 20 minutes of the evening, and no cost.
+   *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **The full rehearsal is today, 2026-11-23, and the day before gets a short check.** "The day before" and "the only live run-through" in this step, and in the lines above it, are superseded.
+   - **2026-11-23, in the afternoon, after the pull request that records ADR-123 is merged:** the sequence of the 2026-11-12 note above (Part 1 cold and timed; wait until every service has gone cold; then H2 to H5), run by the person who will run it on demonstration day. **It is an owner verification session under ADR-110, not Window B.** The paid balance is checked first (read 2026-11-23: $6.15, owner-reported; $5 or more is needed). `ops-db` is started first (H1) and **stopped after the minimums are lowered and read back.** No grader invite is created. The session gets an entry in `docs/deploy-window-log.md`. A1's steps for opening Window B are not run. The owner invite `owner-laptop-6` is the invite. The rehearsal also clicks through segment 6a's tabs for real, times each segment of Part 1 to set the provisional timings (the note under D), and records the zoom for A4.
+   - **Friday 2026-12-04, 09:00 Central, about an hour, with no warm instances:**
+     1. Start `ops-db` first (H1; allow about 7 to 10 minutes, as on 2026-11-11), and stop it after the check (ADR-124).
+     2. **Preflight, read-only:** the six serving revisions against the list in the 2026-11-12 note under Preconditions (a different name means something deployed); the paid balance, in the console ($5 or more, A1); the owner invite's expiry (`owner-laptop-6`, 12-07; `scripts\invites.py --secret $S list` prints no hashes); and the model deprecations page for `gemini-3.5-flash-lite` (A2's `curl.exe -sL` read; it fails if nothing prints).
+     3. **One cold question,** once `ops-db` is up and the services have been idle for 20 minutes or more: one reporting question, timed. Record "Answered in N.N s" and any degraded answer. This is the L-106 observation of that day (R-05 and L-106, notes of 2026-11-23).
+     4. **A click-through of the "What's behind the agents" tabs** (B2, tabs 7 to 15, shown ones and shown-only-if-asked ones alike): each opens, and each anchor lands on its heading.
+     The minimums are not raised on 12-04, and its questions count on its own Pacific-time day (A5).
 4. **Zoom check.**
    - Join a test meeting from a second device (a phone is enough).
    - Share the browser **window**, not the whole screen.
@@ -217,6 +249,18 @@ SINCE=$(date -u -d "$(TZ=PST8 date +%Y-%m-%d) 08:00" +%Y-%m-%dT%H:%M:%SZ); gclou
    4. The public repository's root (the GitHub page for `git remote get-url origin`).
    5. `docs/evaluation-report.md` on GitHub.
    6. `docs/decisions-log.md` on GitHub.
+   *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Tabs 7 to 15, for segment 6a.** Open these as tabs in the same browser window as the system, in this order, before the demonstration. Anchors verified 2026-11-23 via the GitHub API; clicked for real at the rehearsal.
+   7. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/data-dictionary.md#1-entity-overview`
+   8. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/data-dictionary.md#7-table--agent--database-role-access-matrix`
+   9. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/decisions-log.md#adr-046--specialists-parse-their-own-questions-figures-stay-deterministic` (open in the tab row, shown only if asked)
+   10. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/ml/sentiment/artifacts/bert_v1.manifest.json`
+   11. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/evaluation-report.md#45-sentiment`
+   12. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/decisions-log.md#adr-059--sentiment-model-training` (open in the tab row, shown only if asked)
+   13. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/ml/forecast/artifacts/volume_v2.manifest.json`
+   14. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/evaluation-report.md#44-forecast`
+   15. `https://github.com/EricSerrano1111/agentic-service-ops/blob/main/docs/decisions-log.md#adr-071--forecast-serving-requires-passing-on-both-fold-b-and-the-holdout` (open in the tab row, shown only if asked)
+
+   Tabs 10 and 13 are files, so they have no anchor (both tracked on `main`). The results page is tab 3 and is not opened again: `https://ops-gateway-587647038690.us-central1.run.app/results/` (the trailing slash matters, L-105; it answered 200 on 2026-11-23, with no anchors). **Segment 6a shows tabs 8, 10, 11, 13 and 14 in that order, then tab 3, then tab 1. Tab 7 is open and shown only if asked, like tabs 9, 12 and 15.**
 3. **Notes on a second screen,** not inside the shared window.
 4. **Notifications off.**
    - Windows Do Not Disturb on.
@@ -256,6 +300,21 @@ services are separate from the reporting one, so the SLA question does not warm 
 
 **Plan for 27 minutes,** which leaves 3 in hand. The segment times: 2 + 4 + 2 + 3 + 3 + 4 + 3 + 4 + 2 = **27**.
 Each "say" is meant to be spoken in your own words; the sentences are the facts and their sources.
+*2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Provisional timeline: Part 1 is planned at 28:00, with 2:00 in hand against the 30-minute cap** (the slot note). It adds segment 6a, the objectives (segment 1), the success criteria (segment 8), a requirements scorecard (segment 9) and one sentence on cold starts (segment 4), and it pays for them with the cuts in the notes under segments 2, 3, 5 and 6 and with tab 7 skipped by default in 6a. The headings of segments 1 to 9 keep the offsets they were written with; **this table prevails.** It is not yet measured: the timed rehearsal of 2026-11-23 sets it.
+
+| Segment | Start | Minutes | Change from the 29:00 plan |
+|---|---|---|---|
+| 1 | 0:00 | 2:30 | +0:30 (the objectives) |
+| 2 | 2:30 | 3:00 | −1:00 |
+| 3 | 5:30 | 1:30 | −0:30 |
+| 4 | 7:00 | 3:15 | +0:15 (the cold-start sentence) |
+| 5 | 10:15 | 2:30 | −0:30 |
+| 6 | 12:45 | 3:30 | −0:30 |
+| 6a | 16:15 | 2:30 | −0:30 (tab 7 skipped) |
+| 7 | 18:45 | 3:00 | |
+| 8 | 21:45 | 3:30 | +0:30 (opens with the success criteria; the forecast bullet stays dropped) |
+| 9 | 25:15 | 2:45 | +0:45 (the scorecard) |
+| End | 28:00 | | 2:00 in hand |
 
 ### 1. The problem: 0:00 (about 2 min)
 - **On screen:** the landing page (tab 1).
@@ -268,6 +327,10 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
     rule 6, revised 2026-10-22).
 - **The audience should see:** the product name "Service Ops Intelligence", the synthetic-data notice, and the
   grouped example questions (rule 9).
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Add the project's objectives, about 0:30** (segment 1 is now 2:30). Read these two sentences from the proposal (`docs/academic/01-proposal-business-case.md`, "Project Outcomes"), in your own words or as written:
+  - "This project gives Meridian's operations leaders a way to ask direct, natural-language questions about service quality, customer sentiment, future demand, and receive immediate, verified answers without waiting on an analyst or learning new technical skills."
+  - "Every response is checked before it reaches a decision-maker, so leaders can act on the numbers directly, rather than treating them as a starting point for a follow-up conversation with the analyst team."
+  Then one sentence: the success criteria come back in segment 8.
 
 ### 2. The architecture: 0:02 (about 4 min)
 - **On screen:** How it works (tab 2).
@@ -282,6 +345,7 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
   - **Why A2A and MCP at this scale?** At five agents in one codebase A2A is not necessary. It is a deliberate
     choice for portfolio value and a swappable orchestration contract, not a claim of necessity (ADR-001).
 - **The audience should see:** the services diagram and the route of one question.
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Cut to 3:00 (−1:00).** Drop the bullet "Why A2A and MCP at this scale?": segment 3 says it with ADR-001 on screen. It stays in the Q&A (row 1).
 
 ### 3. The code: 0:06 (about 2 min)
 - **At the start of this segment, re-warm** (C, "Re-warm, and why"): in the second, unshared browser window, send
@@ -294,6 +358,7 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
   - Every locked decision is an ADR with the alternatives considered. ADR-001 is the example: it says plainly
     that A2A was not required at this scale.
 - **The audience should see:** the folder layout and one ADR's "Alternatives considered" and "Consequences".
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Cut to 1:30 (−0:30).** Keep the ADR-001 bullet. Say the repository layout in one sentence.
 
 ### 4. Live: the SLA example: 0:08 (about 3 min)
 - **On screen:** landing page. Click "What was SLA compliance in the Northeast last month?" and send it.
@@ -309,6 +374,7 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
     failed its gate twice and is advisory (rule 3; L-74), and "verified" means QA's recomputation agrees, not that
     the definitions are right (L-75).
 - **The audience should see:** the headline, the "Interpreted as" line, the verification line and the timer.
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Add one sentence on cold starts, about 0:15 (segment 4 is now 3:15), before the first live question:** "Cold starts can take up to about a minute, so I keep the instances warm for this session, and that is a known limitation." [ref: L-106, still open. Cold starts measured 26 to 61 s on 2026-10-28; a failure on 2026-10-30 with no cause found; the status line of 2026-11-11.] **Spoken lines carry no internal IDs; references are in brackets for the speaker only.**
 
 ### 5. Live: the answer journey: 0:11 (about 3 min)
 - **On screen:** the same answer. Click "Show the answer journey".
@@ -320,6 +386,7 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
   - The journey never carries a figure, the question text or an error message (rule 10). The browser timer is
     shown separately because it includes the network and any cold start (rule 7).
 - **The audience should see:** the highlighted route, the timeline bars, and the three chips.
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Cut to 2:30 (−0:30).** Drop the third bullet (the journey never carries a figure; the browser timer is separate). It stays in the Q&A.
 
 ### 6. Live: sentiment and forecast: 0:14 (about 4 min)
 - **On screen:** "Is negative feedback trending up in the West?" then "What weekly request volume should we expect
@@ -340,6 +407,21 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
 - **The audience should see:** the sentiment buckets and the stated comparison; the forecast ranges and the
   error with each band.
 - *2026-10-30 (deploy session; assistant-drafted.)* **The sentiment example can split.** "Is negative feedback trending up in the West?" failed its caption once on 2026-10-30: the router answered `split_required` ("Your question covers more than one area… please ask about each separately") and called no specialist. The same question passed on a retake that day and on 2026-10-28 (L-58 update; data dictionary §6, rule 9). If the split appears live, narrate it as the router asking for one question at a time, which is a designed outcome, then resend the question once or use the other sentiment example. No screenshot of the split exists. A stability check of all seven examples is planned.
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Cut to 3:30 (−0:30).** One sentence each for sentiment and forecast: drop the sentiment trend-test sentence and the "be ready for a question about the error" bullet (Q&A row 14 holds it).
+
+### 6a. What's behind the agents: 16:15 (2:30; added 2026-11-23, provisional)
+*2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* One block, not spread through the overview. It serves the agenda items "key design decisions" and "key metrics" (the slot note). Its timings are provisional until the rehearsal.
+- **On screen:** tab 8, then 10 and 11, then 13 and 14 (B2); then the Evaluation results tab (tab 3); then back to the landing page (tab 1). **Tab 7 and tabs 9, 12 and 15 (ADR-046, ADR-059, ADR-071) are open in the tab row and are shown only if asked.**
+- **Say, schema and access (about 0:30; tab 8):**
+  - One sentence for the schema: the data dictionary's entity overview (§1, tab 7, shown only if asked) maps the tables, §2 and §3 give the columns, and §4 holds ground-truth tables that exist only for the generator and the evaluation and are not part of the operational schema.
+  - Tab 8 is the access matrix (§7): one database role per agent, one row per table. No agent role can read `contacts`, so customer personal data never enters a prompt. The sentiment role sees four feedback columns and the forecast role three request columns (`docs/security-model.md`, guarantees 1 to 4).
+- **Say, the model behind each agent (about 1:30 in all):**
+  - *First, about 0:20:* "No model produces or alters a figure. Gemini Flash-Lite routes, parses the question into a typed request, and runs QA's advisory interpretation check. Figures come from SQL, and QA recomputes them with its own SQL." (ADR-046; ADR-055; guarantee 12; ADR-046 is tab 9.)
+  - *Sentiment, about 0:35, tabs 10 and 11:* `bert_v1`, a fine-tuned `google-bert/bert-base-uncased` with four labels, calibrated by temperature scaling with a review threshold (the manifest; ADR-059, ADR-064 to ADR-066; ADR-059 is tab 12). It was compared with the required TF-IDF baseline: test macro-F1 0.9713 against 0.9431 (`docs/requirements-traceability.md`, FR-07; report §4.5). **Say that** it was scored against synthetic labels, so the accuracy overstates real-world performance.
+  - *Forecast, about 0:35, tabs 13 and 14:* `volume_v2`, a log-linear model of weekly counts with a year-end indicator and a robust refit (the manifest; ADR-069, ADR-070), and a serving gate: a slice-band is served only if it passes on fold B and its holdout error is at most 20%, and the larger of the two errors is shown (ADR-071, tab 15; ADR-072; report §4.4). The total's holdout error is 8.81% against 14.80% for seasonal naive.
+  - Check each figure against what the manifest, the report and the results page show on the day.
+- **Say, the numbers (about 0:30):** the Evaluation results tab, the sentiment and forecast comparison cards. Then back to the landing page for segment 7.
+- **The audience should see:** the role-by-table matrix, the two manifests and the comparison cards.
 
 ### 7. Live: the boundaries: 0:18 (about 3 min)
 - **On screen:** "How's the Southeast doing?" then "What will revenue be next quarter?"
@@ -372,6 +454,13 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
   - "These figures describe the evaluated Sprint 5 system unless marked otherwise."
 - **The audience should see:** the cards, the tags on the figures that are not from the evaluated system, and the
   source paths in small type.
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Segment 8 is 3:30 and opens with the success criteria,** each followed by its result, so the criteria and the key metrics are covered together. The criteria are the proposal's (`docs/academic/01-proposal-business-case.md`, "Success Criteria (including measurement metrics)"), quoted below and not reworded. `docs/academic/02-requirements-analysis.md` has no success-criteria section; its non-functional requirement 1 (120 seconds) is the performance requirement. **Say only the criterion's name and its "Measured as" clause, then its result;** reading the full text aloud would take longer than the segment. Criterion 4 is taken in segment 9. The forecast bullet stays dropped (6a showed it), and every caveat below is still read aloud. About 0:15 for the method, then 0:30, 1:00 and 0:45 for the three criteria, and 0:40 for the caveats.
+  1. **"Faster access to operational answers:"** "Success means an operations leader gets a verified answer to a natural-language question with no analyst involved. Measured as end-to-end response time from question to answer, tracked separately for quality, sentiment, and demand questions."
+     *Result:* warm answers took about 3 to 4 s (held-out routing medians 3.7, 3.5 and 3.81 s; golden median 3.93 s); cold first answers took 42 to 58 s in the browser on 2026-11-11, all inside the 120 s ceiling **[to be replaced with today's rehearsal reading]**. [ref: `evals/results/l106/2026-11-11/summary.md`; report §4.6] **Say plainly:** the warm medians are not split by question type, and the cold readings are by path.
+  2. **"Reduced dependency on analyst availability:"** "Success means routine operational questions in quality trends, sentiment shifts, and demand outlooks are answered directly by the system but also that the system correctly recognizes when a question is ambiguous or outside what it can answer, rather than guessing. Measured as routing accuracy across a representative set of test questions, including deliberately ambiguous and out-of-scope cases, with failure cases documented rather than hidden in an aggregate score."
+     *Result:* held-out routing, 38 of 50 in each of three runs, and 38 of 43 without the 7 ambiguous items. The misses are the ambiguous and out-of-scope items. Ambiguous questions: handling them is not met (10 of 15 recognised against 0 of 15, worked out after the fact on sets already used). Out-of-scope: 15 item-runs reached a specialist, which declined each time with no figure shown. [ref: FR-03 and FR-05 in `docs/requirements-traceability.md`]
+  3. **"Verified accuracy that can be acted on:"** "Success means answers reaching a decision-maker have been checked, and incorrect or low-confidence answers are caught before delivery, not after a bad decision is made from them. Measured as the verification stage's catch rate against deliberately introduced errors, plus how often it correctly escalates a case it can't verify instead of passing it through."
+     *Result:* QA caught 219 of 223 injected-fault cases, and 223 of 223 after fixes designed from the misses; **both are upper bounds, because QA's author drafted the faults** [ref: report §4.3]. **Say plainly:** the second half of the criterion, how often it correctly escalates, was not measured as a rate. The degraded path was tested offline and ran live once, on 2026-10-28 (one failure, the forecast hop). [ref: report §10]
 
 ### 9. Production-grade, cost, what's next: 0:25 (about 2 min)
 - **On screen:** the Production-grade card on the results page, then tab 5 at §8 or §9.
@@ -388,6 +477,17 @@ Each "say" is meant to be spoken in your own words; the sentences are the facts 
     not built: Terraform, the `verify-caller` account, a no-traffic deploy (L-64) and the batch-scoring job
     (ADR-100) (`docs/sprint-log.md`, "Planned vs done", 2026-10-18).
   - Hand over to questions.
+- *2026-11-23 (ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Segment 9 is 2:45 (about 0:45 more) and adds criterion 4 and a requirements scorecard.** About 0:20 for the production-grade card, 0:40 for criterion 4 (in place of the Cost bullet's list above), 0:45 for the scorecard, 0:30 for what a real deployment would need in one sentence, and 0:10 to hand over.
+  - **Criterion 4, "Analytical capacity that scales without adding headcount:"** "Success means Meridian can answer a growing volume of analytical questions without adding analysts to keep pace. The proposed system measures compute cost per answered question, tracked as question volume increases and compared against the cost of hiring additional analysts to handle the same growth." *Result:* cost per question is measured: the held-out routing and golden run cost $0.172689 for 186 requests at list price, the most expensive request $0.001737, and the 2026-10-28 window's 12 questions $0.0164. [ref: report §4.7] **Say plainly:** tracking cost as volume rises, and the comparison with the cost of hiring analysts, were not done. The database costs about $0.30 a day while it runs, so it is stopped outside sittings. [ref: ADR-105, ADR-124]
+  - **The requirements scorecard (about 0:45; `docs/requirements-traceability.md`).** **Provisional: traceability last fully re-read 2026-10-18; re-check in the final pass before 12-05.** Counts: **14 met, 9 partly met, 1 open, 3 optional (not planned, MVP: No)**, of 27 (22 functional, 5 non-functional). One phrase each:
+    - **Handling ambiguous questions (open):** not met. Ambiguous questions are still sometimes routed to the best fit; 10 of 15 recognised against 0 of 15, worked out after the fact. [ref: FR-03]
+    - **Checking forecasts (partly met):** QA checks the forecast's arithmetic and stored error but cannot catch a wrongly read slice or horizon, because the interpretation check is advisory. [ref: FR-10]
+    - **Checking sentiment answers (partly met):** the same advisory limit, and the real-data tests ran locally, not on the cloud database. [ref: FR-11]
+    - **The revision loop (partly met):** built and tested, but no running request has been re-asked. [ref: FR-12]
+    - **Performance (partly met):** the 120 s ceiling held in every reading; there is no load test, and no breaker or retry has acted live. [ref: NFR-1]
+    - **Security (partly met):** the layers are built; the sign-in code has had no independent review, and there is no automated dependency scanning. [ref: NFR-2, L-88]
+    - **Scalability (partly met):** each service scales independently by design; scaling under load is not measured, and the one test of scaling across services failed. [ref: NFR-3, TS-18-C, L-101]
+    - The other three partly met requirements (verifying reporting answers, availability, ethics) are covered in segments 4, 9 and 8. [ref: FR-09, NFR-4, NFR-5]
 
 **Never inject a fault live.** If asked about degradation, show the constructed image and say it is constructed
 (section F), then describe the 2026-10-28 live test (evaluation report §10; `docs/deploy-window-log.md`, phase 5):

@@ -118,7 +118,7 @@
 | 104 | Deployed model calls use the paid key for the evaluation and grading window | Accepted |
 | 105 | Grading availability: `ops-db` stopped by default, started for announced windows; the paid key stays on (builds on ADR-104 and ADR-083; supersedes nothing) | Accepted — superseded in part by ADR-110 |
 | 106 | Sprint 6.5 scope is decided at the Sprint 6 close (supersedes ADR-093 in part) | Accepted — superseded in part by ADR-109 and ADR-113 |
-| 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted — superseded in part by ADR-118 and ADR-122 |
+| 107 | Grading windows and grader access (extends ADR-105; supersedes nothing that still holds) | Accepted — superseded in part by ADR-118, ADR-122 and ADR-124 |
 | 108 | Trace ID end to end, log redaction, retry error logging (extends ADR-088 and ADR-097; supersedes nothing) | Accepted |
 | 109 | Sprint 6 runs 2026-10-15 to 10-25; the buffer starts 10-26 (supersedes ADR-093's Sprint 6 dates and ADR-106 in part) | Accepted — superseded in part by ADR-113 |
 | 110 | Owner verification sessions outside grading windows (supersedes ADR-105 in part) | Accepted — superseded in part by ADR-111 |
@@ -130,10 +130,12 @@
 | 116 | `route_v6` becomes the default router on held-out evidence (post hoc; not an FR-03 attempt; FR-03 stays not met) | Accepted |
 | 117 | The final package is code, a documentation packet and a live demonstration; the 6.5 presentation scope widens to six items, including the answer journey; calendar to 12-05 (supersedes ADR-113 and ADR-044 in part) | Accepted — superseded in part by ADR-118 and ADR-119 |
 | 118 | Window A is not opened: graders review `05` and `06` without the live system; the 6.5 deploy waits only for `06`'s submission (supersedes ADR-107 and ADR-117 in part) | Accepted |
-| 119 | The demonstration runs live only; no backup recording (supersedes ADR-117 in part) | Accepted |
+| 119 | The demonstration runs live only; no backup recording (supersedes ADR-117 in part) | Accepted — superseded in part by ADR-123 |
 | 120 | Cold-start hardening for the deployed services: startup CPU boost, a 120 s startup window, liveness without the database (supersedes ADR-081 and ADR-099 in part) | Accepted |
 | 121 | The deploy pipeline's step images are pinned by digest; the Cloud SDK steps pin `591.0.0-slim`, the last image with `python3` on its PATH | Accepted |
-| 122 | Warm instances for the demonstration: minimum instances of 1 on all six services around the live run and the day-before rehearsal, set at the service level (supersedes ADR-107 in part) | Accepted |
+| 122 | Warm instances for the demonstration: minimum instances of 1 on all six services around the live run and the day-before rehearsal, set at the service level (supersedes ADR-107 in part) | Accepted — superseded in part by ADR-123 |
+| 123 | The demonstration slot (12-05, 14:00 Central) and a full rehearsal on 2026-11-23 (supersedes ADR-119 and ADR-122 in part) | Accepted |
+| 124 | No grader invite for Window B, and `ops-db` stopped except for two sittings (supersedes ADR-107 in part) | Accepted |
 
 ---
 
@@ -4298,3 +4300,67 @@ After a start, one question through the gateway confirms the data path before th
 - **A warm instance that dies is replaced by a cold start,** and a request that lands on it takes the degraded path of ADR-120, whose retry has never run. Scale-out past the one warm instance (the 11-11 sentiment case) can also start a cold instance; whether a warm sentiment instance would have avoided it is not shown. **No fault is ever injected live** (`deploy/RUNBOOK_DEMO.md`, the end of section D).
 - **The code freeze holds until after the demonstration** (owner-decided 2026-11-11, `docs/sprint-log.md`): this entry changes no service code, and `main` keeps matching the deployed commit `8ec22db`.
 - **Records:** `deploy/RUNBOOK_DEMO.md` section H and its dated notes; R-05 and `docs/sprint-log.md` (notes of 2026-11-12); L-106 (note of 2026-11-12).
+
+### ADR-123 — The demonstration slot (12-05, 14:00 Central) and a full rehearsal on 2026-11-23 (supersedes ADR-119 and ADR-122 in part)
+*Date: 2026-11-23. Owner-decided 2026-11-23; assistant-drafted. Supersedes ADR-122 in part: only the rehearsal's timing, "the day-before rehearsal" (its title, Decision 1 and Consequences). Supersedes ADR-119 in part: only the first bullet of its Decision 2, "one live run-through the day before (`deploy/RUNBOOK_DEMO.md` A3)". Everything else in both stands, including ADR-122's rule for demonstration day and ADR-119's Consequences line "no 11-29 rehearsal session", to which this entry adds none.*
+
+**Context:**
+- **The slot.** The only date offered was Saturday 2026-12-05, 14:00 to 15:00 US Central, and the owner took it. It is inside Window B (2026-12-01 to 12-12), so no window ADR is needed (`deploy/RUNBOOK_DEMO.md:12-13`; ADR-107; ADR-119 item 5). The final package (code, documentation packet and demonstration) is due 2026-12-05 at 23:59 Central.
+- **The format (owner-stated 2026-11-23).** One hour: Part 1, a presentation of at most 30 minutes; then 10 to 20 minutes of instructor questions or requested demonstrations of features not covered in Part 1.
+- **When a problem is found decides what can be done about it.** ADR-119 and ADR-122 put the one full live run-through the day before the demonstration, 2026-12-04. A problem found then leaves one day to respond, under the code freeze (owner-decided 2026-11-11 and 2026-11-12, `docs/sprint-log.md`). A problem found on 2026-11-23 leaves about ten days.
+- **Today is outside Window B, and no window ADR is needed for it.** The owner's reading, stated here: the rehearsal is an owner verification session under ADR-110. `ops-db` is started and stopped in one sitting, no grader invite is created, and the paid balance is checked in the console at $5 or more. The balance was **$6.15** on 2026-11-23 (owner-reported, from the console). The note under A1 of the demonstration runbook (2026-11-12: a date before 2026-12-01 needs its own window ADR) concerns opening Window B, which today does not do.
+- **The owner invite.** `owner-laptop-5` expired on 2026-11-13. A new owner invite, `owner-laptop-6`, was created on 2026-11-23 and expires 2026-12-07 (ADR-124).
+
+**Decision:**
+1. **The demonstration is on Saturday 2026-12-05, 14:00 to 15:00 US Central.** ADR-122 holds for that day as written: minimum instances of 1 on all six services from T−60 (13:00 Central) until after the instructor's questions.
+2. **The full rehearsal moves to 2026-11-23,** in the afternoon, after the pull request that records this entry is merged. It follows the procedure of the note under A3 of the demonstration runbook (2026-11-12): Part 1 cold and timed, a wait for the services to go cold again, then section H in full, with the date changed from "the day before" to today. It is run by the person who will run it on demonstration day. It runs under ADR-110 (above): `ops-db` is started first, and after the minimums are lowered and read back it is stopped. A1's steps for opening Window B are not run today.
+3. **On Friday 2026-12-04 at 09:00 Central there is a short check of about an hour, with no warm instances:**
+   - preflight: the six serving revisions, the paid balance, the owner invite's expiry, and the model deprecations page for `gemini-3.5-flash-lite`;
+   - one cold question, which is the L-106 observation of that day;
+   - a click-through of the tabs of the segment "What's behind the agents" (`deploy/RUNBOOK_DEMO.md`, segment 6a).
+
+   It needs `ops-db`, which is started first and stopped after (ADR-124).
+
+**Alternatives considered:**
+- *The full rehearsal on 2026-12-04, as ADR-119 and ADR-122 had it.* Rejected, for the reason in Context: a problem found then leaves one day, under the freeze.
+- *A full rehearsal on both 2026-11-23 and 2026-12-04.* Not chosen. It would add a third warm session. The short check on 12-04 is meant to catch drift (an expired invite, a deprecation notice, a changed revision) without one.
+- *No rehearsal before demonstration day.* Rejected: ADR-122's procedure has never run, and its two documentation-only claims (that `--min` creates no revision, and the name of the service-level annotation) are what the rehearsal exists to observe.
+
+**Required versus portfolio value.** **Required,** as risk control for a live-only demonstration (ADR-119, as ADR-122). The segment "What's behind the agents", added to the runbook by the pull request that records this entry, is presentation content and is not required by this decision.
+
+**Consequences:**
+- **Two warm sessions in total:** today and demonstration day. At about $1.85 each at the ceiling of ADR-122, that is about $3.70, the figure ADR-122 already gave for rehearsal plus demonstration. The 12-04 check raises no minimums.
+- **The L-106 review trigger moves.** L-106 and R-05 named "the run-through the day before the demonstration" as the next cold-start observation. It is now the full rehearsal of 2026-11-23 (Part 1 cold and timed), with a shorter cold look on 2026-12-04 (one question). **The cold evidence is older when the demonstration comes:** the full observation is 12 days before it, and the last look is one question. L-106 stays open (ADR-122: a warm instance sidesteps the start and does not make it reliable).
+- **The daily cap is counted by Pacific-time day** (ADR-097), so the rehearsal and the 12-04 check draw on their own days' 50 and not on 12-05's.
+- **The code freeze holds.** A rehearsal finding that needs a service-code change is a decision for the owner under the freeze, and this entry does not lift it. Narration, runbooks and records can change after today.
+- **The segment timings of the runbook are provisional** until today's timed run sets them.
+- **Records:** `deploy/RUNBOOK_DEMO.md` (the slot note, the notes under A3 and B2, segment 6a); `deploy/RUNBOOK_GRADING.md` (note of 2026-11-23); `docs/sprint-log.md`; R-05 and L-106 (notes of 2026-11-23); R-09 (note of 2026-11-23).
+
+### ADR-124 — No grader invite for Window B, and `ops-db` stopped except for two sittings (supersedes ADR-107 in part)
+*Date: 2026-11-23. Owner-decided 2026-11-23; assistant-drafted. Supersedes ADR-107 in part, for Window B only: (1) its grader invite ("create the grader's invite to expire at the window's end") and (2) its "start `ops-db`" before the window and "stop `ops-db`" after it, which become two sittings. Everything else in ADR-107, and ADR-118, stands.*
+
+**Context:**
+- **The owner's reason (owner-stated 2026-11-23, in the owner's words):** "This is not a requirement, the grader does not intend to use the system independently. The grader only intends to review the live presentation followed by the code, revised project docs, and final risk management assessment."
+- ADR-118 reached the same conclusion for Window A (the grader reviews documents, and the system needs to be live only for the final submission).
+- `ops-db` costs about $0.30 a day while it runs (owner-reported estimate, ADR-105). Window B is 2026-12-01 to 12-12.
+- The owner invite `owner-laptop-6` was created on 2026-11-23 and expires on 2026-12-07 (owner-reported; the link is held by the owner and is not recorded).
+
+**Decision:**
+1. **No grader invite is created for Window B.**
+2. **`ops-db` stays stopped through Window B except for two sittings:** the short check on 2026-12-04 (ADR-123) and demonstration day, 2026-12-05 (started at T−75, 12:45 Central, `deploy/RUNBOOK_DEMO.md` H1). Each sitting starts it and stops it (the pattern of ADR-110), and on 12-05 the minimums are lowered and read back first (ADR-122). Window B is not opened as a standing window.
+3. **The owner invite is `owner-laptop-6`, expiring 2026-12-07.**
+
+**Alternatives considered:**
+- *A grader invite for Window B anyway.* Rejected, as ADR-118 rejected it for Window A: the grader does not intend to use the system.
+- *`ops-db` up for all of Window B.* Rejected: about $0.30 a day for 12 days is about $3.60, for a database nobody queries outside two sittings.
+
+**Required versus portfolio value.** Neither. It reduces cost and access: an invite that is never created cannot outlive its window (ADR-107: the expiry is the access control).
+
+**Consequences:**
+- **ADR-107's other Window B steps stand unless the owner decides otherwise.** They are the paid-balance check ($5 or more, in the console) and the deprecation check. This entry does not decide them.
+- **Closing.** There is no grader invite to revoke. The "Close the window" steps of `deploy/RUNBOOK_GRADING.md` that remain apply at the end of the 12-05 sitting: lower and read back the minimums, stop `ops-db`, the retry-log read (`--freshness 14d`) and the log entry.
+- **Open, recorded and not decided:**
+  - ADR-119's last resort is to ask the instructor for another slot. A slot after 2026-12-07 would need a new owner invite and a new sitting of `ops-db`.
+  - If the grader asks to use the system after the presentation, there is no invite and `ops-db` is stopped. Opening one is a decision for the owner then.
+- **The daily cap on 12-05 has no grader draw.** The runbook's A5 line "ask the grader whether they plan to use the system that day" no longer applies.
+- **Records:** `deploy/RUNBOOK_GRADING.md` (note of 2026-11-23); `deploy/RUNBOOK_DEMO.md` (the slot note); `docs/sprint-log.md`.

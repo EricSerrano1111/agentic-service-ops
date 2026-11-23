@@ -30,6 +30,13 @@ The windows (ADR-107): **A** 2026-10-31 to 2026-11-09; **B** 2026-12-01 to 2026-
 - **30 an hour per invite is now deployed,** not "15 until Z2b deploys" (the line under "Reference"): the live gateway revision `ops-gateway-00005-m67` has `GATEWAY_ASKS_PER_SESSION_HOUR` at `'30'` (`describe`, read 2026-11-12), and `deploy/cloudrun/gateway.yaml:46-47` says the same. The daily cap stays 50.
 - **Warm instances for the live run** are not part of opening or closing the window: `deploy/RUNBOOK_DEMO.md`, section H (ADR-122).
 
+*2026-11-23 (ADR-124, ADR-123; owner-decided 2026-11-23; assistant-drafted.)* **Window B is not opened as a standing window, and no grader invite is made for it.**
+- **The owner invite** is `owner-laptop-6`, created 2026-11-23, expiring 2026-12-07 (owner-reported; the link is held by the owner and is not recorded). It replaces `owner-laptop-5` (the note above). Step 4 is done.
+- **No grader invite for Window B** (ADR-124). Step 3 is not run, and the grader parts of "Close the window", step 1, have nothing to revoke. The owner's reason is in ADR-124.
+- **`ops-db` runs in two sittings,** the short check on 2026-12-04 and demonstration day, 2026-12-05, each started and stopped in one sitting (ADR-124; ADR-110's pattern). Steps 1 and 2 of "Open the window" (the paid balance, the start) apply to each sitting, and step 5's smoke check applies when a question is asked. ADR-107's balance check and deprecation check stand unless the owner decides otherwise.
+- **The 2026-11-23 rehearsal is an ADR-110 owner verification session** (ADR-123), not Window B: the same balance check and `ops-db` start, no grader invite, `ops-db` stopped after the minimums are lowered and read back.
+- **Closing.** After the 12-05 sitting, "Close the window" steps 2 to 4 apply (stop `ops-db`; the retry-log read; the log entry). Step 4's `--freshness 14d` reaches back to 11-21, which covers the rehearsal and both sittings.
+
 ## Open the window (do it the day before, or the morning of the start)
 
 1. **Check the paid balance (owner, in the console; there is no API).** Billing > the paid project's
