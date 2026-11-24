@@ -1,0 +1,319 @@
+{
+ "session": "2026-11-23 rehearsal (D2)",
+ "pulled": "one pull of the Cloud Run system log and \"Shutting down\" stdout lines, 2026-11-24T00:53:00Z to 2026-11-24T03:05Z",
+ "build": "8ec22db",
+ "starts": [
+  {
+   "service": "ops-gateway",
+   "instance": "12473e4177",
+   "kind": "autoscale",
+   "reason": "AUTOSCALING",
+   "started_utc": "2026-11-24T00:53:46.060Z",
+   "started_central": "18:53:46",
+   "cause": "page load (before Q1)",
+   "probes": [
+    {
+     "container": "gateway",
+     "attempts": 2,
+     "probe_success_utc": "00:53:51.305Z",
+     "seconds_after_start": 5.2
+    }
+   ],
+   "start_to_last_probe_s": 5.2,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T01:27:19.749Z",
+   "shutdown_central": "19:27:19"
+  },
+  {
+   "service": "ops-orchestrator",
+   "instance": "e1f2b12406",
+   "kind": "autoscale",
+   "reason": "AUTOSCALING",
+   "started_utc": "2026-11-24T00:54:08.720Z",
+   "started_central": "18:54:08",
+   "cause": "Part 1 Q1 (reporting)",
+   "probes": [
+    {
+     "container": "orchestrator",
+     "attempts": 3,
+     "probe_success_utc": "00:54:16.940Z",
+     "seconds_after_start": 8.2
+    }
+   ],
+   "start_to_last_probe_s": 8.2,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T01:13:13.734Z",
+   "shutdown_central": "19:13:13"
+  },
+  {
+   "service": "ops-reporting",
+   "instance": "8dd94d1ab4",
+   "kind": "autoscale",
+   "reason": "AUTOSCALING",
+   "started_utc": "2026-11-24T00:54:19.202Z",
+   "started_central": "18:54:19",
+   "cause": "Part 1 Q1 (reporting)",
+   "probes": [
+    {
+     "container": "mcp-incidents",
+     "attempts": 4,
+     "probe_success_utc": "00:54:30.907Z",
+     "seconds_after_start": 11.7
+    },
+    {
+     "container": "agent-reporting",
+     "attempts": 5,
+     "probe_success_utc": "00:54:45.286Z",
+     "seconds_after_start": 26.1
+    }
+   ],
+   "start_to_last_probe_s": 26.1,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T01:09:51.423Z",
+   "shutdown_central": "19:09:51"
+  },
+  {
+   "service": "ops-qa",
+   "instance": "816449da10",
+   "kind": "autoscale",
+   "reason": "AUTOSCALING",
+   "started_utc": "2026-11-24T00:54:46.928Z",
+   "started_central": "18:54:46",
+   "cause": "Part 1 Q1 (reporting)",
+   "probes": [
+    {
+     "container": "agent-qa",
+     "attempts": 4,
+     "probe_success_utc": "00:54:58.688Z",
+     "seconds_after_start": 11.8
+    }
+   ],
+   "start_to_last_probe_s": 11.8,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T01:13:20.910Z",
+   "shutdown_central": "19:13:20"
+  },
+  {
+   "service": "ops-sentiment",
+   "instance": "c01a05eb12",
+   "kind": "autoscale",
+   "reason": "AUTOSCALING",
+   "started_utc": "2026-11-24T00:55:48.800Z",
+   "started_central": "18:55:48",
+   "cause": "Part 1 Q2 (sentiment)",
+   "probes": [
+    {
+     "container": "mcp-feedback",
+     "attempts": 3,
+     "probe_success_utc": "00:55:57.396Z",
+     "seconds_after_start": 8.6
+    },
+    {
+     "container": "agent-sentiment",
+     "attempts": 4,
+     "probe_success_utc": "00:56:08.765Z",
+     "seconds_after_start": 20.0
+    }
+   ],
+   "start_to_last_probe_s": 20.0,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T01:11:15.912Z",
+   "shutdown_central": "19:11:15"
+  },
+  {
+   "service": "ops-forecast",
+   "instance": "192192d2f6",
+   "kind": "autoscale",
+   "reason": "AUTOSCALING",
+   "started_utc": "2026-11-24T00:57:52.025Z",
+   "started_central": "18:57:52",
+   "cause": "Part 1 Q3 (forecast)",
+   "probes": [
+    {
+     "container": "mcp-volume",
+     "attempts": 3,
+     "probe_success_utc": "00:58:00.859Z",
+     "seconds_after_start": 8.8
+    },
+    {
+     "container": "agent-forecast",
+     "attempts": 3,
+     "probe_success_utc": "00:58:09.146Z",
+     "seconds_after_start": 17.1
+    }
+   ],
+   "start_to_last_probe_s": 17.1,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T01:13:16.420Z",
+   "shutdown_central": "19:13:16"
+  },
+  {
+   "service": "ops-gateway",
+   "instance": "00817b4c94",
+   "kind": "min_instance",
+   "reason": "MANUAL_OR_CUSTOMER_MIN_INSTANCE",
+   "started_utc": "2026-11-24T01:32:29.886Z",
+   "started_central": "19:32:29",
+   "cause": "G2: --min=1 raised (service-level minScale)",
+   "probes": [
+    {
+     "container": "gateway",
+     "attempts": 2,
+     "probe_success_utc": "01:32:35.259Z",
+     "seconds_after_start": 5.4
+    }
+   ],
+   "start_to_last_probe_s": 5.4,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T02:58:29.811Z",
+   "shutdown_central": "20:58:29"
+  },
+  {
+   "service": "ops-qa",
+   "instance": "11299e7221",
+   "kind": "min_instance",
+   "reason": "MANUAL_OR_CUSTOMER_MIN_INSTANCE",
+   "started_utc": "2026-11-24T01:32:29.922Z",
+   "started_central": "19:32:29",
+   "cause": "G2: --min=1 raised (service-level minScale)",
+   "probes": [
+    {
+     "container": "agent-qa",
+     "attempts": 4,
+     "probe_success_utc": "01:32:41.505Z",
+     "seconds_after_start": 11.6
+    }
+   ],
+   "start_to_last_probe_s": 11.6,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T02:56:01.474Z",
+   "shutdown_central": "20:56:01"
+  },
+  {
+   "service": "ops-forecast",
+   "instance": "2b5711bdd4",
+   "kind": "min_instance",
+   "reason": "MANUAL_OR_CUSTOMER_MIN_INSTANCE",
+   "started_utc": "2026-11-24T01:32:29.926Z",
+   "started_central": "19:32:29",
+   "cause": "G2: --min=1 raised (service-level minScale)",
+   "probes": [
+    {
+     "container": "mcp-volume",
+     "attempts": 4,
+     "probe_success_utc": "01:32:41.589Z",
+     "seconds_after_start": 11.7
+    },
+    {
+     "container": "agent-forecast",
+     "attempts": 3,
+     "probe_success_utc": "01:32:49.883Z",
+     "seconds_after_start": 20.0
+    }
+   ],
+   "start_to_last_probe_s": 20.0,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T02:49:14.191Z",
+   "shutdown_central": "20:49:14"
+  },
+  {
+   "service": "ops-orchestrator",
+   "instance": "af030ca51a",
+   "kind": "min_instance",
+   "reason": "MANUAL_OR_CUSTOMER_MIN_INSTANCE",
+   "started_utc": "2026-11-24T01:32:29.929Z",
+   "started_central": "19:32:29",
+   "cause": "G2: --min=1 raised (service-level minScale)",
+   "probes": [
+    {
+     "container": "orchestrator",
+     "attempts": 4,
+     "probe_success_utc": "01:32:41.163Z",
+     "seconds_after_start": 11.2
+    }
+   ],
+   "start_to_last_probe_s": 11.2,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T02:55:53.658Z",
+   "shutdown_central": "20:55:53"
+  },
+  {
+   "service": "ops-reporting",
+   "instance": "24f29ed6a6",
+   "kind": "min_instance",
+   "reason": "MANUAL_OR_CUSTOMER_MIN_INSTANCE",
+   "started_utc": "2026-11-24T01:32:29.930Z",
+   "started_central": "19:32:29",
+   "cause": "G2: --min=1 raised (service-level minScale)",
+   "probes": [
+    {
+     "container": "mcp-incidents",
+     "attempts": 3,
+     "probe_success_utc": "01:32:38.693Z",
+     "seconds_after_start": 8.8
+    },
+    {
+     "container": "agent-reporting",
+     "attempts": 4,
+     "probe_success_utc": "01:32:50.079Z",
+     "seconds_after_start": 20.1
+    }
+   ],
+   "start_to_last_probe_s": 20.1,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T02:55:56.894Z",
+   "shutdown_central": "20:55:56"
+  },
+  {
+   "service": "ops-sentiment",
+   "instance": "91d7f62e14",
+   "kind": "min_instance",
+   "reason": "MANUAL_OR_CUSTOMER_MIN_INSTANCE",
+   "started_utc": "2026-11-24T01:32:29.933Z",
+   "started_central": "19:32:29",
+   "cause": "G2: --min=1 raised (service-level minScale)",
+   "probes": [
+    {
+     "container": "mcp-feedback",
+     "attempts": 5,
+     "probe_success_utc": "01:32:44.630Z",
+     "seconds_after_start": 14.7
+    },
+    {
+     "container": "agent-sentiment",
+     "attempts": 4,
+     "probe_success_utc": "01:32:56.027Z",
+     "seconds_after_start": 26.1
+    }
+   ],
+   "start_to_last_probe_s": 26.1,
+   "probe_failures": 0,
+   "over_60s": false,
+   "verdict": "pass",
+   "shutdown_utc": "2026-11-24T02:49:12.661Z",
+   "shutdown_central": "20:49:12"
+  }
+ ]
+}
