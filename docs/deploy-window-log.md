@@ -724,3 +724,41 @@ The owner also ran one out-of-band read: `docker manifest inspect` of the pinned
 - The assistant stated three things wrongly during the session, each corrected by the owner (the coverage rule for R2 to R4, the direction of the R5 E2 timing risk, and a G-R5 "deviation" that the owner's timing showed was not one); the ledger keeps the earlier line and the appended correction.
 - R5 was added after R0 to R3 were seen (owner-decided) and is outside the pre-registration.
 - `startup_latencies`, the v2 execution environment, the base-image digests inside the rebuilt application images, and the Service Health page were not recorded. Paid balance after the session: $6.15 (owner-read 14:56 CST).
+
+## The full rehearsal, 2026-11-23 (ADR-123, ADR-124; ADR-110 owner session; owner present; assistant-drafted)
+
+*Session of 2026-11-23, 18:28 to 21:05 Central. Branch `docs/rehearsal-2026-11-23`. Evidence: `evals/results/rehearsal/2026-11-23/` (`ledger.jsonl`, `starts.json`, `summary.md`). Procedure: `deploy/RUNBOOK_DEMO.md` A3 and section H; `evals/l106/README.md` for the log reads. The trigger `deploy-reporting-slice` stayed disabled all session and nothing deployed. The code freeze held: no file outside `docs/`, `deploy/*.md` and the new results files changed.*
+
+**Who ran what.** The owner ran every state-changing command: the owner invite (`owner-laptop-6`, in the owner's own terminal; the assistant never saw the link), the `ops-db` start, the six `--min=1` updates, the six `--min=default` updates and the `ops-db` stop; and asked every question in the browser. The assistant ran only reads: `describe`, `revisions list`, `logging read`, `sql operations list`, `builds triggers describe`, `invites.py list` (ids cut from the output) and the secret's version metadata (no `access`).
+
+**The clock (Central; the Cloud Audit Log and the request log, UTC minus 6).**
+- 18:28 G0 reads; 18:30 the branch. The 17:30 cutoff was already past, so the owner moved it to 21:30 before anything was raised or asked (pre-run amendment).
+- 18:37:40 the new invite version was written to the secret (assistant-read from version metadata); 18:40:26 the `ops-db` start was registered; 18:40:49 a transient `RUNNABLE` read; `MAINTENANCE` to about 18:48; stable `RUNNABLE` 18:48:21; operation `DONE` 18:51:08.
+- 18:53:21 Part 1 opened. Questions at 18:54:08, 18:55:47 and 18:57:51 (51.3, 23.4 and 20.1 s). Last request 18:58:11.
+- Idle wait. 19:09:51 to 19:13:20 five services shut down. **19:12:09 to 19:12:11 nine page requests reached the gateway** (a self-declared crawler user agent, unverified; no sign-in exchange, no question; the owner confirmed it was not them and that the link was never sent anywhere). The gateway therefore stayed up; the owner chose to wait, and it shut down at 19:27:19.
+- 19:28:50 capture (`t0`), identical to G0. **19:30:57 to 19:31:17 the six `--min=1 --async` calls. 19:32:29 six `MANUAL_OR_CUSTOMER_MIN_INSTANCE` starts; last probe 19:32:56.**
+- 19:36 to 19:41 smoke check (reporting 5.1 s; sentiment `split_required`, then resent 3.6 s; forecast 3.4 s).
+- 19:53:21 Part 3 opened; its five live questions 20:01:07 to 20:07:01 (all expected statuses). 20:13:48 to 20:19:10 Part 3b (eight questions). 20:19:12 to 20:40:49 the hold wait (21 min 37 s, no request to any service). 20:40:49 Part 4 (2.6 s).
+- 20:43:14 to 20:43:24 three page loads (the owner's). **20:47:03 to 20:47:24 the six `--min=default --async` calls.** 20:48 readback. 20:51:15 the `ops-db` stop (operation `DONE` 20:51:58). 20:52 G4 reached.
+- 20:49:12 to 20:58:29 the instances shut down on their idle timers.
+
+**The rules, as written before the run, and their results.**
+- **P-A (cold; an observation):** 3 of 3 `answered` and `verified`, under the 120 s ceiling. Six autoscale starts, none failed, none over 60 s.
+- **P-B (warm mechanics): pass.** Every service showed `run.googleapis.com/minScale: '1'`; no new revision (revision list and `spec.traffic` the same as G0); a `MANUAL_OR_CUSTOMER_MIN_INSTANCE` start on every service.
+- **P-C (warm hold): pass.** One reporting question 21 min 37 s after the last request: `answered`, `verified`, 2.6 s (the bound was 15 s), with no new instance start.
+- **P-D (teardown): pass.** All six back to no minimum, exports and revisions identical to the start; `ops-db` `STOPPED` `NEVER`; the trigger disabled.
+- **P-E (the script run): not scored: Part 3 segment splits were not recorded** (owner-decided). Recorded as facts, not as a pass: the five live questions returned their expected statuses; the five unscripted candidates matched their written expectations; the tab criterion was not recorded per tab.
+- **The rehearsal's own pass condition (P-B, P-C, P-D and P-E) is therefore not met.**
+
+**Pre-run amendments (owner-decided 2026-11-23).** The cutoff to 21:30; P-E's pass rule reworded; the Part 4 cache check (no response cache found in the code); Part 3b, five unscripted questions and one sentiment wording asked three times (21 questions in all, 4 under the cap of 25).
+
+**Deviations and corrections.**
+- The assistant said during the hold wait that ADR-117 "doesn't forbid" a slide deck. Its alternatives list a separate slide deck as rejected ("not required, and it duplicates what the UI can show live"); the owner had it right.
+- The first `RUNNABLE` read of `ops-db` (23 s after the start) was transient; the assistant waited for the operation to read `DONE`.
+- The owner took no stopwatch, ran no zoom check and read no per-question browser times in Part 3; the owner clicked through the tabs and questions at speed.
+
+**Not run, or not recorded.** Segment splits and Part 1's total time; per-tab anchor results for tabs 7 to 15; the zoom check (the demonstration is on a Zoom call the instructor hosts, the owner joining as a guest; the browser zoom is set at the 12-04 check, which gains a screen-share test); Part 3's per-question browser seconds ("within 3 s"); T2's trailing text and S1a and S1b's text beyond their first line; the paid balance (not recorded tonight; read at the 12-04 preflight). The H3 (b) already-running-instance case and the deploy-PATCH question of ADR-122 were not exercised.
+
+**Cost.** Warm time 1 h 16 min 27 s from the first raise call to the last lowering call; about $0.78 at ADR-122's list rate ($0.6156 an hour), or about $0.84 counted from each instance's start to its shutdown. The ledger's 21 questions cost $0.0305 at list price. `ops-db` ran about 2 h 11 min.
+
+**Closing state (read 20:52, and the shutdowns to 20:58:29).** Trigger `deploy-reporting-slice` disabled; `ops-db` `STOPPED` `NEVER`; no minimum instances on any service; the six serving revisions as at the start (gateway `00005-m67`, orchestrator `00012-t27`, reporting `00010-xtq`, sentiment `00006-8jp`, forecast `00006-nsf`, QA `00007-w9l`); no instance running. The invite `owner-laptop-6` is active and expires 2026-12-07.

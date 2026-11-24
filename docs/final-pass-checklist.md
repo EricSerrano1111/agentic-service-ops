@@ -73,3 +73,5 @@ The summary table (`docs/sprint-log.md`, "Cumulative Summary") ends at Sprint 6;
 - **F-42:** dead code in `services/orchestrator/src/orchestrator/app.py`: the rate-limit, quota and outage branches of `_llm_error` (`:233-274`) are unreachable since ADR-089, and the "reporting is also the fallback" line (`:647-648`) is unreachable because all six routes are handled above it. Delete the dead branches; make the fallback an explicit error.
 
 **Optional, from F-36:** pin the CI workflow's actions by commit SHA (`.github/workflows/ci.yml:23, 24, 27` and the same three in each job). Accepted as is for now (note under ADR-121, 2026-11-11).
+
+- *2026-11-23 (owner-decided 2026-11-23; assistant-drafted.)* **A `robots.txt` that disallows crawlers, on the gateway's public host.** During the rehearsal's idle wait nine requests arrived at 19:12:09 to 19:12:11 Central with a self-declared crawler user agent (`meta-webindexer/1.1`, unverified); no invite was involved. It is a gateway change, so a service change under the code freeze: **after the demonstration,** with a gateway redeploy under its own decision and the deploy runbooks. Not scheduled.
